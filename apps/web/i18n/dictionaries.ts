@@ -1,0 +1,8226 @@
+/**
+ * Typed AR/EN dictionaries (PHASE-003 identity/sessions/admin screens + the
+ * PHASE-004 tenancy/platform screens, task P4-T12a). 100% key parity between
+ * locales is enforced twice:
+ *
+ *   1. Statically — both literals are assigned to `Record<Locale, Dictionary>`
+ *      so TypeScript rejects a missing or extra key on either side.
+ *   2. At runtime — `assertDictionaryParity()` below executes at module load
+ *      (every layout render imports this module), satisfying the "parity
+ *      check script green" acceptance without a separate test runner.
+ *
+ * Arabic is the default locale (Arabic-first, docs/ui/RTL_DESIGN_RULES.md).
+ */
+export const locales = ["ar", "en"] as const;
+
+export type Locale = (typeof locales)[number];
+
+export const defaultLocale: Locale = "ar";
+
+export interface Dictionary {
+  appTitle: string;
+  switchLabel: string;
+  signOut: string;
+  loading: string;
+  phaseNote: string;
+
+  navHome: string;
+  navUsers: string;
+  navSessions: string;
+  navMfa: string;
+  navRoles: string;
+  navPassword: string;
+
+  loginTitle: string;
+  loginSubtitle: string;
+  loginEmailLabel: string;
+  loginPasswordLabel: string;
+  loginMfaLabel: string;
+  loginMfaHint: string;
+  loginMfaShow: string;
+  loginMfaHide: string;
+  loginSubmit: string;
+  loginForgotLink: string;
+  loginErrorInvalidCredentials: string;
+  loginErrorMfaRequired: string;
+  loginErrorRateLimited: string;
+  loginErrorAccountLocked: string;
+  loginErrorGeneric: string;
+
+  forgotTitle: string;
+  forgotDescription: string;
+  forgotEmailLabel: string;
+  forgotSubmit: string;
+  forgotSuccess: string;
+  forgotBack: string;
+
+  acceptTitle: string;
+  acceptTenantLabel: string;
+  acceptRoleLabel: string;
+  acceptEmailLabel: string;
+  acceptFullNameLabel: string;
+  acceptPasswordLabel: string;
+  acceptPasswordHint: string;
+  acceptSubmit: string;
+  acceptErrorExpired: string;
+  acceptErrorRevoked: string;
+  acceptErrorAccepted: string;
+  acceptErrorNotFound: string;
+  acceptErrorGeneric: string;
+
+  homeWelcome: string;
+  homeTenantLabel: string;
+  homeSwitchTenant: string;
+  homeRoleLabel: string;
+  homePermissionsLabel: string;
+  homeScreens: string;
+
+  usersTitle: string;
+  usersNoPermission: string;
+  usersColEmail: string;
+  usersColName: string;
+  usersColRole: string;
+  usersColStatus: string;
+  usersColLastLogin: string;
+  usersNever: string;
+  usersEmpty: string;
+  usersInviteTitle: string;
+  usersInviteEmailLabel: string;
+  usersInviteRoleLabel: string;
+  usersInviteSubmit: string;
+  usersInviteLinkTitle: string;
+  usersInviteExpiresLabel: string;
+  usersInvitationsTitle: string;
+  usersColExpires: string;
+  usersColActions: string;
+  usersRevoke: string;
+  usersNoRoles: string;
+  usersEmptyInvitations: string;
+
+  statusActive: string;
+  statusPending: string;
+  statusRevoked: string;
+  statusExpired: string;
+  statusAccepted: string;
+  statusSuspended: string;
+
+  sessionsTitle: string;
+  sessionsHint: string;
+  sessionsColUser: string;
+  sessionsColCreated: string;
+  sessionsColExpires: string;
+  sessionsColLastSeen: string;
+  sessionsColIp: string;
+  sessionsRevoke: string;
+  sessionsEmpty: string;
+
+  mfaTitle: string;
+  mfaDescription: string;
+  mfaEnrollTitle: string;
+  mfaEnrollButton: string;
+  mfaSecretLabel: string;
+  mfaOtpauthLabel: string;
+  mfaEnrollHint: string;
+  mfaVerifyTitle: string;
+  mfaVerifyCodeLabel: string;
+  mfaVerifySubmit: string;
+  mfaVerified: string;
+  mfaRecoveryTitle: string;
+  mfaRecoveryDescription: string;
+  mfaRecoveryGenerate: string;
+  mfaRecoveryRegenerate: string;
+  mfaInvalidCode: string;
+  mfaNeedConfirmed: string;
+
+  rolesTitle: string;
+  rolesDescription: string;
+  rolesTenantTitle: string;
+  rolesTemplatesTitle: string;
+  rolesColKey: string;
+  rolesColName: string;
+  rolesColSystem: string;
+  rolesColActions: string;
+  rolesClone: string;
+  rolesCloned: string;
+  rolesYes: string;
+  rolesNo: string;
+
+  passwordTitle: string;
+  passwordDescription: string;
+  passwordCurrentLabel: string;
+  passwordNextLabel: string;
+  passwordNextHint: string;
+  passwordSubmit: string;
+  passwordSuccess: string;
+  passwordErrorCurrent: string;
+
+  errorsForbidden: string;
+  errorsUnauthorized: string;
+  errorsValidation: string;
+  errorsNotFound: string;
+  errorsNetwork: string;
+  errorsGeneric: string;
+  errorsRateLimited: string;
+
+  // -- P4-T12a (PHASE-004): navigation ---------------------------------------
+  navOnboarding: string;
+  navBranches: string;
+  navSettings: string;
+  navSupport: string;
+  navPlatformSection: string;
+  navPlatformConsole: string;
+  navPlatformAudit: string;
+
+  // -- P4-T12a: shared labels -------------------------------------------------
+  statusInactive: string;
+  statusClosed: string;
+  statusIssued: string;
+  statusRejected: string;
+  statusConverted: string;
+  statusTerminated: string;
+  taxStatusLabel: string;
+  taxStatusRegistered: string;
+  taxStatusNotRegistered: string;
+  taxStatusDeregistered: string;
+  taxNumberLabel: string;
+  fiscalStartMonthLabel: string;
+  numberingAssignAtLabel: string;
+  numberingAssignAtPosting: string;
+  numberingAssignAtApproval: string;
+  localeArabic: string;
+  localeEnglish: string;
+
+  // -- P4-T12a: register (public) ----------------------------------------------
+  registerTitle: string;
+  registerSubtitle: string;
+  registerBusinessNameLabel: string;
+  registerBusinessNameArLabel: string;
+  registerCountryLabel: string;
+  registerCurrencyLabel: string;
+  registerTemplateLabel: string;
+  registerTaxNumberHint: string;
+  registerOwnerSection: string;
+  registerOwnerEmailLabel: string;
+  registerOwnerNameLabel: string;
+  registerSubmit: string;
+  registerSuccessTitle: string;
+  registerSuccessBody: string;
+  registerGoLogin: string;
+  registerLoginPrompt: string;
+  registerErrorEmailTaken: string;
+  registerErrorOptions: string;
+
+  // -- P4-T12a: onboarding ------------------------------------------------------
+  onboardingTitle: string;
+  onboardingSubtitle: string;
+  onboardingProvisionButton: string;
+  onboardingResultTitle: string;
+  onboardingRolesLabel: string;
+  onboardingAccountsLabel: string;
+  onboardingPurposesLabel: string;
+  onboardingSettingsLabel: string;
+  onboardingCreatedCount: string;
+  onboardingZeroDuplicatesHint: string;
+  onboardingGoHome: string;
+  onboardingGoBranches: string;
+
+  // -- P4-T12a: branches --------------------------------------------------------
+  branchesTitle: string;
+  branchesEmpty: string;
+  branchesColCode: string;
+  branchesColName: string;
+  branchesColNameAr: string;
+  branchesCreateTitle: string;
+  branchesCodeLabel: string;
+  branchesNameLabel: string;
+  branchesNameArLabel: string;
+  branchesCreateSubmit: string;
+  branchesActivate: string;
+  branchesDeactivate: string;
+  branchesErrorCodeTaken: string;
+
+  // -- P4-T12a: tenant settings --------------------------------------------------
+  settingsTitle: string;
+  settingsProfileTitle: string;
+  settingsNameLabel: string;
+  settingsNameArLabel: string;
+  settingsTimezoneLabel: string;
+  settingsProfileSubmit: string;
+  settingsProfileSaved: string;
+  settingsGeneralTitle: string;
+  settingsDefaultLocaleLabel: string;
+  settingsNumeralSystemLabel: string;
+  settingsNumeralLatn: string;
+  settingsNumeralArab: string;
+  settingsHijriLabel: string;
+  settingsHijriHint: string;
+  settingsFiscalNumberingTitle: string;
+  settingsSupportTitle: string;
+  settingsSupportOptInLabel: string;
+  settingsSupportOptInWarning: string;
+  settingsTaxTitle: string;
+  settingsTaxPairHint: string;
+  settingsSave: string;
+  settingsSaved: string;
+  settingsErrorInvalidValue: string;
+
+  // -- P4-T12a: support sessions (tenant plane) ----------------------------------
+  supportSessionsTitle: string;
+  supportSessionsHint: string;
+  supportColReason: string;
+  supportColTicket: string;
+  supportColOpened: string;
+  supportColClosed: string;
+  supportColOptIn: string;
+  supportEmpty: string;
+  supportTerminate: string;
+  supportErrorAccessDenied: string;
+  supportErrorExpired: string;
+  supportErrorNotActive: string;
+
+  // -- P4-T12a: tenancy error strings --------------------------------------------
+  tenancyErrorFeatureNotEntitled: string;
+  tenancyErrorDependenciesMissing: string;
+
+  // -- P4-T12a: platform console -------------------------------------------------
+  platformConsoleTitle: string;
+  platformNoAccess: string;
+  platformTenantBadge: string;
+  platformSearchLabel: string;
+  platformSearchSubmit: string;
+  platformColTenant: string;
+  platformColCountry: string;
+  platformColPlan: string;
+  platformColCreated: string;
+  platformEmpty: string;
+  platformProfileTitle: string;
+  platformPlanTitle: string;
+  platformPlanCurrentLabel: string;
+  platformPlanNone: string;
+  platformPlanAssignTitle: string;
+  platformPlanLabel: string;
+  platformTrialDaysLabel: string;
+  platformPlanSubmit: string;
+  platformPlanAssigned: string;
+  platformEntitlementsTitle: string;
+  platformColFeatureKey: string;
+  platformColSource: string;
+  platformEntitlementsEmpty: string;
+  platformGrantTitle: string;
+  platformGrantFeatureLabel: string;
+  platformGrantSourceLabel: string;
+  platformGrantExpiresLabel: string;
+  platformGrantExpiresHint: string;
+  platformGrantReasonLabel: string;
+  platformGrantSubmit: string;
+  platformGrantDone: string;
+  platformRevoke: string;
+  platformRevokeReasonLabel: string;
+  platformGrantExpiryRequired: string;
+  platformGrantUnknownKey: string;
+  platformMembershipsTitle: string;
+  platformBranchesTitle: string;
+  platformLifecycleTitle: string;
+  platformReasonLabel: string;
+  platformSuspendButton: string;
+  platformRestoreButton: string;
+  platformSuspendDone: string;
+  platformRestoreDone: string;
+  platformSupportTitle: string;
+  platformSupportOpenTitle: string;
+  platformSupportReasonLabel: string;
+  platformSupportTicketLabel: string;
+  platformSupportHoursLabel: string;
+  platformSupportOpenSubmit: string;
+  platformSupportClose: string;
+  platformSupportCloseReasonLabel: string;
+  platformSupportSessionLabel: string;
+  platformReadDataTitle: string;
+  platformReadResourceLabel: string;
+  platformReadSubmit: string;
+  platformNoActiveSession: string;
+  resourceUsers: string;
+  resourceMemberships: string;
+  resourceRoles: string;
+  resourceBranches: string;
+  resourceSettings: string;
+  resourceEntitlements: string;
+  resourceSubscription: string;
+  resourceAccounts: string;
+  resourceAuditEvents: string;
+
+  // -- P4-T12a: platform audit viewer ----------------------------------------------
+  platformAuditTitle: string;
+  platformAuditPlatformOnly: string;
+  platformAuditTenantFilter: string;
+  platformAuditActionFilter: string;
+  platformAuditApply: string;
+  platformAuditColAt: string;
+  platformAuditColAction: string;
+  platformAuditColActor: string;
+  platformAuditViaPlatform: string;
+  platformAuditNextPage: string;
+  platformAuditEmpty: string;
+  platformErrorInvalidTransition: string;
+  platformErrorPlanNotFound: string;
+
+  // -- P5-T12 (PHASE-005): design-system shell + status/stepper labels --------
+  shellSkipToContent: string;
+  shellCommandSearch: string;
+  shellShortcutsTitle: string;
+  shellClose: string;
+  shellMore: string;
+  statusOffboarded: string;
+  wizardStepOf: string;
+  platformBackToConsole: string;
+  rolesEmpty: string;
+  retryLabel: string;
+
+  // -- P6-T11a (PHASE-006 master data): shared labels --------------------------
+  commonSave: string;
+  commonCreate: string;
+  commonCancel: string;
+  commonOpen: string;
+  commonClear: string;
+  commonConfirm: string;
+  commonUnsavedChanges: string;
+  commonVersionConflict: string;
+  statusDraft: string;
+  statusArchived: string;
+  kindLabel: string;
+  kindFilterAll: string;
+  colStatus: string;
+  colName: string;
+  listNextPage: string;
+  listPrevPage: string;
+  listSearchLabel: string;
+  namePreviewLabel: string;
+
+  // -- P6-T11a: navigation + breadcrumbs for the master-data groups ------------
+  navPartners: string;
+  navPartnersDirectory: string;
+  navPartnersNew: string;
+  navOpeningBalances: string;
+  navInventory: string;
+  navItems: string;
+  navItemsNew: string;
+  navPriceLists: string;
+  navImport: string;
+
+  // -- PHASE-007: accounting navigation + screens --------------------------------
+  navAccountingCoa: string;
+  navAccountingJournals: string;
+  navAccountingGl: string;
+  navAccountingPeriods: string;
+  navAccountingApprovals: string;
+  navAccountingRates: string;
+  accountingTitle: string;
+  accountingJournalsTitle: string;
+  accountingJournalsNew: string;
+  accountingJournalsEmpty: string;
+  accountingColEntryNo: string;
+  accountingColEntryDate: string;
+  accountingColCurrency: string;
+  accountingColTotal: string;
+  accountingColStatus: string;
+  accountingColCode: string;
+  accountingColName: string;
+  accountingColType: string;
+  accountingColPostable: string;
+  accountingColDebit: string;
+  accountingColCredit: string;
+  accountingColBalance: string;
+  accountingSubmit: string;
+  accountingApprove: string;
+  accountingPost: string;
+  accountingReverse: string;
+  accountingCancel: string;
+  accountingSaveDraft: string;
+  accountingAddLine: string;
+  accountingRemoveLine: string;
+  accountingDuplicateLine: string;
+  accountingPartnerRequired: string;
+  accountingBalanced: string;
+  accountingUnbalanced: string;
+  accountingDifference: string;
+  accountingLineTotal: string;
+  accountingMemo: string;
+  accountingCostCenter: string;
+  accountingPartner: string;
+  accountingTaxCode: string;
+  accountingAccount: string;
+  accountingDescription: string;
+  accountingCoaTitle: string;
+  accountingCoaEmpty: string;
+  accountingPurposesTitle: string;
+  accountingPurposesEmpty: string;
+  accountingGlTitle: string;
+  accountingGlEmpty: string;
+  accountingGlDrill: string;
+  accountingPeriodsTitle: string;
+  accountingPeriodsEmpty: string;
+  accountingYearsTitle: string;
+  accountingCreateYear: string;
+  accountingYearName: string;
+  accountingYearStart: string;
+  accountingYearEnd: string;
+  accountingSoftClose: string;
+  accountingLock: string;
+  accountingReopen: string;
+  accountingReopenReason: string;
+  accountingReopenPrompt: string;
+  accountingChecklist: string;
+  accountingChecklistOk: string;
+  accountingChecklistBroken: string;
+  accountingChecklistNotRun: string;
+  accountingChecklistNotApplicable: string;
+  accountingApprovalsTitle: string;
+  accountingApprovalsEmpty: string;
+  accountingApprovalsSelfHint: string;
+  accountingApprovalsSubmittedBy: string;
+  accountingApprovalsTotalBase: string;
+  accountingApprovalsPreview: string;
+  accountingReject: string;
+  accountingRatesTitle: string;
+  accountingRatesEmpty: string;
+  accountingRatesCurrency: string;
+  accountingRatesDate: string;
+  accountingRatesRate: string;
+  accountingRatesSave: string;
+  accountingPostedAt: string;
+  accountingSource: string;
+  accountingPreviewTitle: string;
+  statusPendingApproval: string;
+  statusApproved: string;
+  statusPosted: string;
+  statusReversed: string;
+  statusCancelled: string;
+  accountingStatusOpen: string;
+  accountingStatusSoftClosed: string;
+  accountingStatusLocked: string;
+  accountingKindRegular: string;
+  accountingKindOpening: string;
+  accountingKindClosing: string;
+  accountingSearchPlaceholder: string;
+  accountingNewAccount: string;
+  accountingAccountParent: string;
+  accountingAccountCurrency: string;
+  accountingIsGroup: string;
+  accountingMapPurpose: string;
+  accountingPurposeKey: string;
+  accountingPurposeAccount: string;
+  accountingActiveFrom: string;
+  accountingLines: string;
+  accountingColAmount: string;
+  accountingColBase: string;
+  accountingColDirection: string;
+  accountingColPeriod: string;
+  accountingReference: string;
+  accountingExchangeRate: string;
+  accountingRecurringTitle: string;
+  accountingRecurringNew: string;
+  accountingRecurringEmpty: string;
+  accountingRecurringSchedule: string;
+  accountingRecurringNextRun: string;
+  accountingRecurringAmountPolicy: string;
+  accountingRecurringFixed: string;
+  accountingRecurringReenter: string;
+  accountingRecurringPause: string;
+  accountingRecurringActivate: string;
+  accountingRecurringGenerateDue: string;
+  accountingPoliciesTitle: string;
+  accountingPoliciesEmpty: string;
+  accountingPolicyMode: string;
+  accountingPolicyThreshold: string;
+  accountingRunAr: string;
+  accountingRunAp: string;
+  accountingReconStatusOk: string;
+  accountingReconStatusBroken: string;
+  accountingPostOpening: string;
+  accountingPostOpeningConfirm: string;
+  obPostReadyNote: string;
+  accountingYearEndExecute: string;
+  accountingYearEndReverse: string;
+  accountingYearEndConfirm: string;
+  accountingMovementsTitle: string;
+  accountingRegisterTitle: string;
+  accountingSelectAccount: string;
+  accountingFromDate: string;
+  accountingToDate: string;
+  accountingReversalDate: string;
+  accountingReversalReason: string;
+  accountingSoftClosePrompt: string;
+  accountingRateHint: string;
+  accountingErrEntryNotBalanced: string;
+  accountingErrPeriodLocked: string;
+  accountingErrAccountNotPostable: string;
+  accountingErrPurposeNotMapped: string;
+  accountingErrMissingPartner: string;
+  accountingErrMissingFxRate: string;
+  accountingErrAlreadyPosted: string;
+  accountingErrAlreadyReversed: string;
+  accountingErrApprovalLimit: string;
+  accountingErrSelfApproval: string;
+  accountingErrImmutable: string;
+  accountingErrState: string;
+  accountTypeAsset: string;
+  accountTypeLiability: string;
+  accountTypeEquity: string;
+  accountTypeRevenue: string;
+  accountTypeExpense: string;
+  accountingPostableYes: string;
+  accountingPostableNo: string;
+  accountingPurposesHint: string;
+
+  // -- T14-UI: PHASE-008 treasury navigation + screens ---------------------------
+  navTreasury: string;
+  navTreasuryAccounts: string;
+  navTreasuryReceipts: string;
+  navTreasuryPayments: string;
+  navTreasuryExpenses: string;
+  navTreasuryTransfers: string;
+  navTreasuryShifts: string;
+  navTreasuryBankRec: string;
+  treasuryAccountsTitle: string;
+  treasuryAccountsEmpty: string;
+  treasuryAccountOpenTitle: string;
+  treasuryAccountName: string;
+  treasuryAccountNameAr: string;
+  treasuryAccountType: string;
+  treasuryAccountTypeCash: string;
+  treasuryAccountTypeBank: string;
+  treasuryAccountTypePetty: string;
+  treasuryAccountGlAccount: string;
+  treasuryAccountCurrency: string;
+  treasuryAccountBranch: string;
+  treasuryColGlCode: string;
+  treasuryAccountBalance: string;
+  treasuryColMovements: string;
+  treasuryAccountCreatedToast: string;
+  treasuryAccountCloseBtn: string;
+  treasuryAccountCloseReason: string;
+  treasuryAccountClosedToast: string;
+  treasuryAccountOpenedAt: string;
+  treasuryAccountClosedAt: string;
+  treasuryAccountMovementsTitle: string;
+  treasuryAccountMovementsEmpty: string;
+  treasuryColDirectionIn: string;
+  treasuryColDirectionOut: string;
+  treasuryColBaseAmount: string;
+  treasuryColValueDate: string;
+  treasuryColRate: string;
+  treasuryColSource: string;
+  treasuryColMemo: string;
+  treasuryMethodCash: string;
+  treasuryMethodBank: string;
+  treasuryMethodCheque: string;
+  treasuryMethodCard: string;
+  treasuryMethodTransfer: string;
+  treasuryReceiptsTitle: string;
+  treasuryReceiptsEmpty: string;
+  treasuryReceiptsNew: string;
+  treasuryPaymentsTitle: string;
+  treasuryPaymentsEmpty: string;
+  treasuryPaymentsNew: string;
+  treasuryColDocNo: string;
+  treasuryColPartner: string;
+  treasuryColMethod: string;
+  treasuryColAmount: string;
+  treasuryColAllocated: string;
+  treasuryColFx: string;
+  treasuryColPayer: string;
+  treasuryColPayee: string;
+  treasuryDocCashAccount: string;
+  treasuryDocPartner: string;
+  treasuryDocMethod: string;
+  treasuryDocCurrency: string;
+  treasuryDocAmount: string;
+  treasuryDocRate: string;
+  treasuryDocRateHint: string;
+  treasuryDocValueDate: string;
+  treasuryDocReference: string;
+  treasuryDocDescription: string;
+  treasuryDocDescriptionAr: string;
+  treasuryDocCreatedToast: string;
+  treasuryDocDetailTitle: string;
+  treasuryDocPostedToast: string;
+  treasuryDocReverseToast: string;
+  treasuryDocReverseDate: string;
+  treasuryDocReverseReason: string;
+  treasuryDocCancelToast: string;
+  treasuryDocOnAccount: string;
+  treasuryDocJournalNo: string;
+  treasuryDocSideHint: string;
+  treasuryCancelReason: string;
+  treasuryOpenItemsTitle: string;
+  treasuryAllocationsTitle: string;
+  treasuryAllocationsEmpty: string;
+  treasuryAllocationsHint: string;
+  treasuryAllocationSuggestBtn: string;
+  treasuryAllocationSuggestToast: string;
+  treasuryAllocationColOutstanding: string;
+  treasuryAllocationTotals: string;
+  treasuryAllocationTotalAllocated: string;
+  treasuryAllocationRemainder: string;
+  treasuryAllocationOnAccountHint: string;
+  treasuryAllocationOverError: string;
+  treasuryAllocationSaveBtn: string;
+  treasuryAllocationSavedToast: string;
+  treasuryAllocationReloadBtn: string;
+  treasuryExpensesTitle: string;
+  treasuryExpensesEmpty: string;
+  treasuryExpenseClaimNew: string;
+  treasuryExpenseCategoriesTitle: string;
+  treasuryExpenseCategoriesEmpty: string;
+  treasuryExpenseCategoryNew: string;
+  treasuryExpenseCategoryCode: string;
+  treasuryExpenseCategoryAccount: string;
+  treasuryExpenseCategoryApproval: string;
+  treasuryExpenseApprovalNone: string;
+  treasuryExpenseApprovalSingle: string;
+  treasuryExpenseCategoryCreatedToast: string;
+  treasuryExpenseCreatedToast: string;
+  treasuryExpenseReceiptNote: string;
+  treasuryExpenseReceiptFileId: string;
+  treasuryExpenseColNo: string;
+  treasuryExpenseColPayee: string;
+  treasuryExpenseColCategory: string;
+  treasuryTransfersTitle: string;
+  treasuryTransfersEmpty: string;
+  treasuryTransferNew: string;
+  treasuryTransferFrom: string;
+  treasuryTransferTo: string;
+  treasuryTransferCreatedToast: string;
+  treasuryTransferPostedToast: string;
+  treasuryTransferCancelledToast: string;
+  treasuryTransferSameAccountError: string;
+  treasuryColFrom: string;
+  treasuryColTo: string;
+  treasuryColNo: string;
+  treasuryColFee: string;
+  treasuryShiftsTitle: string;
+  treasuryShiftsEmpty: string;
+  treasuryShiftOpenTitle: string;
+  treasuryShiftOpenBtn: string;
+  treasuryShiftOpeningAmount: string;
+  treasuryShiftCreatedToast: string;
+  treasuryShiftStatusOpen: string;
+  treasuryShiftStatusClosed: string;
+  treasuryShiftStatusCancelled: string;
+  treasuryShiftColShiftNo: string;
+  treasuryShiftColOpenedAt: string;
+  treasuryShiftColClosedAt: string;
+  treasuryShiftColCapturedIn: string;
+  treasuryShiftColCapturedOut: string;
+  treasuryShiftExpected: string;
+  treasuryShiftCounted: string;
+  treasuryShiftDifference: string;
+  treasuryShiftVarianceJournal: string;
+  treasuryShiftSupervisor: string;
+  treasuryShiftSupervisorPin: string;
+  treasuryShiftSupervisorHint: string;
+  treasuryShiftReason: string;
+  treasuryShiftCloseToast: string;
+  treasuryShiftCancelBtn: string;
+  treasuryShiftCancelledToast: string;
+  treasuryShiftPanelTitle: string;
+  treasuryShiftCaptureTitle: string;
+  treasuryShiftCaptureHint: string;
+  treasuryShiftCaptureBtn: string;
+  treasuryShiftCloseTitle: string;
+  treasuryShiftCloseBtn: string;
+  treasuryShiftBalanced: string;
+  treasuryShiftVarianceNote: string;
+  treasuryShiftClosedNote: string;
+  treasuryBankRecTitle: string;
+  treasuryBankRecEmpty: string;
+  treasuryBankRecImportTitle: string;
+  treasuryBankRecAdapter: string;
+  treasuryBankRecFile: string;
+  treasuryBankRecFileHint: string;
+  treasuryBankRecPeriodStart: string;
+  treasuryBankRecPeriodEnd: string;
+  treasuryBankRecMappingHint: string;
+  treasuryBankRecMappingDate: string;
+  treasuryBankRecMappingAmount: string;
+  treasuryBankRecMappingReference: string;
+  treasuryBankRecMappingDescription: string;
+  treasuryBankRecImportBtn: string;
+  treasuryBankRecImportedToast: string;
+  treasuryBankRecStatementsTitle: string;
+  treasuryBankRecColFile: string;
+  treasuryBankRecColPeriod: string;
+  treasuryBankRecColLines: string;
+  treasuryBankRecColImportedAt: string;
+  treasuryBankRecStatusImported: string;
+  treasuryBankRecStatusReconciled: string;
+  treasuryBankRecOpeningBalance: string;
+  treasuryBankRecClosingBalance: string;
+  treasuryBankRecSelectStatement: string;
+  treasuryBankRecLinesTitle: string;
+  treasuryBankRecColLineNo: string;
+  treasuryBankRecColMatchState: string;
+  treasuryBankRecMatched: string;
+  treasuryBankRecUnmatched: string;
+  treasuryBankRecMatchAuto: string;
+  treasuryBankRecMatchManual: string;
+  treasuryBankRecAutoMatchBtn: string;
+  treasuryBankRecAutoMatchToast: string;
+  treasuryBankRecManualMatch: string;
+  treasuryBankRecMatchMovement: string;
+  treasuryBankRecUnmatchBtn: string;
+  treasuryBankRecMatchedToast: string;
+  treasuryBankRecReconcileBtn: string;
+  treasuryBankRecReconcileHint: string;
+  treasuryBankRecReconciledToast: string;
+  treasuryBankRecAgingTitle: string;
+  treasuryBankRecAgingAsOf: string;
+  treasuryBankRecUnmatchedLinesTitle: string;
+  treasuryBankRecUnmatchedMovementsTitle: string;
+  treasuryBankRecColAgeDays: string;
+  treasuryBankRecLoadAgingBtn: string;
+  treasuryBankRecCashCheckTitle: string;
+  treasuryBankRecCashCheckAsOf: string;
+  treasuryBankRecCashCheckBtn: string;
+  treasuryBankRecCashCheckOk: string;
+  treasuryBankRecCashCheckBroken: string;
+  treasuryBankRecColControlBalance: string;
+  treasuryBankRecColSubledgerBalance: string;
+  treasuryBankRecColDiffCount: string;
+  treasuryBankRecFilterAccount: string;
+  treasuryErrAccountExists: string;
+  treasuryErrAccountClosed: string;
+  treasuryErrAccountNotCloseable: string;
+  treasuryErrCurrencyMismatch: string;
+  treasuryErrTypeInvalid: string;
+  treasuryErrInvalidAmount: string;
+  treasuryErrDocState: string;
+  treasuryErrMissingFxRate: string;
+  treasuryErrAllocationExceedsDoc: string;
+  treasuryErrAllocationExceedsItem: string;
+  treasuryErrOpenItemCurrency: string;
+  treasuryErrOpenItemPartner: string;
+  treasuryErrOpenItemSide: string;
+  treasuryErrPettyLimit: string;
+  treasuryErrCategoryTaken: string;
+  treasuryErrReceiptRequired: string;
+  treasuryErrApprovalRequired: string;
+  treasuryErrShiftAlreadyOpen: string;
+  treasuryErrSupervisorRequired: string;
+  treasuryErrSupervisorPin: string;
+  treasuryErrShiftReason: string;
+  treasuryErrStatementTooLarge: string;
+  treasuryErrStatementFormat: string;
+  treasuryErrStatementReconciled: string;
+  treasuryErrPeriodLocked: string;
+  treasuryErrMovementMatched: string;
+
+  // -- P6-T11a: partner directory ------------------------------------------------
+  partnersSearchPlaceholder: string;
+  partnersKindLabel: string;
+  kindCustomer: string;
+  kindSupplier: string;
+  kindBoth: string;
+  partnersColCode: string;
+  partnersColCreditLimit: string;
+  partnersEmpty: string;
+  partnersNewButton: string;
+  partnerFormTitleCreate: string;
+  partnerCodeLabel: string;
+  partnerCodeHint: string;
+  partnerNameLabel: string;
+  partnerNameArLabel: string;
+  partnerTaxNumberLabel: string;
+  partnerCreditTermsLabel: string;
+  partnerPriceListLabel: string;
+  partnerStatusLabel: string;
+  partnerCreatedToast: string;
+  partnerSavedToast: string;
+  partnerCodeTaken: string;
+  partnerArchivedError: string;
+  partnerKindChangeLabel: string;
+  partnerKindChangedToast: string;
+  partnerKindImmutable: string;
+  partnerArchiveButton: string;
+  partnerArchiveConfirmTitle: string;
+  partnerArchiveConfirmBody: string;
+  partnerArchivedToast: string;
+  partnerTabOverview: string;
+  partnerContactsTitle: string;
+  partnerContactNameLabel: string;
+  partnerContactPhoneLabel: string;
+  partnerContactEmailLabel: string;
+  partnerContactRoleLabel: string;
+  partnerContactPrimaryLabel: string;
+  partnerContactAdd: string;
+  partnerContactsEmpty: string;
+  partnerAddressesTitle: string;
+  addressTypeLabel: string;
+  addressTypeBilling: string;
+  addressTypeShipping: string;
+  addressTypeOther: string;
+  partnerAddressLine1Label: string;
+  partnerAddressLine2Label: string;
+  partnerAddressCityLabel: string;
+  partnerAddressCountryLabel: string;
+  partnerAddressAdd: string;
+  partnerAddressesEmpty: string;
+  partnerBalanceTitle: string;
+  partnerBalanceOpenAmount: string;
+  partnerBalanceDraftLabel: string;
+  partnerBalanceOverdueLabel: string;
+  partnerBalanceDraftBadge: string;
+  partnerBalanceDraftNote: string;
+
+  // -- P6-T11a: item master --------------------------------------------------------
+  itemsSearchPlaceholder: string;
+  itemsFilterCategoryLabel: string;
+  categoryLabel: string;
+  itemsColSku: string;
+  itemsColBasePrice: string;
+  itemsEmpty: string;
+  itemsNewButton: string;
+  itemFormTitleCreate: string;
+  itemFormTitleEdit: string;
+  itemSkuLabel: string;
+  itemNameLabel: string;
+  itemNameArLabel: string;
+  itemKindLabel: string;
+  kindStock: string;
+  kindService: string;
+  kindComposite: string;
+  itemUomLabel: string;
+  itemCostingLabel: string;
+  costingWac: string;
+  costingFifo: string;
+  itemTrackingLabel: string;
+  itemTrackBatch: string;
+  itemTrackSerial: string;
+  itemTrackImei: string;
+  itemHasExpiry: string;
+  itemExpiryRequiresBatch: string;
+  itemReorderLevelLabel: string;
+  itemReorderQtyLabel: string;
+  itemBasePriceLabel: string;
+  itemCreatedToast: string;
+  itemSavedToast: string;
+  itemSkuTaken: string;
+  itemArchivedError: string;
+  itemArchiveButton: string;
+  itemArchiveConfirmTitle: string;
+  itemArchiveConfirmBody: string;
+  itemArchivedToast: string;
+  barcodesTitle: string;
+  barcodeCodeLabel: string;
+  barcodeAdd: string;
+  barcodesEmpty: string;
+  barcodeTaken: string;
+
+  // -- P6-T11a: price lists ---------------------------------------------------------
+  priceListCreateTitle: string;
+  priceListsListTitle: string;
+  priceListNameLabel: string;
+  priceListNameArLabel: string;
+  priceListKindLabel: string;
+  priceListKindSale: string;
+  priceListKindPurchase: string;
+  priceListCurrencyLabel: string;
+  priceListValidFromLabel: string;
+  priceListValidToLabel: string;
+  priceListCreateSubmit: string;
+  priceListSelectHint: string;
+  priceListRowsTitle: string;
+  priceListRowItemLabel: string;
+  priceListRowUomLabel: string;
+  priceListRowPriceLabel: string;
+  priceListRowMinQtyLabel: string;
+  priceListRowAdd: string;
+  priceListRowAddedToast: string;
+  priceListRowsEmpty: string;
+  priceListsEmpty: string;
+  priceListColValidLabel: string;
+  priceListCreatedToast: string;
+  priceListCurrencySar: string;
+
+  // -- P6-T11a: import & export wizard -----------------------------------------------
+  importStep1Title: string;
+  importDataKindLabel: string;
+  importKindPartners: string;
+  importKindItems: string;
+  importKindOpeningBalances: string;
+  importFormatLabel: string;
+  importCarrierLabel: string;
+  importCarrierHint: string;
+  importFileLabel: string;
+  importFileHint: string;
+  importSubmitPreview: string;
+  importStep2Title: string;
+  importColTotal: string;
+  importColValid: string;
+  importColInvalid: string;
+  importColDuplicates: string;
+  importCommit: string;
+  importCommitToast: string;
+  importCommitFailed: string;
+  importStep3Title: string;
+  importCommittedRows: string;
+  importColRow: string;
+  importColPreview: string;
+  importColErrors: string;
+  importColWarnings: string;
+  importRowValid: string;
+  importRowError: string;
+  importRowDuplicate: string;
+  importRowWarning: string;
+  importPreviewEmpty: string;
+  importNewJob: string;
+  importCarrierRequired: string;
+  importFileRequired: string;
+  importFileTooLarge: string;
+  importFileTypeInvalid: string;
+  importUploadFailed: string;
+  importFormatCsv: string;
+  importFormatXlsx: string;
+  importJobsColCreated: string;
+  importJobsTitle: string;
+  importJobsEmpty: string;
+  importJobColRows: string;
+  importStatusPreviewing: string;
+  importStatusPreviewReady: string;
+  importStatusCommitting: string;
+  importStatusCommitted: string;
+  importStatusFailed: string;
+  importErrorFileInvalid: string;
+  exportTitle: string;
+  exportHint: string;
+  exportSubmit: string;
+  exportDone: string;
+  exportRows: string;
+  exportDownloadLabel: string;
+  exportExpiresNote: string;
+
+  // -- P6-T11a: opening balances (DRAFT-only) -----------------------------------------
+  obTabPartner: string;
+  obTabAccount: string;
+  obTabStock: string;
+  obCreateTitle: string;
+  obAmountLabel: string;
+  obNoteLabel: string;
+  obQtyLabel: string;
+  obUnitCostLabel: string;
+  obAccountLabel: string;
+  obAccountHint: string;
+  obCreateSubmit: string;
+  obEmpty: string;
+  obListTitle: string;
+  obDraftOnlyNote: string;
+  obCreatedToast: string;
+  obColTarget: string;
+  obColAmount: string;
+  obColQty: string;
+  obColNote: string;
+  obQtyAtCostLabel: string;
+  obTargetUnknown: string;
+  obDuplicateError: string;
+
+  // -- P6-T11a: attachments (partners + items) -----------------------------------------
+  attachmentsTitle: string;
+  attachmentIssueFormTitle: string;
+  attachmentFilenameLabel: string;
+  attachmentContentTypeLabel: string;
+  attachmentSizeLabel: string;
+  attachmentTypePdf: string;
+  attachmentTypePng: string;
+  attachmentTypeJpeg: string;
+  attachmentTypeWebp: string;
+  attachmentTypeCsv: string;
+  attachmentIssueButton: string;
+  attachmentIssuedTitle: string;
+  attachmentIssuedHint: string;
+  attachmentIssuedToast: string;
+  attachmentUrlLabel: string;
+  attachmentKeyLabel: string;
+  attachmentExpiresLabel: string;
+  attachmentsEmpty: string;
+  attachmentDownloadLabel: string;
+  attachmentIssueFailed: string;
+
+  // -- P6-T11a: pickers + command-menu remote groups -------------------------------------
+  partnerPickerPlaceholder: string;
+  itemPickerPlaceholder: string;
+  pickerEmptyText: string;
+  commandGroupPartners: string;
+  commandGroupItems: string;
+
+  // -- T15-UI: PHASE-009 tax screens ------------------------------------------------------
+  // tax codes manager (+ the deterministic resolve preview)
+  taxCodesTitle: string;
+  taxCodesEmpty: string;
+  taxCodesCode: string;
+  taxCodesName: string;
+  taxCodesNameAr: string;
+  taxCodesCountry: string;
+  taxCodesTreatment: string;
+  taxCodesUsage: string;
+  taxCodesCreateTitle: string;
+  taxCodesCreatedToast: string;
+  taxCodesArchive: string;
+  taxCodesArchiveConfirm: string;
+  taxCodesArchiveBlocked: string;
+  taxCodesArchivedToast: string;
+  taxTreatmentStandardRated: string;
+  taxTreatmentZeroRated: string;
+  taxTreatmentExempt: string;
+  taxTreatmentOutOfScope: string;
+  taxTreatmentReverseCharge: string;
+  taxTreatmentNotSubject: string;
+  taxResolveTitle: string;
+  taxResolveDate: string;
+  taxResolveAmount: string;
+  taxResolveCode: string;
+  taxResolveAction: string;
+  taxResolveTreatment: string;
+  taxResolveRate: string;
+  taxResolveBase: string;
+  taxResolveTax: string;
+  taxResolveGross: string;
+  taxResolveNotSubject: string;
+  taxResolveBoundaryWarning: string;
+  // tax registrations (per-jurisdiction status, upserted)
+  taxRegistrationsTitle: string;
+  taxRegistrationsEmpty: string;
+  taxRegistrationsStatus: string;
+  taxRegistrationsNumber: string;
+  taxRegistrationsEffectiveFrom: string;
+  taxRegistrationsEffectiveTo: string;
+  taxRegistrationsRegistered: string;
+  taxRegistrationsNotRegistered: string;
+  taxRegistrationsDeregistered: string;
+  taxRegistrationsCreateTitle: string;
+  taxRegistrationsSavedToast: string;
+  // jurisdiction packs (registry + version viewer + staged apply)
+  taxPacksTitle: string;
+  taxPacksEmpty: string;
+  taxPacksCountry: string;
+  taxPacksVatStatus: string;
+  taxPacksVatInForce: string;
+  taxPacksVatPlanned: string;
+  taxPacksVatNoVat: string;
+  taxPacksVersion: string;
+  taxPacksVerification: string;
+  taxPacksVerified: string;
+  taxPacksRequiresVerification: string;
+  taxPacksRate: string;
+  taxPacksEffectiveFrom: string;
+  taxPacksEffectiveTo: string;
+  taxPacksSource: string;
+  taxPacksWindowsTitle: string;
+  taxPacksNoRates: string;
+  taxPacksApply: string;
+  taxPacksApplied: string;
+  taxPacksBinding: string;
+  taxPacksBindingNone: string;
+  taxPacksPreviewNote: string;
+  // VAT return workspace (summary + INV-012 cross-check + filing + export)
+  vatReturnTitle: string;
+  vatReturnEmpty: string;
+  vatReturnCountry: string;
+  vatReturnPeriod: string;
+  vatReturnPeriodStart: string;
+  vatReturnPeriodEnd: string;
+  vatReturnStatus: string;
+  vatReturnDraft: string;
+  vatReturnReady: string;
+  vatReturnFiled: string;
+  vatReturnCreateTitle: string;
+  vatReturnCreatedToast: string;
+  vatReturnPrepare: string;
+  vatReturnPreparedToast: string;
+  vatReturnMarkFiled: string;
+  vatReturnFiledToast: string;
+  vatReturnFilingReference: string;
+  vatReturnFilingNote: string;
+  vatReturnExport: string;
+  vatReturnExportCsv: string;
+  vatReturnExportXlsx: string;
+  vatReturnSummaryTitle: string;
+  vatReturnDirection: string;
+  vatReturnDirectionOutput: string;
+  vatReturnDirectionInput: string;
+  vatReturnTaxableBase: string;
+  vatReturnTaxAmount: string;
+  vatReturnCrossCheck: string;
+  vatReturnDocumentSide: string;
+  vatReturnGlSide: string;
+  vatReturnOutputTax: string;
+  vatReturnInputTax: string;
+  vatReturnInputTaxExpensed: string;
+  vatReturnMismatch: string;
+  vatReturnReadyNote: string;
+  // tax error mapping (stable ERROR_MODEL codes → localized messages)
+  taxErrCodeTaken: string;
+  taxErrCodeInUse: string;
+  taxErrCodeArchived: string;
+  taxErrRegistrationNumber: string;
+  taxErrJurisdiction: string;
+  taxErrNoRateForDate: string;
+  taxErrWindowTaken: string;
+  taxErrCrossCheck: string;
+  taxErrState: string;
+  taxErrAlreadyFiled: string;
+  taxErrPackBinding: string;
+
+  // -- T14-UI (PHASE-010): inventory & warehousing ---------------------------------
+  // navigation
+  navInventoryWarehouses: string;
+  navInventoryStock: string;
+  navInventoryMoves: string;
+  navInventoryTransfers: string;
+  navInventoryCounts: string;
+  // warehouses (list + create + deactivate/reactivate)
+  warehousesTitle: string;
+  warehousesEmpty: string;
+  warehousesCreateTitle: string;
+  warehousesCodeLabel: string;
+  warehousesNameLabel: string;
+  warehousesNameArLabel: string;
+  warehousesBranchLabel: string;
+  warehousesGlAccountLabel: string;
+  warehousesNoteLabel: string;
+  warehousesCreatedToast: string;
+  warehousesDeactivate: string;
+  warehousesDeactivateTitle: string;
+  warehousesDeactivateConfirm: string;
+  warehousesDeactivatedToast: string;
+  warehousesReactivate: string;
+  warehousesReactivatedToast: string;
+  warehousesColCode: string;
+  warehousesColBranch: string;
+  warehousesColGlAccount: string;
+  // stock on hand
+  stockTitle: string;
+  stockEmpty: string;
+  stockFilterWarehouse: string;
+  stockColItem: string;
+  stockColWarehouse: string;
+  stockColQty: string;
+  stockColAvgCost: string;
+  stockNegativeBadge: string;
+  // stock movements ledger
+  movesTitle: string;
+  movesEmpty: string;
+  movesFilterDirection: string;
+  movesFilterKind: string;
+  movesColDate: string;
+  movesColDirection: string;
+  movesColKind: string;
+  movesColUnitCost: string;
+  movesColValue: string;
+  movesColReason: string;
+  movesColBatch: string;
+  movesColSerial: string;
+  movesColSource: string;
+  movesDirectionIn: string;
+  movesDirectionOut: string;
+  movesKindReceipt: string;
+  movesKindIssue: string;
+  movesKindTransferIn: string;
+  movesKindTransferOut: string;
+  movesKindAdjust: string;
+  movesReasonDamage: string;
+  movesReasonExpired: string;
+  movesReasonCountLoss: string;
+  movesReasonCountGain: string;
+  movesReasonCustomerReturn: string;
+  movesReasonOther: string;
+  // warehouse-to-warehouse transfers
+  transfersTitle: string;
+  transfersEmpty: string;
+  transfersColNo: string;
+  transfersColFrom: string;
+  transfersColTo: string;
+  transfersColLines: string;
+  transfersColDispatchDate: string;
+  transfersColReceiveDate: string;
+  transfersStatusInTransit: string;
+  transfersNewTitle: string;
+  transfersFromLabel: string;
+  transfersToLabel: string;
+  transfersNoteLabel: string;
+  transfersLinesTitle: string;
+  transfersLineItemLabel: string;
+  transfersLineQtyLabel: string;
+  transfersAddLine: string;
+  transfersRemoveLine: string;
+  transfersSameWarehouseError: string;
+  transfersLineMissingError: string;
+  transfersCreatedToast: string;
+  transfersDispatch: string;
+  transfersDispatchedToast: string;
+  transfersReceive: string;
+  transfersReceivedToast: string;
+  transfersCancel: string;
+  transfersCancelledToast: string;
+  // stock counting workspace
+  countingTitle: string;
+  countingEmpty: string;
+  countingNewTitle: string;
+  countingWarehouseLabel: string;
+  countingBlindLabel: string;
+  countingPickItemsTitle: string;
+  countingPickSearchPlaceholder: string;
+  countingPickEmpty: string;
+  countingSelectedCount: string;
+  countingCreate: string;
+  countingCreatedToast: string;
+  countingColNo: string;
+  countingColBlind: string;
+  countingBlindYes: string;
+  countingBlindNo: string;
+  countingColVariance: string;
+  countingOpenSession: string;
+  countingCloseSession: string;
+  countingSnapshotAt: string;
+  countingSessionLinesTitle: string;
+  countingColLineNo: string;
+  countingColSystemQty: string;
+  countingColCountedQty: string;
+  countingColDiff: string;
+  countingColValueImpact: string;
+  countingSaveEntries: string;
+  countingEntriesSavedToast: string;
+  countingSubmit: string;
+  countingSubmittedToast: string;
+  countingReviewTitle: string;
+  countingReviewHint: string;
+  countingApprove: string;
+  countingApproveSupervisor: string;
+  countingApprovedToast: string;
+  countingCancel: string;
+  countingCancelledToast: string;
+  countingRecountTitle: string;
+  countingRecountLineLabel: string;
+  countingRecountNoteLabel: string;
+  countingRecountedToast: string;
+  countingStatusCounted: string;
+  countingStatusVarianceReview: string;
+  // inventory error mapping (stable ERROR_MODEL codes → localized messages)
+  inventoryErrWarehouseCodeTaken: string;
+  inventoryErrWarehouseInactive: string;
+  inventoryErrWarehouseNotDeactivatable: string;
+  inventoryErrItemNotStocked: string;
+  inventoryErrInsufficientStock: string;
+  inventoryErrBatchInsufficient: string;
+  inventoryErrBatchRequired: string;
+  inventoryErrBatchTaken: string;
+  inventoryErrSerialRequired: string;
+  inventoryErrSerialNotInStock: string;
+  inventoryErrSerialTaken: string;
+  inventoryErrSerialReturnBinding: string;
+  inventoryErrState: string;
+  inventoryErrTransferEmpty: string;
+  inventoryErrTransferSameWarehouse: string;
+  inventoryErrCountTolerance: string;
+  inventoryErrMethodSwitchInFlight: string;
+  inventoryErrMethodSwitchInvalid: string;
+  inventoryErrMethodSwitchSame: string;
+  // PHASE-011 purchasing (T13-UI).
+  purchasingEmpty: string;
+  purchasingNoticeCreated: string;
+  purchasingNoticeUpdated: string;
+  purchasingNoticePosted: string;
+  expensesColAccount: string;
+  navPurchasingOrders: string;
+  navPurchasingReceipts: string;
+  navPurchasingInvoices: string;
+  navPurchasingDebitNotes: string;
+  navPurchasingAp: string;
+  purchasingOrdersTitle: string;
+  purchasingReceiptsTitle: string;
+  purchasingInvoicesTitle: string;
+  purchasingDebitNotesTitle: string;
+  purchasingApTitle: string;
+  purchasingRequestsSection: string;
+  purchasingOrdersSection: string;
+  purchasingNewRequest: string;
+  purchasingNewOrder: string;
+  purchasingRequestNo: string;
+  purchasingNeededBy: string;
+  purchasingSubmit: string;
+  purchasingApprove: string;
+  purchasingReject: string;
+  purchasingIssue: string;
+  purchasingClose: string;
+  purchasingCancel: string;
+  purchasingOrderNo: string;
+  purchasingOrderDate: string;
+  purchasingExpectedDate: string;
+  purchasingSupplier: string;
+  purchasingLines: string;
+  purchasingAddLine: string;
+  purchasingRemoveLine: string;
+  purchasingItem: string;
+  purchasingQty: string;
+  purchasingUnitPrice: string;
+  purchasingTaxCode: string;
+  purchasingUnitCost: string;
+  purchasingTotalNet: string;
+  purchasingTotalTax: string;
+  purchasingTotalGross: string;
+  purchasingStatus: string;
+  purchasingNewReceipt: string;
+  purchasingReceiptNo: string;
+  purchasingReceiptDate: string;
+  purchasingWarehouse: string;
+  purchasingPo: string;
+  purchasingPoLessReason: string;
+  purchasingPost: string;
+  purchasingBatchNo: string;
+  purchasingBatchExpiry: string;
+  purchasingNewInvoice: string;
+  purchasingInvoiceNo: string;
+  purchasingInvoiceDate: string;
+  purchasingDueDate: string;
+  purchasingInternalNo: string;
+  purchasingMatchStatus: string;
+  purchasingMatchPreview: string;
+  purchasingRecordMatch: string;
+  purchasingDisposition: string;
+  purchasingDispositionReason: string;
+  purchasingDispositionAccept: string;
+  purchasingMatchOutcomeMatched: string;
+  purchasingMatchOutcomeException: string;
+  purchasingMatchOutcomeDispositioned: string;
+  purchasingMatchOutcomePending: string;
+  purchasingQtyVariance: string;
+  purchasingPriceVariance: string;
+  purchasingNewDebitNote: string;
+  purchasingNoteNo: string;
+  purchasingNoteDate: string;
+  purchasingRefInvoice: string;
+  purchasingApAging: string;
+  purchasingApStatement: string;
+  purchasingGrniRegister: string;
+  purchasingAgingNotDue: string;
+  purchasingAging1_30: string;
+  purchasingAging31_60: string;
+  purchasingAging61_90: string;
+  purchasingAging90Plus: string;
+  purchasingAgingTotal: string;
+  purchasingAsOf: string;
+  purchasingOpeningBalance: string;
+  purchasingClosingBalance: string;
+  purchasingDebit: string;
+  purchasingCredit: string;
+  purchasingBalance: string;
+  purchasingOutstanding: string;
+  purchasingReceivedValue: string;
+  purchasingInvoicedValue: string;
+  purchasingGrniRemaining: string;
+  purchasingSelectSupplier: string;
+  purchasingSelectWarehouse: string;
+  purchasingSelectPo: string;
+  purchasingNoPo: string;
+  purchasingErrState: string;
+  purchasingErrDuplicate: string;
+  purchasingErrMatchMissing: string;
+  purchasingErrMatchException: string;
+  purchasingErrPoLess: string;
+  purchasingErrPoLessReason: string;
+  purchasingErrOverReceipt: string;
+  purchasingErrOverInvoice: string;
+  purchasingErrNotSupplier: string;
+  purchasingErrGrnSupplier: string;
+  purchasingErrSelfApproval: string;
+  purchasingErrReallocation: string;
+  // PHASE-012 sales (T13-UI).
+  salesEmpty: string;
+  salesNoticeCreated: string;
+  salesNoticeUpdated: string;
+  salesNoticePosted: string;
+  navSalesQuotes: string;
+  navSalesOrders: string;
+  navSalesDeliveries: string;
+  navSalesInvoices: string;
+  navSalesCreditNotes: string;
+  navSalesAr: string;
+  salesQuotesTitle: string;
+  salesOrdersTitle: string;
+  salesDeliveriesTitle: string;
+  salesInvoicesTitle: string;
+  salesCreditNotesTitle: string;
+  salesArTitle: string;
+  salesQuotesSection: string;
+  salesOrdersSection: string;
+  salesStatus: string;
+  salesStatusSent: string;
+  salesNewQuote: string;
+  salesNewOrder: string;
+  salesQuoteNo: string;
+  salesQuoteDate: string;
+  salesValidUntil: string;
+  salesOrderNo: string;
+  salesOrderDate: string;
+  salesExpectedDate: string;
+  salesSalesOrder: string;
+  salesNoOrder: string;
+  salesCustomer: string;
+  salesSelectCustomer: string;
+  salesBranch: string;
+  salesSelectBranch: string;
+  salesWarehouse: string;
+  salesSelectWarehouse: string;
+  salesCurrency: string;
+  salesExchangeRate: string;
+  salesItem: string;
+  salesQty: string;
+  salesUnitPrice: string;
+  salesDiscount: string;
+  salesTaxCode: string;
+  salesAccount: string;
+  salesLines: string;
+  salesAddLine: string;
+  salesRemoveLine: string;
+  salesTotalNet: string;
+  salesTotalTax: string;
+  salesTotalGross: string;
+  salesSend: string;
+  salesAccept: string;
+  salesReject: string;
+  salesSubmit: string;
+  salesApprove: string;
+  salesIssue: string;
+  salesClose: string;
+  salesPost: string;
+  salesCancel: string;
+  salesCancelReason: string;
+  salesReserve: string;
+  salesAcceptWarehouse: string;
+  salesNewDelivery: string;
+  salesDeliveryNo: string;
+  salesDeliveryDate: string;
+  salesDelivery: string;
+  salesCogsValue: string;
+  salesNewInvoice: string;
+  salesInvoiceNo: string;
+  salesInvoiceDate: string;
+  salesDueDate: string;
+  salesKind: string;
+  salesKindCash: string;
+  salesKindCredit: string;
+  salesCashAccount: string;
+  salesSelectCashAccount: string;
+  salesOverrideCredit: string;
+  salesCreditCheck: string;
+  salesCreditAllow: string;
+  salesCreditWarn: string;
+  salesCreditBlock: string;
+  salesNewCreditNote: string;
+  salesNoteNo: string;
+  salesNoteDate: string;
+  salesRefInvoice: string;
+  salesInvoiceLineId: string;
+  salesReturnToStock: string;
+  salesArAging: string;
+  salesArStatement: string;
+  salesArOpenItems: string;
+  salesOpenItemsHint: string;
+  salesAgingNotDue: string;
+  salesAging1_30: string;
+  salesAging31_60: string;
+  salesAging61_90: string;
+  salesAging90Plus: string;
+  salesAgingTotal: string;
+  salesAsOf: string;
+  salesOpeningBalance: string;
+  salesClosingBalance: string;
+  salesDebit: string;
+  salesCredit: string;
+  salesBalance: string;
+  salesOutstanding: string;
+  salesBaseBalance: string;
+  salesSubledgerTie: string;
+  salesTieOk: string;
+  salesTieBroken: string;
+  salesSource: string;
+  salesAmount: string;
+  salesRunOverdueScan: string;
+  salesOverdueScanDone: string;
+  salesPrint: string;
+  salesPrintDisabled: string;
+  salesErrState: string;
+  salesErrQuotationExpired: string;
+  salesErrCreditLimit: string;
+  salesErrReturnWindow: string;
+  salesErrPriceChanged: string;
+  salesErrItemInactive: string;
+  salesErrDeliveryInvoiced: string;
+  salesErrCreditNoteExceeds: string;
+  salesErrReallocation: string;
+
+  // -- T-WEB (PHASE-013): the report workspace (report archetype §7) --------
+  navReports: string;
+  reportsNavWorkspace: string;
+  reportWorkspaceTitle: string;
+  reportWorkspaceCatalog: string;
+  reportWorkspaceNoReport: string;
+  reportWorkspaceDateFrom: string;
+  reportWorkspaceDateTo: string;
+  reportWorkspaceAsOfLabel: string;
+  reportWorkspaceLocale: string;
+  reportWorkspaceRun: string;
+  reportWorkspaceQueued: string;
+  reportWorkspaceRunning: string;
+  reportWorkspaceStage: string;
+  reportWorkspaceStatus: string;
+  reportWorkspaceStatusSucceeded: string;
+  reportWorkspaceStatusFailed: string;
+  reportWorkspaceDuration: string;
+  reportWorkspaceTotals: string;
+  reportWorkspaceAssertions: string;
+  reportWorkspaceAssertionFailed: string;
+  reportWorkspaceAsOf: string;
+  reportWorkspaceComputedAt: string;
+  reportWorkspaceEmpty: string;
+  reportWorkspaceSavedViews: string;
+  reportWorkspaceSaveView: string;
+  reportWorkspaceViewNameAr: string;
+  reportWorkspaceViewNameEn: string;
+  reportWorkspaceApply: string;
+  reportWorkspaceDeleteView: string;
+  reportWorkspaceRunHistory: string;
+  reportWorkspaceRefresh: string;
+  reportWorkspaceBack: string;
+  reportWorkspaceExportPdf: string;
+  reportWorkspaceExportXlsx: string;
+  reportWorkspaceExportCsv: string;
+  reportWorkspacePrintPreview: string;
+  reportWorkspaceExportBlocked: string;
+  reportWorkspaceViewSaved: string;
+  reportWorkspaceColReport: string;
+  reportWorkspaceNoRuns: string;
+
+  // -- T19-WEB (PHASE-014): subscription, billing, onboarding & dashboards --
+  navDashboard: string;
+  statusTrial: string;
+  statusPastDue: string;
+  statusGraceReadOnly: string;
+  readOnlyBanner: string;
+  readOnlyPayNow: string;
+  readOnlyError: string;
+  readOnlyReason: string;
+
+  pricingTitle: string;
+  pricingIntro: string;
+  pricingPlaceholderNote: string;
+  pricingPlaceholderBadge: string;
+  pricingPlansHeading: string;
+  pricingMonthly: string;
+  pricingAnnual: string;
+  pricingHighlightBadge: string;
+  pricingCta: string;
+  pricingMatrixHeading: string;
+  pricingMatrixHint: string;
+  pricingMatrixArea: string;
+  pricingMatrixCellOf: string;
+  pricingFamilyPlatform: string;
+  pricingFamilyAccounting: string;
+  pricingFamilyTrade: string;
+  pricingFamilyTreasuryTax: string;
+  pricingFamilyReporting: string;
+  pricingFamilyGrowth: string;
+  pricingHaveAccount: string;
+  pricingGoLogin: string;
+
+  checkoutTitle: string;
+  checkoutGraceNote: string;
+  checkoutPlansHeading: string;
+  checkoutCurrentPlan: string;
+  checkoutSelected: string;
+  checkoutChoose: string;
+  checkoutConfirmTitle: string;
+  checkoutConfirmMeta: string;
+  checkoutPeriodLabel: string;
+  checkoutPeriodMonths: string;
+  checkoutConfirmButton: string;
+  checkoutCancelSelection: string;
+  checkoutSessionTitle: string;
+  checkoutInvoiceMeta: string;
+  checkoutPeriod: string;
+  checkoutDueDate: string;
+  checkoutAmount: string;
+  checkoutPayNow: string;
+  checkoutSimulateFailure: string;
+  checkoutSandboxNote: string;
+  checkoutSuccessTitle: string;
+  checkoutSuccessBody: string;
+  checkoutFailureTitle: string;
+  checkoutFailureBody: string;
+  checkoutGoBilling: string;
+  checkoutGoDashboard: string;
+  checkoutBackToPlans: string;
+  checkoutAlreadySettled: string;
+  checkoutBlockersTitle: string;
+  checkoutBlockerLine: string;
+  checkoutLimitUsers: string;
+  checkoutLimitBranches: string;
+  checkoutLimitWarehouses: string;
+  checkoutErrorDowngradeBlocked: string;
+  checkoutErrorPlanUnchanged: string;
+  checkoutErrorSessionNotFound: string;
+  checkoutErrorSessionSettled: string;
+  checkoutErrorTransition: string;
+  checkoutErrorLimitExceeded: string;
+  checkoutErrorNoSessionRef: string;
+
+  billingTitle: string;
+  billingGraceNote: string;
+  billingPlanCardTitle: string;
+  billingNoSubscription: string;
+  billingPrice: string;
+  billingPeriod: string;
+  billingTrialEndsAt: string;
+  billingTrialCountdown: string;
+  billingTrialDaysNote: string;
+  billingChangePlan: string;
+  billingUsageTitle: string;
+  billingUnlimited: string;
+  billingWarn80: string;
+  billingWarn100: string;
+  billingInvoicesTitle: string;
+  billingNoInvoices: string;
+  billingColNumber: string;
+  billingColPlan: string;
+  billingColPeriod: string;
+  billingColAmount: string;
+  billingColDueDate: string;
+  billingColPaidVia: string;
+  billingPaidViaWebhook: string;
+  billingPaidViaManual: string;
+  billingEventsTitle: string;
+  billingNoEvents: string;
+  billingViaPlatformAdmin: string;
+  billingEventTrialStarted: string;
+  billingEventTrialExpired: string;
+  billingEventGraceEntered: string;
+  billingEventDunningWarned: string;
+  billingEventPlanChangeRequested: string;
+  billingEventPlanChanged: string;
+  billingEventDowngradeBlocked: string;
+  billingEventCheckoutCreated: string;
+  billingEventManualPaymentRecorded: string;
+  billingEventSuspensionExecuted: string;
+  billingEventSubscriptionRestored: string;
+  billingEventEntitlementsChanged: string;
+
+  dashboardTitle: string;
+  dashboardFreshness: string;
+  dashboardSalesToday: string;
+  dashboardCashPosition: string;
+  dashboardArOverdue: string;
+  dashboardStockAlerts: string;
+  dashboardInvoicesCount: string;
+  dashboardAccountsCount: string;
+  dashboardCustomersCount: string;
+  dashboardStockPreviewHeading: string;
+  dashboardDrillAria: string;
+  dashboardWidgetFailed: string;
+  dashboardAssertionFailed: string;
+  dashboardUsageHeading: string;
+  dashboardUsageUnavailable: string;
+  dashboardTrialBanner: string;
+  dashboardPastDueBanner: string;
+  dashboardGoBilling: string;
+  dashboardGraceNote: string;
+
+  notificationsTitle: string;
+  notificationsUnreadCount: string;
+  notificationsUnreadOnly: string;
+  notificationsRefresh: string;
+  notificationsSyncLine: string;
+  notificationsInboxHeading: string;
+  notificationsEmpty: string;
+  notificationsMarkRead: string;
+  notificationsReadAt: string;
+  notificationsPrefsTitle: string;
+  notificationsPrefsHint: string;
+  notificationsPrefsCategory: string;
+  notificationsPrefsInApp: string;
+  notificationsPrefsEmail: string;
+  notificationsPrefsSaved: string;
+  notificationsCategoryLimits: string;
+  notificationsCategorySubscription: string;
+  notificationsCategoryReconciliation: string;
+  notificationsCategoryInvoiceOverdue: string;
+
+  onboardingStepItem: string;
+  onboardingStepCustomer: string;
+  onboardingStepInvoice: string;
+  onboardingStepPrint: string;
+  onboardingContinueJourney: string;
+  onboardingNeedPcsUom: string;
+  onboardingItemSku: string;
+  onboardingItemName: string;
+  onboardingItemNameAr: string;
+  onboardingItemPrice: string;
+  onboardingItemFixed: string;
+  onboardingCreateItem: string;
+  onboardingSkipItem: string;
+  onboardingCustomerCode: string;
+  onboardingCustomerName: string;
+  onboardingCustomerNameAr: string;
+  onboardingCustomerFixed: string;
+  onboardingCreateCustomer: string;
+  onboardingSkipCustomer: string;
+  onboardingSelectItem: string;
+  onboardingTaxPreview: string;
+  onboardingPreviewEstimate: string;
+  onboardingPreviewPending: string;
+  onboardingNoTaxNote: string;
+  onboardingInvoiceStageCreated: string;
+  onboardingInvoiceStageSubmitted: string;
+  onboardingInvoiceStageApproved: string;
+  onboardingInvoiceStagePosted: string;
+  onboardingCreateInvoice: string;
+  onboardingSkipInvoice: string;
+  onboardingInvoiceSummary: string;
+  onboardingNoPostedInvoice: string;
+  onboardingPrintQueueNote: string;
+  onboardingSkipPrint: string;
+  onboardingFinish: string;
+  onboardingGoInvoices: string;
+  onboardingGoDashboard: string;
+  onboardingCompletedNote: string;
+  onboardingSkippedNote: string;
+
+  billingAdminTitle: string;
+  billingAdminCaption: string;
+  billingAdminSubscription: string;
+  billingAdminNoSubscription: string;
+  billingAdminManualTitle: string;
+  billingAdminInvoice: string;
+  billingAdminSelectInvoice: string;
+  billingAdminVia: string;
+  billingAdminViaBankTransfer: string;
+  billingAdminViaCash: string;
+  billingAdminViaCheque: string;
+  billingAdminReference: string;
+  billingAdminReason: string;
+  billingAdminRecordButton: string;
+  billingAdminNoOpenInvoices: string;
+  billingAdminManualDone: string;
+  billingAdminLifecycleTitle: string;
+  billingAdminSuspendButton: string;
+  billingAdminRestoreButton: string;
+  billingAdminSuspendDone: string;
+  billingAdminRestoreDone: string;
+  billingAdminDailyPassTitle: string;
+  billingAdminDailyPassHint: string;
+  billingAdminDailyPassButton: string;
+  billingAdminDailyPassDone: string;
+  billingAdminAuditNote: string;
+  billingAdminConfirmSuspend: string;
+  billingAdminConfirmSuspendBody: string;
+  billingAdminConfirmRestore: string;
+  billingAdminConfirmRestoreBody: string;
+  billingAdminConfirmButton: string;
+  billingAdminErrorNotOpen: string;
+  billingAdminErrorReasonRequired: string;
+
+  // -- PHASE-015 T11 (3-a): onboarding industry step -------------------------
+  onboardingStepIndustry: string;
+  industryIntro: string;
+  industryActivityQuestion: string;
+  industryActivityOther: string;
+  industryActivityResolve: string;
+  industryResolvedExact: string;
+  industryResolvedSuggested: string;
+  industryNoMatch: string;
+  industryTemplatesLabel: string;
+  industryCapabilitiesLabel: string;
+  industryCapabilitiesPending: string;
+  industryCapIncluded: string;
+  industryCapPhaseGated: string;
+  industryCapOptional: string;
+  industryCapBlocked: string;
+  industryCapRequired: string;
+  industrySelect: string;
+  industryDeselect: string;
+  industrySelectedBadge: string;
+  industryBlockedBadge: string;
+  industrySkipPlain: string;
+  industryContinue: string;
+  industryApplyAfterProvisionNote: string;
+  industryAlreadyAppliedTitle: string;
+  industryAlreadyApplied: string;
+  industryLoadError: string;
+  industryOutcomeTitle: string;
+  industryPlainChosen: string;
+  industryAppliedOk: string;
+  industryApplyAlready: string;
+  industryApplyForbidden: string;
+  industryApplyFailedContinue: string;
+  industryApplyBlockedPrefix: string;
+  industryRetryHint: string;
+
+  // -- PHASE-015 T11 (3-a): template-derived navigation labels -----------------
+  industryNavComingPhase: string;
+  industryNavNotInWebApp: string;
+
+  // -- PHASE-015 T11 (3-a): admin "Industry & templates" screen --------------
+  templatesTitle: string;
+  templatesAppliedCard: string;
+  templatesNoneApplied: string;
+  templatesAppliedNotInRegistry: string;
+  templatesKey: string;
+  templatesName: string;
+  templatesAppliedVersion: string;
+  templatesHash: string;
+  templatesStatus: string;
+  templatesStatusActive: string;
+  templatesAppliedNote: string;
+  templatesDriftTitle: string;
+  templatesDriftPending: string;
+  templatesDriftCurrent: string;
+  templatesDriftBehind: string;
+  templatesDriftAvailable: string;
+  templatesDriftMajor: string;
+  templatesDriftWhatNext: string;
+  templatesDriftRecorded: string;
+  templatesDriftReview: string;
+  templatesDriftNeverAuto: string;
+  templatesRegistryTitle: string;
+  templatesNoPermission: string;
+  templatesAppliedBadge: string;
+  templatesApplyButton: string;
+  templatesPreviewSwitch: string;
+  templatesPreviewExtend: string;
+  templatesApplyDone: string;
+  templatesApplyAlready: string;
+  templatesBlockedGeneric: string;
+  templatesSwitchDone: string;
+  templatesExtendDone: string;
+  templatesAckRequiredNote: string;
+  templatesAckLabel: string;
+  templatesDiffTitle: string;
+  templatesDiffDescription: string;
+  templatesModeSwitch: string;
+  templatesModeExtend: string;
+  templatesDiffFromTo: string;
+  templatesDiffBlocked: string;
+  templatesDiffAddedCaps: string;
+  templatesDiffAddedIncluded: string;
+  templatesDiffAddedPhaseGated: string;
+  templatesDiffAddedOptionalMissing: string;
+  templatesDiffEmpty: string;
+  templatesDiffArchived: string;
+  templatesDiffArchivedNote: string;
+  templatesDiffRenamed: string;
+  templatesDiffSeries: string;
+  templatesDiffKeptSeries: string;
+  templatesDiffInventory: string;
+  templatesDiffInventoryNote: string;
+  templatesDiffPolicies: string;
+  templatesDiffPolicyConflict: string;
+  templatesDiffPins: string;
+  templatesDiffPinsAdded: string;
+  templatesDiffPinsRemoved: string;
+  templatesDiffChecklist: string;
+  templatesSwitchButton: string;
+  templatesExtendButton: string;
+  templatesPoliciesTitle: string;
+  templatesPoliciesNote: string;
+  templatesPolicyKey: string;
+  templatesPolicyValue: string;
+  templatesPolicySource: string;
+  templatesPolicySourceTemplate: string;
+  templatesPolicySourceTenant: string;
+  templatesPolicyOn: string;
+  templatesPolicyOff: string;
+  templatesPolicyLegend: string;
+
+  // -- PHASE-017 (T6/T14): automotive + distribution navigation & crumbs ------
+  navSales: string;
+  distributionNavSection: string;
+  jobCardsTitle: string;
+  vehiclesTitle: string;
+  commissionsTitle: string;
+  distributionRoutesTitle: string;
+  distributionVanTitle: string;
+  distributionSettlementsTitle: string;
+  distributionTiersTitle: string;
+
+  // -- PHASE-017-T6 automotive screens (job cards + vehicles) ------------------
+  jobCardsEmpty: string;
+  jobCardsNew: string;
+  jcFilterAll: string;
+  jcCardNo: string;
+  jcCustomer: string;
+  jcVehicle: string;
+  jcBranch: string;
+  jcWarehouse: string;
+  jcPartsIssueMode: string;
+  jcModeReserve: string;
+  jcModeIssueImmediate: string;
+  jcOdometer: string;
+  jcComplaints: string;
+  jcDiagnosis: string;
+  jcNote: string;
+  jcLaborHoursTotal: string;
+  jcLineParts: string;
+  jcLineLabor: string;
+  jcItem: string;
+  jcQty: string;
+  jcUnitPrice: string;
+  jcHourlyRate: string;
+  jcEstimatedHours: string;
+  jcLoggedHours: string;
+  jcDiscount: string;
+  jcTaxCode: string;
+  jcAddLine: string;
+  jcRemoveLine: string;
+  jcStatusDraft: string;
+  jcStatusInProgress: string;
+  jcStatusCompleted: string;
+  jcStatusInvoiced: string;
+  jcStatusCancelled: string;
+  jcActionQuotation: string;
+  jcActionApprove: string;
+  jcActionComplete: string;
+  jcActionInvoice: string;
+  jcActionCancel: string;
+  jcCancelReason: string;
+  jcLogHours: string;
+  jcSearchPlaceholder: string;
+  jcClose: string;
+  jcCreated: string;
+  jcNoticeCreated: string;
+  jcNoticeQuotation: string;
+  jcNoticeUpdated: string;
+  jcNoticeHoursLogged: string;
+  jcErrState: string;
+  jcErrNotCancelable: string;
+  jcErrLineInvalid: string;
+  jcErrPosting: string;
+  vehiclesEmpty: string;
+  vehNew: string;
+  vehNote: string;
+  vehPartner: string;
+  vehMake: string;
+  vehModel: string;
+  vehModelYear: string;
+  vehChassis: string;
+  vehPlate: string;
+  vehColor: string;
+  vehEngineNo: string;
+  vehOdometer: string;
+  vehSearchPlaceholder: string;
+  vehStatusActive: string;
+  vehStatusArchived: string;
+  vehArchive: string;
+  vehArchiveHint: string;
+  vehHistory: string;
+  vehHistoryKindJobCard: string;
+  vehHistoryKindInvoice: string;
+  vehHistoryKindCreditNote: string;
+  vehHistoryEmpty: string;
+  vehNoticeCreated: string;
+  vehNoticeArchived: string;
+  vehErrChassisTaken: string;
+  vehErrArchived: string;
+  vehErrChassisInvalid: string;
+
+  // -- PHASE-017-T14 distribution + commissions screens ------------------------
+  // (9a-dist) routes & visits + van stock + rep settlements + tiers/FOC + commissions
+
+  // routes & visits (T14 routes screen)
+  distRoutesCreate: string;
+  distRoutesCode: string;
+  distRoutesName: string;
+  distRoutesRep: string;
+  distRoutesVan: string;
+  distRoutesDayPattern: string;
+  distRoutesDayPatternHint: string;
+  distRoutesEmpty: string;
+  distRoutesCreatedToast: string;
+  distRoutesErrCodeTaken: string;
+  distRoutesErrPlanning: string;
+  distDayMon: string;
+  distDayTue: string;
+  distDayWed: string;
+  distDayThu: string;
+  distDayFri: string;
+  distDaySat: string;
+  distDaySun: string;
+  distCompTitle: string;
+  distCompHint: string;
+  distCompDerivedHint: string;
+  distCompCount: string;
+  distCompOrder: string;
+  distCompPinned: string;
+  distCompAddCustomer: string;
+  distCompRemove: string;
+  distCompSave: string;
+  distCompEmpty: string;
+  distCompSavedToast: string;
+  distPlanTitle: string;
+  distPlanDate: string;
+  distPlanBtn: string;
+  distPlanToast: string;
+  distBoardTitle: string;
+  distBoardDate: string;
+  distBoardAllStatuses: string;
+  distVisitPlanned: string;
+  distVisitCompleted: string;
+  distVisitSkipped: string;
+  distVisitMissed: string;
+  distVisitCheckIn: string;
+  distVisitComplete: string;
+  distVisitSkip: string;
+  distVisitCheckedIn: string;
+  distVisitCustomer: string;
+  distVisitRoute: string;
+  distVisitNote: string;
+  distVisitEmpty: string;
+  distCompleteTitle: string;
+  distCompleteInvoice: string;
+  distCompleteCreditNote: string;
+  distCompleteReceipt: string;
+  distCompleteHint: string;
+  distVisitCheckedInToast: string;
+  distVisitCompletedToast: string;
+  distVisitSkippedToast: string;
+  distErrVisitState: string;
+  distErrVisitDocument: string;
+
+  // van stock (T14 van screen)
+  distVanRegister: string;
+  distVanCode: string;
+  distVanName: string;
+  distVanBranch: string;
+  distVanRep: string;
+  distVanEmpty: string;
+  distVanRegisteredToast: string;
+  distVanBalancesTitle: string;
+  distVanPickVan: string;
+  distVanItem: string;
+  distVanSku: string;
+  distVanQty: string;
+  distVanValue: string;
+  distVanTotals: string;
+  distVanBalancesEmpty: string;
+  distLoadOutTitle: string;
+  distLoadOutFrom: string;
+  distLoadOutVan: string;
+  distLoadOutAddLine: string;
+  distLoadOutBtn: string;
+  distLoadOutToast: string;
+  distUnloadTitle: string;
+  distUnloadVan: string;
+  distUnloadTo: string;
+  distUnloadBtn: string;
+  distUnloadToast: string;
+  distTransfersTitle: string;
+  distTransfersEmpty: string;
+  distTransfersVanOnly: string;
+  distTransfersReceiveToast: string;
+  distErrVanCodeTaken: string;
+  distErrVanRepBinding: string;
+  distErrVanLoadOut: string;
+  distErrVanNotFound: string;
+
+  // rep settlements (T14 settlements screen)
+  distSettlementsOpen: string;
+  distSettlementsRep: string;
+  distSettlementsCashAccount: string;
+  distSettlementsVan: string;
+  distSettlementsDate: string;
+  distSettlementsOpening: string;
+  distSettlementsNo: string;
+  distSettlementsEmpty: string;
+  distSettlementsOpenedToast: string;
+  distSettlementAllStatuses: string;
+  distSettlementDraft: string;
+  distSettlementCounted: string;
+  distSettlementApproved: string;
+  distSettlementPosted: string;
+  distSettlementCancelled: string;
+  distSettlementDetail: string;
+  distSettlementLines: string;
+  distSettlementLineNo: string;
+  distSettlementComponent: string;
+  distSettlementAmount: string;
+  distSettlementDescription: string;
+  distSettlementCashSales: string;
+  distSettlementCollections: string;
+  distSettlementRefunds: string;
+  distSettlementExpenses: string;
+  distSettlementExpected: string;
+  distSettlementCountedCash: string;
+  distSettlementVariance: string;
+  distSettlementShortage: string;
+  distSettlementSurplus: string;
+  distSettlementNone: string;
+  distSettlementVarianceReason: string;
+  distSettlementApprovalBadge: string;
+  distSettlementCountAction: string;
+  distSettlementApproveAction: string;
+  distSettlementPostAction: string;
+  distSettlementCancelAction: string;
+  distSettlementCancelReason: string;
+  distSettlementDepositAccount: string;
+  distSettlementDepositAmount: string;
+  distSettlementDepositHint: string;
+  distSettlementShift: string;
+  distSettlementCountedToast: string;
+  distSettlementApprovedToast: string;
+  distSettlementPostedToast: string;
+  distSettlementCancelledToast: string;
+  distComponentOpeningCash: string;
+  distComponentCashSale: string;
+  distComponentCollection: string;
+  distComponentCashRefund: string;
+  distComponentRepExpense: string;
+  distComponentVariance: string;
+  distComponentBankDeposit: string;
+  distErrSettlementPendingDocs: string;
+  distErrSettlementDayLocked: string;
+  distErrSettlementApprovalRequired: string;
+  distErrSettlementVarianceReason: string;
+  distErrSettlementSelfApproval: string;
+  distErrSettlementState: string;
+  distErrSettlementNotFound: string;
+
+  // customer tiers + free goods (T14 tiers screen)
+  distTiersCreate: string;
+  distTiersEdit: string;
+  distTiersCode: string;
+  distTiersName: string;
+  distTiersPriceList: string;
+  distTiersDiscountCap: string;
+  distTiersDiscountCapHint: string;
+  distTiersVisitFrequency: string;
+  distTiersVisitFrequencyHint: string;
+  distTiersEmpty: string;
+  distTiersSavedToast: string;
+  distErrTierCodeTaken: string;
+  distErrTierPriceList: string;
+  distErrTierInvalid: string;
+  distFocTitle: string;
+  distFocCreate: string;
+  distFocCode: string;
+  distFocName: string;
+  distFocBuy: string;
+  distFocBuyQty: string;
+  distFocGet: string;
+  distFocGetQty: string;
+  distFocPerMultiple: string;
+  distFocMaxFree: string;
+  distFocMaxFreeHint: string;
+  distFocTier: string;
+  distFocAnyTier: string;
+  distFocReason: string;
+  distFocReasonHint: string;
+  distFocValidFrom: string;
+  distFocValidTo: string;
+  distFocEmpty: string;
+  distFocSavedToast: string;
+  distFocErrInvalid: string;
+
+  // commissions (T14 commissions screen)
+  commissionsRunsTitle: string;
+  commissionsNewRun: string;
+  commissionsPeriodFrom: string;
+  commissionsPeriodTo: string;
+  commissionsBasis: string;
+  commissionsBasisInvoiced: string;
+  commissionsBasisCollected: string;
+  commissionsTotalBase: string;
+  commissionsTotalCommission: string;
+  commissionsEmpty: string;
+  commissionsAllStatuses: string;
+  commissionsStatusDraft: string;
+  commissionsStatusPosted: string;
+  commissionsStatusCancelled: string;
+  commissionsRunCreatedToast: string;
+  commissionsRunPostedToast: string;
+  commissionsRunCancelledToast: string;
+  commissionsDetail: string;
+  commissionsLines: string;
+  commissionsRep: string;
+  commissionsBase: string;
+  commissionsRate: string;
+  commissionsAmount: string;
+  commissionsPayout: string;
+  commissionsPayoutAccrued: string;
+  commissionsPayoutPaid: string;
+  commissionsExcluded: string;
+  commissionsNoLines: string;
+  commissionsPostRun: string;
+  commissionsCancelRun: string;
+  commissionsCancelReason: string;
+  commissionsRulesTitle: string;
+  commissionsRulesHint: string;
+  commissionsRuleRep: string;
+  commissionsRuleMethod: string;
+  commissionsMethodNone: string;
+  commissionsMethodPercentage: string;
+  commissionsRuleRate: string;
+  commissionsRuleRateHint: string;
+  commissionsRuleBasis: string;
+  commissionsRuleTiers: string;
+  commissionsRuleTiersHint: string;
+  commissionsRuleSavedToast: string;
+  commErrRuleInvalid: string;
+  commErrRunState: string;
+
+  // -- PHASE-016 T4/T10 — POS (counter, floor, reconciliation, terminals, offline) --
+
+  posNavSection: string;
+  posNavCounter: string;
+  posNavFloor: string;
+  posNavReconciliation: string;
+  posNavTerminals: string;
+
+  posCounterTitle: string;
+  posCounterNoTerminals: string;
+  posCounterRegisterTerminal: string;
+  posCounterTerminalLabel: string;
+  posCounterShiftOpen: string;
+  posCounterShiftNone: string;
+  posCounterOpenShiftBtn: string;
+  posCounterCloseShiftBtn: string;
+  posCounterZReportLink: string;
+  posCounterScanLabel: string;
+  posCounterScanPlaceholder: string;
+  posCounterScanNotFound: string;
+  posCounterScanPerf: string;
+  posCounterItemsTitle: string;
+  posCounterItemsEmpty: string;
+  posCounterSearchPlaceholder: string;
+  posCounterCartTitle: string;
+  posCounterCartEmpty: string;
+  posCounterQty: string;
+  posCounterRemove: string;
+  posCounterTotal: string;
+  posCounterTaxNote: string;
+  posCounterPayBtn: string;
+  posCounterClearBtn: string;
+  posCounterCustomer: string;
+  posCounterWalkIn: string;
+  posCounterPickCustomer: string;
+  posCounterCustomerSearch: string;
+  posCounterNewSale: string;
+  posCounterSalePosted: string;
+  posCounterPreloadedCheck: string;
+  posCounterErrTerminalRequired: string;
+  posCounterErrCartEmpty: string;
+  posCounterErrTerminalInactive: string;
+  posCounterErrDiscountCeiling: string;
+  posCounterReturnBtn: string;
+  posCounterOfflineQueued: string;
+
+  posShiftOpenTitle: string;
+  posShiftOpeningAmount: string;
+  posShiftDenominations: string;
+  posShiftDenomination: string;
+  posShiftCount: string;
+  posShiftCountedTotal: string;
+  posShiftOpenAction: string;
+  posShiftAlreadyOpen: string;
+  posShiftOpenedToast: string;
+  posShiftCloseTitle: string;
+  posShiftBlindNote: string;
+  posShiftCloseAction: string;
+  posShiftClosedToast: string;
+  posShiftSupervisorRequired: string;
+  posShiftErrOpenMismatch: string;
+  posShiftErrNotOnTerminal: string;
+
+  posTenderTitle: string;
+  posTenderMethod: string;
+  posTenderAmount: string;
+  posTenderCash: string;
+  posTenderCard: string;
+  posTenderRemaining: string;
+  posTenderChangeDue: string;
+  posTenderAddRow: string;
+  posTenderConfirm: string;
+  posTenderErrInvalid: string;
+  posTenderErrOverflow: string;
+  posTenderErrUnderpaid: string;
+
+  posReceiptTitle: string;
+  posReceiptPrint: string;
+  posReceiptLoading: string;
+  posReceiptErrLoad: string;
+  posReceiptOfflineNote: string;
+
+  posReturnTitle: string;
+  posReturnInvoiceLabel: string;
+  posReturnLoad: string;
+  posReturnLines: string;
+  posReturnReason: string;
+  posReturnNote: string;
+  posReturnSubmit: string;
+  posReturnPosted: string;
+  posReturnErrNoLines: string;
+  posReturnErrInvoice: string;
+
+  posFloorTitle: string;
+  posFloorBranch: string;
+  posFloorZone: string;
+  posFloorSeats: string;
+  posFloorSortKey: string;
+  posFloorFree: string;
+  posFloorOccupied: string;
+  posFloorTableLabel: string;
+  posFloorOpenCheck: string;
+  posFloorOrderType: string;
+  posFloorGuests: string;
+  posFloorAddTable: string;
+  posFloorTableAdded: string;
+  posFloorEmpty: string;
+  posFloorOpenChecks: string;
+  posFloorCheckNo: string;
+  posFloorLines: string;
+  posFloorAddItem: string;
+  posFloorSaveLines: string;
+  posFloorLinesSaved: string;
+  posFloorKitchenSend: string;
+  posFloorKitchenSent: string;
+  posFloorTickets: string;
+  posFloorTransfer: string;
+  posFloorTransferTo: string;
+  posFloorTransferred: string;
+  posFloorSplit: string;
+  posFloorSplitHint: string;
+  posFloorSplitDone: string;
+  posFloorGuestCheck: string;
+  posFloorPay: string;
+  posFloorCancelCheck: string;
+  posFloorCancelReason: string;
+  posFloorCheckCancelled: string;
+  posFloorSent: string;
+  posFloorUnsent: string;
+  posFloorOrderDineIn: string;
+  posFloorOrderTakeaway: string;
+  posFloorOrderDelivery: string;
+  posFloorOrderCounter: string;
+  posFloorCheckPaid: string;
+  posFloorErrCheckNotOpen: string;
+  posFloorErrOpenTables: string;
+
+  posReconciliationTitle: string;
+  posReconciliationDate: string;
+  posReconciliationBranch: string;
+  posReconciliationLoad: string;
+  posReconciliationZNumber: string;
+  posReconciliationTotals: string;
+  posReconciliationInvoiceCount: string;
+  posReconciliationByOrderType: string;
+  posReconciliationByTender: string;
+  posReconciliationByTerminal: string;
+  posReconciliationByHour: string;
+  posReconciliationOfflinePairs: string;
+  posReconciliationOfflineNo: string;
+  posReconciliationOfficialNo: string;
+  posReconciliationPrint: string;
+  posReconciliationEmpty: string;
+  posReconciliationOpenChecks: string;
+  posReconciliationRejections: string;
+  posReconciliationColType: string;
+  posReconciliationColCount: string;
+  posReconciliationColTax: string;
+
+  posTerminalsTitle: string;
+  posTerminalsCode: string;
+  posTerminalsName: string;
+  posTerminalsBranch: string;
+  posTerminalsTill: string;
+  posTerminalsWarehouse: string;
+  posTerminalsReceiptSize: string;
+  posTerminalsStatus: string;
+  posTerminalsDevice: string;
+  posTerminalsLastSeen: string;
+  posTerminalsActive: string;
+  posTerminalsInactive: string;
+  posTerminalsRegister: string;
+  posTerminalsRegisterAction: string;
+  posTerminalsRegistered: string;
+  posTerminalsActivate: string;
+  posTerminalsDeactivate: string;
+  posTerminalsActivated: string;
+  posTerminalsDeactivated: string;
+  posTerminalsEnrollDevice: string;
+  posTerminalsDeviceName: string;
+  posTerminalsDeviceKey: string;
+  posTerminalsDeviceKeyNote: string;
+  posTerminalsEnrollAction: string;
+  posTerminalsEnrolled: string;
+  posTerminalsRevoke: string;
+  posTerminalsRevoked: string;
+  posTerminalsErrCodePattern: string;
+  posTerminalsErrCodeTaken: string;
+  posTerminalsEmpty: string;
+
+  posOfflineBanner: string;
+  posOfflineQueue: string;
+  posOfflinePendingSync: string;
+  posOfflineSynced: string;
+  posOfflineRejected: string;
+  posOfflineKept: string;
+  posOfflineRetry: string;
+  posOfflineKeep: string;
+  posOfflineRemove: string;
+  posOfflineSyncNow: string;
+  posOfflineSyncedToast: string;
+  posOfflineRejectionReason: string;
+  posOfflineEditResend: string;
+  posOfflineAcceptPrice: string;
+  posOfflineCancelWithReason: string;
+  posOfflineCancelledLocal: string;
+  posOfflineReasonPeriodLocked: string;
+  posOfflineReasonPriceChanged: string;
+  posOfflineReasonInsufficientStock: string;
+  posOfflineReasonCreditLimit: string;
+  posOfflineReasonValidation: string;
+  posOfflineLocalReceiptTitle: string;
+
+  // -- PHASE-018 (T41): manufacturing navigation & screens ---------------------
+  // (boms + production orders + QC inspections + batch genealogy; the
+  // food_manufacturing template's production/traceability surfaces)
+
+  manufacturingNavSection: string;
+  mfgBomsTitle: string;
+  mfgOrdersTitle: string;
+  mfgQcTitle: string;
+  mfgGenealogyTitle: string;
+
+  // BOM screen (the version registry + the lines editor + explosion preview)
+  mfgBomsNew: string;
+  mfgBomsEmpty: string;
+  mfgBomFilterItem: string;
+  mfgBomsAllStatuses: string;
+  mfgBomStatusDraft: string;
+  mfgBomStatusActive: string;
+  mfgBomStatusArchived: string;
+  mfgBomItem: string;
+  mfgBomVersion: string;
+  mfgBomYield: string;
+  mfgBomYieldHint: string;
+  mfgBomEffectiveFrom: string;
+  mfgBomNote: string;
+  mfgBomOutputUom: string;
+  mfgBomComponent: string;
+  mfgBomQtyPerOutput: string;
+  mfgBomScrapPct: string;
+  mfgBomLines: string;
+  mfgBomLineNo: string;
+  mfgBomAddLine: string;
+  mfgBomRemoveLine: string;
+  mfgBomCreateTitle: string;
+  mfgBomEditTitle: string;
+  mfgBomDraftOnlyHint: string;
+  mfgBomActivate: string;
+  mfgBomActivateTitle: string;
+  mfgBomArchive: string;
+  mfgBomArchiveHint: string;
+  mfgBomCreatedToast: string;
+  mfgBomSavedToast: string;
+  mfgBomActivatedToast: string;
+  mfgBomArchivedToast: string;
+  mfgBomWorkspace: string;
+  mfgExplodeTitle: string;
+  mfgExplodeQty: string;
+  mfgExplodeBom: string;
+  mfgExplodeBomAuto: string;
+  mfgExplodeRun: string;
+  mfgExplodeLevels: string;
+  mfgExplodeColVia: string;
+  mfgExplodeTotals: string;
+  mfgExplodeEmpty: string;
+  mfgExplodeHint: string;
+  mfgColLevel: string;
+
+  // Production-order screen (list + create + the lifecycle workspace)
+  mfgOrdersNew: string;
+  mfgOrdersEmpty: string;
+  mfgOrdersAllStatuses: string;
+  mfgOrderStatusDraft: string;
+  mfgOrderStatusReleased: string;
+  mfgOrderStatusInProgress: string;
+  mfgOrderStatusCompleted: string;
+  mfgOrderStatusCancelled: string;
+  mfgOrderNo: string;
+  mfgOrderPlannedQty: string;
+  mfgOrderActualQty: string;
+  mfgOrderFgValue: string;
+  mfgOrderCompletedAt: string;
+  mfgOrderBranch: string;
+  mfgOrderBom: string;
+  mfgOrderBomActive: string;
+  mfgOrderPlannedDate: string;
+  mfgOrderMaterialsWarehouse: string;
+  mfgOrderFgWarehouse: string;
+  mfgOrderLaborRate: string;
+  mfgOrderOverheadRate: string;
+  mfgOrderRatesHint: string;
+  mfgOrderCreatedToast: string;
+  mfgOrderDetail: string;
+  mfgOrderBatch: string;
+  mfgOrderExpiry: string;
+  mfgOrderWipCredit: string;
+  mfgOrderLabor: string;
+  mfgOrderOverhead: string;
+  mfgOrderNoEditHint: string;
+  mfgOrderPlanLines: string;
+  mfgOrderOverPlan: string;
+  mfgOrderRelease: string;
+  mfgOrderStart: string;
+  mfgOrderConsume: string;
+  mfgOrderScrap: string;
+  mfgOrderComplete: string;
+  mfgOrderCancel: string;
+  mfgOrderCancelTitle: string;
+  mfgOrderCancelReason: string;
+  mfgOrderReleasedToast: string;
+  mfgOrderStartedToast: string;
+  mfgOrderCancelledToast: string;
+  mfgConsumeQty: string;
+  mfgConsumeBatch: string;
+  mfgConsumeBatchAuto: string;
+  mfgConsumeAt: string;
+  mfgConsumeAddLine: string;
+  mfgConsumeToast: string;
+  mfgScrapTitle: string;
+  mfgScrapQty: string;
+  mfgScrapReason: string;
+  mfgScrapValue: string;
+  mfgScrapAt: string;
+  mfgScrapToast: string;
+  mfgCompleteTitle: string;
+  mfgCompleteActualQty: string;
+  mfgCompleteBatchNo: string;
+  mfgCompleteToast: string;
+  mfgConsumptions: string;
+  mfgConsumptionBatch: string;
+  mfgConsumptionUnitCost: string;
+  mfgConsumptionValue: string;
+  mfgConsumptionJournal: string;
+  mfgScraps: string;
+
+  // QC screen (the inspection log + the entry dialog)
+  mfgQcNew: string;
+  mfgQcEmpty: string;
+  mfgQcAllTargets: string;
+  mfgQcResultPass: string;
+  mfgQcResultFail: string;
+  mfgQcDispAccept: string;
+  mfgQcDispScrap: string;
+  mfgQcDispRework: string;
+  mfgQcDispReturn: string;
+  mfgQcDispNone: string;
+  mfgQcTargetProductionOrder: string;
+  mfgQcTargetGoodsReceipt: string;
+  mfgQcColInspectedAt: string;
+  mfgQcColTarget: string;
+  mfgQcColGrn: string;
+  mfgQcColBatch: string;
+  mfgQcColSampled: string;
+  mfgQcCreateTitle: string;
+  mfgQcTargetType: string;
+  mfgQcOrder: string;
+  mfgQcGrnId: string;
+  mfgQcGrnHint: string;
+  mfgQcResult: string;
+  mfgQcSampled: string;
+  mfgQcSampleSize: string;
+  mfgQcDisposition: string;
+  mfgQcDispositionHint: string;
+  mfgQcCreatedToast: string;
+  mfgQcReleasedToast: string;
+  mfgQcScrapToast: string;
+
+  // Genealogy screen (the read-only recall search)
+  mfgGenealogyItem: string;
+  mfgGenealogyBatchId: string;
+  mfgGenealogyBatchHint: string;
+  mfgGenealogyUpstream: string;
+  mfgGenealogyDownstream: string;
+  mfgGenealogySummary: string;
+  mfgGenealogyBatchCard: string;
+  mfgGenealogyOnHand: string;
+  mfgGenealogyProducingOrder: string;
+  mfgGenealogyConsumedBy: string;
+  mfgGenealogySalesCount: string;
+  mfgGenealogyInspectionsCount: string;
+  mfgBatchStatusActive: string;
+  mfgBatchStatusQuarantined: string;
+  mfgBatchStatusWrittenOff: string;
+  mfgGenealogyMaterials: string;
+  mfgGenealogyColConsumedBy: string;
+  mfgGenealogyColProducedBy: string;
+  mfgGenealogyProductions: string;
+  mfgGenealogyColFromBatch: string;
+  mfgGenealogyColOrder: string;
+  mfgGenealogySales: string;
+  mfgGenealogyColDocType: string;
+  mfgGenealogyColDocId: string;
+  mfgGenealogyColDocDate: string;
+  mfgGenealogyIdsHint: string;
+  mfgDocSalesInvoice: string;
+  mfgDocDeliveryNote: string;
+  mfgGenealogyKindMaterial: string;
+  mfgGenealogyKindProduced: string;
+  mfgGenealogyKindSold: string;
+
+  // Manufacturing typed errors (manufacturing-errors.ts codes → mfgErr*)
+  mfgErrBomNotFound: string;
+  mfgErrBomVersionConflict: string;
+  mfgErrBomNotDraft: string;
+  mfgErrBomNotActive: string;
+  mfgErrBomActiveExists: string;
+  mfgErrBomLineInvalid: string;
+  mfgErrBomCycle: string;
+  mfgErrBomTooDeep: string;
+  mfgErrBomItemNotStock: string;
+  mfgErrBomSelfReference: string;
+  mfgErrBomYieldInvalid: string;
+  mfgErrBomUomMismatch: string;
+  mfgErrBomRequired: string;
+  mfgErrOrderNotFound: string;
+  mfgErrOrderState: string;
+  mfgErrOrderInputInvalid: string;
+  mfgErrOrderItemNotStock: string;
+  mfgErrConsumptionNotPlanned: string;
+  mfgErrScrapReasonRequired: string;
+  mfgErrScrapExceedsWip: string;
+  mfgErrCompleteWithoutConsumption: string;
+  mfgErrCostRounding: string;
+  mfgErrFgShelfLifeRequired: string;
+  mfgErrOrderNotCancelable: string;
+  mfgErrInspectionNotFound: string;
+  mfgErrInspectionTargetNotFound: string;
+  mfgErrInspectionTargetInvalid: string;
+  mfgErrInspectionInputInvalid: string;
+  mfgErrDispositionRequired: string;
+  mfgErrDispositionInvalid: string;
+  mfgErrQcScrapBatchNotQuarantined: string;
+  mfgErrQcScrapEmptyBatch: string;
+  mfgErrGenealogyBatchNotFound: string;
+}
+
+const ar: Dictionary = {
+  appTitle: "منصة الأعمال الشاملة",
+  switchLabel: "English",
+  signOut: "تسجيل الخروج",
+  loading: "جارٍ التحميل...",
+  phaseNote: "واجهة المرحلة 003 (PHASE-003) — الدخول والجلسات والشاشات الإدارية عبر وسيط الويب الآمن (BFF).",
+
+  navHome: "الرئيسية",
+  navUsers: "المستخدمون والدعوات",
+  navSessions: "الجلسات",
+  navMfa: "التحقق بخطوتين",
+  navRoles: "الأدوار",
+  navPassword: "كلمة المرور",
+
+  loginTitle: "تسجيل الدخول",
+  loginSubtitle: "أدخل بيانات حسابك للوصول إلى المنصة.",
+  loginEmailLabel: "البريد الإلكتروني",
+  loginPasswordLabel: "كلمة المرور",
+  loginMfaLabel: "رمز التحقق (MFA)",
+  loginMfaHint: "ستة أرقام من تطبيق المصادقة.",
+  loginMfaShow: "إظهار حقل رمز التحقق",
+  loginMfaHide: "إخفاء حقل رمز التحقق",
+  loginSubmit: "دخول",
+  loginForgotLink: "نسيت كلمة المرور؟",
+  loginErrorInvalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+  loginErrorMfaRequired: "هذا الحساب محمي بالتحقق بخطوتين — أدخل رمز التحقق.",
+  loginErrorRateLimited: "محاولات كثيرة — أعد المحاولة بعد {seconds} ثانية.",
+  loginErrorAccountLocked: "الحساب مقفل مؤقتًا — أعد المحاولة بعد {seconds} ثانية.",
+  loginErrorGeneric: "تعذّر تسجيل الدخول — حاول مرة أخرى.",
+
+  forgotTitle: "استعادة كلمة المرور",
+  forgotDescription: "أدخل بريدك الإلكتروني، وستصلك رسالة برابط إعادة التعيين إذا كان الحساب مسجلًا.",
+  forgotEmailLabel: "البريد الإلكتروني",
+  forgotSubmit: "إرسال رابط الاستعادة",
+  forgotSuccess: "إذا كان هذا البريد مسجلًا لدينا فستصله رسالة تحتوي رابط إعادة التعيين.",
+  forgotBack: "العودة إلى تسجيل الدخول",
+
+  acceptTitle: "قبول الدعوة",
+  acceptTenantLabel: "المنشأة",
+  acceptRoleLabel: "الدور",
+  acceptEmailLabel: "البريد الإلكتروني المدعو",
+  acceptFullNameLabel: "الاسم الكامل",
+  acceptPasswordLabel: "كلمة مرور جديدة",
+  acceptPasswordHint: "10 أحرف على الأقل.",
+  acceptSubmit: "إنشاء الحساب والدخول",
+  acceptErrorExpired: "انتهت صلاحية هذه الدعوة.",
+  acceptErrorRevoked: "تم إلغاء هذه الدعوة.",
+  acceptErrorAccepted: "تم استخدام هذه الدعوة مسبقًا.",
+  acceptErrorNotFound: "رابط الدعوة غير صالح.",
+  acceptErrorGeneric: "تعذّر قبول الدعوة.",
+
+  homeWelcome: "مرحبًا، {name}",
+  homeTenantLabel: "المنشأة النشطة",
+  homeSwitchTenant: "تبديل المنشأة",
+  homeRoleLabel: "دورك الحالي",
+  homePermissionsLabel: "عدد الصلاحيات الممنوحة: {count}",
+  homeScreens: "الشاشات الإدارية",
+
+  usersTitle: "المستخدمون والدعوات",
+  usersNoPermission: "ليست لديك صلاحية عرض هذه الشاشة.",
+  usersColEmail: "البريد الإلكتروني",
+  usersColName: "الاسم",
+  usersColRole: "الدور",
+  usersColStatus: "الحالة",
+  usersColLastLogin: "آخر دخول",
+  usersNever: "لم يسجل الدخول بعد",
+  usersEmpty: "لا يوجد مستخدمون في هذه المنشأة بعد.",
+  usersInviteTitle: "دعوة مستخدم",
+  usersInviteEmailLabel: "بريد المدعو",
+  usersInviteRoleLabel: "الدور عند الانضمام",
+  usersInviteSubmit: "إرسال دعوة",
+  usersInviteLinkTitle: "رابط القبول (بيئة التطوير — لا يوجد إرسال بريد فعلي):",
+  usersInviteExpiresLabel: "تنتهي في:",
+  usersInvitationsTitle: "الدعوات",
+  usersColExpires: "تنتهي في",
+  usersColActions: "إجراءات",
+  usersRevoke: "إلغاء",
+  usersNoRoles: "لا توجد أدوار متاحة للإسناد.",
+  usersEmptyInvitations: "لا توجد دعوات.",
+
+  statusActive: "نشط",
+  statusPending: "معلّق",
+  statusRevoked: "ملغى",
+  statusExpired: "منتهي",
+  statusAccepted: "مقبول",
+  statusSuspended: "موقوف",
+
+  sessionsTitle: "الجلسات النشطة",
+  sessionsHint: "إلغاء أي جلسة يخرج صاحبها فورًا؛ ولإخراج نفسك من كل الأجهزة ألغِ جلساتك واحدة تلو الأخرى.",
+  sessionsColUser: "المستخدم",
+  sessionsColCreated: "بدأت في",
+  sessionsColExpires: "تنتهي في",
+  sessionsColLastSeen: "آخر نشاط",
+  sessionsColIp: "عنوان IP",
+  sessionsRevoke: "إلغاء الجلسة",
+  sessionsEmpty: "لا توجد جلسات نشطة.",
+
+  mfaTitle: "التحقق بخطوتين (TOTP)",
+  mfaDescription: "اربط تطبيق مصادقة بحسابك، وأكّد الرمز، ثم أنشئ رموز الاستعادة.",
+  mfaEnrollTitle: "1) بدء التسجيل",
+  mfaEnrollButton: "بدء التسجيل",
+  mfaSecretLabel: "المفتاح السري (أدخله يدويًا في تطبيق المصادقة):",
+  mfaOtpauthLabel: "بيانات الربط otpauth (محتوى رمز QR):",
+  mfaEnrollHint: "أدخل الرمز الحالي من تطبيق المصادقة لتأكيد التسجيل.",
+  mfaVerifyTitle: "2) تأكيد الرمز",
+  mfaVerifyCodeLabel: "رمز التحقق",
+  mfaVerifySubmit: "تأكيد",
+  mfaVerified: "تم تفعيل التحقق بخطوتين بنجاح.",
+  mfaRecoveryTitle: "3) رموز الاستعادة",
+  mfaRecoveryDescription: "تُعرض رموز الاستعادة مرة واحدة فقط — احفظها الآن في مكان آمن.",
+  mfaRecoveryGenerate: "إنشاء رموز الاستعادة",
+  mfaRecoveryRegenerate: "إعادة إنشاء الرموز",
+  mfaInvalidCode: "رمز التحقق غير صحيح.",
+  mfaNeedConfirmed: "أكّد التسجيل أولًا ثم أنشئ رموز الاستعادة.",
+
+  rolesTitle: "الأدوار",
+  rolesDescription: "استنسخ قالبًا معياريًا لإنشاء دور خاص بمنشأتك.",
+  rolesTenantTitle: "أدوار المنشأة",
+  rolesTemplatesTitle: "القوالب المعيارية (النظام)",
+  rolesColKey: "المفتاح",
+  rolesColName: "الاسم",
+  rolesColSystem: "دور نظام؟",
+  rolesColActions: "إجراءات",
+  rolesClone: "استنساخ",
+  rolesCloned: "تم إنشاء الدور {name}.",
+  rolesYes: "نعم",
+  rolesNo: "لا",
+
+  passwordTitle: "تغيير كلمة المرور",
+  passwordDescription: "بعد التغيير تُلغى جلساتك الأخرى ويبقى هذا المتصفح مسجلًا.",
+  passwordCurrentLabel: "كلمة المرور الحالية",
+  passwordNextLabel: "كلمة المرور الجديدة",
+  passwordNextHint: "10 أحرف على الأقل.",
+  passwordSubmit: "تغيير كلمة المرور",
+  passwordSuccess: "تم تغيير كلمة المرور.",
+  passwordErrorCurrent: "كلمة المرور الحالية غير صحيحة.",
+
+  errorsForbidden: "ليست لديك صلاحية تنفيذ هذا الإجراء.",
+  errorsUnauthorized: "انتهت الجلسة — سجّل الدخول من جديد.",
+  errorsValidation: "بيانات غير صالحة — راجع الحقول.",
+  errorsNotFound: "العنصر غير موجود.",
+  errorsNetwork: "تعذّر الاتصال بالخادم.",
+  errorsGeneric: "حدث خطأ غير متوقع.",
+  errorsRateLimited: "محاولات كثيرة — أعد المحاولة بعد {seconds} ثانية.",
+
+  navOnboarding: "تهيئة",
+  navBranches: "الفروع",
+  navSettings: "الإعدادات",
+  navSupport: "جلسات الدعم",
+  navPlatformSection: "إدارة المنصة",
+  navPlatformConsole: "المنصة",
+  navPlatformAudit: "سجل المنصة",
+
+  statusInactive: "غير نشط",
+  statusClosed: "مغلقة",
+  statusIssued: "مُصدر",
+  statusRejected: "مرفوض",
+  statusConverted: "محوّل",
+  statusTerminated: "موقوفة بالإنهاء",
+  taxStatusLabel: "حالة التسجيل الضريبي",
+  taxStatusRegistered: "مسجّل",
+  taxStatusNotRegistered: "غير مسجّل",
+  taxStatusDeregistered: "ملغى التسجيل",
+  taxNumberLabel: "الرقم الضريبي",
+  fiscalStartMonthLabel: "شهر بداية السنة المالية",
+  numberingAssignAtLabel: "إسناد أرقام المستندات",
+  numberingAssignAtPosting: "عند الترحيل",
+  numberingAssignAtApproval: "عند الاعتماد",
+  localeArabic: "العربية",
+  localeEnglish: "English",
+
+  registerTitle: "إنشاء منشأة جديدة",
+  registerSubtitle: "أنشئ حساب مالك ومنشأة جديدة في خطوة واحدة، ثم ابدأ فترة تجريبية.",
+  registerBusinessNameLabel: "اسم المنشأة (بالإنجليزية)",
+  registerBusinessNameArLabel: "اسم المنشأة (بالعربية، اختياري)",
+  registerCountryLabel: "الدولة",
+  registerCurrencyLabel: "العملة الأساس (تُشتق من الدولة)",
+  registerTemplateLabel: "قالب النشاط",
+  registerTaxNumberHint: "مطلوب عند اختيار «مسجّل».",
+  registerOwnerSection: "حساب المالك",
+  registerOwnerEmailLabel: "بريد المالك الإلكتروني",
+  registerOwnerNameLabel: "الاسم الكامل للمالك",
+  registerSubmit: "إنشاء المنشأة",
+  registerSuccessTitle: "تم إنشاء المنشأة بنجاح",
+  registerSuccessBody: "راجع بريدك الإلكتروني ({email}) ثم سجّل الدخول. تنتهي الفترة التجريبية في {date}.",
+  registerGoLogin: "سجّل الدخول",
+  registerLoginPrompt: "لديك حساب بالفعل؟",
+  registerErrorEmailTaken: "هذا البريد الإلكتروني مسجّل مسبقًا — سجّل الدخول بدلًا من إنشاء حساب جديد.",
+  registerErrorOptions: "تعذّر تحميل خيارات التسجيل (الدول والقوالب) — أعد تحميل الصفحة.",
+
+  onboardingTitle: "تهيئة مساحة العمل",
+  onboardingSubtitle:
+    "تُنشئ التهيئة أدوار المنشأة ودليل الحسابات وسياسات الترقيم الافتراضية. العملية آمنة للتكرار: إعادة تشغيلها لا تُنشئ نسخًا مكررة.",
+  onboardingProvisionButton: "إعداد مساحة العمل",
+  onboardingResultTitle: "نتيجة التهيئة",
+  onboardingRolesLabel: "الأدوار",
+  onboardingAccountsLabel: "الحسابات",
+  onboardingPurposesLabel: "أغراض الحسابات",
+  onboardingSettingsLabel: "الإعدادات",
+  onboardingCreatedCount: "جديد: {created} — موجود مسبقًا: {existing}",
+  onboardingZeroDuplicatesHint:
+    "لم يُنشأ أي عنصر جديد — مساحة العمل مهيأة مسبقًا، وهذا يؤكد أن إعادة التشغيل لا تُنتج تكرارات.",
+  onboardingGoHome: "الذهاب إلى الرئيسية",
+  onboardingGoBranches: "إدارة الفروع",
+
+  branchesTitle: "الفروع",
+  branchesEmpty: "لا توجد فروع بعد.",
+  branchesColCode: "الرمز",
+  branchesColName: "الاسم",
+  branchesColNameAr: "الاسم العربي",
+  branchesCreateTitle: "إنشاء فرع",
+  branchesCodeLabel: "رمز الفرع",
+  branchesNameLabel: "اسم الفرع",
+  branchesNameArLabel: "الاسم العربي (اختياري)",
+  branchesCreateSubmit: "إضافة الفرع",
+  branchesActivate: "تنشيط",
+  branchesDeactivate: "تعطيل",
+  branchesErrorCodeTaken: "رمز الفرع مستخدم مسبقًا في هذه المنشأة.",
+
+  settingsTitle: "إعدادات المنشأة",
+  settingsProfileTitle: "الملف التعريفي",
+  settingsNameLabel: "الاسم (بالإنجليزية)",
+  settingsNameArLabel: "الاسم العربي",
+  settingsTimezoneLabel: "المنطقة الزمنية",
+  settingsProfileSubmit: "حفظ الملف",
+  settingsProfileSaved: "تم حفظ الملف التعريفي.",
+  settingsGeneralTitle: "الإعدادات العامة",
+  settingsDefaultLocaleLabel: "اللغة الافتراضية",
+  settingsNumeralSystemLabel: "نظام الأرقام",
+  settingsNumeralLatn: "أرقام غربية (123)",
+  settingsNumeralArab: "أرقام عربية (١٢٣)",
+  settingsHijriLabel: "عرض التاريخ الهجري",
+  settingsHijriHint: "تراكب عرض فقط — السنوات المالية تبقى ميلادية.",
+  settingsFiscalNumberingTitle: "التقويم المالي والترقيم",
+  settingsSupportTitle: "الدعم",
+  settingsSupportOptInLabel: "السماح بجلسات الدعم",
+  settingsSupportOptInWarning:
+    "تنبيه: تمكين هذا الخيار يسمح لفريق المنصة بفتح جلسات دعم محدودة الوقت ومُدقّقة لقراءة بيانات منشأتك.",
+  settingsTaxTitle: "التسجيل الضريبي",
+  settingsTaxPairHint:
+    "يُتحقق من الحالة والرقم معًا: الرقم مطلوب أثناء «مسجّل» وممنوع في غير ذلك.",
+  settingsSave: "حفظ",
+  settingsSaved: "تم الحفظ.",
+  settingsErrorInvalidValue: "قيمة غير صالحة لهذا الإعداد.",
+
+  supportSessionsTitle: "جلسات الدعم",
+  supportSessionsHint:
+    "هذه الجلسات التي يفتحها فريق المنصة عند طلبك أو بموافقتك؛ يمكنك إنهاء أي جلسة نشطة قائمة على الموافقة في أي وقت.",
+  supportColReason: "السبب",
+  supportColTicket: "مرجع التذكرة",
+  supportColOpened: "بدأت",
+  supportColClosed: "أُغلقت",
+  supportColOptIn: "بالموافقة؟",
+  supportEmpty: "لا توجد جلسات دعم.",
+  supportTerminate: "إنهاء الجلسة",
+  supportErrorAccessDenied: "فتح جلسة الدعم يتطلب موافقة المنشأة أو مرجع تذكرة حادثة معلنًا.",
+  supportErrorExpired: "انتهت صلاحية جلسة الدعم.",
+  supportErrorNotActive: "هذه الجلسة ليست نشطة.",
+
+  tenancyErrorFeatureNotEntitled: "هذه الميزة غير مفعّلة لمنشأتك.",
+  tenancyErrorDependenciesMissing: "تفعيل الميزة يتطلب مفاتيح تابعة غير ممنوحة بعد: {keys}",
+
+  platformConsoleTitle: "لوحة إدارة المنصة",
+  platformNoAccess: "هذه منطقة إدارة المنصة — متاحة فقط لفريق عمليات المنصة.",
+  platformTenantBadge: "منصة",
+  platformSearchLabel: "البحث عن منشأة",
+  platformSearchSubmit: "بحث",
+  platformColTenant: "المنشأة",
+  platformColCountry: "الدولة",
+  platformColPlan: "الخطة",
+  platformColCreated: "أُنشئت",
+  platformEmpty: "لا توجد منشآت مطابقة.",
+  platformProfileTitle: "الملف",
+  platformPlanTitle: "الخطة والاشتراك",
+  platformPlanCurrentLabel: "الخطة الحالية",
+  platformPlanNone: "لا يوجد اشتراك نشط.",
+  platformPlanAssignTitle: "تعيين خطة",
+  platformPlanLabel: "الخطة",
+  platformTrialDaysLabel: "أيام التجربة (اختياري)",
+  platformPlanSubmit: "تعيين الخطة",
+  platformPlanAssigned: "تم تعيين الخطة «{plan}» — المفاتيح الممنوحة: {count}.",
+  platformEntitlementsTitle: "الميزات الممنوحة",
+  platformColFeatureKey: "المفتاح",
+  platformColSource: "المصدر",
+  platformEntitlementsEmpty: "لا توجد ميزات ممنوحة.",
+  platformGrantTitle: "منح ميزة",
+  platformGrantFeatureLabel: "مفتاح الميزة",
+  platformGrantSourceLabel: "المصدر",
+  platformGrantExpiresLabel: "تاريخ الانتهاء",
+  platformGrantExpiresHint: "مطلوب للمنح اليدوي (MANUAL).",
+  platformGrantReasonLabel: "السبب",
+  platformGrantSubmit: "منح",
+  platformGrantDone: "تم منح الميزة.",
+  platformRevoke: "سحب",
+  platformRevokeReasonLabel: "سبب السحب",
+  platformGrantExpiryRequired: "المنح اليدوي يتطلب تاريخ انتهاء صريحًا.",
+  platformGrantUnknownKey: "مفتاح ميزة غير معروف.",
+  platformMembershipsTitle: "الأعضاء",
+  platformBranchesTitle: "فروع المنشأة",
+  platformLifecycleTitle: "إيقاف واستعادة",
+  platformReasonLabel: "السبب (مطلوب)",
+  platformSuspendButton: "إيقاف المنشأة",
+  platformRestoreButton: "استعادة المنشأة",
+  platformSuspendDone: "تم إيقاف المنشأة — أُنهيت {count} جلسة مستخدم.",
+  platformRestoreDone: "تمت استعادة المنشأة إلى الحالة النشطة.",
+  platformSupportTitle: "جلسات الدعم",
+  platformSupportOpenTitle: "فتح جلسة دعم",
+  platformSupportReasonLabel: "السبب",
+  platformSupportTicketLabel: "مرجع التذكرة (اختياري)",
+  platformSupportHoursLabel: "المدة بالساعات (1-4)",
+  platformSupportOpenSubmit: "فتح الجلسة",
+  platformSupportClose: "إغلاق",
+  platformSupportCloseReasonLabel: "سبب الإغلاق",
+  platformSupportSessionLabel: "الجلسة النشطة",
+  platformReadDataTitle: "قراءة بيانات المنشأة",
+  platformReadResourceLabel: "المورد",
+  platformReadSubmit: "قراءة",
+  platformNoActiveSession: "لا توجد جلسة دعم نشطة — افتح جلسة أولًا.",
+  resourceUsers: "المستخدمون",
+  resourceMemberships: "العضويات",
+  resourceRoles: "الأدوار",
+  resourceBranches: "الفروع",
+  resourceSettings: "الإعدادات",
+  resourceEntitlements: "الميزات",
+  resourceSubscription: "الاشتراك",
+  resourceAccounts: "الحسابات",
+  resourceAuditEvents: "أحداث التدقيق",
+
+  platformAuditTitle: "سجل تدقيق المنصة",
+  platformAuditPlatformOnly: "أحداث المنصة فقط",
+  platformAuditTenantFilter: "معرّف المنشأة (اختياري)",
+  platformAuditActionFilter: "الإجراء (اختياري)",
+  platformAuditApply: "تصفية",
+  platformAuditColAt: "الوقت",
+  platformAuditColAction: "الإجراء",
+  platformAuditColActor: "الفاعل",
+  platformAuditViaPlatform: "عبر مشرف المنصة",
+  platformAuditNextPage: "الصفحة التالية",
+  platformAuditEmpty: "لا توجد أحداث.",
+  platformErrorInvalidTransition: "حالة المنشأة لا تسمح بهذا الانتقال.",
+  platformErrorPlanNotFound: "خطة غير معروفة.",
+
+  shellSkipToContent: "تخطَّ إلى المحتوى",
+  shellCommandSearch: "ابحث أو انتقل إلى…",
+  shellShortcutsTitle: "اختصارات لوحة المفاتيح",
+  shellClose: "إغلاق",
+  shellMore: "المزيد",
+  statusOffboarded: "تم إنهاء الخدمة",
+  wizardStepOf: "الخطوة {current} من {total}",
+  platformBackToConsole: "العودة إلى لوحة المنصة",
+  rolesEmpty: "لا توجد أدوار بعد.",
+  retryLabel: "إعادة المحاولة",
+
+  // -- P6-T11a: shared labels -------------------------------------------------
+  commonSave: "حفظ",
+  commonCreate: "إنشاء",
+  commonCancel: "إلغاء",
+  commonOpen: "فتح",
+  commonClear: "مسح",
+  commonConfirm: "تأكيد",
+  commonUnsavedChanges: "توجد تغييرات غير محفوظة — هل تريد المتابعة؟",
+  commonVersionConflict: "تم تعديل السجل من مستخدم آخر — أعد التحميل وحاول مجددًا.",
+  statusDraft: "مسودة",
+  statusArchived: "مؤرشف",
+  kindLabel: "النوع",
+  kindFilterAll: "الكل",
+  colStatus: "الحالة",
+  colName: "الاسم",
+  listNextPage: "الصفحة التالية",
+  listPrevPage: "الصفحة السابقة",
+  listSearchLabel: "بحث",
+  namePreviewLabel: "معاينة الاسم",
+
+  // -- P6-T11a: navigation + breadcrumbs ----------------------------------------
+  navPartners: "الجهات",
+  navPartnersDirectory: "دليل الجهات",
+  navPartnersNew: "جهة جديدة",
+  navOpeningBalances: "الأرصدة الافتتاحية",
+  navInventory: "المخزون",
+  navItems: "الأصناف",
+  navItemsNew: "صنف جديد",
+  navPriceLists: "قوائم الأسعار",
+  navImport: "استيراد وتصدير",
+
+  // -- PHASE-007: accounting -----------------------------------------------------
+  navAccountingCoa: "دليل الحسابات",
+  navAccountingJournals: "قيود اليومية",
+  navAccountingGl: "دفتر الأستاذ العام",
+  navAccountingPeriods: "الفترات المالية",
+  navAccountingApprovals: "الاعتمادات",
+  navAccountingRates: "أسعار الصرف",
+  accountingTitle: "المحاسبة",
+  accountingJournalsTitle: "قيود اليومية",
+  accountingJournalsNew: "قيد جديد",
+  accountingJournalsEmpty: "لا قيود بعد",
+  accountingColEntryNo: "رقم القيد",
+  accountingColEntryDate: "التاريخ",
+  accountingColCurrency: "العملة",
+  accountingColTotal: "الإجمالي",
+  accountingColStatus: "الحالة",
+  accountingColCode: "الرمز",
+  accountingColName: "الاسم",
+  accountingColType: "النوع",
+  accountingColPostable: "قابل للترحيل",
+  accountingColDebit: "مدين",
+  accountingColCredit: "دائن",
+  accountingColBalance: "الرصيد",
+  accountingSubmit: "إرسال",
+  accountingApprove: "اعتماد",
+  accountingPost: "ترحيل",
+  accountingReverse: "عكس",
+  accountingCancel: "إلغاء",
+  accountingSaveDraft: "حفظ المسودة",
+  accountingAddLine: "إضافة سطر",
+  accountingRemoveLine: "حذف السطر",
+  accountingDuplicateLine: "تكرار السطر",
+  accountingPartnerRequired: "مطلوب تحديد الجهة لهذا الحساب",
+  accountingBalanced: "متوازن",
+  accountingUnbalanced: "القيد غير متوازن",
+  accountingDifference: "الفرق",
+  accountingLineTotal: "السطر",
+  accountingMemo: "البيان",
+  accountingCostCenter: "مركز التكلفة",
+  accountingPartner: "الجهة",
+  accountingTaxCode: "الرمز الضريبي",
+  accountingAccount: "الحساب",
+  accountingDescription: "الوصف",
+  accountingCoaTitle: "دليل الحسابات",
+  accountingCoaEmpty: "لا حسابات",
+  accountingPurposesTitle: "أغراض الحسابات",
+  accountingPurposesEmpty: "لا ارتباطات أغراض",
+  accountingGlTitle: "دفتر الأستاذ العام",
+  accountingGlEmpty: "لا حركات",
+  accountingGlDrill: "فتح القيد",
+  accountingPeriodsTitle: "الفترات المالية",
+  accountingPeriodsEmpty: "لا فترات",
+  accountingYearsTitle: "السنوات المالية",
+  accountingCreateYear: "إنشاء سنة مالية",
+  accountingYearName: "اسم السنة",
+  accountingYearStart: "تاريخ البداية",
+  accountingYearEnd: "تاريخ النهاية",
+  accountingSoftClose: "إغلاق مؤقت",
+  accountingLock: "إقفال",
+  accountingReopen: "إعادة فتح",
+  accountingReopenReason: "سبب إعادة الفتح",
+  accountingReopenPrompt: "أدخل سبب إعادة الفتح (إلزامي)",
+  accountingChecklist: "قائمة فحص الإغلاق",
+  accountingChecklistOk: "سليم",
+  accountingChecklistBroken: "مخالف",
+  accountingChecklistNotRun: "لم يُفحص",
+  accountingChecklistNotApplicable: "غير منطبق بعد",
+  accountingApprovalsTitle: "بانتظار الموافقة",
+  accountingApprovalsEmpty: "لا عناصر بانتظار الموافقة",
+  accountingApprovalsSelfHint: "لا يمكنك اعتماد قيدك الخاص",
+  accountingApprovalsSubmittedBy: "مقدم بواسطة",
+  accountingApprovalsTotalBase: "الإجمالي (بالعملة الأساسية)",
+  accountingApprovalsPreview: "معاينة",
+  accountingReject: "رفض",
+  accountingRatesTitle: "أسعار الصرف",
+  accountingRatesEmpty: "لا أسعار",
+  accountingRatesCurrency: "العملة",
+  accountingRatesDate: "التاريخ",
+  accountingRatesRate: "السعر",
+  accountingRatesSave: "حفظ السعر",
+  accountingPostedAt: "تاريخ الترحيل",
+  accountingSource: "المصدر",
+  accountingPreviewTitle: "معاينة القيد",
+  statusPendingApproval: "بانتظار الاعتماد",
+  statusApproved: "معتمد",
+  statusPosted: "مرحّل",
+  statusReversed: "معكوس",
+  statusCancelled: "ملغى",
+  accountingStatusOpen: "مفتوحة",
+  accountingStatusSoftClosed: "مغلقة مؤقتاً",
+  accountingStatusLocked: "مقفلة",
+  accountingKindRegular: "عادية",
+  accountingKindOpening: "افتتاحية",
+  accountingKindClosing: "ختامية",
+  accountingSearchPlaceholder: "ابحث بالرمز أو الاسم…",
+  accountingNewAccount: "حساب جديد",
+  accountingAccountParent: "الحساب الأب",
+  accountingAccountCurrency: "عملة الحساب (اختياري)",
+  accountingIsGroup: "حساب تجميعي (غير قابل للترحيل)",
+  accountingMapPurpose: "ربط غرض بحساب",
+  accountingPurposeKey: "الغرض",
+  accountingPurposeAccount: "الحساب",
+  accountingActiveFrom: "ساري من",
+  accountingLines: "سطور القيد",
+  accountingColAmount: "المبلغ",
+  accountingColBase: "المبلغ بالعملة الأساسية",
+  accountingColDirection: "الاتجاه",
+  accountingColPeriod: "الفترة",
+  accountingReference: "المرجع",
+  accountingExchangeRate: "سعر الصرف",
+  accountingRecurringTitle: "القيود الدورية",
+  accountingRecurringNew: "قيد دوري جديد",
+  accountingRecurringEmpty: "لا قيود دورية",
+  accountingRecurringSchedule: "التكرار",
+  accountingRecurringNextRun: "التشغيل القادم",
+  accountingRecurringAmountPolicy: "سياسة المبلغ",
+  accountingRecurringFixed: "ثابت",
+  accountingRecurringReenter: "إعادة إدخال",
+  accountingRecurringPause: "إيقاف مؤقت",
+  accountingRecurringActivate: "تنشيط",
+  accountingRecurringGenerateDue: "توليد القيود المستحقة",
+  accountingPoliciesTitle: "سياسات الاعتماد",
+  accountingPoliciesEmpty: "لا سياسات معرّفة",
+  accountingPolicyMode: "النمط",
+  accountingPolicyThreshold: "الحد (بالعملة الأساسية)",
+  accountingRunAr: "تشغيل مطابقة العملاء",
+  accountingRunAp: "تشغيل مطابقة الموردين",
+  accountingReconStatusOk: "مطابقة سليمة",
+  accountingReconStatusBroken: "مطابقة مخالفة",
+  accountingPostOpening: "ترحيل الأرصدة الافتتاحية",
+  accountingPostOpeningConfirm: "سيتم ترحيل الأرصدة الافتتاحية مرة واحدة عبر الفترة الافتتاحية. هل تريد المتابعة؟",
+  obPostReadyNote: "المسودات جاهزة — الترحيل يتم مرة واحدة عبر الفترة الافتتاحية للسنة المالية المحددة.",
+  accountingYearEndExecute: "تنفيذ إقفال السنة",
+  accountingYearEndReverse: "عكس إقفال السنة",
+  accountingYearEndConfirm: "سيتم إنشاء قيد الإقفال النظامي للسنة. هل تريد المتابعة؟",
+  accountingMovementsTitle: "حركات الحساب",
+  accountingRegisterTitle: "سجل اليومية",
+  accountingSelectAccount: "اختر حساباً",
+  accountingFromDate: "من تاريخ",
+  accountingToDate: "إلى تاريخ",
+  accountingReversalDate: "تاريخ القيد العكسي",
+  accountingReversalReason: "سبب العكس",
+  accountingSoftClosePrompt: "سبب الترحيل في فترة مغلقة مؤقتاً (اختياري)",
+  accountingRateHint: "السعر = وحدات العملة الأساسية مقابل 1 من العملة الأجنبية",
+  accountingErrEntryNotBalanced: "القيد غير متوازن — مجموع المدين يجب أن يساوي مجموع الدائن.",
+  accountingErrPeriodLocked: "الفترة المالية مقفلة — لا يمكن الترحيل فيها.",
+  accountingErrAccountNotPostable: "الحساب غير قابل للترحيل (أرشيف أو تجميعي).",
+  accountingErrPurposeNotMapped: "الغرض غير مربوط بأي حساب نشط — لا ترحيل احتياطي إطلاقاً.",
+  accountingErrMissingPartner: "سطور حسابات العملاء/الموردين تتطلب تحديد الجهة.",
+  accountingErrMissingFxRate: "لا يوجد سعر صرف للتاريخ المحدد.",
+  accountingErrAlreadyPosted: "تم ترحيل هذا المستند مسبقاً.",
+  accountingErrAlreadyReversed: "تم عكس هذا القيد مسبقاً.",
+  accountingErrApprovalLimit: "المبلغ يتجاوز حد الاعتماد المسموح.",
+  accountingErrSelfApproval: "لا يمكنك اعتماد مستند أنشأته بنفسك.",
+  accountingErrImmutable: "القيود المرحّلة غير قابلة للتعديل — التصحيح بالعكس فقط.",
+  accountingErrState: "حالة المستند لا تسمح بهذه العملية.",
+  accountTypeAsset: "أصول",
+  accountTypeLiability: "التزامات",
+  accountTypeEquity: "حقوق ملكية",
+  accountTypeRevenue: "إيرادات",
+  accountTypeExpense: "مصروفات",
+  accountingPostableYes: "قابل للترحيل",
+  accountingPostableNo: "تجميعي",
+  accountingPurposesHint: "غرض واحد نشط لكل مفتاح — المحرك يفشل مغلقاً عند أي غرض غير مربوط (لا ترحيل احتياطي).",
+
+  // -- T14-UI: PHASE-008 treasury --------------------------------------------------
+  navTreasury: "الخزينة",
+  navTreasuryAccounts: "الحسابات النقدية",
+  navTreasuryReceipts: "سندات القبض",
+  navTreasuryPayments: "سندات الصرف",
+  navTreasuryExpenses: "المصروفات",
+  navTreasuryTransfers: "التحويلات النقدية",
+  navTreasuryShifts: "ورديات الصندوق",
+  navTreasuryBankRec: "التسوية البنكية",
+  treasuryAccountsTitle: "الحسابات النقدية",
+  treasuryAccountsEmpty: "لا حسابات نقدية بعد — افتح أول حساب.",
+  treasuryAccountOpenTitle: "فتح حساب نقدي",
+  treasuryAccountName: "الاسم (إنجليزي)",
+  treasuryAccountNameAr: "الاسم (عربي)",
+  treasuryAccountType: "نوع الحساب",
+  treasuryAccountTypeCash: "نقدي",
+  treasuryAccountTypeBank: "بنكي",
+  treasuryAccountTypePetty: "الصندوق النقدي الصغير",
+  treasuryAccountGlAccount: "الحساب المقابل في دليل الحسابات",
+  treasuryAccountCurrency: "العملة",
+  treasuryAccountBranch: "الفرع (اختياري)",
+  treasuryColGlCode: "رمز الحساب المقابل",
+  treasuryAccountBalance: "الرصيد",
+  treasuryColMovements: "عدد الحركات",
+  treasuryAccountCreatedToast: "تم فتح الحساب النقدي.",
+  treasuryAccountCloseBtn: "إغلاق الحساب",
+  treasuryAccountCloseReason: "سبب الإغلاق",
+  treasuryAccountClosedToast: "تم إغلاق الحساب النقدي.",
+  treasuryAccountOpenedAt: "تاريخ الفتح",
+  treasuryAccountClosedAt: "تاريخ الإغلاق",
+  treasuryAccountMovementsTitle: "حركات الحساب النقدي",
+  treasuryAccountMovementsEmpty: "لا حركات بعد.",
+  treasuryColDirectionIn: "قبض",
+  treasuryColDirectionOut: "صرف",
+  treasuryColBaseAmount: "المبلغ بالعملة الأساسية",
+  treasuryColValueDate: "تاريخ القيمة",
+  treasuryColRate: "سعر الصرف",
+  treasuryColSource: "المصدر",
+  treasuryColMemo: "البيان",
+  treasuryMethodCash: "نقداً",
+  treasuryMethodBank: "تحويل بنكي",
+  treasuryMethodCheque: "شيك",
+  treasuryMethodCard: "بطاقة",
+  treasuryMethodTransfer: "حوالة",
+  treasuryReceiptsTitle: "سندات القبض",
+  treasuryReceiptsEmpty: "لا سندات قبض بعد.",
+  treasuryReceiptsNew: "سند قبض جديد",
+  treasuryPaymentsTitle: "سندات الصرف",
+  treasuryPaymentsEmpty: "لا سندات صرف بعد.",
+  treasuryPaymentsNew: "سند صرف جديد",
+  treasuryColDocNo: "رقم السند",
+  treasuryColPartner: "الجهة",
+  treasuryColMethod: "طريقة الدفع",
+  treasuryColAmount: "المبلغ",
+  treasuryColAllocated: "المخصص",
+  treasuryColFx: "فرق العملة",
+  treasuryColPayer: "الدافع",
+  treasuryColPayee: "المستفيد",
+  treasuryDocCashAccount: "الحساب النقدي",
+  treasuryDocPartner: "الجهة",
+  treasuryDocMethod: "طريقة الدفع",
+  treasuryDocCurrency: "العملة",
+  treasuryDocAmount: "المبلغ",
+  treasuryDocRate: "سعر الصرف (اختياري)",
+  treasuryDocRateHint: "اتركه فارغاً لاستخدام سعر تاريخ القيمة",
+  treasuryDocValueDate: "تاريخ القيمة",
+  treasuryDocReference: "المرجع",
+  treasuryDocDescription: "الوصف",
+  treasuryDocDescriptionAr: "الوصف (عربي)",
+  treasuryDocCreatedToast: "تم إنشاء السند.",
+  treasuryDocDetailTitle: "تفاصيل السند",
+  treasuryDocPostedToast: "تم ترحيل السند {no} — القيد {entry}.",
+  treasuryDocReverseToast: "تم عكس السند.",
+  treasuryDocReverseDate: "تاريخ القيد العكسي",
+  treasuryDocReverseReason: "سبب العكس",
+  treasuryDocCancelToast: "تم إلغاء السند.",
+  treasuryDocOnAccount: "المتبقي على الحساب",
+  treasuryDocJournalNo: "رقم القيد",
+  treasuryDocSideHint: "سندات القبض تُخصص بنود العملاء (المدينين)، وسندات الصرف تُخصص بنود الموردين (الدائنين).",
+  treasuryCancelReason: "سبب الإلغاء",
+  treasuryOpenItemsTitle: "البنود المفتوحة",
+  treasuryAllocationsTitle: "تخصيص السند",
+  treasuryAllocationsEmpty: "لا بنود مفتوحة لهذه الجهة.",
+  treasuryAllocationsHint: "خصّص المبلغ على البنود المفتوحة — المتبقي يُرحّل على الحساب.",
+  treasuryAllocationSuggestBtn: "اقتراح تخصيص (الأقدم أولاً)",
+  treasuryAllocationSuggestToast: "تم تطبيق الاقتراح على {count} بنداً.",
+  treasuryAllocationColOutstanding: "المتبقي",
+  treasuryAllocationTotals: "ملخص التخصيص",
+  treasuryAllocationTotalAllocated: "إجمالي المخصص",
+  treasuryAllocationRemainder: "غير المخصص",
+  treasuryAllocationOnAccountHint: "المبلغ غير المخصص يُرحّل على حساب الجهة.",
+  treasuryAllocationOverError: "مجموع التخصيص يتجاوز مبلغ السند.",
+  treasuryAllocationSaveBtn: "حفظ التخصيص",
+  treasuryAllocationSavedToast: "تم حفظ التخصيص.",
+  treasuryAllocationReloadBtn: "تحديث البنود",
+  treasuryExpensesTitle: "المصروفات",
+  treasuryExpensesEmpty: "لا مصروفات بعد.",
+  treasuryExpenseClaimNew: "تسجيل مصروف",
+  treasuryExpenseCategoriesTitle: "فئات المصروفات",
+  treasuryExpenseCategoriesEmpty: "لا فئات بعد — أنشئ أول فئة.",
+  treasuryExpenseCategoryNew: "فئة جديدة",
+  treasuryExpenseCategoryCode: "رمز الفئة",
+  treasuryExpenseCategoryAccount: "حساب المصروف",
+  treasuryExpenseCategoryApproval: "نمط الاعتماد",
+  treasuryExpenseApprovalNone: "بدون اعتماد",
+  treasuryExpenseApprovalSingle: "معتمد واحد",
+  treasuryExpenseCategoryCreatedToast: "تم إنشاء الفئة.",
+  treasuryExpenseCreatedToast: "تم تسجيل المصروف.",
+  treasuryExpenseReceiptNote: "إرفاق ملفات الإيصالات يصل مع مساحة الملفات في مرحلة لاحقة — أدخل معرف ملف الإيصال مباشرة إن وُجد.",
+  treasuryExpenseReceiptFileId: "معرف ملف الإيصال (اختياري)",
+  treasuryExpenseColNo: "رقم المصروف",
+  treasuryExpenseColPayee: "المستفيد",
+  treasuryExpenseColCategory: "الفئة",
+  treasuryTransfersTitle: "التحويلات النقدية",
+  treasuryTransfersEmpty: "لا تحويلات بعد.",
+  treasuryTransferNew: "تحويل جديد",
+  treasuryTransferFrom: "من حساب",
+  treasuryTransferTo: "إلى حساب",
+  treasuryTransferCreatedToast: "تم إنشاء التحويل.",
+  treasuryTransferPostedToast: "تم ترحيل التحويل.",
+  treasuryTransferCancelledToast: "تم إلغاء التحويل.",
+  treasuryTransferSameAccountError: "لا يمكن التحويل إلى الحساب نفسه.",
+  treasuryColFrom: "من",
+  treasuryColTo: "إلى",
+  treasuryColNo: "الرقم",
+  treasuryColFee: "الرسوم",
+  treasuryShiftsTitle: "ورديات الصندوق",
+  treasuryShiftsEmpty: "لا ورديات بعد.",
+  treasuryShiftOpenTitle: "فتح وردية",
+  treasuryShiftOpenBtn: "فتح الوردية",
+  treasuryShiftOpeningAmount: "العهدة الافتتاحية",
+  treasuryShiftCreatedToast: "تم فتح الوردية.",
+  treasuryShiftStatusOpen: "مفتوحة",
+  treasuryShiftStatusClosed: "مغلقة",
+  treasuryShiftStatusCancelled: "ملغاة",
+  treasuryShiftColShiftNo: "رقم الوردية",
+  treasuryShiftColOpenedAt: "تاريخ الفتح",
+  treasuryShiftColClosedAt: "تاريخ الإغلاق",
+  treasuryShiftColCapturedIn: "القبض المُسجّل",
+  treasuryShiftColCapturedOut: "الصرف المُسجّل",
+  treasuryShiftExpected: "المتوقع",
+  treasuryShiftCounted: "المعدود",
+  treasuryShiftDifference: "الفرق",
+  treasuryShiftVarianceJournal: "قيد فرق الوردية",
+  treasuryShiftSupervisor: "المشرف",
+  treasuryShiftSupervisorPin: "رمز المشرف",
+  treasuryShiftSupervisorHint: "مطلوب عند تجاوز الفرق حد التسامح",
+  treasuryShiftReason: "سبب الإغلاق",
+  treasuryShiftCloseToast: "تم إغلاق الوردية.",
+  treasuryShiftCancelBtn: "إلغاء الوردية",
+  treasuryShiftCancelledToast: "تم إلغاء الوردية.",
+  treasuryShiftPanelTitle: "وردية الصندوق",
+  treasuryShiftCaptureTitle: "تسجيل حركة نقدية",
+  treasuryShiftCaptureHint: "سجّل الإيداعات والمصروفات النقدية خلال الوردية.",
+  treasuryShiftCaptureBtn: "تسجيل",
+  treasuryShiftCloseTitle: "إغلاق الوردية",
+  treasuryShiftCloseBtn: "إغلاق",
+  treasuryShiftBalanced: "مطابق للعدّ",
+  treasuryShiftVarianceNote: "الفرق لا يساوي صفراً — أدخل السبب، وبيانات المشرف عند تجاوز حد التسامح.",
+  treasuryShiftClosedNote: "الوردية مغلقة — الملخص للعرض فقط.",
+  treasuryBankRecTitle: "التسوية البنكية",
+  treasuryBankRecEmpty: "لا كشوف بعد — استورد أول كشف.",
+  treasuryBankRecImportTitle: "استيراد كشف حساب",
+  treasuryBankRecAdapter: "محول الاستيراد",
+  treasuryBankRecFile: "الملف",
+  treasuryBankRecFileHint: "ملف CSV أو Excel",
+  treasuryBankRecPeriodStart: "بداية الفترة",
+  treasuryBankRecPeriodEnd: "نهاية الفترة",
+  treasuryBankRecMappingHint: "تخطيط الأعمدة — اختياري مع المؤشر العام",
+  treasuryBankRecMappingDate: "عمود التاريخ",
+  treasuryBankRecMappingAmount: "عمود المبلغ",
+  treasuryBankRecMappingReference: "عمود المرجع",
+  treasuryBankRecMappingDescription: "عمود البيان",
+  treasuryBankRecImportBtn: "استيراد الكشف",
+  treasuryBankRecImportedToast: "تم استيراد الكشف.",
+  treasuryBankRecStatementsTitle: "كشوف الحساب",
+  treasuryBankRecColFile: "الملف",
+  treasuryBankRecColPeriod: "الفترة",
+  treasuryBankRecColLines: "عدد السطور",
+  treasuryBankRecColImportedAt: "تاريخ الاستيراد",
+  treasuryBankRecStatusImported: "مستورد",
+  treasuryBankRecStatusReconciled: "مسوّى",
+  treasuryBankRecOpeningBalance: "الرصيد الافتتاحي",
+  treasuryBankRecClosingBalance: "الرصيد الختامي",
+  treasuryBankRecSelectStatement: "اختر كشفاً من القائمة للعمل على سطوره.",
+  treasuryBankRecLinesTitle: "سطور الكشف",
+  treasuryBankRecColLineNo: "السطر",
+  treasuryBankRecColMatchState: "حالة المطابقة",
+  treasuryBankRecMatched: "مطابق",
+  treasuryBankRecUnmatched: "غير مطابق",
+  treasuryBankRecMatchAuto: "تلقائي",
+  treasuryBankRecMatchManual: "يدوي",
+  treasuryBankRecAutoMatchBtn: "مطابقة تلقائية",
+  treasuryBankRecAutoMatchToast: "تمت مطابقة {count} سطراً.",
+  treasuryBankRecManualMatch: "مطابقة يدوية",
+  treasuryBankRecMatchMovement: "الحركة المطابقة",
+  treasuryBankRecUnmatchBtn: "إزالة المطابقة",
+  treasuryBankRecMatchedToast: "تم تحديث المطابقة.",
+  treasuryBankRecReconcileBtn: "تسوية الكشف",
+  treasuryBankRecReconcileHint: "التسوية تُقفل فترة الكشف لهذا الحساب.",
+  treasuryBankRecReconciledToast: "تمت التسوية وقُفلت الفترة.",
+  treasuryBankRecAgingTitle: "التقادم — العناصر غير المطابقة",
+  treasuryBankRecAgingAsOf: "تاريخ احتساب التقادم",
+  treasuryBankRecUnmatchedLinesTitle: "سطور كشف غير مطابقة",
+  treasuryBankRecUnmatchedMovementsTitle: "حركات دفتر غير مطابقة",
+  treasuryBankRecColAgeDays: "العمر (أيام)",
+  treasuryBankRecLoadAgingBtn: "عرض التقادم",
+  treasuryBankRecCashCheckTitle: "فحص مطابقة النقدية",
+  treasuryBankRecCashCheckAsOf: "كما في تاريخ",
+  treasuryBankRecCashCheckBtn: "تشغيل الفحص",
+  treasuryBankRecCashCheckOk: "النقدية مطابقة — لا فرق.",
+  treasuryBankRecCashCheckBroken: "فرق في مطابقة النقدية.",
+  treasuryBankRecColControlBalance: "رصيد حساب الرقابة",
+  treasuryBankRecColSubledgerBalance: "رصيد السجل المساعد",
+  treasuryBankRecColDiffCount: "عدد الفروقات",
+  treasuryBankRecFilterAccount: "تصفية بالحساب النقدي",
+  treasuryErrAccountExists: "يوجد حساب نقدي بهذا الاسم مسبقاً.",
+  treasuryErrAccountClosed: "الحساب النقدي مغلق — لا يستقبل مستندات جديدة.",
+  treasuryErrAccountNotCloseable: "لا يمكن إغلاق هذا الحساب في وضعه الحالي.",
+  treasuryErrCurrencyMismatch: "عملة الحساب النقدي لا تطابق عملة المستند.",
+  treasuryErrTypeInvalid: "نوع الحساب النقدي غير صالح.",
+  treasuryErrInvalidAmount: "المبلغ غير صالح — يجب أن يكون رقماً موجباً.",
+  treasuryErrDocState: "حالة المستند لا تسمح بهذه العملية.",
+  treasuryErrMissingFxRate: "لا يوجد سعر صرف للتاريخ المحدد.",
+  treasuryErrAllocationExceedsDoc: "مجموع التخصيصات يتجاوز مبلغ السند.",
+  treasuryErrAllocationExceedsItem: "التخصيص يتجاوز المتبقي من البند المفتوح.",
+  treasuryErrOpenItemCurrency: "عملة البند المفتوح تختلف عن عملة السند.",
+  treasuryErrOpenItemPartner: "البند المفتوح لا يخص هذه الجهة.",
+  treasuryErrOpenItemSide: "نوع السند يخصص بنوداً من الجانب المقابل فقط (عملاء للقبض، موردون للصرف).",
+  treasuryErrPettyLimit: "المبلغ يتجاوز حدود الصندوق النقدي الصغير — استخدم الترحيل البنكي أو قسّم المبلغ.",
+  treasuryErrCategoryTaken: "رمز فئة المصروف مستخدم مسبقاً.",
+  treasuryErrReceiptRequired: "إرفاق إيصال مطلوب لهذا المبلغ.",
+  treasuryErrApprovalRequired: "يجب اعتماد المصروف قبل الترحيل.",
+  treasuryErrShiftAlreadyOpen: "توجد وردية مفتوحة لهذا الحساب مسبقاً.",
+  treasuryErrSupervisorRequired: "الفرق يتجاوز حد التسامح — مطلوب مشرف ورمز وسبب.",
+  treasuryErrSupervisorPin: "رمز المشرف غير صحيح أو غير مضبوط.",
+  treasuryErrShiftReason: "السبب مطلوب عند إغلاق وردية بفرق.",
+  treasuryErrStatementTooLarge: "الكشف يتجاوز الحد الأقصى لعدد السطور.",
+  treasuryErrStatementFormat: "تعذر تحليل ملف الكشف — تحقق من التنسيق أو محول الاستيراد.",
+  treasuryErrStatementReconciled: "الكشف مسوّى مسبقاً — الفترة مقفلة.",
+  treasuryErrPeriodLocked: "التاريخ يقع ضمن فترة مسوّاة لهذا الحساب.",
+  treasuryErrMovementMatched: "الحركة مطابقة لسطر كشف آخر مسبقاً.",
+
+  // -- P6-T11a: partner directory ------------------------------------------------
+  partnersSearchPlaceholder: "ابحث بالاسم أو الرمز أو الرقم الضريبي…",
+  partnersKindLabel: "نوع الجهة",
+  kindCustomer: "عميل",
+  kindSupplier: "مورّد",
+  kindBoth: "عميل ومورّد",
+  partnersColCode: "الرمز",
+  partnersColCreditLimit: "حد الائتمان",
+  partnersEmpty: "لا توجد جهات بعد — أنشئ أول جهة.",
+  partnersNewButton: "جهة جديدة",
+  partnerFormTitleCreate: "إضافة جهة جديدة",
+  partnerCodeLabel: "رمز الجهة",
+  partnerCodeHint: "اتركه فارغًا للترقيم التلقائي (P-000001).",
+  partnerNameLabel: "الاسم (إنجليزي)",
+  partnerNameArLabel: "الاسم (عربي)",
+  partnerTaxNumberLabel: "الرقم الضريبي",
+  partnerCreditTermsLabel: "شروط الدفع",
+  partnerPriceListLabel: "قائمة الأسعار",
+  partnerStatusLabel: "الحالة",
+  partnerCreatedToast: "تم إنشاء الجهة.",
+  partnerSavedToast: "تم حفظ التعديلات.",
+  partnerCodeTaken: "رمز الجهة مستخدم مسبقًا.",
+  partnerArchivedError: "الجهة مؤرشفة — لا يمكن تعديلها.",
+  partnerKindChangeLabel: "تغيير نوع الجهة",
+  partnerKindChangedToast: "تم تغيير نوع الجهة.",
+  partnerKindImmutable: "لا يمكن تغيير النوع بعد وجود حركات مرحّلة.",
+  partnerArchiveButton: "أرشفة الجهة",
+  partnerArchiveConfirmTitle: "تأكيد أرشفة الجهة",
+  partnerArchiveConfirmBody: "لن تظهر الجهة المؤرشفة في القوائم الجديدة. هل تريد المتابعة؟",
+  partnerArchivedToast: "تمت أرشفة الجهة.",
+  partnerTabOverview: "البيانات",
+  partnerContactsTitle: "جهات الاتصال",
+  partnerContactNameLabel: "الاسم",
+  partnerContactPhoneLabel: "الهاتف",
+  partnerContactEmailLabel: "البريد الإلكتروني",
+  partnerContactRoleLabel: "الصفة",
+  partnerContactPrimaryLabel: "أساسي",
+  partnerContactAdd: "إضافة جهة اتصال",
+  partnerContactsEmpty: "لا توجد جهات اتصال.",
+  partnerAddressesTitle: "العناوين",
+  addressTypeLabel: "نوع العنوان",
+  addressTypeBilling: "فوترة",
+  addressTypeShipping: "شحن",
+  addressTypeOther: "أخرى",
+  partnerAddressLine1Label: "العنوان (سطر 1)",
+  partnerAddressLine2Label: "العنوان (سطر 2)",
+  partnerAddressCityLabel: "المدينة",
+  partnerAddressCountryLabel: "رمز الدولة (حرفان)",
+  partnerAddressAdd: "إضافة عنوان",
+  partnerAddressesEmpty: "لا توجد عناوين.",
+  partnerBalanceTitle: "الرصيد",
+  partnerBalanceOpenAmount: "الرصيد الافتتاحي (مسودة)",
+  partnerBalanceDraftLabel: "رصيد المسودات",
+  partnerBalanceOverdueLabel: "المتأخر",
+  partnerBalanceDraftBadge: "مسودات فقط",
+  partnerBalanceDraftNote: "تُحتسب الأرصدة في هذه المرحلة من مسودات الأرصدة الافتتاحية فقط — لا ترحيل بعد (الترحيل يصل مع المحاسبة).",
+
+  // -- P6-T11a: item master ----------------------------------------------------------
+  itemsSearchPlaceholder: "ابحث بالاسم أو SKU…",
+  itemsFilterCategoryLabel: "التصنيف",
+  categoryLabel: "التصنيف",
+  itemsColSku: "رمز الصنف (SKU)",
+  itemsColBasePrice: "السعر الأساسي",
+  itemsEmpty: "لا توجد أصناف بعد — أنشئ أول صنف.",
+  itemsNewButton: "صنف جديد",
+  itemFormTitleCreate: "إضافة صنف جديد",
+  itemFormTitleEdit: "بيانات الصنف",
+  itemSkuLabel: "رمز الصنف (SKU)",
+  itemNameLabel: "الاسم (إنجليزي)",
+  itemNameArLabel: "الاسم (عربي)",
+  itemKindLabel: "نوع الصنف",
+  kindStock: "مخزني",
+  kindService: "خدمي",
+  kindComposite: "مركّب",
+  itemUomLabel: "وحدة القياس",
+  itemCostingLabel: "طريقة التكلفة",
+  costingWac: "متوسط مرجّح (WAC)",
+  costingFifo: "الوارد أولًا يصدر أولًا (FIFO)",
+  itemTrackingLabel: "التتبع",
+  itemTrackBatch: "تتبع الدفعات",
+  itemTrackSerial: "أرقام تسلسلية",
+  itemTrackImei: "IMEI",
+  itemHasExpiry: "تاريخ انتهاء",
+  itemExpiryRequiresBatch: "تاريخ الانتهاء يتطلب تتبع الدفعات — فُعِّل تتبع الدفعات تلقائيًا.",
+  itemReorderLevelLabel: "حد إعادة الطلب",
+  itemReorderQtyLabel: "كمية إعادة الطلب",
+  itemBasePriceLabel: "السعر الأساسي",
+  itemCreatedToast: "تم إنشاء الصنف.",
+  itemSavedToast: "تم حفظ التعديلات.",
+  itemSkuTaken: "رمز الصنف (SKU) مستخدم مسبقًا.",
+  itemArchivedError: "الصنف مؤرشف — لا يمكن تعديله.",
+  itemArchiveButton: "أرشفة الصنف",
+  itemArchiveConfirmTitle: "تأكيد أرشفة الصنف",
+  itemArchiveConfirmBody: "لن يظهر الصنف المؤرشف في المستندات الجديدة. هل تريد المتابعة؟",
+  itemArchivedToast: "تمت أرشفة الصنف.",
+  barcodesTitle: "الباركود",
+  barcodeCodeLabel: "رقم الباركود",
+  barcodeAdd: "إضافة باركود",
+  barcodesEmpty: "لا توجد باركود.",
+  barcodeTaken: "الباركود مستخدم مسبقًا (فريد على مستوى المنشأة).",
+
+  // -- P6-T11a: price lists -----------------------------------------------------------
+  priceListCreateTitle: "قائمة أسعار جديدة",
+  priceListsListTitle: "القوائم",
+  priceListNameLabel: "الاسم (إنجليزي)",
+  priceListNameArLabel: "الاسم (عربي)",
+  priceListKindLabel: "نوع القائمة",
+  priceListKindSale: "بيع",
+  priceListKindPurchase: "شراء",
+  priceListCurrencyLabel: "العملة",
+  priceListValidFromLabel: "سارٍ من (اختياري)",
+  priceListValidToLabel: "سارٍ إلى (اختياري)",
+  priceListCreateSubmit: "إنشاء القائمة",
+  priceListSelectHint: "اختر قائمة من الجدول لتحرير صفوفها.",
+  priceListRowsTitle: "صفوف القائمة",
+  priceListRowItemLabel: "الصنف",
+  priceListRowUomLabel: "وحدة القياس",
+  priceListRowPriceLabel: "سعر الوحدة",
+  priceListRowMinQtyLabel: "أقل كمية",
+  priceListRowAdd: "إضافة صف",
+  priceListRowAddedToast: "تمت إضافة الصف.",
+  priceListRowsEmpty: "لا توجد صفوف بعد — أضف أول سعر.",
+  priceListsEmpty: "لا توجد قوائم أسعار بعد.",
+  priceListColValidLabel: "الفترة",
+  priceListCreatedToast: "تم إنشاء قائمة الأسعار.",
+  priceListCurrencySar: "ريال سعودي (SAR)",
+
+  // -- P6-T11a: import & export wizard ---------------------------------------------------
+  importStep1Title: "الملف والنوع",
+  importDataKindLabel: "نوع البيانات",
+  importKindPartners: "الجهات",
+  importKindItems: "الأصناف",
+  importKindOpeningBalances: "الأرصدة الافتتاحية",
+  importFormatLabel: "الصيغة",
+  importCarrierLabel: "جهة الرفع (الناقل)",
+  importCarrierHint: "يُرفع ملف الاستيراد عبر خانة مرفقات الجهة المختارة — هذا هو نمط الرفع المباشر المتاح في هذه المرحلة.",
+  importFileLabel: "الملف",
+  importFileHint: "ملف CSV أو XLSX حتى 8 ميغابايت وبحد أقصى 5000 صف.",
+  importSubmitPreview: "رفع ومعاينة",
+  importStep2Title: "المعاينة",
+  importColTotal: "إجمالي الصفوف",
+  importColValid: "صالحة",
+  importColInvalid: "غير صالحة",
+  importColDuplicates: "مكررة",
+  importCommit: "تطبيق الاستيراد",
+  importCommitToast: "تم تطبيق الاستيراد.",
+  importCommitFailed: "فشل تطبيق الاستيراد — راجع حالة المهمة.",
+  importStep3Title: "تم التطبيق",
+  importCommittedRows: "تم تطبيق {count} صف.",
+  importColRow: "الصف",
+  importColPreview: "المعاينة",
+  importColErrors: "الأخطاء",
+  importColWarnings: "تحذيرات",
+  importRowValid: "صالح",
+  importRowError: "خطأ",
+  importRowDuplicate: "مكرر",
+  importRowWarning: "تحذير",
+  importPreviewEmpty: "لا توجد صفوف في الملف.",
+  importNewJob: "استيراد جديد",
+  importCarrierRequired: "اختر جهة الرفع أولًا.",
+  importFileRequired: "اختر ملفًا أولًا.",
+  importFileTooLarge: "حجم الملف يتجاوز 8 ميغابايت.",
+  importFileTypeInvalid: "صيغة غير مدعومة — CSV أو XLSX فقط.",
+  importUploadFailed: "تعذّر رفع الملف إلى التخزين.",
+  importFormatCsv: "CSV",
+  importFormatXlsx: "XLSX (Excel)",
+  importJobsColCreated: "أُنشئت",
+  importJobsTitle: "سجل الاستيراد",
+  importJobsEmpty: "لا توجد مهام استيراد.",
+  importJobColRows: "الصفوف",
+  importStatusPreviewing: "قيد المعاينة",
+  importStatusPreviewReady: "جاهزة للتطبيق",
+  importStatusCommitting: "قيد التطبيق",
+  importStatusCommitted: "مطبّقة",
+  importStatusFailed: "فاشلة",
+  importErrorFileInvalid: "ملف غير صالح — تأكد من الصيغة والحدود.",
+  exportTitle: "تصدير",
+  exportHint: "تصدير فوري بحد 10000 صف — يصدر رابط تنزيل مؤقت.",
+  exportSubmit: "تصدير",
+  exportDone: "تم التصدير — {rows} صف.",
+  exportRows: "عدد الصفوف",
+  exportDownloadLabel: "تنزيل الملف",
+  exportExpiresNote: "الرابط صالح لمدة {seconds} ثانية.",
+
+  // -- P6-T11a: opening balances (DRAFT only) ------------------------------------------
+  obTabPartner: "جهة",
+  obTabAccount: "حساب",
+  obTabStock: "مخزون",
+  obCreateTitle: "إنشاء رصيد افتتاحي (مسودة)",
+  obAmountLabel: "المبلغ",
+  obNoteLabel: "ملاحظة",
+  obQtyLabel: "الكمية",
+  obUnitCostLabel: "تكلفة الوحدة",
+  obAccountLabel: "معرّف الحساب",
+  obAccountHint: "شجرة الحسابات القانونية تصل مع المحاسبة (المرحلة 007) — أدخل معرّف الحساب الحالي.",
+  obCreateSubmit: "إنشاء المسودة",
+  obEmpty: "لا توجد مسودات بعد.",
+  obListTitle: "المسودات الحالية",
+  obDraftOnlyNote: "لا يوجد ترحيل في هذه المرحلة — كل رصيد افتتاحي يُنشأ كمسودة فقط.",
+  obCreatedToast: "تم إنشاء المسودة.",
+  obColTarget: "الهدف",
+  obColAmount: "المبلغ",
+  obColQty: "الكمية",
+  obColNote: "ملاحظة",
+  obQtyAtCostLabel: "{qty} × {cost}",
+  obTargetUnknown: "هدف غير معروف",
+  obDuplicateError: "توجد مسودة لهذا الهدف بالفعل — مسودة واحدة لكل هدف.",
+
+  // -- P6-T11a: attachments --------------------------------------------------------------
+  attachmentsTitle: "المرفقات",
+  attachmentIssueFormTitle: "إصدار خانة رفع",
+  attachmentFilenameLabel: "اسم الملف",
+  attachmentContentTypeLabel: "نوع المحتوى",
+  attachmentSizeLabel: "الحجم (بايت)",
+  attachmentTypePdf: "PDF",
+  attachmentTypePng: "PNG",
+  attachmentTypeJpeg: "JPEG",
+  attachmentTypeWebp: "WebP",
+  attachmentTypeCsv: "CSV",
+  attachmentIssueButton: "إصدار رابط رفع",
+  attachmentIssuedTitle: "رابط الرفع الصادر",
+  attachmentIssuedHint: "ارفع الملف إلى الرابط أعلاه بأمر PUT خلال {seconds} ثانية من الإصدار — الرفع المباشر من المتصفح يكتمل مع وحدة الملفات الكاملة.",
+  attachmentIssuedToast: "تم إصدار رابط الرفع.",
+  attachmentUrlLabel: "الرابط",
+  attachmentKeyLabel: "مفتاح التخزين",
+  attachmentExpiresLabel: "تنتهي الصلاحية خلال (ثوانٍ)",
+  attachmentsEmpty: "لا توجد مرفقات.",
+  attachmentDownloadLabel: "تنزيل",
+  attachmentIssueFailed: "تعذّر إصدار رابط الرفع.",
+
+  // -- P6-T11a: pickers + command-menu remote groups ---------------------------------------
+  partnerPickerPlaceholder: "اختر جهة…",
+  itemPickerPlaceholder: "اختر صنفًا…",
+  pickerEmptyText: "لا نتائج",
+  commandGroupPartners: "الجهات",
+  commandGroupItems: "الأصناف",
+
+  // -- T15-UI: PHASE-009 tax screens --------------------------------------------------------
+  taxCodesTitle: "الرموز الضريبية",
+  taxCodesEmpty: "لا توجد رموز ضريبية بعد — أنشئ أول رمز.",
+  taxCodesCode: "الرمز",
+  taxCodesName: "الاسم (إنجليزي)",
+  taxCodesNameAr: "الاسم (عربي)",
+  taxCodesCountry: "الدولة",
+  taxCodesTreatment: "المعاملة الضريبية",
+  taxCodesUsage: "الاستخدام",
+  taxCodesCreateTitle: "إنشاء رمز ضريبي",
+  taxCodesCreatedToast: "تم إنشاء الرمز الضريبي.",
+  taxCodesArchive: "أرشفة الرمز",
+  taxCodesArchiveConfirm: "سيختفي الرمز المؤرشف من المستندات الجديدة. هل تريد المتابعة؟",
+  taxCodesArchiveBlocked: "لا يمكن أرشفة رمز مستخدم في أصناف أو فئات — أعد تعيينها أولًا.",
+  taxCodesArchivedToast: "تمت أرشفة الرمز الضريبي.",
+  taxTreatmentStandardRated: "خاضع للنسبة الأساسية",
+  taxTreatmentZeroRated: "نسبة صفرية",
+  taxTreatmentExempt: "معفى",
+  taxTreatmentOutOfScope: "خارج نطاق الضريبة",
+  taxTreatmentReverseCharge: "احتساب عكسي",
+  taxTreatmentNotSubject: "غير خاضع",
+  taxResolveTitle: "تجربة احتساب الضريبة",
+  taxResolveDate: "تاريخ المستند",
+  taxResolveAmount: "المبلغ",
+  taxResolveCode: "الرمز الضريبي",
+  taxResolveAction: "احتساب",
+  taxResolveTreatment: "المعاملة",
+  taxResolveRate: "النسبة",
+  taxResolveBase: "الوعاء الضريبي",
+  taxResolveTax: "الضريبة",
+  taxResolveGross: "الإجمالي مع الضريبة",
+  taxResolveNotSubject: "هذا السطر غير خاضع للضريبة — لا تُحتسب عليه ضريبة.",
+  taxResolveBoundaryWarning:
+    "تنبيه حدودي (BR-033): تسري نسبة {rate} اعتبارًا من {date} — المسودات الممتدة عبر هذا الحد تُنبَّه عند الفتح، واللقطات المرحّلة لا تتغير.",
+  taxRegistrationsTitle: "التسجيلات الضريبية",
+  taxRegistrationsEmpty: "لا توجد تسجيلات ضريبية بعد.",
+  taxRegistrationsStatus: "حالة التسجيل",
+  taxRegistrationsNumber: "رقم التسجيل الضريبي",
+  taxRegistrationsEffectiveFrom: "ساري من",
+  taxRegistrationsEffectiveTo: "ساري حتى",
+  taxRegistrationsRegistered: "مسجل",
+  taxRegistrationsNotRegistered: "غير مسجل",
+  taxRegistrationsDeregistered: "مُلغى التسجيل",
+  taxRegistrationsCreateTitle: "تحديث حالة التسجيل",
+  taxRegistrationsSavedToast: "تم حفظ حالة التسجيل الضريبي.",
+  taxPacksTitle: "حزم الولايات القضائية",
+  taxPacksEmpty: "لا توجد حزم مزروعة.",
+  taxPacksCountry: "الدولة",
+  taxPacksVatStatus: "حالة ضريبة القيمة المضافة",
+  taxPacksVatInForce: "سارية",
+  taxPacksVatPlanned: "مخططة",
+  taxPacksVatNoVat: "بدون ضريبة",
+  taxPacksVersion: "إصدار الحزمة",
+  taxPacksVerification: "حالة التحقق",
+  taxPacksVerified: "مُتحقق",
+  taxPacksRequiresVerification: "يتطلب تحققًا",
+  taxPacksRate: "النسبة",
+  taxPacksEffectiveFrom: "ساري من",
+  taxPacksEffectiveTo: "ساري حتى",
+  taxPacksSource: "المرجع",
+  taxPacksWindowsTitle: "نوافذ النسب",
+  taxPacksNoRates: "لا توجد نوافذ نسب لهذه الحزمة.",
+  taxPacksApply: "تثبيت الإصدار",
+  taxPacksApplied: "تم تثبيت إصدار الحزمة للمنشأة.",
+  taxPacksBinding: "الإصدار المثبَّت للمنشأة",
+  taxPacksBindingNone: "لا يوجد تثبيت — تُطبَّق النسخة المزروعة تلقائيًا.",
+  taxPacksPreviewNote:
+    "ترقية الحزمة لا تعيد كتابة اللقطات المرحّلة — النوافذ الجديدة تسري على المستندات الجديدة فقط (BR-033).",
+  vatReturnTitle: "الإقرار الضريبي",
+  vatReturnEmpty: "لا توجد إقرارات ضريبية بعد.",
+  vatReturnCountry: "الدولة",
+  vatReturnPeriod: "الفترة",
+  vatReturnPeriodStart: "بداية الفترة",
+  vatReturnPeriodEnd: "نهاية الفترة",
+  vatReturnStatus: "الحالة",
+  vatReturnDraft: "مسودة",
+  vatReturnReady: "جاهز",
+  vatReturnFiled: "مقدَّم",
+  vatReturnCreateTitle: "إنشاء إقرار ضريبي",
+  vatReturnCreatedToast: "تم إنشاء الإقرار الضريبي.",
+  vatReturnPrepare: "إعداد الإقرار",
+  vatReturnPreparedToast: "تم إعداد الإقرار الضريبي.",
+  vatReturnMarkFiled: "تسجيل التقديم",
+  vatReturnFiledToast: "تم تسجيل تقديم الإقرار الضريبي.",
+  vatReturnFilingReference: "مرجع التقديم",
+  vatReturnFilingNote: "ملاحظة التقديم",
+  vatReturnExport: "تصدير",
+  vatReturnExportCsv: "تصدير CSV",
+  vatReturnExportXlsx: "تصدير XLSX",
+  vatReturnSummaryTitle: "ملخص الفترة حسب المعاملة",
+  vatReturnDirection: "الاتجاه",
+  vatReturnDirectionOutput: "مخرجات",
+  vatReturnDirectionInput: "مدخلات",
+  vatReturnTaxableBase: "الوعاء الضريبي",
+  vatReturnTaxAmount: "قيمة الضريبة",
+  vatReturnCrossCheck: "المطابقة مع دفتر الأستاذ",
+  vatReturnDocumentSide: "جانب المستندات",
+  vatReturnGlSide: "جانب دفتر الأستاذ",
+  vatReturnOutputTax: "ضريبة المخرجات",
+  vatReturnInputTax: "ضريبة المدخلات القابلة للخصم",
+  vatReturnInputTaxExpensed: "ضريبة مدخلات محمّلة على المصروف",
+  vatReturnMismatch:
+    "فشلت المطابقة (INV-012) — قيم المستندات تختلف عن دفتر الأستاذ؛ يُحظر تسجيل التقديم حتى التطابق.",
+  vatReturnReadyNote: "الإقرار جاهز — التطابق مع الأستاذ سليم",
+  taxErrCodeTaken: "هذا الرمز الضريبي مستخدم مسبقًا لهذه الدولة.",
+  taxErrCodeInUse: "الرمز مستخدم في أصناف أو فئات — أعد تعيينها قبل الأرشفة.",
+  taxErrCodeArchived: "الرمز الضريبي مؤرشف ولا يمكن استخدامه في مستندات جديدة.",
+  taxErrRegistrationNumber: "رقم التسجيل الضريبي مطلوب عندما تكون الحالة «مسجل» (٣ إلى ٥٠ حرفًا) ولا يُقبل في غيرها.",
+  taxErrJurisdiction: "لا توجد حزمة مزروعة لهذه الدولة.",
+  taxErrNoRateForDate: "لا توجد نسبة مزروعة تغطي هذا التاريخ — الاحتساب يفشل بشكل آمن.",
+  taxErrWindowTaken: "يوجد إقرار ضريبي لهذه الفترة مسبقًا.",
+  taxErrCrossCheck: "فشلت المطابقة مع دفتر الأستاذ — راجع الفروقات ثم أعد الإعداد.",
+  taxErrState: "حالة الإقرار الضريبي لا تسمح بهذا الإجراء.",
+  taxErrAlreadyFiled: "الإقرار الضريبي مقدَّم ولا يمكن تعديله.",
+  taxErrPackBinding: "إصدار الحزمة غير مزروع — تُطبَّق الترقيات عبر بذور الهجرات فقط.",
+
+  // -- T14-UI (PHASE-010): inventory & warehousing (AR canonical per GLOSSARY) ----
+  navInventoryWarehouses: "المستودعات",
+  navInventoryStock: "الأرصدة المتوفرة",
+  navInventoryMoves: "حركات المخزون",
+  navInventoryTransfers: "تحويلات المخزون",
+  navInventoryCounts: "جرد المخزون",
+  warehousesTitle: "المستودعات",
+  warehousesEmpty: "لا توجد مستودعات بعد.",
+  warehousesCreateTitle: "إنشاء مستودع",
+  warehousesCodeLabel: "رمز المستودع",
+  warehousesNameLabel: "الاسم (إنجليزي)",
+  warehousesNameArLabel: "الاسم (عربي)",
+  warehousesBranchLabel: "الفرع",
+  warehousesGlAccountLabel: "حساب المخزون في الأستاذ (اختياري)",
+  warehousesNoteLabel: "ملاحظة",
+  warehousesCreatedToast: "تم إنشاء المستودع.",
+  warehousesDeactivate: "تعطيل",
+  warehousesDeactivateTitle: "تعطيل المستودع",
+  warehousesDeactivateConfirm: "تعطيل المستودع يمنع الحركات الجديدة عليه؛ تاريخ الحركات يبقى كما هو.",
+  warehousesDeactivatedToast: "تم تعطيل المستودع.",
+  warehousesReactivate: "إعادة التفعيل",
+  warehousesReactivatedToast: "تمت إعادة تفعيل المستودع.",
+  warehousesColCode: "الرمز",
+  warehousesColBranch: "الفرع",
+  warehousesColGlAccount: "حساب الأستاذ",
+  stockTitle: "الأرصدة المتوفرة",
+  stockEmpty: "لا توجد أرصدة مخزنية بعد.",
+  stockFilterWarehouse: "المستودع",
+  stockColItem: "الصنف",
+  stockColWarehouse: "المستودع",
+  stockColQty: "الكمية",
+  stockColAvgCost: "متوسط التكلفة",
+  stockNegativeBadge: "رصيد سالب",
+  movesTitle: "حركات المخزون",
+  movesEmpty: "لا توجد حركات مخزون بعد.",
+  movesFilterDirection: "الاتجاه",
+  movesFilterKind: "نوع الحركة",
+  movesColDate: "التاريخ",
+  movesColDirection: "الاتجاه",
+  movesColKind: "النوع",
+  movesColUnitCost: "تكلفة الوحدة",
+  movesColValue: "القيمة",
+  movesColReason: "السبب",
+  movesColBatch: "الدفعة",
+  movesColSerial: "الرقم التسلسلي",
+  movesColSource: "المصدر",
+  movesDirectionIn: "إدخال",
+  movesDirectionOut: "إخراج",
+  movesKindReceipt: "استلام",
+  movesKindIssue: "صرف",
+  movesKindTransferIn: "تحويل وارد",
+  movesKindTransferOut: "تحويل صادر",
+  movesKindAdjust: "تسوية",
+  movesReasonDamage: "تلف",
+  movesReasonExpired: "انتهاء صلاحية",
+  movesReasonCountLoss: "عجز جرد",
+  movesReasonCountGain: "زيادة جرد",
+  movesReasonCustomerReturn: "مرتجع عميل",
+  movesReasonOther: "أخرى",
+  transfersTitle: "تحويلات المخزون",
+  transfersEmpty: "لا توجد تحويلات بعد.",
+  transfersColNo: "رقم التحويل",
+  transfersColFrom: "من مستودع",
+  transfersColTo: "إلى مستودع",
+  transfersColLines: "البنود",
+  transfersColDispatchDate: "تاريخ الإرسال",
+  transfersColReceiveDate: "تاريخ الاستلام",
+  transfersStatusInTransit: "في الطريق",
+  transfersNewTitle: "تحويل جديد",
+  transfersFromLabel: "من مستودع",
+  transfersToLabel: "إلى مستودع",
+  transfersNoteLabel: "ملاحظة",
+  transfersLinesTitle: "بنود التحويل",
+  transfersLineItemLabel: "الصنف",
+  transfersLineQtyLabel: "الكمية",
+  transfersAddLine: "إضافة بند",
+  transfersRemoveLine: "حذف البند",
+  transfersSameWarehouseError: "يجب أن يختلف مستودع الإرسال عن مستودع الاستلام.",
+  transfersLineMissingError: "كل بند يحتاج صنفًا وكمية موجبة.",
+  transfersCreatedToast: "تم إنشاء التحويل (مسودة).",
+  transfersDispatch: "إرسال",
+  transfersDispatchedToast: "تم إرسال التحويل — المخزون في الطريق (غير متاح للبيع).",
+  transfersReceive: "استلام",
+  transfersReceivedToast: "تم استلام التحويل في المستودع الوجهة.",
+  transfersCancel: "إلغاء",
+  transfersCancelledToast: "تم إلغاء التحويل.",
+  countingTitle: "جرد المخزون",
+  countingEmpty: "لا توجد جلسات جرد بعد.",
+  countingNewTitle: "جلسة جرد جديدة",
+  countingWarehouseLabel: "المستودع",
+  countingBlindLabel: "جرد أعمى (إخفاء الكميات الدفترية)",
+  countingPickItemsTitle: "اختيار الأصناف",
+  countingPickSearchPlaceholder: "ابحث بالرمز أو الاسم…",
+  countingPickEmpty: "لا توجد أصناف مطابقة.",
+  countingSelectedCount: "الأصناف المختارة",
+  countingCreate: "إنشاء الجلسة",
+  countingCreatedToast: "تم إنشاء جلسة الجرد وتجميد لقطة الكميات.",
+  countingColNo: "رقم الجرد",
+  countingColBlind: "أعمى",
+  countingBlindYes: "نعم",
+  countingBlindNo: "لا",
+  countingColVariance: "الفروقات",
+  countingOpenSession: "فتح الجلسة",
+  countingCloseSession: "إغلاق الجلسة",
+  countingSnapshotAt: "تاريخ اللقطة",
+  countingSessionLinesTitle: "بنود الجرد",
+  countingColLineNo: "البند",
+  countingColSystemQty: "الكمية الدفترية",
+  countingColCountedQty: "الكمية المعدودة",
+  countingColDiff: "الفرق",
+  countingColValueImpact: "الأثر القيمي",
+  countingSaveEntries: "حفظ العدّ",
+  countingEntriesSavedToast: "تم حفظ كميات العدّ.",
+  countingSubmit: "تقديم للمراجعة",
+  countingSubmittedToast: "تم تقديم الجلسة لمراجعة الفروقات.",
+  countingReviewTitle: "مراجعة الفروقات",
+  countingReviewHint: "راجع الفروقات قبل الاعتماد — الاعتماد يرحّل تسوية الجرد (عجز/زيادة) عبر محرك الترحيل.",
+  countingApprove: "اعتماد",
+  countingApproveSupervisor: "اعتماد بموافقة مشرف",
+  countingApprovedToast: "تم اعتماد الجرد وترحيل التسوية.",
+  countingCancel: "إلغاء",
+  countingCancelledToast: "تم إلغاء جلسة الجرد.",
+  countingRecountTitle: "إعادة عدّ بند",
+  countingRecountLineLabel: "رقم البند",
+  countingRecountNoteLabel: "سبب إعادة العدّ",
+  countingRecountedToast: "تم تسجيل إعادة العدّ بمراجعة.",
+  countingStatusCounted: "معدود",
+  countingStatusVarianceReview: "مراجعة الفروقات",
+  inventoryErrWarehouseCodeTaken: "رمز المستودع مستخدم مسبقًا.",
+  inventoryErrWarehouseInactive: "المستودع غير مفعّل.",
+  inventoryErrWarehouseNotDeactivatable: "لا يمكن تعطيل المستودع (حركات أو جلسات جرد جارية).",
+  inventoryErrItemNotStocked: "الصنف غير مُخزّن في هذا المستودع.",
+  inventoryErrInsufficientStock: "الكمية المتوفرة لا تكفي (السماح بالسالب معطّل افتراضيًا).",
+  inventoryErrBatchInsufficient: "كمية الدفعة لا تكفي.",
+  inventoryErrBatchRequired: "الصنف يتتبع الدفعات — الدفعة مطلوبة.",
+  inventoryErrBatchTaken: "رقم الدفعة مستخدم مسبقًا لهذا الصنف.",
+  inventoryErrSerialRequired: "الصنف يتتبع الأرقام التسلسلية — حدد الوحدات.",
+  inventoryErrSerialNotInStock: "الوحدة التسلسلية غير متوفرة في المخزون.",
+  inventoryErrSerialTaken: "الرقم التسلسلي مستخدم مسبقًا.",
+  inventoryErrSerialReturnBinding: "مرتجع الصنف التسلسلي يجب أن يشير إلى الوحدة المبيعة أصلًا.",
+  inventoryErrState: "حالة المستند لا تسمح بهذا الإجراء.",
+  inventoryErrTransferEmpty: "التحويل يحتاج بندًا واحدًا على الأقل.",
+  inventoryErrTransferSameWarehouse: "يجب أن يختلف مستودعا الإرسال والاستلام.",
+  inventoryErrCountTolerance: "الفروق يتجاوز الحد المسموح — يلزم اعتماد المشرف.",
+  inventoryErrMethodSwitchInFlight: "لا يمكن تغيير طريقة التقييم مع حركات جارية.",
+  inventoryErrMethodSwitchInvalid: "تغيير طريقة التقييم غير صالح (لا يوجد رصيد أو نفس الطريقة).",
+  inventoryErrMethodSwitchSame: "الصنف يستخدم هذه الطريقة بالفعل.",
+  // PHASE-011 purchasing (T13-UI).
+  purchasingEmpty: "لا توجد مستندات بعد",
+  purchasingNoticeCreated: "تم إنشاء المستند",
+  purchasingNoticeUpdated: "تم التحديث",
+  purchasingNoticePosted: "تم الترحيل",
+  expensesColAccount: "الحساب",
+  navPurchasingOrders: "أوامر الشراء",
+  navPurchasingReceipts: "سندات الاستلام",
+  navPurchasingInvoices: "فواتير الموردين",
+  navPurchasingDebitNotes: "الإشعارات المدينة",
+  navPurchasingAp: "حسابات الموردين",
+  purchasingOrdersTitle: "المشتريات — أوامر الشراء",
+  purchasingReceiptsTitle: "المشتريات — سندات الاستلام",
+  purchasingInvoicesTitle: "المشتريات — فواتير الموردين",
+  purchasingDebitNotesTitle: "المشتريات — الإشعارات المدينة",
+  purchasingApTitle: "المشتريات — حسابات الموردين",
+  purchasingRequestsSection: "طلبات الشراء",
+  purchasingOrdersSection: "أوامر الشراء",
+  purchasingNewRequest: "طلب شراء جديد",
+  purchasingNewOrder: "أمر شراء جديد",
+  purchasingRequestNo: "رقم الطلب",
+  purchasingNeededBy: "مطلوب بحلول",
+  purchasingSubmit: "إرسال",
+  purchasingApprove: "اعتماد",
+  purchasingReject: "رفض",
+  purchasingIssue: "إصدار",
+  purchasingClose: "إغلاق",
+  purchasingCancel: "إلغاء",
+  purchasingOrderNo: "رقم الأمر",
+  purchasingOrderDate: "تاريخ الأمر",
+  purchasingExpectedDate: "تاريخ التسليم المتوقع",
+  purchasingSupplier: "المورد",
+  purchasingLines: "البنود",
+  purchasingAddLine: "إضافة بند",
+  purchasingRemoveLine: "حذف البند",
+  purchasingItem: "الصنف",
+  purchasingQty: "الكمية",
+  purchasingUnitPrice: "سعر الوحدة",
+  purchasingTaxCode: "رمز الضريبة",
+  purchasingUnitCost: "تكلفة الوحدة",
+  purchasingTotalNet: "الصافي",
+  purchasingTotalTax: "الضريبة",
+  purchasingTotalGross: "الإجمالي",
+  purchasingStatus: "الحالة",
+  purchasingNewReceipt: "سند استلام جديد",
+  purchasingReceiptNo: "رقم السند",
+  purchasingReceiptDate: "تاريخ الاستلام",
+  purchasingWarehouse: "المستودع",
+  purchasingPo: "أمر الشراء",
+  purchasingPoLessReason: "سبب الشراء المباشر (بدون أمر)",
+  purchasingPost: "ترحيل",
+  purchasingBatchNo: "رقم التشغيلة",
+  purchasingBatchExpiry: "تاريخ الانتهاء",
+  purchasingNewInvoice: "فاتورة مورد جديدة",
+  purchasingInvoiceNo: "رقم فاتورة المورد",
+  purchasingInvoiceDate: "تاريخ الفاتورة",
+  purchasingDueDate: "تاريخ الاستحقاق",
+  purchasingInternalNo: "الرقم الداخلي",
+  purchasingMatchStatus: "حالة المطابقة",
+  purchasingMatchPreview: "معاينة المطابقة الثلاثية",
+  purchasingRecordMatch: "تسجيل المطابقة",
+  purchasingDisposition: "المعالجة",
+  purchasingDispositionReason: "سبب المعالجة",
+  purchasingDispositionAccept: "قبول مع السبب",
+  purchasingMatchOutcomeMatched: "مطابقة",
+  purchasingMatchOutcomeException: "استثناء",
+  purchasingMatchOutcomeDispositioned: "معالَج",
+  purchasingMatchOutcomePending: "قيد المطابقة",
+  purchasingQtyVariance: "فرق الكمية %",
+  purchasingPriceVariance: "فرق السعر %",
+  purchasingNewDebitNote: "إشعار مدين جديد",
+  purchasingNoteNo: "رقم الإشعار",
+  purchasingNoteDate: "تاريخ الإشعار",
+  purchasingRefInvoice: "الفاتورة المرجعية",
+  purchasingApAging: "أعمار الديون",
+  purchasingApStatement: "كشف حساب المورد",
+  purchasingGrniRegister: "سجل البضاعة غير المفوترة",
+  purchasingAgingNotDue: "غير مستحق",
+  purchasingAging1_30: "١-٣٠ يوم",
+  purchasingAging31_60: "٣١-٦٠ يوم",
+  purchasingAging61_90: "٦١-٩٠ يوم",
+  purchasingAging90Plus: "أكثر من ٩٠",
+  purchasingAgingTotal: "الإجمالي",
+  purchasingAsOf: "كما في",
+  purchasingOpeningBalance: "الرصيد الافتتاحي",
+  purchasingClosingBalance: "الرصيد الختامي",
+  purchasingDebit: "مدين",
+  purchasingCredit: "دائن",
+  purchasingBalance: "الرصيد",
+  purchasingOutstanding: "المتبقي",
+  purchasingReceivedValue: "القيمة المستلمة",
+  purchasingInvoicedValue: "القيمة المفوترة",
+  purchasingGrniRemaining: "غير مفوتر",
+  purchasingSelectSupplier: "اختر المورد",
+  purchasingSelectWarehouse: "اختر المستودع",
+  purchasingSelectPo: "اختر أمر الشراء",
+  purchasingNoPo: "بدون أمر شراء",
+  purchasingErrState: "حالة المستند لا تسمح بهذه العملية",
+  purchasingErrDuplicate: "فاتورة مكررة للمورد (الرقم والمبلغ)",
+  purchasingErrMatchMissing: "سجّل نتيجة المطابقة الثلاثية أولاً",
+  purchasingErrMatchException: "استثناءات مطابقة بلا معالجة — عالجها أولاً",
+  purchasingErrPoLess: "السياسة تمنع الاستلام بدون أمر شراء",
+  purchasingErrPoLessReason: "سبب الشراء المباشر مطلوب",
+  purchasingErrOverReceipt: "الكمية المستلمة تتجاوز بند أمر الشراء",
+  purchasingErrOverInvoice: "الكمية المفوترة تتجاوز الكمية المستلمة",
+  purchasingErrNotSupplier: "الجهة ليست موردًا",
+  purchasingErrGrnSupplier: "بند الاستلام يخص موردًا آخر",
+  purchasingErrSelfApproval: "لا يمكن لمنشئ المستند اعتماده",
+  purchasingErrReallocation: "إعادة التخصيص تتجاوز الحدود المسموحة",
+  // PHASE-012 sales (T13-UI).
+  salesEmpty: "لا توجد مستندات بعد",
+  salesNoticeCreated: "تم إنشاء المستند",
+  salesNoticeUpdated: "تم التحديث",
+  salesNoticePosted: "تم الترحيل",
+  navSalesQuotes: "عروض الأسعار",
+  navSalesOrders: "أوامر البيع",
+  navSalesDeliveries: "سندات التسليم",
+  navSalesInvoices: "فواتير البيع",
+  navSalesCreditNotes: "الإشعارات الدائنة",
+  navSalesAr: "حسابات العملاء",
+  salesQuotesTitle: "المبيعات — عروض الأسعار وأوامر البيع",
+  salesOrdersTitle: "المبيعات — أوامر البيع",
+  salesDeliveriesTitle: "المبيعات — سندات التسليم",
+  salesInvoicesTitle: "المبيعات — فواتير البيع",
+  salesCreditNotesTitle: "المبيعات — الإشعارات الدائنة",
+  salesArTitle: "المبيعات — حسابات العملاء",
+  salesQuotesSection: "عروض الأسعار",
+  salesOrdersSection: "أوامر البيع",
+  salesStatus: "الحالة",
+  salesStatusSent: "مُرسل",
+  salesNewQuote: "عرض سعر جديد",
+  salesNewOrder: "أمر بيع جديد",
+  salesQuoteNo: "رقم العرض",
+  salesQuoteDate: "تاريخ العرض",
+  salesValidUntil: "صالح حتى",
+  salesOrderNo: "رقم الأمر",
+  salesOrderDate: "تاريخ الأمر",
+  salesExpectedDate: "تاريخ التسليم المتوقع",
+  salesSalesOrder: "أمر البيع",
+  salesNoOrder: "بدون أمر بيع",
+  salesCustomer: "العميل",
+  salesSelectCustomer: "اختر العميل",
+  salesBranch: "الفرع",
+  salesSelectBranch: "اختر الفرع",
+  salesWarehouse: "المستودع",
+  salesSelectWarehouse: "اختر المستودع",
+  salesCurrency: "العملة",
+  salesExchangeRate: "سعر الصرف",
+  salesItem: "الصنف",
+  salesQty: "الكمية",
+  salesUnitPrice: "سعر الوحدة",
+  salesDiscount: "الخصم",
+  salesTaxCode: "رمز الضريبة",
+  salesAccount: "الحساب",
+  salesLines: "البنود",
+  salesAddLine: "إضافة بند",
+  salesRemoveLine: "حذف البند",
+  salesTotalNet: "الصافي",
+  salesTotalTax: "الضريبة",
+  salesTotalGross: "الإجمالي",
+  salesSend: "إرسال",
+  salesAccept: "قبول وتحويل",
+  salesReject: "رفض",
+  salesSubmit: "إرسال للاعتماد",
+  salesApprove: "اعتماد",
+  salesIssue: "إصدار",
+  salesClose: "إغلاق",
+  salesPost: "ترحيل",
+  salesCancel: "إلغاء",
+  salesCancelReason: "سبب الإلغاء",
+  salesReserve: "حجز المخزون",
+  salesAcceptWarehouse: "مستودع التحويل",
+  salesNewDelivery: "سند تسليم جديد",
+  salesDeliveryNo: "رقم السند",
+  salesDeliveryDate: "تاريخ التسليم",
+  salesDelivery: "سند التسليم",
+  salesCogsValue: "تكلفة البضاعة المباعة",
+  salesNewInvoice: "فاتورة بيع جديدة",
+  salesInvoiceNo: "رقم الفاتورة",
+  salesInvoiceDate: "تاريخ الفاتورة",
+  salesDueDate: "تاريخ الاستحقاق",
+  salesKind: "نوع الفاتورة",
+  salesKindCash: "نقدية",
+  salesKindCredit: "آجلة",
+  salesCashAccount: "الحساب النقدي",
+  salesSelectCashAccount: "اختر الحساب النقدي",
+  salesOverrideCredit: "تجاوز حد الائتمان",
+  salesCreditCheck: "فحص الائتمان",
+  salesCreditAllow: "مسموح",
+  salesCreditWarn: "تحذير",
+  salesCreditBlock: "ممنوع",
+  salesNewCreditNote: "إشعار دائن جديد",
+  salesNoteNo: "رقم الإشعار",
+  salesNoteDate: "تاريخ الإشعار",
+  salesRefInvoice: "الفاتورة المرجعية",
+  salesInvoiceLineId: "معرّف بند الفاتورة",
+  salesReturnToStock: "إرجاع إلى المخزون",
+  salesArAging: "أعمار الديون",
+  salesArStatement: "كشف حساب العميل",
+  salesArOpenItems: "البنود المفتوحة",
+  salesOpenItemsHint: "هذه البنود هي سطح التخصيص الذي تستهلكه سندات القبض (FIFO / جزئي / دفعة مقدمة)",
+  salesAgingNotDue: "غير مستحق",
+  salesAging1_30: "١-٣٠ يوم",
+  salesAging31_60: "٣١-٦٠ يوم",
+  salesAging61_90: "٦١-٩٠ يوم",
+  salesAging90Plus: "أكثر من ٩٠",
+  salesAgingTotal: "الإجمالي",
+  salesAsOf: "كما في",
+  salesOpeningBalance: "الرصيد الافتتاحي",
+  salesClosingBalance: "الرصيد الختامي",
+  salesDebit: "مدين",
+  salesCredit: "دائن",
+  salesBalance: "الرصيد",
+  salesOutstanding: "المتبقي",
+  salesBaseBalance: "الرصيد بالعملة الأساسية",
+  salesSubledgerTie: "ربط دفتر العملاء المساعد",
+  salesTieOk: "متطابق",
+  salesTieBroken: "غير متطابق",
+  salesSource: "المصدر",
+  salesAmount: "المبلغ",
+  salesRunOverdueScan: "فحص الفواتير المتأخرة",
+  salesOverdueScanDone: "اكتمل الفحص: {overdue} فاتورة متأخرة، {alerted} تنبيه",
+  salesPrint: "طباعة",
+  salesPrintDisabled: "الطباعة متاحة عند إصدار التقارير (PHASE-013)",
+  salesErrState: "حالة المستند لا تسمح بهذه العملية",
+  salesErrQuotationExpired: "انتهت صلاحية عرض السعر — أصدر عرضًا جديدًا",
+  salesErrCreditLimit: "تجاوز حد الائتمان (المنع أو التحذير وفق السياسة)",
+  salesErrReturnWindow: "مرتجع خارج فترة الإرجاع المسموحة",
+  salesErrPriceChanged: "تغيّر السعر — أعد فتح المستند لإعادة الاحتساب",
+  salesErrItemInactive: "الصنف غير مفعّل ولا يقبل مستندات البيع",
+  salesErrDeliveryInvoiced: "الكمية المفوترة تتجاوز الكمية المسلّمة",
+  salesErrCreditNoteExceeds: "الإشعار الدائن يتجاوز المتبقي على الفاتورة",
+  salesErrReallocation: "إعادة التخصيص تتجاوز الحدود المسموحة",
+
+  // -- T-WEB (PHASE-013): مساحة التقارير (النموذج §7) -----------------------
+  navReports: "التقارير",
+  reportsNavWorkspace: "تقارير المنشأة",
+  reportWorkspaceTitle: "تقارير المنشأة",
+  reportWorkspaceCatalog: "كتالوج التقارير",
+  reportWorkspaceNoReport: "لم يتم اختيار تقرير بعد — اختر تقريرًا من الكتالوج",
+  reportWorkspaceDateFrom: "من تاريخ",
+  reportWorkspaceDateTo: "إلى تاريخ",
+  reportWorkspaceAsOfLabel: "تاريخ اللقطة",
+  reportWorkspaceLocale: "لغة التقرير",
+  reportWorkspaceRun: "تشغيل التقرير",
+  reportWorkspaceQueued: "في قائمة الانتظار",
+  reportWorkspaceRunning: "قيد التنفيذ",
+  reportWorkspaceStage: "المرحلة",
+  reportWorkspaceStatus: "الحالة",
+  reportWorkspaceStatusSucceeded: "مكتملة",
+  reportWorkspaceStatusFailed: "فاشلة",
+  reportWorkspaceDuration: "المدة",
+  reportWorkspaceTotals: "الإجماليات",
+  reportWorkspaceAssertions: "تأكيدات المطابقة",
+  reportWorkspaceAssertionFailed: "فشل تأكيد المطابقة — التصدير معطّل",
+  reportWorkspaceAsOf: "كما في {date}",
+  reportWorkspaceComputedAt: "وقت الاحتساب {datetime}",
+  reportWorkspaceEmpty: "لا توجد صفوف في هذه النتيجة",
+  reportWorkspaceSavedViews: "المشاهدات المحفوظة",
+  reportWorkspaceSaveView: "حفظ المشهد الحالي",
+  reportWorkspaceViewNameAr: "اسم المشهد (عربي)",
+  reportWorkspaceViewNameEn: "اسم المشهد (إنجليزي)",
+  reportWorkspaceApply: "تطبيق",
+  reportWorkspaceDeleteView: "حذف",
+  reportWorkspaceRunHistory: "سجل التشغيلات",
+  reportWorkspaceRefresh: "تحديث",
+  reportWorkspaceBack: "العودة إلى الكتالوج",
+  reportWorkspaceExportPdf: "تصدير PDF",
+  reportWorkspaceExportXlsx: "تصدير XLSX",
+  reportWorkspaceExportCsv: "تصدير CSV",
+  reportWorkspacePrintPreview: "معاينة الطباعة",
+  reportWorkspaceExportBlocked: "التصدير محجوب: فشل فحص المطابقة لهذه النتيجة",
+  reportWorkspaceViewSaved: "تم حفظ المشهد",
+  reportWorkspaceColReport: "التقرير",
+  reportWorkspaceNoRuns: "لا توجد تشغيلات سابقة",
+
+  // -- T19-WEB (PHASE-014): subscription, billing, onboarding & dashboards --
+  navDashboard: "لوحة المعلومات",
+  statusTrial: "تجريبي",
+  statusPastDue: "متأخر السداد",
+  statusGraceReadOnly: "فترة سماحية (قراءة فقط)",
+  readOnlyBanner:
+    "وضع القراءة فقط: الفترة السماحية — الترحيل معلّق مؤقتًا؛ التقارير والتصدير والطباعة متاحة. ادفع أو قم بترقية الخطة لاستعادة القدرة على الترحيل.",
+  readOnlyPayNow: "الدفع الآن",
+  readOnlyError:
+    "وضع القراءة فقط: الترحيل معلّق مؤقتًا خلال الفترة السماحية — الدفع هو إجراء الحل",
+  readOnlyReason:
+    "الوضع للقراءة فقط خلال الفترة السماحية — إجراءات الإنشاء والتعديل تعود بعد الدفع",
+
+  pricingTitle: "الأسعار والخطط",
+  pricingIntro:
+    "خطط الخدمة الذاتية الثلاث — كل الأسعار والحدود قيم تمهيدية من بيانات الخطة نفسها (لا أرقام ثابتة في الصفحة).",
+  pricingPlaceholderNote:
+    "⚠ جميع الأسعار قيم تمهيدية (OQ-002) — بانتظار اعتماد الأسعار؛ الأرقام المعروضة تأتي من إعداد الخطط فقط.",
+  pricingPlaceholderBadge: "سعر تمهيدي — بانتظار اعتماد الأسعار (OQ-002)",
+  pricingPlansHeading: "الخطط",
+  pricingMonthly: "شهريًا",
+  pricingAnnual: "سنويًا",
+  pricingHighlightBadge: "الأكثر ملاءمة",
+  pricingCta: "اختر الخطة",
+  pricingMatrixHeading: "مقارنة الميزات",
+  pricingMatrixHint:
+    "عدد مفاتيح الميزات المتاحة لكل خطة من مجموع مفاتيح العائلة عبر الخطط الثلاث (مشتق من مفاتيح ميزات الخطة).",
+  pricingMatrixArea: "المجال",
+  pricingMatrixCellOf: "{present} من {total}",
+  pricingFamilyPlatform: "المنصة",
+  pricingFamilyAccounting: "المحاسبة",
+  pricingFamilyTrade: "البيانات الأساسية والتجارة",
+  pricingFamilyTreasuryTax: "الخزينة والضرائب",
+  pricingFamilyReporting: "التقارير",
+  pricingFamilyGrowth: "طبقة النمو",
+  pricingHaveAccount: "لديك حساب بالفعل؟",
+  pricingGoLogin: "تسجيل الدخول",
+
+  checkoutTitle: "إتمام الدفع",
+  checkoutGraceNote: "هذه الصفحة متاحة في وضع القراءة فقط — الدفع هو إجراء الحل.",
+  checkoutPlansHeading: "اختر الخطة",
+  checkoutCurrentPlan: "خطتك الحالية",
+  checkoutSelected: "محددة",
+  checkoutChoose: "اختر",
+  checkoutConfirmTitle: "تأكيد طلب الخطة",
+  checkoutConfirmMeta: "الخطة: {plan} — {price} (سعر تمهيدي)",
+  checkoutPeriodLabel: "مدة الفترة",
+  checkoutPeriodMonths: "{months} شهر",
+  checkoutConfirmButton: "متابعة إلى الدفع",
+  checkoutCancelSelection: "إلغاء التحديد",
+  checkoutSessionTitle: "جلسة الدفع",
+  checkoutInvoiceMeta: "الفاتورة {number} — خطة {plan}",
+  checkoutPeriod: "الفترة",
+  checkoutDueDate: "تاريخ الاستحقاق",
+  checkoutAmount: "المبلغ",
+  checkoutPayNow: "ادفع الآن (وضع الاختبار)",
+  checkoutSimulateFailure: "محاكاة فشل الدفع",
+  checkoutSandboxNote:
+    "وضع الاختبار: بوابة الدفع في وضع الحماية (sandbox) — لا مدفوعات حقيقية؛ الدفع يمر عبر خط الويب هوك نفسه.",
+  checkoutSuccessTitle: "تم الدفع بنجاح",
+  checkoutSuccessBody:
+    "تمت تسوية الفاتورة وتفعيل الخطة. ستظهر الفاتورة مسددة في سجل الفواتير، ويمكنك متابعة عملك من لوحة المعلومات.",
+  checkoutFailureTitle: "فشل الدفع (محاكاة)",
+  checkoutFailureBody:
+    "تم تسجيل فشل الدفع — تستمر خطوات التحصيل وفق السياسة، ويمكنك المحاولة مجددًا من صفحة الفواتير.",
+  checkoutGoBilling: "الذهاب إلى الفواتير والاشتراك",
+  checkoutGoDashboard: "لوحة المعلومات",
+  checkoutBackToPlans: "العودة إلى الخطط",
+  checkoutAlreadySettled: "هذه الجلسة مسددة بالفعل.",
+  checkoutBlockersTitle: "التنزيل لخطة أدنى محجوب",
+  checkoutBlockerLine:
+    "يوجد {usage} {limit}؛ خطة {plan} تسمح بـ {limitValue} — خفّض العدد إلى {limitValue} أو أقل ثم أعد المحاولة.",
+  checkoutLimitUsers: "مستخدمين",
+  checkoutLimitBranches: "فروع",
+  checkoutLimitWarehouses: "مستودعات",
+  checkoutErrorDowngradeBlocked:
+    "التنزيل محجوب لأن الاستخدام الحالي يتجاوز حدود الخطة الهدف — راجع القائمة أدناه.",
+  checkoutErrorPlanUnchanged: "الاشتراك على هذه الخطة بالفعل.",
+  checkoutErrorSessionNotFound: "جلسة دفع غير معروفة — ربما انتهت صلاحيتها.",
+  checkoutErrorSessionSettled: "جلسة الدفع مسددة بالفعل.",
+  checkoutErrorTransition: "حالة الاشتراك لا تسمح بهذه العملية.",
+  checkoutErrorLimitExceeded:
+    "حد الخطة: {limit} — الاستخدام {usage} من {limitValue}. قم بترقية الخطة أو حرّر مقعدًا.",
+  checkoutErrorNoSessionRef: "تعذر استخراج مرجع جلسة الدفع من رابط المزود.",
+
+  billingTitle: "الفواتير والاشتراك",
+  billingGraceNote:
+    "وضع القراءة فقط حتى {date} — الدفع متاح من هذه الصفحة لاستعادة الترحيل.",
+  billingPlanCardTitle: "الخطة الحالية",
+  billingNoSubscription: "لا يوجد اشتراك نشط لهذا المستأجر.",
+  billingPrice: "السعر",
+  billingPeriod: "الفترة",
+  billingTrialEndsAt: "نهاية التجربة",
+  billingTrialCountdown: "متبقٍ {days} يومًا",
+  billingTrialDaysNote: "مدة التجربة {days} يومًا (قيمة تمهيدية).",
+  billingChangePlan: "تغيير الخطة",
+  billingUsageTitle: "الاستخدام",
+  billingUnlimited: "غير محدود",
+  billingWarn80: "حدّ 80%",
+  billingWarn100: "100%",
+  billingInvoicesTitle: "سجل الفواتير",
+  billingNoInvoices: "لا توجد فواتير بعد.",
+  billingColNumber: "الرقم",
+  billingColPlan: "الخطة",
+  billingColPeriod: "الفترة",
+  billingColAmount: "المبلغ",
+  billingColDueDate: "الاستحقاق",
+  billingColPaidVia: "طريقة السداد",
+  billingPaidViaWebhook: "بوابة الدفع",
+  billingPaidViaManual: "تسجيل يدوي",
+  billingEventsTitle: "أحداث الفواتير",
+  billingNoEvents: "لا توجد أحداث بعد.",
+  billingViaPlatformAdmin: "عبر مسؤول المنصة",
+  billingEventTrialStarted: "بدء التجربة",
+  billingEventTrialExpired: "انتهاء التجربة",
+  billingEventGraceEntered: "دخول الفترة السماحية",
+  billingEventDunningWarned: "تحذير تحصيل",
+  billingEventPlanChangeRequested: "طلب تغيير خطة",
+  billingEventPlanChanged: "تغيّرت الخطة",
+  billingEventDowngradeBlocked: "تنزيل محجوب",
+  billingEventCheckoutCreated: "إنشاء جلسة دفع",
+  billingEventManualPaymentRecorded: "تسجيل دفعة يدوية",
+  billingEventSuspensionExecuted: "تنفيذ الإيقاف",
+  billingEventSubscriptionRestored: "استعادة الاشتراك",
+  billingEventEntitlementsChanged: "تغيّر الاستحقاقات",
+
+  dashboardTitle: "لوحة المعلومات",
+  dashboardFreshness:
+    "ملخّص اليوم {date} — كل رقم في هذه اللوحة من تشغيل تقرير ملزم بنفس المعاملات (لا حساب موازٍ).",
+  dashboardSalesToday: "مبيعات اليوم",
+  dashboardCashPosition: "المركز النقدي (صافي اليوم)",
+  dashboardArOverdue: "ذمم متأخرة",
+  dashboardStockAlerts: "تنبيهات إعادة الطلب",
+  dashboardInvoicesCount: "{count} فاتورة",
+  dashboardAccountsCount: "{count} حساب نقدي",
+  dashboardCustomersCount: "{count} عميلًا",
+  dashboardStockPreviewHeading: "أول ٥ تنبيهات (الرمز · المستودع — المتوفر / حد إعادة الطلب)",
+  dashboardDrillAria: "افتح التقرير بالمعاملات نفسها",
+  dashboardWidgetFailed: "تعذر تشغيل التقرير",
+  dashboardAssertionFailed: "فشل فحص المطابقة: {ids}",
+  dashboardUsageHeading: "ملخص الاستخدام",
+  dashboardUsageUnavailable: "ملخص الاستخدام غير متاح — يتطلب صلاحية إدارة الاشتراك.",
+  dashboardTrialBanner: "الفترة التجريبية تنتهي خلال {days} يومًا",
+  dashboardPastDueBanner: "هناك فاتورة مستحقة السداد",
+  dashboardGoBilling: "إدارة الاشتراك",
+  dashboardGraceNote: "لوحة المعلومات تعمل بالكامل في وضع القراءة فقط — التقارير والتصدير متاحة.",
+
+  notificationsTitle: "الإشعارات",
+  notificationsUnreadCount: "غير مقروءة: {count}",
+  notificationsUnreadOnly: "غير المقروءة فقط",
+  notificationsRefresh: "تحديث",
+  notificationsSyncLine: "غير مقروءة: {count}",
+  notificationsInboxHeading: "الوارد",
+  notificationsEmpty: "لا توجد إشعارات.",
+  notificationsMarkRead: "تحديد كمقروء",
+  notificationsReadAt: "قُرئ:",
+  notificationsPrefsTitle: "تفضيلات الإشعارات",
+  notificationsPrefsHint: "غياب الصف يعني تفعيل القناتين؛ التفضيلات تكبح فقط ولا تُنشئ إشعارات.",
+  notificationsPrefsCategory: "الفئة",
+  notificationsPrefsInApp: "داخل التطبيق",
+  notificationsPrefsEmail: "البريد الإلكتروني",
+  notificationsPrefsSaved: "تم حفظ التفضيل.",
+  notificationsCategoryLimits: "حدود الاستخدام",
+  notificationsCategorySubscription: "الاشتراك",
+  notificationsCategoryReconciliation: "المطابقات",
+  notificationsCategoryInvoiceOverdue: "الفواتير المتأخرة",
+
+  onboardingStepItem: "أول صنف",
+  onboardingStepCustomer: "أول عميل",
+  onboardingStepInvoice: "أول فاتورة",
+  onboardingStepPrint: "الطباعة",
+  onboardingContinueJourney: "متابعة الرحلة الإرشادية",
+  onboardingNeedPcsUom:
+    "تعذر العثور على وحدة القياس «قطعة» (PCS) — أضفها من شاشة وحدات القياس ثم أعد المحاولة.",
+  onboardingItemSku: "الرمز (SKU)",
+  onboardingItemName: "الاسم (إنجليزي)",
+  onboardingItemNameAr: "الاسم (عربي)",
+  onboardingItemPrice: "سعر البيع",
+  onboardingItemFixed:
+    "قيم ثابتة لهذه الخطوة: النوع مخزني · الوحدة {uom} — يمكن تغييرهما لاحقًا من شاشة الأصناف.",
+  onboardingCreateItem: "إنشاء الصنف",
+  onboardingSkipItem: "تخطي هذه الخطوة",
+  onboardingCustomerCode: "الرمز",
+  onboardingCustomerName: "الاسم (إنجليزي)",
+  onboardingCustomerNameAr: "الاسم (عربي)",
+  onboardingCustomerFixed: "النوع لهذه الخطوة: عميل — قابل للتغيير لاحقًا من شاشة الجهات.",
+  onboardingCreateCustomer: "إنشاء العميل",
+  onboardingSkipCustomer: "تخطي هذه الخطوة",
+  onboardingSelectItem: "اختر صنفًا",
+  onboardingTaxPreview: "معاينة الضريبة",
+  onboardingPreviewEstimate: "(تقدير — الأرقام النهائية عند الإنشاء)",
+  onboardingPreviewPending: "أدخل الكمية والسعر لعرض المعاينة.",
+  onboardingNoTaxNote: "بدون ضريبة — لا يوجد رمز ضريبي على سطر الفاتورة الإرشادية.",
+  onboardingInvoiceStageCreated: "تم إنشاء المسودة (DRAFT)…",
+  onboardingInvoiceStageSubmitted: "تم الإرسال (PENDING_APPROVAL)…",
+  onboardingInvoiceStageApproved: "تم الاعتماد (APPROVED)…",
+  onboardingInvoiceStagePosted: "تم الترحيل (POSTED) — تم تعيين الرقم الرسمي.",
+  onboardingCreateInvoice: "إنشاء الفاتورة وترحيلها",
+  onboardingSkipInvoice: "تخطي هذه الخطوة",
+  onboardingInvoiceSummary: "ملخص الفاتورة المرحّلة",
+  onboardingNoPostedInvoice: "لا توجد فاتورة مرحّلة بعد.",
+  onboardingPrintQueueNote:
+    "طباعة الفواتير تصل مع طابور طباعة المستندات — سُجلت هذه الخطوة كمكتملة مع ملاحظة، ولا يُختلق أي مسار طباعة.",
+  onboardingSkipPrint: "تخطي الطباعة",
+  onboardingFinish: "إتمام الرحلة",
+  onboardingGoInvoices: "فواتير البيع",
+  onboardingGoDashboard: "لوحة المعلومات",
+  onboardingCompletedNote: "اكتملت رحلة التهيئة — يمكنك الآن إدارة أعمالك من لوحة المعلومات.",
+  onboardingSkippedNote:
+    "تم تسجيل التوقف عند «ترحيل أول فاتورة» — الرحلة قابلة للاستئناف من هنا في أي وقت.",
+
+  billingAdminTitle: "فواتير الاشتراك (لوحة المنصة)",
+  billingAdminCaption:
+    "التسجيلات من هذه اللوحة تُوثق في سجل التدقيق باسم مسؤول المنصة (via_platform_admin).",
+  billingAdminSubscription: "الاشتراك",
+  billingAdminNoSubscription: "لا يوجد اشتراك لهذا المستأجر.",
+  billingAdminManualTitle: "تسجيل دفعة يدوية (الفواتير اليدوية)",
+  billingAdminInvoice: "الفاتورة",
+  billingAdminSelectInvoice: "اختر فاتورة (مفتوحة فقط)",
+  billingAdminVia: "الطريقة",
+  billingAdminViaBankTransfer: "حوالة بنكية",
+  billingAdminViaCash: "نقدًا",
+  billingAdminViaCheque: "شيك",
+  billingAdminReference: "المرجع (٣ أحرف على الأقل)",
+  billingAdminReason: "السبب (٣ أحرف على الأقل)",
+  billingAdminRecordButton: "تسجيل الدفعة",
+  billingAdminNoOpenInvoices: "لا توجد فواتير مفتوحة لتسجيل دفعة.",
+  billingAdminManualDone: "تم تسجيل الدفعة للفاتورة {number} — حالة الاشتراك: {status}",
+  billingAdminLifecycleTitle: "إيقاف/استعادة (مدفوعات)",
+  billingAdminSuspendButton: "إيقاف",
+  billingAdminRestoreButton: "استعادة",
+  billingAdminSuspendDone: "تم الإيقاف — أُنهيت {count} جلسة.",
+  billingAdminRestoreDone: "تمت الاستعادة.",
+  billingAdminDailyPassTitle: "المرور اليومي",
+  billingAdminDailyPassHint:
+    "يجري المرور عند الطلب: انتهاء التجارب، انتهاء الفترات السماحية، تنفيذ التنزيلات المجدولة، وتسوية عداد المستندات.",
+  billingAdminDailyPassButton: "تشغيل المرور اليومي",
+  billingAdminDailyPassDone:
+    "تم: تجارب منتهية {trials} · إيقافات {suspensions} · تنزيلات مطبقة {applied} · تنزيلات محجوبة {blocked} · فواتير متأخرة {overdue} · مستندات مسوّاة {reconciled}",
+  billingAdminAuditNote:
+    "كل إجراء من هذه اللوحة يظهر في سجل التدقيق مع علامة via_platform_admin — السبب والمرجع إلزاميان.",
+  billingAdminConfirmSuspend: "تأكيد الإيقاف",
+  billingAdminConfirmSuspendBody:
+    "سيؤدي الإيقاف إلى إنهاء جلسات المستأجر فورًا وفق سياسة الإيقاف. هل تريد المتابعة؟",
+  billingAdminConfirmRestore: "تأكيد الاستعادة",
+  billingAdminConfirmRestoreBody:
+    "ستستعاد العضوية وتُفعّل مفعوليات الخطة بوضع مدفوع. هل تريد المتابعة؟",
+  billingAdminConfirmButton: "تأكيد",
+  billingAdminErrorNotOpen: "الفاتورة المستهدفة ليست مفتوحة.",
+  billingAdminErrorReasonRequired: "تسجيل الدفعة يتطلب سببًا ومرجعًا.",
+
+  // -- PHASE-015 T11 (3-a): onboarding industry step -------------------------
+  onboardingStepIndustry: "اختيار القطاع",
+  industryIntro:
+    "ابدأ بتحديد قطاع نشاطك — نجهّز لك مساحة عمل بلغة قطاعك: قوائمه، ومصطلحاته، وإعداداته الافتراضية. يمكنك أيضًا المتابعة بدون قالب.",
+  industryActivityQuestion: "ما طبيعة نشاطك التجاري؟",
+  industryActivityOther: "اوصف نشاطك بكلماتك (اختياري)",
+  industryActivityResolve: "اقترح القالب",
+  industryResolvedExact: "تطابق مؤكد: القالب المقترح هو «{template}».",
+  industryResolvedSuggested:
+    "بناءً على وصفك نقترح قالب «{template}» — راجعه وأكّد اختياره، أو اختر قالبًا آخر بنفسك.",
+  industryNoMatch:
+    "لم نجد قالبًا يطابق وصفك. يمكنك اختيار قالب من القائمة أدناه أو المتابعة بدون قالب.",
+  industryTemplatesLabel: "قوالب القطاعات",
+  industryCapabilitiesLabel: "الميزات والقدرات",
+  industryCapabilitiesPending: "جارٍ تحميل معاينة الميزات…",
+  industryCapIncluded: "متاح",
+  industryCapPhaseGated: "قادم مع المرحلة {phase}",
+  industryCapOptional: "اختياري — غير مفعّل في خطتك",
+  industryCapBlocked: "يتطلب خطة أعلى",
+  industryCapRequired: "أساسي",
+  industrySelect: "اختيار",
+  industryDeselect: "إلغاء الاختيار",
+  industrySelectedBadge: "مختار",
+  industryBlockedBadge: "غير متاح لخطتك",
+  industrySkipPlain: "بدون قالب قطاع — مساحة عمل أساسية",
+  industryContinue: "متابعة",
+  industryApplyAfterProvisionNote:
+    "سيُطبَّق القالب تلقائيًا بعد نجاح تجهيز مساحة العمل — ولن يتوقف الإعداد إذا تعذّر التطبيق.",
+  industryAlreadyAppliedTitle: "القالب مطبّق بالفعل",
+  industryAlreadyApplied: "تعمل مساحة العمل حاليًا بقالب «{template}»",
+  industryLoadError:
+    "تعذّر تحميل قوالب القطاعات — يمكنك المتابعة بدون قالب وإعادة المحاولة لاحقًا من شاشة «القوالب القطاعية».",
+  industryOutcomeTitle: "قالب القطاع",
+  industryPlainChosen:
+    "تمت المتابعة بدون قالب قطاع — تعمل مساحة العمل بالإعدادات الأساسية، ويمكنك تطبيق قالب لاحقًا من شاشة «القوالب القطاعية».",
+  industryAppliedOk: "تم تطبيق قالب «{template}» (الإصدار {version}).",
+  industryApplyAlready: "القالب مطبّق بالفعل — لم يتم أي تغيير.",
+  industryApplyForbidden: "لم يتم تطبيق القالب — لا تملك صلاحية تطبيق القوالب.",
+  industryApplyFailedContinue:
+    "تابع الإعداد على الإعدادات الأساسية — لن يتوقف تجهيز مساحة العمل بسبب ذلك.",
+  industryApplyBlockedPrefix: "لم يتم تطبيق القالب:",
+  industryRetryHint:
+    "يمكنك مراجعة القوالب وخيارات الخطة لاحقًا من الإعدادات ← «القوالب القطاعية».",
+
+  // -- PHASE-015 T11 (3-a): template-derived navigation labels -----------------
+  industryNavComingPhase: "قادم مع المرحلة {phase}",
+  industryNavNotInWebApp: "غير متوفر بعد في الواجهة",
+
+  // -- PHASE-015 T11 (3-a): admin "Industry & templates" screen --------------
+  templatesTitle: "القوالب القطاعية",
+  templatesAppliedCard: "القالب المطبّق",
+  templatesNoneApplied:
+    "لا يوجد قالب قطاعي مطبّق — تعمل مساحة العمل بالإعدادات الأساسية للمنصة.",
+  templatesAppliedNotInRegistry:
+    "القالب المطبّق غير موجود في سجل القوالب النشطة — راجع إدارة المنصة.",
+  templatesKey: "المعرّف",
+  templatesName: "الاسم",
+  templatesAppliedVersion: "الإصدار المطبّق",
+  templatesHash: "بصمة ملف القالب",
+  templatesStatus: "الحالة",
+  templatesStatusActive: "نشط",
+  templatesAppliedNote: "تاريخ التطبيق غير معروض — لا تكشفه الواجهة البرمجية حاليًا.",
+  templatesDriftTitle: "تحديثات القوالب",
+  templatesDriftPending: "تعذّر فحص تحديثات القالب حاليًا.",
+  templatesDriftCurrent: "أنت على أحدث إصدار من القالب المطبّق.",
+  templatesDriftBehind: "بيانات شاذة: إصدار السجل أقدم من الإصدار المطبّق — راجع إدارة المنصة.",
+  templatesDriftAvailable: "تحديث متاح: الإصدار {registry} (المطبّق حاليًا: {applied}).",
+  templatesDriftMajor: "تحديث رئيسي — راجع ملاحظات الترحيل قبل الترقية.",
+  templatesDriftWhatNext: "راجع ما سيتغير قبل الترقية.",
+  templatesDriftRecorded: "سُجّل عرض الترقية في مركز الإشعارات.",
+  templatesDriftReview: "راجع التغييرات",
+  templatesDriftNeverAuto: "لا يتم تطبيق تحديثات القوالب تلقائيًا أبدًا — الترقية قرارك.",
+  templatesRegistryTitle: "القوالب المتاحة",
+  templatesNoPermission:
+    "عرض فقط — تطبيق القوالب وتبديلها يتطلب صلاحية «configuration.templates.apply».",
+  templatesAppliedBadge: "المطبّق حاليًا",
+  templatesApplyButton: "تطبيق",
+  templatesPreviewSwitch: "معاينة التبديل",
+  templatesPreviewExtend: "معاينة الإضافة",
+  templatesApplyDone: "تم تطبيق قالب «{template}» (الإصدار {version}).",
+  templatesApplyAlready: "القالب مطبّق بالفعل — لم يتم أي تغيير.",
+  templatesBlockedGeneric:
+    "العملية محجوبة: قدرات مطلوبة غير مفعّلة في خطتك الحالية — اختر خطة أعلى لإتمام التفعيل.",
+  templatesSwitchDone: "تم التبديل إلى قالب «{template}».",
+  templatesExtendDone: "تمت إضافة قالب «{template}» إلى مساحة عملك.",
+  templatesAckRequiredNote:
+    "يتضمن هذا التغيير ميزات إلزامية مرحلية — ستفعل لاحقًا مع المراحل القادمة، ويجب الإقرار بذلك قبل المتابعة.",
+  templatesAckLabel: "أُقرّ بأن الميزات المرحلية ({phases}) ستفعل لاحقًا عند توفرها.",
+  templatesDiffTitle: "ما الذي سيتغير؟",
+  templatesDiffDescription: "معاينة {mode} — لا يتم أي تغيير حتى التأكيد.",
+  templatesModeSwitch: "التبديل",
+  templatesModeExtend: "الإضافة",
+  templatesDiffFromTo: "من {from} إلى {to}",
+  templatesDiffBlocked: "العملية محجوبة — المفاتيح الناقصة:",
+  templatesDiffAddedCaps: "قدرات جديدة",
+  templatesDiffAddedIncluded: "متاحة فورًا",
+  templatesDiffAddedPhaseGated: "مرحلية — قادمة لاحقًا",
+  templatesDiffAddedOptionalMissing: "اختيارية غير مفعّلة في خطتك (لن تظهر قوائمها)",
+  templatesDiffEmpty: "لا توجد إضافات.",
+  templatesDiffArchived: "قدرات مؤرشفة",
+  templatesDiffArchivedNote: "تُحفظ للقراءة فقط — لا يُحذف أي بيانات عند التبديل.",
+  templatesDiffRenamed: "تسميات ستتغير",
+  templatesDiffSeries: "سلاسل ترقيم جديدة",
+  templatesDiffKeptSeries: "سلاسل موجودة تبقى دون تغيير:",
+  templatesDiffInventory: "تغييرات افتراضيات المخزون",
+  templatesDiffInventoryNote: "تسري على الأصناف الجديدة فقط — لا تتغير بيانات الأصناف القائمة.",
+  templatesDiffPolicies: "سياسات سير العمل",
+  templatesDiffPolicyConflict: "تعارض مسجّل — تبقى القيمة الأساسية",
+  templatesDiffPins: "التقارير المثبتة",
+  templatesDiffPinsAdded: "ستُضاف:",
+  templatesDiffPinsRemoved: "ستُرفع:",
+  templatesDiffChecklist: "خطوات قائمة التهيئة",
+  templatesSwitchButton: "تبديل القالب",
+  templatesExtendButton: "إضافة القالب",
+  templatesPoliciesTitle: "السياسات الفعّالة",
+  templatesPoliciesNote: "القيم الفعّالة بعد دمج كل الطبقات — للقراءة فقط.",
+  templatesPolicyKey: "المفتاح",
+  templatesPolicyValue: "القيمة",
+  templatesPolicySource: "المصدر",
+  templatesPolicySourceTemplate: "قالب الصناعة",
+  templatesPolicySourceTenant: "إعدادك",
+  templatesPolicyOn: "مفعّلة",
+  templatesPolicyOff: "معطّلة",
+  templatesPolicyLegend:
+    "«قالب الصناعة» = افتراضي من القالب المطبّق · «إعدادك» = قيمة صريحة من إعداداتك · «—» = لا تكشف الحمولة مصدر هذا المفتاح على حدة (قد يكون إعدادك الصريح أو افتراضي القالب أو الافتراضي العام).",
+
+  // -- PHASE-017 (T6/T14): automotive + distribution navigation & crumbs ------
+  navSales: "المبيعات",
+  distributionNavSection: "التوزيع",
+  jobCardsTitle: "بطاقات العمل",
+  vehiclesTitle: "المركبات",
+  commissionsTitle: "العمولات",
+  distributionRoutesTitle: "خطوط السير والزيارات",
+  distributionVanTitle: "مخزون السيارات",
+  distributionSettlementsTitle: "تسويات المندوبين",
+  distributionTiersTitle: "فئات العملاء",
+
+  // -- PHASE-017-T6 automotive screens (job cards + vehicles) ------------------
+  jobCardsEmpty: "لا توجد بطاقات عمل بعد.",
+  jobCardsNew: "بطاقة عمل جديدة",
+  jcFilterAll: "الكل",
+  jcCardNo: "رقم البطاقة",
+  jcCustomer: "العميل",
+  jcVehicle: "المركبة",
+  jcBranch: "الفرع",
+  jcWarehouse: "المستودع",
+  jcPartsIssueMode: "سياسة إصدار القطع",
+  jcModeReserve: "حجز القطع (reserve)",
+  jcModeIssueImmediate: "إصدار فوري (issue_immediate)",
+  jcOdometer: "العداد (كم)",
+  jcComplaints: "الشكاوى",
+  jcDiagnosis: "التشخيص",
+  jcNote: "ملاحظة",
+  jcLaborHoursTotal: "إجمالي ساعات العمل",
+  jcLineParts: "قطع",
+  jcLineLabor: "خدمة",
+  jcItem: "الصنف",
+  jcQty: "الكمية",
+  jcUnitPrice: "سعر الوحدة",
+  jcHourlyRate: "أجر الساعة",
+  jcEstimatedHours: "الساعات المقدرة",
+  jcLoggedHours: "الساعات المسجلة",
+  jcDiscount: "الخصم",
+  jcTaxCode: "رمز الضريبة",
+  jcAddLine: "إضافة سطر",
+  jcRemoveLine: "إزالة السطر",
+  jcStatusDraft: "مسودة",
+  jcStatusInProgress: "قيد التنفيذ",
+  jcStatusCompleted: "مكتملة",
+  jcStatusInvoiced: "مفوترة",
+  jcStatusCancelled: "ملغاة",
+  jcActionQuotation: "توليد عرض سعر",
+  jcActionApprove: "موافقة العميل",
+  jcActionComplete: "إكمال الأعمال",
+  jcActionInvoice: "إصدار الفاتورة",
+  jcActionCancel: "إلغاء البطاقة",
+  jcCancelReason: "سبب الإلغاء",
+  jcLogHours: "تسجيل ساعات",
+  jcSearchPlaceholder: "ابحث برقم البطاقة أو العميل…",
+  jcClose: "إغلاق",
+  jcCreated: "تاريخ الفتح",
+  jcNoticeCreated: "تم فتح البطاقة {no}.",
+  jcNoticeQuotation: "تم توليد عرض السعر {no}.",
+  jcNoticeUpdated: "تم تحديث البطاقة.",
+  jcNoticeHoursLogged: "تم تسجيل الساعات.",
+  jcErrState: "لا يمكن تنفيذ هذا الإجراء في الحالة الحالية للبطاقة.",
+  jcErrNotCancelable:
+    "لا يمكن الإلغاء بعد إصدار قطع أو فاتورة — التصحيح يكون بإشعار دائن.",
+  jcErrLineInvalid: "سطر غير صالح — تحقق من نوع الصنف والكمية والساعات.",
+  jcErrPosting: "ترحيل بطاقات العمل غير مهيأ بعد؛ لا يمكن تنفيذ هذا الإجراء.",
+  vehiclesEmpty: "لا توجد مركبات مسجلة بعد.",
+  vehNew: "مركبة جديدة",
+  vehPartner: "الشريك",
+  vehNote: "ملاحظة",
+  vehMake: "الماركة",
+  vehModel: "الطراز",
+  vehModelYear: "سنة الصنع",
+  vehChassis: "رقم الهيكل (VIN)",
+  vehPlate: "رقم اللوحة",
+  vehColor: "اللون",
+  vehEngineNo: "رقم المحرك",
+  vehOdometer: "العداد (كم)",
+  vehSearchPlaceholder: "ابحث باللوحة أو الهيكل أو الماركة…",
+  vehStatusActive: "نشطة",
+  vehStatusArchived: "مؤرشفة",
+  vehArchive: "أرشفة",
+  vehArchiveHint: "تبقى المركبة في السجل للتوثيق ولا تظهر في الاختيارات الجديدة.",
+  vehHistory: "سجل الخدمة",
+  vehHistoryKindJobCard: "بطاقة عمل",
+  vehHistoryKindInvoice: "فاتورة",
+  vehHistoryKindCreditNote: "إشعار دائن",
+  vehHistoryEmpty: "لا يوجد سجل خدمة لهذه المركبة.",
+  vehNoticeCreated: "تم تسجيل المركبة.",
+  vehNoticeArchived: "تمت أرشفة المركبة.",
+  vehErrChassisTaken: "رقم الهيكل مسجل مسبقاً في هذا النطاق.",
+  vehErrArchived: "المركبة مؤرشفة — لا يمكن تعديلها.",
+  vehErrChassisInvalid:
+    "رقم هيكل غير صالح: ٦–١٧ خانة من الأحرف A–H وJ–N وP وR–Z والأرقام (بدون I/O/Q).",
+
+  // -- PHASE-017-T14 distribution + commissions screens ------------------------
+  // (9a-dist) routes & visits + van stock + rep settlements + tiers/FOC + commissions
+
+  // routes & visits (T14 routes screen)
+  distRoutesCreate: "إنشاء خط سير",
+  distRoutesCode: "الرمز",
+  distRoutesName: "الاسم",
+  distRoutesRep: "مندوب المبيعات",
+  distRoutesVan: "سيارة التوزيع",
+  distRoutesDayPattern: "أيام السير",
+  distRoutesDayPatternHint: "اختر يومًا واحدًا على الأقل لكل خط سير — تخطَّط الزيارات لأيام السير فقط.",
+  distRoutesEmpty: "لا خطوط سير بعد — أنشئ أول خط سير.",
+  distRoutesCreatedToast: "أُنشئ خط السير {code}.",
+  distRoutesErrCodeTaken: "رمز خط السير مستخدم بالفعل في هذا النطاق.",
+  distRoutesErrPlanning: "بيانات التخطيط غير سليمة — تحقق من التاريخ وأيام السير والعملاء.",
+  distDayMon: "الاثنين",
+  distDayTue: "الثلاثاء",
+  distDayWed: "الأربعاء",
+  distDayThu: "الخميس",
+  distDayFri: "الجمعة",
+  distDaySat: "السبت",
+  distDaySun: "الأحد",
+  distCompTitle: "تشكيلة العملاء",
+  distCompHint: "الترتيب يحدد تسلسل الزيارات عند التخطيط؛ ثبّت العملاء الدائمين أعلى القائمة.",
+  distCompDerivedHint: "التشكيلة الحالية مستنتجة من زيارات الخط المخططة (خطة السير)؛ الحفظ يستبدلها كاملة بالترتيب المعروض.",
+  distCompCount: "{count} من العملاء",
+  distCompOrder: "الترتيب",
+  distCompPinned: "مثبّت",
+  distCompAddCustomer: "إضافة عميل",
+  distCompRemove: "إزالة",
+  distCompSave: "حفظ التشكيلة",
+  distCompEmpty: "لا عملاء على هذا الخط بعد — أضف عملاء من القائمة.",
+  distCompSavedToast: "حُفظت تشكيلة العملاء ({count}).",
+  distPlanTitle: "تخطيط الزيارات",
+  distPlanDate: "تاريخ التخطيط",
+  distPlanBtn: "خطّط زيارات هذا التاريخ",
+  distPlanToast: "خُطّطت {planned} زيارة ({skipped} كانت مخططة مسبقًا).",
+  distBoardTitle: "لوحة الزيارات",
+  distBoardDate: "تاريخ الزيارة",
+  distBoardAllStatuses: "كل الحالات",
+  distVisitPlanned: "مخططة",
+  distVisitCompleted: "مكتملة",
+  distVisitSkipped: "متخطاة",
+  distVisitMissed: "مفقودة",
+  distVisitCheckIn: "تسجيل وصول",
+  distVisitComplete: "إكمال",
+  distVisitSkip: "تخطٍّ",
+  distVisitCheckedIn: "سُجّل الوصول",
+  distVisitCustomer: "العميل",
+  distVisitRoute: "خط السير",
+  distVisitNote: "ملاحظة",
+  distVisitEmpty: "لا زيارات بهذه المرشّحات.",
+  distCompleteTitle: "إكمال الزيارة",
+  distCompleteInvoice: "فاتورة بيع (UUID)",
+  distCompleteCreditNote: "إشعار دائن (UUID)",
+  distCompleteReceipt: "سند قبض (UUID)",
+  distCompleteHint: "اختياري — الصق معرّف مستند لربطه بالزيارة عند الإكمال، مع ملاحظة إن لزم.",
+  distVisitCheckedInToast: "سُجّل وصول الزيارة.",
+  distVisitCompletedToast: "أُكملت الزيارة.",
+  distVisitSkippedToast: "تُخُطّيت الزيارة.",
+  distErrVisitState: "حالة الزيارة لا تسمح بهذه العملية — فقط الزيارات المخططة تُدار.",
+  distErrVisitDocument: "أحد المستندات المرتبطة غير موجود في هذا النطاق.",
+
+  // van stock (T14 van screen)
+  distVanRegister: "تسجيل سيارة",
+  distVanCode: "الرمز",
+  distVanName: "الاسم",
+  distVanBranch: "الفرع",
+  distVanRep: "المندوب المرتبط",
+  distVanEmpty: "لا سيارات توزيع مسجلة — سجّل أول سيارة.",
+  distVanRegisteredToast: "سُجّلت سيارة التوزيع {code} وربطت بالمندوب {rep}.",
+  distVanBalancesTitle: "أرصدة السيارة",
+  distVanPickVan: "اختر سيارة",
+  distVanItem: "الصنف",
+  distVanSku: "رمز الصنف",
+  distVanQty: "الكمية",
+  distVanValue: "القيمة",
+  distVanTotals: "الإجمالي",
+  distVanBalancesEmpty: "لا مخزون على هذه السيارة بعد — حمّلها من مستودع رئيسي.",
+  distLoadOutTitle: "تحميل سيارة (إخراج مخزون)",
+  distLoadOutFrom: "من مستودع",
+  distLoadOutVan: "إلى سيارة",
+  distLoadOutAddLine: "إضافة بند",
+  distLoadOutBtn: "تحميل",
+  distLoadOutToast: "حركة التحميل {no} قيد النقل — استلمها لتظهر في رصيد السيارة.",
+  distUnloadTitle: "تفريغ سيارة",
+  distUnloadVan: "من سيارة",
+  distUnloadTo: "إلى مستودع",
+  distUnloadBtn: "تفريغ",
+  distUnloadToast: "حركة التفريغ {no} قيد النقل — تُستلم من الجهة الأخرى.",
+  distTransfersTitle: "حركات قيد النقل إلى السيارات",
+  distTransfersEmpty: "لا حركات قيد النقل إلى السيارات حاليًا.",
+  distTransfersVanOnly: "تُعرض فقط الحركات المرسلة إلى سيارات توزيع (الاستلام يُنعش مرآة المخزون).",
+  distTransfersReceiveToast: "استُلمت الحركة — انعكس الرصيد على السيارة.",
+  distErrVanCodeTaken: "رمز المستودع مستخدم بالفعل في هذا النطاق.",
+  distErrVanRepBinding: "ربط المندوب غير صالح — يلزم مندوب نشط غير مرتبط بسيارة أخرى (سيارة لكل مندوب).",
+  distErrVanLoadOut: "عملية التحميل/التفريغ غير صالحة — تحقق من السيارة والمستودع والبنود.",
+  distErrVanNotFound: "سيارة التوزيع غير موجودة (أو ليست من نوع VAN).",
+
+  // rep settlements (T14 settlements screen)
+  distSettlementsOpen: "فتح تسوية جديدة",
+  distSettlementsRep: "المندوب",
+  distSettlementsCashAccount: "حساب نقدية المندوب",
+  distSettlementsVan: "سيارة التوزيع",
+  distSettlementsDate: "تاريخ التسوية",
+  distSettlementsOpening: "النقدية الافتتاحية",
+  distSettlementsNo: "رقم التسوية",
+  distSettlementsEmpty: "لا تسويات بعد — افتح تسوية اليوم لأحد المندوبين.",
+  distSettlementsOpenedToast: "فُتحت تسوية المندوب {rep} ليوم {date} (رقم STL يُرقَّم عند الترحيل).",
+  distSettlementAllStatuses: "كل الحالات",
+  distSettlementDraft: "مسودة",
+  distSettlementCounted: "مجرودة",
+  distSettlementApproved: "معتمدة",
+  distSettlementPosted: "مُرحّلة",
+  distSettlementCancelled: "ملغاة",
+  distSettlementDetail: "تفاصيل التسوية",
+  distSettlementLines: "بنود توقع النقدية",
+  distSettlementLineNo: "#",
+  distSettlementComponent: "المكوّن",
+  distSettlementAmount: "المبلغ",
+  distSettlementDescription: "البيان",
+  distSettlementCashSales: "المبيعات النقدية",
+  distSettlementCollections: "التحصيلات",
+  distSettlementRefunds: "المرتجعات النقدية",
+  distSettlementExpenses: "مصروفات المندوب",
+  distSettlementExpected: "النقدية المتوقعة",
+  distSettlementCountedCash: "النقدية المجرودة",
+  distSettlementVariance: "الفرق",
+  distSettlementShortage: "عجز",
+  distSettlementSurplus: "زيادة",
+  distSettlementNone: "لا فرق",
+  distSettlementVarianceReason: "سبب الفرق",
+  distSettlementApprovalBadge: "يتطلب اعتمادًا",
+  distSettlementCountAction: "جرد الدرج",
+  distSettlementApproveAction: "اعتماد",
+  distSettlementPostAction: "ترحيل",
+  distSettlementCancelAction: "إلغاء التسوية",
+  distSettlementCancelReason: "سبب الإلغاء",
+  distSettlementDepositAccount: "حساب الإيداع",
+  distSettlementDepositAmount: "مبلغ الإيداع",
+  distSettlementDepositHint: "اختياري — إيداع جزء من الدرج في حساب آخر (بنك/صندوق) عند الترحيل، ولا يتجاوز المجرود.",
+  distSettlementShift: "الوردية المرتبطة",
+  distSettlementCountedToast: "جُردت التسوية — الفرق {variance} ({direction}).",
+  distSettlementApprovedToast: "اعتُمدت التسوية.",
+  distSettlementPostedToast: "رُحّلت التسوية {no} وقُيّدت قيود الفرق والإيداع.",
+  distSettlementCancelledToast: "أُلغيت التسوية.",
+  distComponentOpeningCash: "نقدية افتتاحية",
+  distComponentCashSale: "بيع نقدي",
+  distComponentCollection: "تحصيل",
+  distComponentCashRefund: "رد نقدي",
+  distComponentRepExpense: "مصروف مندوب",
+  distComponentVariance: "فرق الجرد",
+  distComponentBankDeposit: "إيداع بنكي",
+  distErrSettlementPendingDocs: "ما زالت مستندات مسودة/معلّقة على يوم المندوب — رحّلها أو ألغِها قبل التسوية.",
+  distErrSettlementDayLocked: "يوم المندوب مقيّد بتسوية قائمة بالفعل (أو التسوية مُرحّلة وغير قابلة للتعديل).",
+  distErrSettlementApprovalRequired: "الفرق يتجاوز الحد المسموح (أو سياسة اعتماد مفعّلة) — يلزم اعتماد منفصل قبل الترحيل.",
+  distErrSettlementVarianceReason: "الفرق غير الصفري يتطلب سببًا موثقًا.",
+  distErrSettlementSelfApproval: "لا يمكن لمنشئ التسوية اعتمادها (المُنشئ ≠ المُعتمد).",
+  distErrSettlementState: "حالة التسوية لا تسمح بهذه العملية — الجرد يسبق الترحيل.",
+  distErrSettlementNotFound: "التسوية غير موجودة في هذا النطاق.",
+
+  // customer tiers + free goods (T14 tiers screen)
+  distTiersCreate: "إنشاء فئة",
+  distTiersEdit: "تعديل الفئة",
+  distTiersCode: "الرمز",
+  distTiersName: "الاسم",
+  distTiersPriceList: "قائمة الأسعار",
+  distTiersDiscountCap: "سقف الخصم %",
+  distTiersDiscountCapHint: "اختياري 0–100 — يقيّد أي خصم يُمنح لعملاء هذه الفئة.",
+  distTiersVisitFrequency: "تكرار الزيارة (أيام)",
+  distTiersVisitFrequencyHint: "اختياري 0–365 — كل كم يوم يُزار عملاء هذه الفئة.",
+  distTiersEmpty: "لا فئات بعد — أنشئ أول فئة.",
+  distTiersSavedToast: "حُفظت الفئة {code}.",
+  distErrTierCodeTaken: "رمز الفئة مستخدم بالفعل في هذا النطاق.",
+  distErrTierPriceList: "قائمة الأسعار غير صالحة — يجب أن تكون قائمة بيع (SALE) نشطة.",
+  distErrTierInvalid: "بيانات الفئة غير سليمة (سقف الخصم 0–100، تكرار غير سالب).",
+  distFocTitle: "قواعد الهدايا (FOC)",
+  distFocCreate: "إنشاء قاعدة",
+  distFocCode: "الرمز",
+  distFocName: "الاسم",
+  distFocBuy: "اشترِ صنفًا",
+  distFocBuyQty: "كمية الشراء",
+  distFocGet: "احصل على صنف",
+  distFocGetQty: "كمية الهدايا",
+  distFocPerMultiple: "لكل مضاعف",
+  distFocMaxFree: "سقف الهدايا للأمر",
+  distFocMaxFreeHint: "اختياري — 0 أو فراغ يعني بلا سقف.",
+  distFocTier: "الفئة المستهدفة",
+  distFocAnyTier: "كل الفئات",
+  distFocReason: "رمز السبب",
+  distFocReasonHint: "مطلوب — سبب منح الهدايا (BR-008)، حتى 30 حرفًا.",
+  distFocValidFrom: "صالح من",
+  distFocValidTo: "صالح إلى",
+  distFocEmpty: "لا قواعد هدايا بعد — أنشئ أول قاعدة (اشترِ X واحصل على Y).",
+  distFocSavedToast: "حُفظت قاعدة الهدايا {code}.",
+  distFocErrInvalid: "بيانات القاعدة غير سليمة (كميات موجبة، نافذة صالحة، رمز سبب).",
+
+  // commissions (T14 commissions screen)
+  commissionsRunsTitle: "تشغيلات العمولة",
+  commissionsNewRun: "تشغيلة جديدة",
+  commissionsPeriodFrom: "من تاريخ",
+  commissionsPeriodTo: "إلى تاريخ",
+  commissionsBasis: "أساس الاحتساب",
+  commissionsBasisInvoiced: "مفوتر",
+  commissionsBasisCollected: "محصّل",
+  commissionsTotalBase: "إجمالي الأساس",
+  commissionsTotalCommission: "إجمالي العمولة",
+  commissionsEmpty: "لا تشغيلات بعد — أنشئ تشغيلة لفترة محددة.",
+  commissionsAllStatuses: "كل الحالات",
+  commissionsStatusDraft: "مسودة",
+  commissionsStatusPosted: "مُرحّلة",
+  commissionsStatusCancelled: "ملغاة",
+  commissionsRunCreatedToast: "أُنشئت التشغيلة وحُسبت بنودها — الترحيل هو نقطة الاستحقاق.",
+  commissionsRunPostedToast: "رُحّلت التشغيلة — قُيّد مخصص العمولات (مصروف/مخصص).",
+  commissionsRunCancelledToast: "أُلغيت التشغيلة.",
+  commissionsDetail: "تفاصيل التشغيلة",
+  commissionsLines: "بنود العمولة",
+  commissionsRep: "المندوب",
+  commissionsBase: "الأساس",
+  commissionsRate: "المعدل %",
+  commissionsAmount: "العمولة",
+  commissionsPayout: "حالة الصرف",
+  commissionsPayoutAccrued: "مستحقة",
+  commissionsPayoutPaid: "مدفوعة",
+  commissionsExcluded: "مستبعد — أساس قاعدة المندوب يخالف أساس التشغيلة",
+  commissionsNoLines: "لا بنود محتسبة لهذه التشغيلة (لا نشاط أو قواعد بلا عمولة).",
+  commissionsPostRun: "ترحيل التشغيلة",
+  commissionsCancelRun: "إلغاء التشغيلة",
+  commissionsCancelReason: "سبب الإلغاء",
+  commissionsRulesTitle: "قواعد العمولة للمندوبين",
+  commissionsRulesHint: "اختر مندوبًا لعرض قاعدته وتعديلها (طريقة/معدل/أساس).",
+  commissionsRuleRep: "المندوب",
+  commissionsRuleMethod: "الطريقة",
+  commissionsMethodNone: "بلا عمولة",
+  commissionsMethodPercentage: "نسبة",
+  commissionsRuleRate: "المعدل %",
+  commissionsRuleRateHint: "0–100 على الأساس المحتسب؛ تركه فارغًا مع قاعدة متدرجة يُبقي النطاقات كما هي.",
+  commissionsRuleBasis: "أساس الاحتساب",
+  commissionsRuleTiers: "النطاقات المتدرجة",
+  commissionsRuleTiersHint: "للقراءة فقط في هذه الشاشة — إدخال معدل ثابت يستبدلها.",
+  commissionsRuleSavedToast: "حُفظت قاعدة عمولة المندوب {rep}.",
+  commErrRuleInvalid: "بيانات القاعدة غير سليمة (معدل 0–100، أو نطاقات متدرجة سليمة — لا الاثنان معًا).",
+  commErrRunState: "حالة التشغيلة لا تسمح بهذه العملية (المُرحّلة غير قابلة للتعديل — الصحيح عكس قيد الاستحقاق).",
+
+  // -- PHASE-016 T4/T10 — POS (counter, floor, reconciliation, terminals, offline) --
+
+  posNavSection: "نقاط البيع",
+  posNavCounter: "نقاط البيع",
+  posNavFloor: "خريطة الطاولات",
+  posNavReconciliation: "التسوية",
+  posNavTerminals: "أجهزة نقاط البيع",
+
+  posCounterTitle: "نقاط البيع — شاشة الكاشير",
+  posCounterNoTerminals: "لا توجد أجهزة نقاط بيع مسجلة — سجّل جهازاً أولاً.",
+  posCounterRegisterTerminal: "تسجيل جهاز",
+  posCounterTerminalLabel: "الجهاز",
+  posCounterShiftOpen: "وردية مفتوحة",
+  posCounterShiftNone: "لا وردية مفتوحة",
+  posCounterOpenShiftBtn: "فتح وردية",
+  posCounterCloseShiftBtn: "إغلاق الوردية",
+  posCounterZReportLink: "تقرير Z",
+  posCounterScanLabel: "مسح الباركود / رمز الصنف",
+  posCounterScanPlaceholder: "امسح أو اكتب الرمز ثم Enter",
+  posCounterScanNotFound: "لا يوجد صنف بهذا الرمز.",
+  posCounterScanPerf: "آخر بحث: {ms} م.ث",
+  posCounterItemsTitle: "الأصناف",
+  posCounterItemsEmpty: "لا أصناف قابلة للبيع.",
+  posCounterSearchPlaceholder: "ابحث بالاسم أو الرمز…",
+  posCounterCartTitle: "سلة البيع",
+  posCounterCartEmpty: "السلة فارغة — أضف أصنافاً من الشبكة أو بالمسح.",
+  posCounterQty: "الكمية",
+  posCounterRemove: "إزالة",
+  posCounterTotal: "الإجمالي",
+  posCounterTaxNote: "الضريبة النهائية تُحتسب عند الترحيل.",
+  posCounterPayBtn: "دفع",
+  posCounterClearBtn: "تفريغ السلة",
+  posCounterCustomer: "العميل",
+  posCounterWalkIn: "عميل نقدي",
+  posCounterPickCustomer: "اختيار عميل",
+  posCounterCustomerSearch: "ابحث بالاسم أو الكود…",
+  posCounterNewSale: "بيع جديد",
+  posCounterSalePosted: "تم ترحيل الفاتورة {no}.",
+  posCounterPreloadedCheck: "طلب الطاولة {no} محمّل — الدفع يغلق الطلب ويحرر الطاولة.",
+  posCounterErrTerminalRequired: "اختر جهازاً أولاً.",
+  posCounterErrCartEmpty: "أضف بنداً واحداً على الأقل.",
+  posCounterErrTerminalInactive: "الجهاز متوقف — فعّله قبل البيع.",
+  posCounterErrDiscountCeiling: "الخصم يتجاوز الحد المسموح — يلزم موافقة مشرف.",
+  posCounterReturnBtn: "مرتجع",
+  posCounterOfflineQueued: "خارج الاتصال — حُفظ البيع {no} محلياً بانتظار المزامنة.",
+
+  posShiftOpenTitle: "فتح وردية على {terminal}",
+  posShiftOpeningAmount: "الفتحة النقدية",
+  posShiftDenominations: "فئات النقد (اختياري)",
+  posShiftDenomination: "الفئة",
+  posShiftCount: "العدد",
+  posShiftCountedTotal: "إجمالي المعدود",
+  posShiftOpenAction: "فتح الوردية",
+  posShiftAlreadyOpen: "توجد وردية مفتوحة على صندوق هذا الجهاز.",
+  posShiftOpenedToast: "فُتحت الوردية {no}.",
+  posShiftCloseTitle: "إغلاق الوردية — عدّ عمياء",
+  posShiftBlindNote: "عدّ عمياء: المتوقع لا يظهر قبل الإغلاق.",
+  posShiftCloseAction: "إغلاق الوردية",
+  posShiftClosedToast: "أُغلقت الوردية {no}.",
+  posShiftSupervisorRequired: "الفارق يتجاوز السماحية — يلزم معرّف مشرف + الرمز السري + السبب.",
+  posShiftErrOpenMismatch: "توجد وردية مفتوحة على هذا الصندوق — وردية واحدة لكل صندوق.",
+  posShiftErrNotOnTerminal: "هذه الوردية ليست المفتوحة على هذا الجهاز.",
+
+  posTenderTitle: "الدفع",
+  posTenderMethod: "الطريقة",
+  posTenderAmount: "المبلغ",
+  posTenderCash: "نقداً",
+  posTenderCard: "بطاقة",
+  posTenderRemaining: "المتبقي",
+  posTenderChangeDue: "المسترد للعميل",
+  posTenderAddRow: "إضافة طريقة دفع",
+  posTenderConfirm: "تأكيد الدفع",
+  posTenderErrInvalid: "مبلغ الدفع غير صالح — يجب أن يكون رقماً موجباً.",
+  posTenderErrOverflow: "مجموع الدفع يتجاوز الإجمالي بكثير — راجع البنود.",
+  posTenderErrUnderpaid: "مجموع الدفع أقل من الإجمالي.",
+
+  posReceiptTitle: "معاينة الإيصال",
+  posReceiptPrint: "طباعة",
+  posReceiptLoading: "جارٍ تحميل الإيصال…",
+  posReceiptErrLoad: "تعذر تحميل الإيصال.",
+  posReceiptOfflineNote: "إيصال محلي بانتظار المزامنة — الرقم الرسمي يظهر بعد قبول الخادم.",
+
+  posReturnTitle: "مرتجع بيع",
+  posReturnInvoiceLabel: "الفاتورة الأصلية (المعرّف أو الرقم)",
+  posReturnLoad: "تحميل الفاتورة",
+  posReturnLines: "بنود المرتجع",
+  posReturnReason: "سبب الإرجاع",
+  posReturnNote: "ملاحظة",
+  posReturnSubmit: "تسجيل المرتجع",
+  posReturnPosted: "سُجّل الإشعار الدائن {no} ورُحّل.",
+  posReturnErrNoLines: "اختر بنداً واحداً على الأقل بكمية موجبة.",
+  posReturnErrInvoice: "تعذر تحميل الفاتورة الأصلية.",
+
+  posFloorTitle: "خريطة الطاولات — خدمة الطاولات",
+  posFloorBranch: "الفرع",
+  posFloorZone: "المنطقة",
+  posFloorSeats: "المقاعد",
+  posFloorSortKey: "الترتيب",
+  posFloorFree: "شاغرة",
+  posFloorOccupied: "مشغولة",
+  posFloorTableLabel: "رمز الطاولة",
+  posFloorOpenCheck: "فتح طلب",
+  posFloorOrderType: "نوع الطلب",
+  posFloorGuests: "عدد الضيوف",
+  posFloorAddTable: "إضافة طاولة",
+  posFloorTableAdded: "أُضيفت الطاولة.",
+  posFloorEmpty: "لا طاولات في هذا الفرع بعد.",
+  posFloorOpenChecks: "الطلبات المفتوحة",
+  posFloorCheckNo: "رقم الطلب",
+  posFloorLines: "البنود",
+  posFloorAddItem: "إضافة صنف",
+  posFloorSaveLines: "حفظ البنود",
+  posFloorLinesSaved: "حُفظت بنود الطلب.",
+  posFloorKitchenSend: "إرسال للمطبخ",
+  posFloorKitchenSent: "أُرسلت تذكرة المطبخ {no}.",
+  posFloorTickets: "تذاكر المطبخ",
+  posFloorTransfer: "نقل لطاولة",
+  posFloorTransferTo: "إلى طاولة",
+  posFloorTransferred: "نُقل الطلب إلى الطاولة الجديدة.",
+  posFloorSplit: "تقسيم الطلب",
+  posFloorSplitHint: "اختر البنود التي ستنتقل إلى طلب جديد.",
+  posFloorSplitDone: "انتقلت {n} بنود إلى طلب جديد.",
+  posFloorGuestCheck: "حساب الضيف",
+  posFloorPay: "دفع",
+  posFloorCancelCheck: "إلغاء الطلب",
+  posFloorCancelReason: "سبب الإلغاء",
+  posFloorCheckCancelled: "أُلغي الطلب وحُررت الطاولة.",
+  posFloorSent: "أُرسل للمطبخ",
+  posFloorUnsent: "لم يُرسل",
+  posFloorOrderDineIn: "في المكان",
+  posFloorOrderTakeaway: "سفري",
+  posFloorOrderDelivery: "توصيل",
+  posFloorOrderCounter: "كاشير",
+  posFloorCheckPaid: "مدفوع",
+  posFloorErrCheckNotOpen: "الطلب ليس مفتوحاً — لا يمكن تعديله.",
+  posFloorErrOpenTables: "لا تزال هناك طلبات مفتوحة — سوّها أو ألغها قبل إغلاق اليوم.",
+
+  posReconciliationTitle: "التسوية — تقرير Z",
+  posReconciliationDate: "التاريخ",
+  posReconciliationBranch: "الفرع",
+  posReconciliationLoad: "عرض التقرير",
+  posReconciliationZNumber: "رقم Z",
+  posReconciliationTotals: "الإجماليات",
+  posReconciliationInvoiceCount: "عدد الفواتير",
+  posReconciliationByOrderType: "حسب نوع الطلب",
+  posReconciliationByTender: "حسب طريقة الدفع",
+  posReconciliationByTerminal: "حسب الجهاز",
+  posReconciliationByHour: "حسب الساعة",
+  posReconciliationOfflinePairs: "مطابقة مبيعات عدم الاتصال (OFF- ⇄ الرسمي)",
+  posReconciliationOfflineNo: "رقم OFF-",
+  posReconciliationOfficialNo: "الرقم الرسمي",
+  posReconciliationPrint: "طباعة تقرير Z",
+  posReconciliationEmpty: "لا نتائج لهذا اليوم.",
+  posReconciliationOpenChecks: "طلبات مفتوحة ({n})",
+  posReconciliationRejections: "مبيعات مرفوضة من طابور المزامنة",
+  posReconciliationColType: "النوع",
+  posReconciliationColCount: "العدد",
+  posReconciliationColTax: "الضريبة",
+
+  posTerminalsTitle: "أجهزة نقاط البيع",
+  posTerminalsCode: "الكود",
+  posTerminalsName: "الاسم",
+  posTerminalsBranch: "الفرع",
+  posTerminalsTill: "الصندوق النقدي",
+  posTerminalsWarehouse: "المستودع",
+  posTerminalsReceiptSize: "مقاس الإيصال",
+  posTerminalsStatus: "الحالة",
+  posTerminalsDevice: "الجهاز المرتبط",
+  posTerminalsLastSeen: "آخر ظهور",
+  posTerminalsActive: "نشط",
+  posTerminalsInactive: "متوقف",
+  posTerminalsRegister: "تسجيل جهاز",
+  posTerminalsRegisterAction: "تسجيل",
+  posTerminalsRegistered: "سُجّل الجهاز {code}.",
+  posTerminalsActivate: "تفعيل",
+  posTerminalsDeactivate: "إيقاف",
+  posTerminalsActivated: "فُعّل الجهاز.",
+  posTerminalsDeactivated: "أُوقف الجهاز.",
+  posTerminalsEnrollDevice: "ربط جهاز",
+  posTerminalsDeviceName: "اسم الجهاز",
+  posTerminalsDeviceKey: "مفتاح الجهاز",
+  posTerminalsDeviceKeyNote: "يُولَّد محلياً ويظهر مرة واحدة — انسخه الآن.",
+  posTerminalsEnrollAction: "ربط",
+  posTerminalsEnrolled: "رُبط الجهاز بنجاح.",
+  posTerminalsRevoke: "إلغاء ربط الجهاز",
+  posTerminalsRevoked: "أُلغي ربط الجهاز.",
+  posTerminalsErrCodePattern: "الكود: 2–30 حرفاً/رقماً (يسمح بـ . _ -).",
+  posTerminalsErrCodeTaken: "هذا الكود مستخدم لجهاز آخر.",
+  posTerminalsEmpty: "لا أجهزة مسجلة.",
+
+  posOfflineBanner: "أنت خارج الاتصال — البيع يُحفظ محلياً برقم OFF- ويُزامن عند العودة.",
+  posOfflineQueue: "طابور المزامنة ({n})",
+  posOfflinePendingSync: "بانتظار المزامنة",
+  posOfflineSynced: "مُزامن",
+  posOfflineRejected: "مرفوض",
+  posOfflineKept: "محفوظ محلياً",
+  posOfflineRetry: "إعادة الإرسال",
+  posOfflineKeep: "الاحتفاظ",
+  posOfflineRemove: "حذف من الطابور",
+  posOfflineSyncNow: "مزامنة الآن",
+  posOfflineSyncedToast: "زُامن {n} بيعاً بنجاح.",
+  posOfflineRejectionReason: "سبب الرفض",
+  posOfflineEditResend: "تعديل وإعادة الإرسال",
+  posOfflineAcceptPrice: "قبول سعر الخادم",
+  posOfflineCancelWithReason: "إلغاء مع السبب",
+  posOfflineCancelledLocal: "أُلغي محلياً — بقي السجل محفوظاً.",
+  posOfflineReasonPeriodLocked: "الفترة المحاسبية مقفلة.",
+  posOfflineReasonPriceChanged: "تغيّر سعر الصنف على الخادم.",
+  posOfflineReasonInsufficientStock: "الكمية غير كافية في المخزون.",
+  posOfflineReasonCreditLimit: "تجاوز الحد الائتماني للعميل.",
+  posOfflineReasonValidation: "البيانات لم تجتز التحقق.",
+  posOfflineLocalReceiptTitle: "إيصال محلي",
+
+  // -- PHASE-018 (T41): manufacturing navigation & screens ---------------------
+  // (boms + production orders + QC inspections + batch genealogy; the
+  // food_manufacturing template's production/traceability surfaces)
+
+  manufacturingNavSection: "الإنتاج والتصنيع",
+  mfgBomsTitle: "قوائم المواد",
+  mfgOrdersTitle: "أوامر الإنتاج",
+  mfgQcTitle: "فحوص الجودة",
+  mfgGenealogyTitle: "تتبّع الدفعات",
+
+  // BOM screen (the version registry + the lines editor + explosion preview)
+  mfgBomsNew: "إصدار جديد",
+  mfgBomsEmpty: "لا توجد قوائم مواد بعد.",
+  mfgBomFilterItem: "تصفية حسب الصنف",
+  mfgBomsAllStatuses: "كل الحالات",
+  mfgBomStatusDraft: "مسودة",
+  mfgBomStatusActive: "نشطة",
+  mfgBomStatusArchived: "مؤرشفة",
+  mfgBomItem: "الصنف المنتج",
+  mfgBomVersion: "الإصدار",
+  mfgBomYield: "نسبة الإنتاج (%)",
+  mfgBomYieldHint: "أكبر من 0 وأقصاها 100 — تُقسم الكميات عليها عند تفجير القائمة.",
+  mfgBomEffectiveFrom: "سارٍ من",
+  mfgBomNote: "ملاحظة",
+  mfgBomOutputUom: "وحدة القياس للإخراج",
+  mfgBomComponent: "المكوّن",
+  mfgBomQtyPerOutput: "الكمية لكل وحدة إخراج",
+  mfgBomScrapPct: "هدر المكوّن (%)",
+  mfgBomLines: "بنود المكوّنات",
+  mfgBomLineNo: "#",
+  mfgBomAddLine: "إضافة مكوّن",
+  mfgBomRemoveLine: "إزالة",
+  mfgBomCreateTitle: "إصدار قائمة مواد جديد",
+  mfgBomEditTitle: "تعديل قائمة المواد (مسودة)",
+  mfgBomDraftOnlyHint: "التعديل على الإصدارات المسودة فقط؛ بعد التفعيل أنشئ إصدارًا جديدًا.",
+  mfgBomActivate: "تفعيل",
+  mfgBomActivateTitle: "تفعيل الإصدار",
+  mfgBomArchive: "أرشفة",
+  mfgBomArchiveHint: "يتوقف هذا الإصدار عن كونه القائمة المعتمدة لأوامر إنتاج الصنف.",
+  mfgBomCreatedToast: "أُنشئ الإصدار {version} — عدّل البنود ثم فعّله.",
+  mfgBomSavedToast: "حُفظ تعديل الإصدار {version}.",
+  mfgBomActivatedToast: "فُعّل الإصدار {version} (أُرشِف النشط السابق إن وُجد).",
+  mfgBomArchivedToast: "أُرشِف الإصدار {version}.",
+  mfgBomWorkspace: "مساحة عمل الإصدار",
+  mfgExplodeTitle: "معاينة تفجير القائمة",
+  mfgExplodeQty: "كمية الإخراج المطلوبة",
+  mfgExplodeBom: "الإصدار (اختياري)",
+  mfgExplodeBomAuto: "الإصدار النشط للصنف",
+  mfgExplodeRun: "تفجير",
+  mfgExplodeLevels: "المستويات",
+  mfgExplodeColVia: "عبر نصف مصنّع",
+  mfgExplodeTotals: "الإجماليات لكل صنف",
+  mfgExplodeEmpty: "لا توجد نتائج — تأكد من وجود إصدار قابل للتفجير للصنف.",
+  mfgExplodeHint: "المستوى 1 بنود مباشرة؛ المستويات الأعمق تُشتق من قوائم المكوّنات نصف المصنّعة.",
+  mfgColLevel: "المستوى",
+
+  // Production-order screen (list + create + the lifecycle workspace)
+  mfgOrdersNew: "أمر إنتاج جديد",
+  mfgOrdersEmpty: "لا توجد أوامر إنتاج بعد.",
+  mfgOrdersAllStatuses: "كل الحالات",
+  mfgOrderStatusDraft: "مسودة",
+  mfgOrderStatusReleased: "مُطلقة",
+  mfgOrderStatusInProgress: "قيد التنفيذ",
+  mfgOrderStatusCompleted: "مكتملة",
+  mfgOrderStatusCancelled: "ملغاة",
+  mfgOrderNo: "رقم الأمر",
+  mfgOrderPlannedQty: "الكمية المخططة",
+  mfgOrderActualQty: "الكمية الفعلية",
+  mfgOrderFgValue: "قيمة الإنتاج التام",
+  mfgOrderCompletedAt: "تاريخ الإكمال",
+  mfgOrderBranch: "الفرع",
+  mfgOrderBom: "إصدار القائمة (اختياري)",
+  mfgOrderBomActive: "الإصدار النشط عند الإطلاق",
+  mfgOrderPlannedDate: "التاريخ المخطط",
+  mfgOrderMaterialsWarehouse: "مستودع المواد",
+  mfgOrderFgWarehouse: "مستودع الإنتاج التام",
+  mfgOrderLaborRate: "أجر العمالة لكل وحدة",
+  mfgOrderOverheadRate: "المصاريف غير المباشرة لكل وحدة",
+  mfgOrderRatesHint: "اختياري — يُستوعب في قيد الإكمال عند الإطلاق عندما يكون أكبر من صفر.",
+  mfgOrderCreatedToast: "أُنشئ أمر الإنتاج (مسودة) — أطلقه لحجز رقم PRD وتجميد بنود الخطة.",
+  mfgOrderDetail: "تفاصيل أمر الإنتاج",
+  mfgOrderBatch: "الدفعة المنتجة",
+  mfgOrderExpiry: "تاريخ الانتهاء",
+  mfgOrderWipCredit: "دائن تحت التشغيل",
+  mfgOrderLabor: "العمالة المستوعبة",
+  mfgOrderOverhead: "المصاريف المستوعبة",
+  mfgOrderNoEditHint: "لا يوجد تعديل مباشر من الشاشة — أنشئ أمرًا بديلًا أو صحّح عبر استهلاكات معدّلة.",
+  mfgOrderPlanLines: "بنود الخطة (لقطة الإطلاق)",
+  mfgOrderOverPlan: "تجاوز الخطة",
+  mfgOrderRelease: "إطلاق",
+  mfgOrderStart: "بدء التنفيذ",
+  mfgOrderConsume: "استهلاك مواد",
+  mfgOrderScrap: "تالف",
+  mfgOrderComplete: "إكمال",
+  mfgOrderCancel: "إلغاء الأمر",
+  mfgOrderCancelTitle: "إلغاء أمر الإنتاج",
+  mfgOrderCancelReason: "سبب الإلغاء",
+  mfgOrderReleasedToast: "أُطلق الأمر {no} وجُمّدت بنود الخطة.",
+  mfgOrderStartedToast: "بدأ تنفيذ الأمر {no}.",
+  mfgOrderCancelledToast: "أُلغي الأمر.",
+  mfgConsumeQty: "الكمية المستهلكة",
+  mfgConsumeBatch: "الدفعة (اختياري)",
+  mfgConsumeBatchAuto: "تلقائي (الأقرب انتهاءً)",
+  mfgConsumeAt: "تاريخ الاستهلاك",
+  mfgConsumeAddLine: "إضافة بند",
+  mfgConsumeToast: "سُجّل الاستهلاك — قيد يومية {journal}.",
+  mfgScrapTitle: "تسجيل تالف تحت التشغيل",
+  mfgScrapQty: "الكمية التالفة",
+  mfgScrapReason: "رمز السبب",
+  mfgScrapValue: "قيمة التالف",
+  mfgScrapAt: "تاريخ الإتلاف",
+  mfgScrapToast: "سُجّل التالف بقيمة {value} — قيد يومية {journal}.",
+  mfgCompleteTitle: "إكمال أمر الإنتاج",
+  mfgCompleteActualQty: "الكمية المنتجة فعلًا",
+  mfgCompleteBatchNo: "رقم الدفعة (اختياري)",
+  mfgCompleteToast: "اكتمل الأمر — قيمة الإنتاج {value}، والدفعة {batch}.",
+  mfgConsumptions: "الاستهلاكات",
+  mfgConsumptionBatch: "الدفعة",
+  mfgConsumptionUnitCost: "تكلفة الوحدة",
+  mfgConsumptionValue: "القيمة",
+  mfgConsumptionJournal: "قيد اليومية",
+  mfgScraps: "التالف المسجّل",
+
+  // QC screen (the inspection log + the entry dialog)
+  mfgQcNew: "تسجيل فحص",
+  mfgQcEmpty: "لا توجد فحوص مسجّلة بعد.",
+  mfgQcAllTargets: "كل الأهداف",
+  mfgQcResultPass: "ناجح",
+  mfgQcResultFail: "راسب",
+  mfgQcDispAccept: "قبول",
+  mfgQcDispScrap: "إتلاف",
+  mfgQcDispRework: "إعادة تشغيل",
+  mfgQcDispReturn: "إرجاع للمورّد",
+  mfgQcDispNone: "بدون قرار",
+  mfgQcTargetProductionOrder: "أمر إنتاج",
+  mfgQcTargetGoodsReceipt: "استلام مشتريات",
+  mfgQcColInspectedAt: "تاريخ الفحص",
+  mfgQcColTarget: "الهدف",
+  mfgQcColGrn: "استلام المشتريات (معرّف)",
+  mfgQcColBatch: "دفعة الإنتاج التام",
+  mfgQcColSampled: "العيّنة",
+  mfgQcCreateTitle: "تسجيل فحص جودة",
+  mfgQcTargetType: "نوع الهدف",
+  mfgQcOrder: "أمر الإنتاج (مكتمل)",
+  mfgQcGrnId: "معرّف استلام المشتريات (UUID)",
+  mfgQcGrnHint: "لا تتوفر قائمة استلامات في الواجهة — الصق المعرّف من شاشة المشتريات.",
+  mfgQcResult: "النتيجة",
+  mfgQcSampled: "فحص بالعيّنة",
+  mfgQcSampleSize: "حجم العيّنة",
+  mfgQcDisposition: "القرار",
+  mfgQcDispositionHint: "الراسب يتطلب قرارًا؛ الناجح يقبل «بدون قرار» أو «قبول» فقط؛ والإرجاع للمورّد لأهداف استلام المشتريات فقط.",
+  mfgQcCreatedToast: "سُجّل الفحص ({result}).",
+  mfgQcReleasedToast: "أُفرج عن الدفعة المحجوزة للفحص (أصبحت نشطة).",
+  mfgQcScrapToast: "سُجّل إتلاف الفحص: كمية {qty} بقيمة {value} — قيد يومية {journal}.",
+
+  // Genealogy screen (the read-only recall search)
+  mfgGenealogyItem: "الصنف",
+  mfgGenealogyBatchId: "أو الصق معرّف دفعة (UUID)",
+  mfgGenealogyBatchHint: "اختر صنفًا ثم دفعة، أو الصق المعرّف مباشرة — الشاشة للقراءة فقط ولا ترحّل شيئًا.",
+  mfgGenealogyUpstream: "المصادر (صعودًا)",
+  mfgGenealogyDownstream: "الوجهات (نزولًا)",
+  mfgGenealogySummary: "ملخّص الدفعة",
+  mfgGenealogyBatchCard: "بطاقة الدفعة",
+  mfgGenealogyOnHand: "الرصيد الحالي",
+  mfgGenealogyProducingOrder: "أمر الإنتاج المُنشئ",
+  mfgGenealogyConsumedBy: "الأوامر التي استهلكتها",
+  mfgGenealogySalesCount: "عدد حركات البيع",
+  mfgGenealogyInspectionsCount: "عدد الفحوص",
+  mfgBatchStatusActive: "نشطة",
+  mfgBatchStatusQuarantined: "محجوزة للفحص",
+  mfgBatchStatusWrittenOff: "مشطوبة",
+  mfgGenealogyMaterials: "سلسلة المواد (صعودًا)",
+  mfgGenealogyColConsumedBy: "استُهلكت بواسطة",
+  mfgGenealogyColProducedBy: "أُنتجت بواسطة",
+  mfgGenealogyProductions: "الإنتاج النازل",
+  mfgGenealogyColFromBatch: "من دفعة",
+  mfgGenealogyColOrder: "الأمر",
+  mfgGenealogySales: "المبيعات النازلة",
+  mfgGenealogyColDocType: "نوع المستند",
+  mfgGenealogyColDocId: "المستند",
+  mfgGenealogyColDocDate: "تاريخ المستند",
+  mfgGenealogyIdsHint: "تعرض هذه الشاشة معرّفات المستندات فقط — تقرير شجرة الدفعات يضيف أرقامها.",
+  mfgDocSalesInvoice: "فاتورة بيع",
+  mfgDocDeliveryNote: "إشعار تسليم",
+  mfgGenealogyKindMaterial: "مادة",
+  mfgGenealogyKindProduced: "منتَج",
+  mfgGenealogyKindSold: "مبيع",
+
+  // Manufacturing typed errors (manufacturing-errors.ts codes → mfgErr*)
+  mfgErrBomNotFound: "قائمة المواد غير موجودة في هذه المنشأة.",
+  mfgErrBomVersionConflict: "رقم الإصدار مستخدم مسبقًا لهذا الصنف — اختر إصدارًا جديدًا.",
+  mfgErrBomNotDraft: "الإصدار ليس مسودة — التعديل والتفعيل للإصدارات المسودة فقط.",
+  mfgErrBomNotActive: "الإصدار ليس نشطًا — الأرشفة للإصدارات النشطة فقط.",
+  mfgErrBomActiveExists: "للصنف إصدار نشط آخر — أرشِفه أولًا (إصدار نشط واحد لكل صنف).",
+  mfgErrBomLineInvalid: "بند مكوّن غير صالح — تحقق من الصنف والكمية (أكبر من صفر) وعدم تكرار المكوّن.",
+  mfgErrBomCycle: "سلسلة القائمة تعود إلى صنف سبق عرضه — القوائم الدائرية مرفوضة.",
+  mfgErrBomTooDeep: "تفجير القائمة يتجاوز حد الـ 16 مستوى.",
+  mfgErrBomItemNotStock: "يجب أن يكون الصنف مخزنيًا — الخدمات لا تدخل قوائم المواد.",
+  mfgErrBomSelfReference: "لا يمكن أن يكون الصنف مكوّنًا في قائمته الخاصة.",
+  mfgErrBomYieldInvalid: "نسبة الإنتاج يجب أن تكون أكبر من 0 وأقصاها 100 (بحد أربع منازل عشرية).",
+  mfgErrBomUomMismatch: "وحدة القياس للإخراج يجب أن تطابق وحدة الصنف الأساسية.",
+  mfgErrBomRequired: "لا يوجد إصدار نشط لقائمة مواد الصنف — أنشئ إصدارًا وفعّله أو اختر إصدارًا صريحًا.",
+  mfgErrOrderNotFound: "أمر الإنتاج غير موجود في هذه المنشأة.",
+  mfgErrOrderState: "حالة الأمر لا تسمح بهذه العملية (المكتمل والملغى نهائيان).",
+  mfgErrOrderInputInvalid: "بيانات الأمر غير صالحة — تحقق من الكميات والتواريخ والمستودعات.",
+  mfgErrOrderItemNotStock: "يجب أن يكون الصنف المنتج مخزنيًا — الخدمات لا تُصنّع.",
+  mfgErrConsumptionNotPlanned: "الصنف ليس من مكوّنات الخطة المجمّدة — التصحيح يكون باستهلاك معدّل للمكوّنات المخططة.",
+  mfgErrScrapReasonRequired: "رمز سبب الإتلاف مطلوب بموجب سياسة المنشأة (1–40 حرفًا).",
+  mfgErrScrapExceedsWip: "قيمة التالف تتجاوز رصيد تحت التشغيل الحالي للأمر.",
+  mfgErrCompleteWithoutConsumption: "لا يمكن الإكمال قبل استهلاك المواد — سجّل استهلاكًا أولًا.",
+  mfgErrCostRounding: "تكلفة الوحدة لا تمثل قيمة الإنتاج بدقة أربع منازل — راجع الكمية الفعلية.",
+  mfgErrFgShelfLifeRequired: "الصنف يتتبع الانتهاء وسياسة الاشتقاق مفعّلة لكن لا توجد أيام صلاحية على الصنف.",
+  mfgErrOrderNotCancelable: "الأمر بدأ الاستهلاك — التصحيح باستهلاكات معدّلة لا بالإلغاء.",
+  mfgErrInspectionNotFound: "الفحص غير موجود في هذه المنشأة.",
+  mfgErrInspectionTargetNotFound: "استلام المشتريات غير موجود في هذه المنشأة.",
+  mfgErrInspectionTargetInvalid: "هدف الفحص غير صالح — أمر الإنتاج يجب أن يكون مكتملًا، والاستلام يحتاج معرّفًا.",
+  mfgErrInspectionInputInvalid: "بيانات الفحص غير صالحة — تحقق من العيّنة وحجمها والتاريخ.",
+  mfgErrDispositionRequired: "الفحص الراسب يتطلب قرارًا (قبول أو إتلاف أو إعادة تشغيل أو إرجاع للمورّد).",
+  mfgErrDispositionInvalid: "القرار لا يناسب النتيجة — الناجح يقبل «بدون قرار» أو «قبول» فقط، والإرجاع للمورّد لأهداف الاستلام فقط.",
+  mfgErrQcScrapBatchNotQuarantined: "لا توجد دفعة إنتاج تام محجوزة للفحص على الأمر — الإتلاف يتطلب دفعة محجوزة.",
+  mfgErrQcScrapEmptyBatch: "الدفعة المحجوزة فارغة — لا رصيد متبقٍ لإتلافه.",
+  mfgErrGenealogyBatchNotFound: "الدفعة غير موجودة في هذه المنشأة.",
+};
+
+const en: Dictionary = {
+  appTitle: "Universal Business ERP",
+  switchLabel: "العربية",
+  signOut: "Sign out",
+  loading: "Loading...",
+  phaseNote: "PHASE-003 UI — sign-in, sessions and admin screens via the secure web BFF.",
+
+  navHome: "Home",
+  navUsers: "Users & invitations",
+  navSessions: "Sessions",
+  navMfa: "Two-factor (TOTP)",
+  navRoles: "Roles",
+  navPassword: "Password",
+
+  loginTitle: "Sign in",
+  loginSubtitle: "Use your work account to access the platform.",
+  loginEmailLabel: "Email",
+  loginPasswordLabel: "Password",
+  loginMfaLabel: "MFA code",
+  loginMfaHint: "Six digits from your authenticator app.",
+  loginMfaShow: "Enter an MFA code",
+  loginMfaHide: "Hide the MFA code",
+  loginSubmit: "Sign in",
+  loginForgotLink: "Forgot your password?",
+  loginErrorInvalidCredentials: "Email or password is incorrect.",
+  loginErrorMfaRequired: "This account is protected with two-factor authentication — enter your MFA code.",
+  loginErrorRateLimited: "Too many attempts — try again in {seconds} seconds.",
+  loginErrorAccountLocked: "This account is temporarily locked — try again in {seconds} seconds.",
+  loginErrorGeneric: "Could not sign you in — please try again.",
+
+  forgotTitle: "Reset your password",
+  forgotDescription: "Enter your email; if the account exists, a reset link will be sent to it.",
+  forgotEmailLabel: "Email",
+  forgotSubmit: "Send reset link",
+  forgotSuccess: "If that email is registered, a password reset message is on its way.",
+  forgotBack: "Back to sign in",
+
+  acceptTitle: "Accept your invitation",
+  acceptTenantLabel: "Organization",
+  acceptRoleLabel: "Role",
+  acceptEmailLabel: "Invited email",
+  acceptFullNameLabel: "Full name",
+  acceptPasswordLabel: "New password",
+  acceptPasswordHint: "At least 10 characters.",
+  acceptSubmit: "Create account and sign in",
+  acceptErrorExpired: "This invitation has expired.",
+  acceptErrorRevoked: "This invitation was revoked.",
+  acceptErrorAccepted: "This invitation has already been used.",
+  acceptErrorNotFound: "This invitation link is not valid.",
+  acceptErrorGeneric: "Could not accept this invitation.",
+
+  homeWelcome: "Welcome, {name}",
+  homeTenantLabel: "Active organization",
+  homeSwitchTenant: "Switch organization",
+  homeRoleLabel: "Your role",
+  homePermissionsLabel: "Granted permissions: {count}",
+  homeScreens: "Admin screens",
+
+  usersTitle: "Users & invitations",
+  usersNoPermission: "You do not have permission to view this screen.",
+  usersColEmail: "Email",
+  usersColName: "Name",
+  usersColRole: "Role",
+  usersColStatus: "Status",
+  usersColLastLogin: "Last sign-in",
+  usersNever: "Never signed in",
+  usersEmpty: "No users in this organization yet.",
+  usersInviteTitle: "Invite a user",
+  usersInviteEmailLabel: "Invitee email",
+  usersInviteRoleLabel: "Role on joining",
+  usersInviteSubmit: "Send invitation",
+  usersInviteLinkTitle: "Accept link (dev environment — no real mail delivery):",
+  usersInviteExpiresLabel: "Expires:",
+  usersInvitationsTitle: "Invitations",
+  usersColExpires: "Expires",
+  usersColActions: "Actions",
+  usersRevoke: "Revoke",
+  usersNoRoles: "No roles are available to assign.",
+  usersEmptyInvitations: "No invitations.",
+
+  statusActive: "Active",
+  statusPending: "Pending",
+  statusRevoked: "Revoked",
+  statusExpired: "Expired",
+  statusAccepted: "Accepted",
+  statusSuspended: "Suspended",
+
+  sessionsTitle: "Active sessions",
+  sessionsHint:
+    "Revoking a session signs that device out immediately; to sign yourself out everywhere, revoke your sessions one by one.",
+  sessionsColUser: "User",
+  sessionsColCreated: "Started",
+  sessionsColExpires: "Expires",
+  sessionsColLastSeen: "Last seen",
+  sessionsColIp: "IP address",
+  sessionsRevoke: "Revoke session",
+  sessionsEmpty: "No active sessions.",
+
+  mfaTitle: "Two-factor authentication (TOTP)",
+  mfaDescription: "Enroll an authenticator app, confirm with a code, then generate recovery codes.",
+  mfaEnrollTitle: "Step 1 — Start enrollment",
+  mfaEnrollButton: "Start enrollment",
+  mfaSecretLabel: "Secret (enter it manually in your authenticator app):",
+  mfaOtpauthLabel: "otpauth data (QR payload):",
+  mfaEnrollHint: "Enter the current code from your authenticator app to confirm enrollment.",
+  mfaVerifyTitle: "Step 2 — Confirm the code",
+  mfaVerifyCodeLabel: "MFA code",
+  mfaVerifySubmit: "Confirm",
+  mfaVerified: "Two-factor authentication is now active.",
+  mfaRecoveryTitle: "Step 3 — Recovery codes",
+  mfaRecoveryDescription: "Recovery codes are shown once — store them somewhere safe now.",
+  mfaRecoveryGenerate: "Generate recovery codes",
+  mfaRecoveryRegenerate: "Regenerate codes",
+  mfaInvalidCode: "That code is not valid.",
+  mfaNeedConfirmed: "Confirm enrollment first, then generate recovery codes.",
+
+  rolesTitle: "Roles",
+  rolesDescription: "Clone a system template to create a role for your organization.",
+  rolesTenantTitle: "Organization roles",
+  rolesTemplatesTitle: "System templates",
+  rolesColKey: "Key",
+  rolesColName: "Name",
+  rolesColSystem: "System?",
+  rolesColActions: "Actions",
+  rolesClone: "Clone",
+  rolesCloned: "Role {name} created.",
+  rolesYes: "Yes",
+  rolesNo: "No",
+
+  passwordTitle: "Change password",
+  passwordDescription: "After the change your other sessions are revoked; this browser stays signed in.",
+  passwordCurrentLabel: "Current password",
+  passwordNextLabel: "New password",
+  passwordNextHint: "At least 10 characters.",
+  passwordSubmit: "Change password",
+  passwordSuccess: "Your password has been changed.",
+  passwordErrorCurrent: "Your current password is not correct.",
+
+  errorsForbidden: "You do not have permission to do that.",
+  errorsUnauthorized: "Your session has expired — sign in again.",
+  errorsValidation: "Invalid input — please check the fields.",
+  errorsNotFound: "Not found.",
+  errorsNetwork: "Could not reach the server.",
+  errorsGeneric: "Something went wrong.",
+  errorsRateLimited: "Too many attempts — try again in {seconds} seconds.",
+
+  navOnboarding: "Onboarding",
+  navBranches: "Branches",
+  navSettings: "Settings",
+  navSupport: "Support sessions",
+  navPlatformSection: "Platform administration",
+  navPlatformConsole: "Platform",
+  navPlatformAudit: "Platform audit",
+
+  statusInactive: "Inactive",
+  statusClosed: "Closed",
+  statusIssued: "Issued",
+  statusRejected: "Rejected",
+  statusConverted: "Converted",
+  statusTerminated: "Terminated",
+  taxStatusLabel: "Tax registration status",
+  taxStatusRegistered: "Registered",
+  taxStatusNotRegistered: "Not registered",
+  taxStatusDeregistered: "Deregistered",
+  taxNumberLabel: "Tax registration number",
+  fiscalStartMonthLabel: "Fiscal year start month",
+  numberingAssignAtLabel: "Document number assignment",
+  numberingAssignAtPosting: "At posting",
+  numberingAssignAtApproval: "At approval",
+  localeArabic: "العربية",
+  localeEnglish: "English",
+
+  registerTitle: "Create a new organization",
+  registerSubtitle: "Create an owner account and a new organization in one step, then start a trial.",
+  registerBusinessNameLabel: "Business name (English)",
+  registerBusinessNameArLabel: "Business name (Arabic, optional)",
+  registerCountryLabel: "Country",
+  registerCurrencyLabel: "Base currency (derived from the country)",
+  registerTemplateLabel: "Industry template",
+  registerTaxNumberHint: "Required when the status is “Registered”.",
+  registerOwnerSection: "Owner account",
+  registerOwnerEmailLabel: "Owner email",
+  registerOwnerNameLabel: "Owner full name",
+  registerSubmit: "Create organization",
+  registerSuccessTitle: "Your organization has been created",
+  registerSuccessBody: "Check your email ({email}) then sign in. The trial period ends on {date}.",
+  registerGoLogin: "Sign in",
+  registerLoginPrompt: "Already have an account?",
+  registerErrorEmailTaken: "This email is already registered — sign in instead of creating a new account.",
+  registerErrorOptions: "Could not load the registration options (countries/templates) — reload the page.",
+
+  onboardingTitle: "Workspace onboarding",
+  onboardingSubtitle:
+    "Provisioning creates your organization roles, the chart of accounts and the default numbering policies. It is safe to re-run: a second run creates no duplicates.",
+  onboardingProvisionButton: "Provision workspace",
+  onboardingResultTitle: "Provisioning result",
+  onboardingRolesLabel: "Roles",
+  onboardingAccountsLabel: "Accounts",
+  onboardingPurposesLabel: "Account purposes",
+  onboardingSettingsLabel: "Settings",
+  onboardingCreatedCount: "Created: {created} — already existing: {existing}",
+  onboardingZeroDuplicatesHint:
+    "Nothing new was created — the workspace is already provisioned, which confirms that re-runs produce zero duplicates.",
+  onboardingGoHome: "Go to home",
+  onboardingGoBranches: "Manage branches",
+
+  branchesTitle: "Branches",
+  branchesEmpty: "No branches yet.",
+  branchesColCode: "Code",
+  branchesColName: "Name",
+  branchesColNameAr: "Arabic name",
+  branchesCreateTitle: "Create a branch",
+  branchesCodeLabel: "Branch code",
+  branchesNameLabel: "Branch name",
+  branchesNameArLabel: "Arabic name (optional)",
+  branchesCreateSubmit: "Add branch",
+  branchesActivate: "Activate",
+  branchesDeactivate: "Deactivate",
+  branchesErrorCodeTaken: "This branch code is already used in this organization.",
+
+  settingsTitle: "Organization settings",
+  settingsProfileTitle: "Profile",
+  settingsNameLabel: "Name (English)",
+  settingsNameArLabel: "Arabic name",
+  settingsTimezoneLabel: "Timezone",
+  settingsProfileSubmit: "Save profile",
+  settingsProfileSaved: "The profile has been saved.",
+  settingsGeneralTitle: "General settings",
+  settingsDefaultLocaleLabel: "Default locale",
+  settingsNumeralSystemLabel: "Numeral system",
+  settingsNumeralLatn: "Western digits (123)",
+  settingsNumeralArab: "Arabic-Indic digits (١٢٣)",
+  settingsHijriLabel: "Hijri date display",
+  settingsHijriHint: "Display-only overlay — fiscal years stay Gregorian.",
+  settingsFiscalNumberingTitle: "Fiscal calendar & numbering",
+  settingsSupportTitle: "Support",
+  settingsSupportOptInLabel: "Allow support sessions",
+  settingsSupportOptInWarning:
+    "Warning: enabling this allows the platform team to open time-boxed, audited support sessions that read your organization's data.",
+  settingsTaxTitle: "Tax registration",
+  settingsTaxPairHint:
+    "The status and number are validated as a pair: the number is required while “Registered” and rejected otherwise.",
+  settingsSave: "Save",
+  settingsSaved: "Saved.",
+  settingsErrorInvalidValue: "Invalid value for this setting.",
+
+  supportSessionsTitle: "Support sessions",
+  supportSessionsHint:
+    "These are sessions the platform team opens on your request or with your consent; you can terminate any active opt-in session at any time.",
+  supportColReason: "Reason",
+  supportColTicket: "Ticket ref",
+  supportColOpened: "Opened",
+  supportColClosed: "Closed",
+  supportColOptIn: "Opt-in?",
+  supportEmpty: "No support sessions.",
+  supportTerminate: "Terminate session",
+  supportErrorAccessDenied:
+    "Opening a support session requires the organization's opt-in or a declared incident ticket reference.",
+  supportErrorExpired: "The support session has expired.",
+  supportErrorNotActive: "This session is not active.",
+
+  tenancyErrorFeatureNotEntitled: "This feature is not enabled for your organization.",
+  tenancyErrorDependenciesMissing: "Activating the feature requires dependency keys that are not granted yet: {keys}",
+
+  platformConsoleTitle: "Platform administration console",
+  platformNoAccess: "This is the platform administration area — available to platform operations staff only.",
+  platformTenantBadge: "Platform",
+  platformSearchLabel: "Search organizations",
+  platformSearchSubmit: "Search",
+  platformColTenant: "Organization",
+  platformColCountry: "Country",
+  platformColPlan: "Plan",
+  platformColCreated: "Created",
+  platformEmpty: "No matching organizations.",
+  platformProfileTitle: "Profile",
+  platformPlanTitle: "Plan & subscription",
+  platformPlanCurrentLabel: "Current plan",
+  platformPlanNone: "No active subscription.",
+  platformPlanAssignTitle: "Assign a plan",
+  platformPlanLabel: "Plan",
+  platformTrialDaysLabel: "Trial days (optional)",
+  platformPlanSubmit: "Assign plan",
+  platformPlanAssigned: "Plan “{plan}” assigned — granted keys: {count}.",
+  platformEntitlementsTitle: "Entitlements",
+  platformColFeatureKey: "Feature key",
+  platformColSource: "Source",
+  platformEntitlementsEmpty: "No entitlements granted.",
+  platformGrantTitle: "Grant a feature",
+  platformGrantFeatureLabel: "Feature key",
+  platformGrantSourceLabel: "Source",
+  platformGrantExpiresLabel: "Expires at",
+  platformGrantExpiresHint: "Required for MANUAL grants.",
+  platformGrantReasonLabel: "Reason",
+  platformGrantSubmit: "Grant",
+  platformGrantDone: "The feature has been granted.",
+  platformRevoke: "Revoke",
+  platformRevokeReasonLabel: "Revocation reason",
+  platformGrantExpiryRequired: "Manual grants must carry an explicit expiry.",
+  platformGrantUnknownKey: "Unknown feature key.",
+  platformMembershipsTitle: "Memberships",
+  platformBranchesTitle: "Organization branches",
+  platformLifecycleTitle: "Suspend & restore",
+  platformReasonLabel: "Reason (required)",
+  platformSuspendButton: "Suspend organization",
+  platformRestoreButton: "Restore organization",
+  platformSuspendDone: "Organization suspended — {count} user session(s) killed.",
+  platformRestoreDone: "Organization restored to active.",
+  platformSupportTitle: "Support sessions",
+  platformSupportOpenTitle: "Open a support session",
+  platformSupportReasonLabel: "Reason",
+  platformSupportTicketLabel: "Ticket reference (optional)",
+  platformSupportHoursLabel: "Duration in hours (1-4)",
+  platformSupportOpenSubmit: "Open session",
+  platformSupportClose: "Close",
+  platformSupportCloseReasonLabel: "Close reason",
+  platformSupportSessionLabel: "Active session",
+  platformReadDataTitle: "Read organization data",
+  platformReadResourceLabel: "Resource",
+  platformReadSubmit: "Read",
+  platformNoActiveSession: "No active support session — open one first.",
+  resourceUsers: "Users",
+  resourceMemberships: "Memberships",
+  resourceRoles: "Roles",
+  resourceBranches: "Branches",
+  resourceSettings: "Settings",
+  resourceEntitlements: "Entitlements",
+  resourceSubscription: "Subscription",
+  resourceAccounts: "Accounts",
+  resourceAuditEvents: "Audit events",
+
+  platformAuditTitle: "Platform audit log",
+  platformAuditPlatformOnly: "Platform events only",
+  platformAuditTenantFilter: "Tenant id (optional)",
+  platformAuditActionFilter: "Action (optional)",
+  platformAuditApply: "Apply filters",
+  platformAuditColAt: "When",
+  platformAuditColAction: "Action",
+  platformAuditColActor: "Actor",
+  platformAuditViaPlatform: "Via platform admin",
+  platformAuditNextPage: "Next page",
+  platformAuditEmpty: "No events.",
+  platformErrorInvalidTransition: "The organization's state does not allow this transition.",
+  platformErrorPlanNotFound: "Unknown plan.",
+
+  shellSkipToContent: "Skip to content",
+  shellCommandSearch: "Search or jump to…",
+  shellShortcutsTitle: "Keyboard shortcuts",
+  shellClose: "Close",
+  shellMore: "More",
+  statusOffboarded: "Offboarded",
+  wizardStepOf: "Step {current} of {total}",
+  platformBackToConsole: "Back to the platform console",
+  rolesEmpty: "No roles yet.",
+  retryLabel: "Try again",
+
+  // -- P6-T11a: shared labels -------------------------------------------------
+  commonSave: "Save",
+  commonCreate: "Create",
+  commonCancel: "Cancel",
+  commonOpen: "Open",
+  commonClear: "Clear",
+  commonConfirm: "Confirm",
+  commonUnsavedChanges: "There are unsaved changes — continue anyway?",
+  commonVersionConflict: "The record changed elsewhere — reload and retry.",
+  statusDraft: "Draft",
+  statusArchived: "Archived",
+  kindLabel: "Kind",
+  kindFilterAll: "All",
+  colStatus: "Status",
+  colName: "Name",
+  listNextPage: "Next page",
+  listPrevPage: "Previous page",
+  listSearchLabel: "Search",
+  namePreviewLabel: "Name preview",
+
+  // -- P6-T11a: navigation + breadcrumbs ----------------------------------------
+  navPartners: "Partners",
+  navPartnersDirectory: "Partner directory",
+  navPartnersNew: "New partner",
+  navOpeningBalances: "Opening balances",
+  navInventory: "Inventory",
+  navItems: "Items",
+  navItemsNew: "New item",
+  navPriceLists: "Price lists",
+  navImport: "Import & export",
+
+  // -- PHASE-007: accounting -----------------------------------------------------
+  navAccountingCoa: "Chart of accounts",
+  navAccountingJournals: "Journal entries",
+  navAccountingGl: "General ledger",
+  navAccountingPeriods: "Fiscal calendar",
+  navAccountingApprovals: "Approvals",
+  navAccountingRates: "Exchange rates",
+  accountingTitle: "Accounting",
+  accountingJournalsTitle: "Journal entries",
+  accountingJournalsNew: "New journal",
+  accountingJournalsEmpty: "No journal entries yet",
+  accountingColEntryNo: "Entry no.",
+  accountingColEntryDate: "Date",
+  accountingColCurrency: "Currency",
+  accountingColTotal: "Total",
+  accountingColStatus: "Status",
+  accountingColCode: "Code",
+  accountingColName: "Name",
+  accountingColType: "Type",
+  accountingColPostable: "Postable",
+  accountingColDebit: "Debit",
+  accountingColCredit: "Credit",
+  accountingColBalance: "Balance",
+  accountingSubmit: "Submit",
+  accountingApprove: "Approve",
+  accountingPost: "Post",
+  accountingReverse: "Reverse",
+  accountingCancel: "Cancel",
+  accountingSaveDraft: "Save draft",
+  accountingAddLine: "Add line",
+  accountingRemoveLine: "Remove line",
+  accountingDuplicateLine: "Duplicate line",
+  accountingPartnerRequired: "Partner is required on this account",
+  accountingBalanced: "Balanced",
+  accountingUnbalanced: "Entry unbalanced",
+  accountingDifference: "Δ",
+  accountingLineTotal: "Line",
+  accountingMemo: "Description",
+  accountingCostCenter: "Cost center",
+  accountingPartner: "Partner",
+  accountingTaxCode: "Tax code",
+  accountingAccount: "Account",
+  accountingDescription: "Description",
+  accountingCoaTitle: "Chart of accounts",
+  accountingCoaEmpty: "No accounts",
+  accountingPurposesTitle: "Account purposes",
+  accountingPurposesEmpty: "No purpose mappings",
+  accountingGlTitle: "General ledger",
+  accountingGlEmpty: "No movements",
+  accountingGlDrill: "Open entry",
+  accountingPeriodsTitle: "Fiscal periods",
+  accountingPeriodsEmpty: "No periods",
+  accountingYearsTitle: "Fiscal years",
+  accountingCreateYear: "Create fiscal year",
+  accountingYearName: "Year name",
+  accountingYearStart: "Start date",
+  accountingYearEnd: "End date",
+  accountingSoftClose: "Soft-close",
+  accountingLock: "Lock",
+  accountingReopen: "Reopen",
+  accountingReopenReason: "Reopen reason",
+  accountingReopenPrompt: "Enter the reopen reason (required)",
+  accountingChecklist: "Close checklist",
+  accountingChecklistOk: "OK",
+  accountingChecklistBroken: "Broken",
+  accountingChecklistNotRun: "Not run",
+  accountingChecklistNotApplicable: "Not yet applicable",
+  accountingApprovalsTitle: "Pending approvals",
+  accountingApprovalsEmpty: "Nothing awaiting approval",
+  accountingApprovalsSelfHint: "You cannot approve your own document",
+  accountingApprovalsSubmittedBy: "Submitted by",
+  accountingApprovalsTotalBase: "Total (base)",
+  accountingApprovalsPreview: "Preview",
+  accountingReject: "Reject",
+  accountingRatesTitle: "Exchange rates",
+  accountingRatesEmpty: "No rates",
+  accountingRatesCurrency: "Currency",
+  accountingRatesDate: "Date",
+  accountingRatesRate: "Rate",
+  accountingRatesSave: "Save rate",
+  accountingPostedAt: "Posted at",
+  accountingSource: "Source",
+  accountingPreviewTitle: "Journal preview",
+  statusPendingApproval: "Pending approval",
+  statusApproved: "Approved",
+  statusPosted: "Posted",
+  statusReversed: "Reversed",
+  statusCancelled: "Cancelled",
+  accountingStatusOpen: "Open",
+  accountingStatusSoftClosed: "Soft-closed",
+  accountingStatusLocked: "Locked",
+  accountingKindRegular: "Regular",
+  accountingKindOpening: "Opening",
+  accountingKindClosing: "Closing",
+  accountingSearchPlaceholder: "Search by code or name…",
+  accountingNewAccount: "New account",
+  accountingAccountParent: "Parent account",
+  accountingAccountCurrency: "Account currency (optional)",
+  accountingIsGroup: "Group account (not postable)",
+  accountingMapPurpose: "Map purpose to account",
+  accountingPurposeKey: "Purpose",
+  accountingPurposeAccount: "Account",
+  accountingActiveFrom: "Active from",
+  accountingLines: "Entry lines",
+  accountingColAmount: "Amount",
+  accountingColBase: "Base amount",
+  accountingColDirection: "Direction",
+  accountingColPeriod: "Period",
+  accountingReference: "Reference",
+  accountingExchangeRate: "Exchange rate",
+  accountingRecurringTitle: "Recurring journals",
+  accountingRecurringNew: "New recurring journal",
+  accountingRecurringEmpty: "No recurring journals",
+  accountingRecurringSchedule: "Schedule",
+  accountingRecurringNextRun: "Next run",
+  accountingRecurringAmountPolicy: "Amount policy",
+  accountingRecurringFixed: "Fixed",
+  accountingRecurringReenter: "Re-enter",
+  accountingRecurringPause: "Pause",
+  accountingRecurringActivate: "Activate",
+  accountingRecurringGenerateDue: "Generate due entries",
+  accountingPoliciesTitle: "Approval policies",
+  accountingPoliciesEmpty: "No policies defined",
+  accountingPolicyMode: "Mode",
+  accountingPolicyThreshold: "Threshold (base currency)",
+  accountingRunAr: "Run AR reconciliation",
+  accountingRunAp: "Run AP reconciliation",
+  accountingReconStatusOk: "Reconciled",
+  accountingReconStatusBroken: "Broken",
+  accountingPostOpening: "Post opening balances",
+  accountingPostOpeningConfirm: "Opening balances post once through the OPENING period of the selected fiscal year. Continue?",
+  obPostReadyNote: "Drafts are ready — posting runs once through the OPENING period of the selected fiscal year.",
+  accountingYearEndExecute: "Execute year-end close",
+  accountingYearEndReverse: "Reverse year-end close",
+  accountingYearEndConfirm: "The system closing entry for the year will be generated. Continue?",
+  accountingMovementsTitle: "Account movements",
+  accountingRegisterTitle: "Journal register",
+  accountingSelectAccount: "Select an account",
+  accountingFromDate: "From date",
+  accountingToDate: "To date",
+  accountingReversalDate: "Reversal entry date",
+  accountingReversalReason: "Reversal reason",
+  accountingSoftClosePrompt: "Reason for posting into a soft-closed period (optional)",
+  accountingRateHint: "Rate = base-currency units per 1 foreign unit",
+  accountingErrEntryNotBalanced: "Entry unbalanced — total debits must equal total credits.",
+  accountingErrPeriodLocked: "The fiscal period is locked — posting is not allowed.",
+  accountingErrAccountNotPostable: "Account is not postable (archived or group).",
+  accountingErrPurposeNotMapped: "Purpose is not mapped to an active account — no fallback posting, ever.",
+  accountingErrMissingPartner: "AR/AP control lines require a partner.",
+  accountingErrMissingFxRate: "No exchange rate for the given date.",
+  accountingErrAlreadyPosted: "This document is already posted.",
+  accountingErrAlreadyReversed: "This entry is already reversed.",
+  accountingErrApprovalLimit: "Amount exceeds the approval threshold.",
+  accountingErrSelfApproval: "You cannot approve a document you created.",
+  accountingErrImmutable: "Posted entries are immutable — correction is reversal-only.",
+  accountingErrState: "Document state does not allow this action.",
+  accountTypeAsset: "Asset",
+  accountTypeLiability: "Liability",
+  accountTypeEquity: "Equity",
+  accountTypeRevenue: "Revenue",
+  accountTypeExpense: "Expense",
+  accountingPostableYes: "Postable",
+  accountingPostableNo: "Group",
+  accountingPurposesHint: "One active mapping per purpose — the engine fails closed on any unmapped purpose (no fallback posting).",
+
+  // -- T14-UI: PHASE-008 treasury --------------------------------------------------
+  navTreasury: "Treasury",
+  navTreasuryAccounts: "Cash accounts",
+  navTreasuryReceipts: "Receipts",
+  navTreasuryPayments: "Payments",
+  navTreasuryExpenses: "Expenses",
+  navTreasuryTransfers: "Cash transfers",
+  navTreasuryShifts: "Cashier shifts",
+  navTreasuryBankRec: "Bank reconciliation",
+  treasuryAccountsTitle: "Cash accounts",
+  treasuryAccountsEmpty: "No cash accounts yet — open the first one.",
+  treasuryAccountOpenTitle: "Open cash account",
+  treasuryAccountName: "Name (English)",
+  treasuryAccountNameAr: "Name (Arabic)",
+  treasuryAccountType: "Account type",
+  treasuryAccountTypeCash: "Cash",
+  treasuryAccountTypeBank: "Bank",
+  treasuryAccountTypePetty: "Petty cash",
+  treasuryAccountGlAccount: "GL control account",
+  treasuryAccountCurrency: "Currency",
+  treasuryAccountBranch: "Branch (optional)",
+  treasuryColGlCode: "GL code",
+  treasuryAccountBalance: "Balance",
+  treasuryColMovements: "Movements",
+  treasuryAccountCreatedToast: "Cash account opened.",
+  treasuryAccountCloseBtn: "Close account",
+  treasuryAccountCloseReason: "Close reason",
+  treasuryAccountClosedToast: "Cash account closed.",
+  treasuryAccountOpenedAt: "Opened at",
+  treasuryAccountClosedAt: "Closed at",
+  treasuryAccountMovementsTitle: "Account movements",
+  treasuryAccountMovementsEmpty: "No movements yet.",
+  treasuryColDirectionIn: "In",
+  treasuryColDirectionOut: "Out",
+  treasuryColBaseAmount: "Base amount",
+  treasuryColValueDate: "Value date",
+  treasuryColRate: "Rate",
+  treasuryColSource: "Source",
+  treasuryColMemo: "Memo",
+  treasuryMethodCash: "Cash",
+  treasuryMethodBank: "Bank transfer",
+  treasuryMethodCheque: "Cheque",
+  treasuryMethodCard: "Card",
+  treasuryMethodTransfer: "Wire transfer",
+  treasuryReceiptsTitle: "Receipts",
+  treasuryReceiptsEmpty: "No receipts yet.",
+  treasuryReceiptsNew: "New receipt",
+  treasuryPaymentsTitle: "Payments",
+  treasuryPaymentsEmpty: "No payments yet.",
+  treasuryPaymentsNew: "New payment",
+  treasuryColDocNo: "Doc no.",
+  treasuryColPartner: "Partner",
+  treasuryColMethod: "Method",
+  treasuryColAmount: "Amount",
+  treasuryColAllocated: "Allocated",
+  treasuryColFx: "FX gain/loss",
+  treasuryColPayer: "Payer",
+  treasuryColPayee: "Payee",
+  treasuryDocCashAccount: "Cash account",
+  treasuryDocPartner: "Partner",
+  treasuryDocMethod: "Method",
+  treasuryDocCurrency: "Currency",
+  treasuryDocAmount: "Amount",
+  treasuryDocRate: "Exchange rate (optional)",
+  treasuryDocRateHint: "Leave empty to use the value-date rate",
+  treasuryDocValueDate: "Value date",
+  treasuryDocReference: "Reference",
+  treasuryDocDescription: "Description",
+  treasuryDocDescriptionAr: "Description (Arabic)",
+  treasuryDocCreatedToast: "Document created.",
+  treasuryDocDetailTitle: "Document detail",
+  treasuryDocPostedToast: "Posted {no} — journal {entry}.",
+  treasuryDocReverseToast: "Document reversed.",
+  treasuryDocReverseDate: "Reversal date",
+  treasuryDocReverseReason: "Reversal reason",
+  treasuryDocCancelToast: "Document cancelled.",
+  treasuryDocOnAccount: "On account",
+  treasuryDocJournalNo: "Journal no.",
+  treasuryDocSideHint: "Receipts allocate AR (customer) open items; payments allocate AP (supplier) open items.",
+  treasuryCancelReason: "Cancellation reason",
+  treasuryOpenItemsTitle: "Open items",
+  treasuryAllocationsTitle: "Document allocation",
+  treasuryAllocationsEmpty: "No open items for this partner.",
+  treasuryAllocationsHint: "Allocate the amount across open items — the remainder posts on account.",
+  treasuryAllocationSuggestBtn: "Suggest FIFO allocation",
+  treasuryAllocationSuggestToast: "Suggestion applied to {count} item(s).",
+  treasuryAllocationColOutstanding: "Outstanding",
+  treasuryAllocationTotals: "Allocation summary",
+  treasuryAllocationTotalAllocated: "Total allocated",
+  treasuryAllocationRemainder: "Unallocated",
+  treasuryAllocationOnAccountHint: "The unallocated remainder posts to the partner's on-account balance.",
+  treasuryAllocationOverError: "Allocations exceed the document amount.",
+  treasuryAllocationSaveBtn: "Save allocation",
+  treasuryAllocationSavedToast: "Allocation saved.",
+  treasuryAllocationReloadBtn: "Reload items",
+  treasuryExpensesTitle: "Expenses",
+  treasuryExpensesEmpty: "No expense claims yet.",
+  treasuryExpenseClaimNew: "Record expense",
+  treasuryExpenseCategoriesTitle: "Expense categories",
+  treasuryExpenseCategoriesEmpty: "No categories yet — create the first one.",
+  treasuryExpenseCategoryNew: "New category",
+  treasuryExpenseCategoryCode: "Category code",
+  treasuryExpenseCategoryAccount: "Expense account",
+  treasuryExpenseCategoryApproval: "Approval mode",
+  treasuryExpenseApprovalNone: "No approval",
+  treasuryExpenseApprovalSingle: "Single approver",
+  treasuryExpenseCategoryCreatedToast: "Category created.",
+  treasuryExpenseCreatedToast: "Expense recorded.",
+  treasuryExpenseReceiptNote: "Receipt file uploads arrive with the files workspace — paste an existing receipt file id if you have one.",
+  treasuryExpenseReceiptFileId: "Receipt file id (optional)",
+  treasuryExpenseColNo: "Expense no.",
+  treasuryExpenseColPayee: "Payee",
+  treasuryExpenseColCategory: "Category",
+  treasuryTransfersTitle: "Cash transfers",
+  treasuryTransfersEmpty: "No transfers yet.",
+  treasuryTransferNew: "New transfer",
+  treasuryTransferFrom: "From account",
+  treasuryTransferTo: "To account",
+  treasuryTransferCreatedToast: "Transfer created.",
+  treasuryTransferPostedToast: "Transfer posted.",
+  treasuryTransferCancelledToast: "Transfer cancelled.",
+  treasuryTransferSameAccountError: "Source and destination accounts must differ.",
+  treasuryColFrom: "From",
+  treasuryColTo: "To",
+  treasuryColNo: "No.",
+  treasuryColFee: "Fee",
+  treasuryShiftsTitle: "Cashier shifts",
+  treasuryShiftsEmpty: "No shifts yet.",
+  treasuryShiftOpenTitle: "Open shift",
+  treasuryShiftOpenBtn: "Open shift",
+  treasuryShiftOpeningAmount: "Opening float",
+  treasuryShiftCreatedToast: "Shift opened.",
+  treasuryShiftStatusOpen: "Open",
+  treasuryShiftStatusClosed: "Closed",
+  treasuryShiftStatusCancelled: "Cancelled",
+  treasuryShiftColShiftNo: "Shift no.",
+  treasuryShiftColOpenedAt: "Opened at",
+  treasuryShiftColClosedAt: "Closed at",
+  treasuryShiftColCapturedIn: "Captured in",
+  treasuryShiftColCapturedOut: "Captured out",
+  treasuryShiftExpected: "Expected",
+  treasuryShiftCounted: "Counted",
+  treasuryShiftDifference: "Variance",
+  treasuryShiftVarianceJournal: "Variance journal",
+  treasuryShiftSupervisor: "Supervisor",
+  treasuryShiftSupervisorPin: "Supervisor PIN",
+  treasuryShiftSupervisorHint: "Required when the variance exceeds tolerance",
+  treasuryShiftReason: "Close reason",
+  treasuryShiftCloseToast: "Shift closed.",
+  treasuryShiftCancelBtn: "Cancel shift",
+  treasuryShiftCancelledToast: "Shift cancelled.",
+  treasuryShiftPanelTitle: "Cashier shift",
+  treasuryShiftCaptureTitle: "Capture movement",
+  treasuryShiftCaptureHint: "Record cash in/out movements during the shift.",
+  treasuryShiftCaptureBtn: "Capture",
+  treasuryShiftCloseTitle: "Close shift",
+  treasuryShiftCloseBtn: "Close",
+  treasuryShiftBalanced: "Counts match",
+  treasuryShiftVarianceNote: "Variance is non-zero — enter a reason and supervisor details when beyond tolerance.",
+  treasuryShiftClosedNote: "Shift closed — read-only summary.",
+  treasuryBankRecTitle: "Bank reconciliation",
+  treasuryBankRecEmpty: "No statements yet — import the first one.",
+  treasuryBankRecImportTitle: "Import statement",
+  treasuryBankRecAdapter: "Import adapter",
+  treasuryBankRecFile: "File",
+  treasuryBankRecFileHint: "CSV or Excel file",
+  treasuryBankRecPeriodStart: "Period start",
+  treasuryBankRecPeriodEnd: "Period end",
+  treasuryBankRecMappingHint: "Column mapping — optional with the generic adapters",
+  treasuryBankRecMappingDate: "Date column",
+  treasuryBankRecMappingAmount: "Amount column",
+  treasuryBankRecMappingReference: "Reference column",
+  treasuryBankRecMappingDescription: "Description column",
+  treasuryBankRecImportBtn: "Import statement",
+  treasuryBankRecImportedToast: "Statement imported.",
+  treasuryBankRecStatementsTitle: "Bank statements",
+  treasuryBankRecColFile: "File",
+  treasuryBankRecColPeriod: "Period",
+  treasuryBankRecColLines: "Lines",
+  treasuryBankRecColImportedAt: "Imported at",
+  treasuryBankRecStatusImported: "Imported",
+  treasuryBankRecStatusReconciled: "Reconciled",
+  treasuryBankRecOpeningBalance: "Opening balance",
+  treasuryBankRecClosingBalance: "Closing balance",
+  treasuryBankRecSelectStatement: "Select a statement to work on its lines.",
+  treasuryBankRecLinesTitle: "Statement lines",
+  treasuryBankRecColLineNo: "Line",
+  treasuryBankRecColMatchState: "Match state",
+  treasuryBankRecMatched: "Matched",
+  treasuryBankRecUnmatched: "Unmatched",
+  treasuryBankRecMatchAuto: "Auto",
+  treasuryBankRecMatchManual: "Manual",
+  treasuryBankRecAutoMatchBtn: "Auto-match",
+  treasuryBankRecAutoMatchToast: "Matched {count} line(s).",
+  treasuryBankRecManualMatch: "Manual match",
+  treasuryBankRecMatchMovement: "Matched movement",
+  treasuryBankRecUnmatchBtn: "Remove match",
+  treasuryBankRecMatchedToast: "Match updated.",
+  treasuryBankRecReconcileBtn: "Reconcile statement",
+  treasuryBankRecReconcileHint: "Reconciling locks the statement period for this account.",
+  treasuryBankRecReconciledToast: "Reconciled — period locked.",
+  treasuryBankRecAgingTitle: "Aging — unmatched",
+  treasuryBankRecAgingAsOf: "Aging as of",
+  treasuryBankRecUnmatchedLinesTitle: "Unmatched statement lines",
+  treasuryBankRecUnmatchedMovementsTitle: "Unmatched ledger movements",
+  treasuryBankRecColAgeDays: "Age (days)",
+  treasuryBankRecLoadAgingBtn: "Show aging",
+  treasuryBankRecCashCheckTitle: "Cash reconciliation check",
+  treasuryBankRecCashCheckAsOf: "As of",
+  treasuryBankRecCashCheckBtn: "Run check",
+  treasuryBankRecCashCheckOk: "Cash reconciles — no difference.",
+  treasuryBankRecCashCheckBroken: "Cash reconciliation difference.",
+  treasuryBankRecColControlBalance: "Control balance",
+  treasuryBankRecColSubledgerBalance: "Subledger balance",
+  treasuryBankRecColDiffCount: "Diffs",
+  treasuryBankRecFilterAccount: "Filter by cash account",
+  treasuryErrAccountExists: "A cash account with this name already exists.",
+  treasuryErrAccountClosed: "The cash account is CLOSED — it cannot receive new documents.",
+  treasuryErrAccountNotCloseable: "This account cannot be closed in its current state.",
+  treasuryErrCurrencyMismatch: "The cash account currency does not match the document currency.",
+  treasuryErrTypeInvalid: "Invalid cash-account type.",
+  treasuryErrInvalidAmount: "Invalid amount — must be a positive decimal.",
+  treasuryErrDocState: "The document state does not allow this action.",
+  treasuryErrMissingFxRate: "No exchange rate for the given date.",
+  treasuryErrAllocationExceedsDoc: "Allocations exceed the document amount.",
+  treasuryErrAllocationExceedsItem: "Allocation exceeds the open item's outstanding amount.",
+  treasuryErrOpenItemCurrency: "The open item currency differs from the document currency.",
+  treasuryErrOpenItemPartner: "The open item belongs to a different partner.",
+  treasuryErrOpenItemSide: "This document type allocates only the matching side (AR for receipts, AP for payments).",
+  treasuryErrPettyLimit: "Amount exceeds the petty-cash limits — use the bank path or split the payment.",
+  treasuryErrCategoryTaken: "Expense category code already in use.",
+  treasuryErrReceiptRequired: "A receipt attachment is required at this amount.",
+  treasuryErrApprovalRequired: "The expense must be approved before payout posting.",
+  treasuryErrShiftAlreadyOpen: "This cash account already has an OPEN shift.",
+  treasuryErrSupervisorRequired: "Variance exceeds tolerance — supervisor id + PIN + reason required.",
+  treasuryErrSupervisorPin: "Supervisor PIN not set or incorrect.",
+  treasuryErrShiftReason: "A reason is required to close a shift with a variance.",
+  treasuryErrStatementTooLarge: "Statement exceeds the maximum line count.",
+  treasuryErrStatementFormat: "Could not parse the statement file — check the format or adapter.",
+  treasuryErrStatementReconciled: "Statement already reconciled — the period is locked.",
+  treasuryErrPeriodLocked: "The date falls in a reconciled statement period for this account.",
+  treasuryErrMovementMatched: "The cash movement is already matched to another statement line.",
+
+  // -- P6-T11a: partner directory ------------------------------------------------
+  partnersSearchPlaceholder: "Search by name, code, or tax number…",
+  partnersKindLabel: "Partner kind",
+  kindCustomer: "Customer",
+  kindSupplier: "Supplier",
+  kindBoth: "Customer & supplier",
+  partnersColCode: "Code",
+  partnersColCreditLimit: "Credit limit",
+  partnersEmpty: "No partners yet — create the first one.",
+  partnersNewButton: "New partner",
+  partnerFormTitleCreate: "Create a partner",
+  partnerCodeLabel: "Partner code",
+  partnerCodeHint: "Leave empty for auto-numbering (P-000001).",
+  partnerNameLabel: "Name (English)",
+  partnerNameArLabel: "Name (Arabic)",
+  partnerTaxNumberLabel: "Tax number",
+  partnerCreditTermsLabel: "Credit terms",
+  partnerPriceListLabel: "Price list",
+  partnerStatusLabel: "Status",
+  partnerCreatedToast: "Partner created.",
+  partnerSavedToast: "Changes saved.",
+  partnerCodeTaken: "Partner code is already in use.",
+  partnerArchivedError: "The partner is archived — it cannot be edited.",
+  partnerKindChangeLabel: "Change partner kind",
+  partnerKindChangedToast: "Partner kind changed.",
+  partnerKindImmutable: "The kind cannot change once posted entries exist.",
+  partnerArchiveButton: "Archive partner",
+  partnerArchiveConfirmTitle: "Confirm partner archive",
+  partnerArchiveConfirmBody: "The archived partner disappears from new lists. Continue?",
+  partnerArchivedToast: "Partner archived.",
+  partnerTabOverview: "Overview",
+  partnerContactsTitle: "Contacts",
+  partnerContactNameLabel: "Name",
+  partnerContactPhoneLabel: "Phone",
+  partnerContactEmailLabel: "Email",
+  partnerContactRoleLabel: "Role",
+  partnerContactPrimaryLabel: "Primary",
+  partnerContactAdd: "Add contact",
+  partnerContactsEmpty: "No contacts.",
+  partnerAddressesTitle: "Addresses",
+  addressTypeLabel: "Address type",
+  addressTypeBilling: "Billing",
+  addressTypeShipping: "Shipping",
+  addressTypeOther: "Other",
+  partnerAddressLine1Label: "Address line 1",
+  partnerAddressLine2Label: "Address line 2",
+  partnerAddressCityLabel: "City",
+  partnerAddressCountryLabel: "Country code (2 letters)",
+  partnerAddressAdd: "Add address",
+  partnerAddressesEmpty: "No addresses.",
+  partnerBalanceTitle: "Balance",
+  partnerBalanceOpenAmount: "Opening draft",
+  partnerBalanceDraftLabel: "Draft balance",
+  partnerBalanceOverdueLabel: "Overdue",
+  partnerBalanceDraftBadge: "Drafts only",
+  partnerBalanceDraftNote: "Balances at this phase derive from opening-balance DRAFTs only — nothing is posted yet (posting lands with accounting).",
+
+  // -- P6-T11a: item master ----------------------------------------------------------
+  itemsSearchPlaceholder: "Search by name or SKU…",
+  itemsFilterCategoryLabel: "Category",
+  categoryLabel: "Category",
+  itemsColSku: "Item SKU",
+  itemsColBasePrice: "Base price",
+  itemsEmpty: "No items yet — create the first one.",
+  itemsNewButton: "New item",
+  itemFormTitleCreate: "Create an item",
+  itemFormTitleEdit: "Item details",
+  itemSkuLabel: "Item SKU",
+  itemNameLabel: "Name (English)",
+  itemNameArLabel: "Name (Arabic)",
+  itemKindLabel: "Item kind",
+  kindStock: "Stock",
+  kindService: "Service",
+  kindComposite: "Composite",
+  itemUomLabel: "Unit of measure",
+  itemCostingLabel: "Costing method",
+  costingWac: "Weighted average (WAC)",
+  costingFifo: "First-in first-out (FIFO)",
+  itemTrackingLabel: "Tracking",
+  itemTrackBatch: "Track batches",
+  itemTrackSerial: "Serial numbers",
+  itemTrackImei: "IMEI",
+  itemHasExpiry: "Has expiry",
+  itemExpiryRequiresBatch: "Expiry requires batch tracking — batch tracking was enabled automatically.",
+  itemReorderLevelLabel: "Reorder level",
+  itemReorderQtyLabel: "Reorder quantity",
+  itemBasePriceLabel: "Base price",
+  itemCreatedToast: "Item created.",
+  itemSavedToast: "Changes saved.",
+  itemSkuTaken: "Item SKU is already in use.",
+  itemArchivedError: "The item is archived — it cannot be edited.",
+  itemArchiveButton: "Archive item",
+  itemArchiveConfirmTitle: "Confirm item archive",
+  itemArchiveConfirmBody: "The archived item disappears from new documents. Continue?",
+  itemArchivedToast: "Item archived.",
+  barcodesTitle: "Barcodes",
+  barcodeCodeLabel: "Barcode",
+  barcodeAdd: "Add barcode",
+  barcodesEmpty: "No barcodes.",
+  barcodeTaken: "Barcode already in use (tenant-wide scan-unique).",
+
+  // -- P6-T11a: price lists -----------------------------------------------------------
+  priceListCreateTitle: "New price list",
+  priceListsListTitle: "Lists",
+  priceListNameLabel: "Name (English)",
+  priceListNameArLabel: "Name (Arabic)",
+  priceListKindLabel: "List kind",
+  priceListKindSale: "Sale",
+  priceListKindPurchase: "Purchase",
+  priceListCurrencyLabel: "Currency",
+  priceListValidFromLabel: "Valid from (optional)",
+  priceListValidToLabel: "Valid to (optional)",
+  priceListCreateSubmit: "Create list",
+  priceListSelectHint: "Select a list in the table to edit its rows.",
+  priceListRowsTitle: "List rows",
+  priceListRowItemLabel: "Item",
+  priceListRowUomLabel: "Unit of measure",
+  priceListRowPriceLabel: "Unit price",
+  priceListRowMinQtyLabel: "Minimum quantity",
+  priceListRowAdd: "Add row",
+  priceListRowAddedToast: "Row added.",
+  priceListRowsEmpty: "No rows yet — add the first price.",
+  priceListsEmpty: "No price lists yet.",
+  priceListColValidLabel: "Period",
+  priceListCreatedToast: "Price list created.",
+  priceListCurrencySar: "Saudi riyal (SAR)",
+
+  // -- P6-T11a: import & export wizard ---------------------------------------------------
+  importStep1Title: "File & kind",
+  importDataKindLabel: "Data kind",
+  importKindPartners: "Partners",
+  importKindItems: "Items",
+  importKindOpeningBalances: "Opening balances",
+  importFormatLabel: "Format",
+  importCarrierLabel: "Upload carrier partner",
+  importCarrierHint: "The import file is uploaded through the selected partner's attachment slot — this is this phase's direct-upload pattern.",
+  importFileLabel: "File",
+  importFileHint: "CSV or XLSX up to 8 MB and at most 5000 rows.",
+  importSubmitPreview: "Upload & preview",
+  importStep2Title: "Preview",
+  importColTotal: "Total rows",
+  importColValid: "Valid",
+  importColInvalid: "Invalid",
+  importColDuplicates: "Duplicates",
+  importCommit: "Apply import",
+  importCommitToast: "Import applied.",
+  importCommitFailed: "Commit failed — check the job status.",
+  importStep3Title: "Applied",
+  importCommittedRows: "Applied {count} rows.",
+  importColRow: "Row",
+  importColPreview: "Preview",
+  importColErrors: "Errors",
+  importColWarnings: "Warnings",
+  importRowValid: "Valid",
+  importRowError: "Error",
+  importRowDuplicate: "Duplicate",
+  importRowWarning: "Warning",
+  importPreviewEmpty: "The file has no rows.",
+  importNewJob: "New import",
+  importCarrierRequired: "Pick a carrier partner first.",
+  importFileRequired: "Choose a file first.",
+  importFileTooLarge: "The file exceeds the 8MB limit.",
+  importFileTypeInvalid: "Unsupported type — CSV or XLSX only.",
+  importUploadFailed: "Could not upload the file to storage.",
+  importFormatCsv: "CSV",
+  importFormatXlsx: "XLSX (Excel)",
+  importJobsColCreated: "Created",
+  importJobsTitle: "Import jobs",
+  importJobsEmpty: "No import jobs.",
+  importJobColRows: "Rows",
+  importStatusPreviewing: "Previewing",
+  importStatusPreviewReady: "Ready to apply",
+  importStatusCommitting: "Committing",
+  importStatusCommitted: "Committed",
+  importStatusFailed: "Failed",
+  importErrorFileInvalid: "Invalid file — check the format and the bounds.",
+  exportTitle: "Export",
+  exportHint: "Immediate export up to 10,000 rows — returns a temporary download link.",
+  exportSubmit: "Export",
+  exportDone: "Export ready — {rows} rows.",
+  exportRows: "Row count",
+  exportDownloadLabel: "Download the file",
+  exportExpiresNote: "The link is valid for {seconds} seconds.",
+
+  // -- P6-T11a: opening balances (DRAFT only) ------------------------------------------
+  obTabPartner: "Partner",
+  obTabAccount: "Account",
+  obTabStock: "Stock",
+  obCreateTitle: "Create opening balance (draft)",
+  obAmountLabel: "Amount",
+  obNoteLabel: "Note",
+  obQtyLabel: "Quantity",
+  obUnitCostLabel: "Unit cost",
+  obAccountLabel: "Account id",
+  obAccountHint: "The full account tree lands with accounting (PHASE-007) — enter the current account id.",
+  obCreateSubmit: "Create draft",
+  obEmpty: "No drafts yet.",
+  obListTitle: "Current drafts",
+  obDraftOnlyNote: "No posting at this phase — every opening balance is created as a DRAFT only.",
+  obCreatedToast: "Draft created.",
+  obColTarget: "Target",
+  obColAmount: "Amount",
+  obColQty: "Quantity",
+  obColNote: "Note",
+  obQtyAtCostLabel: "{qty} × {cost}",
+  obTargetUnknown: "Unknown target",
+  obDuplicateError: "A draft already exists for this target — one draft per target.",
+
+  // -- P6-T11a: attachments --------------------------------------------------------------
+  attachmentsTitle: "Attachments",
+  attachmentIssueFormTitle: "Issue an upload slot",
+  attachmentFilenameLabel: "Filename",
+  attachmentContentTypeLabel: "Content type",
+  attachmentSizeLabel: "Size (bytes)",
+  attachmentTypePdf: "PDF",
+  attachmentTypePng: "PNG",
+  attachmentTypeJpeg: "JPEG",
+  attachmentTypeWebp: "WebP",
+  attachmentTypeCsv: "CSV",
+  attachmentIssueButton: "Issue upload link",
+  attachmentIssuedTitle: "Issued upload URL",
+  attachmentIssuedHint: "PUT the file to the URL above within {seconds} seconds of issuance — direct browser upload completes with the full files module.",
+  attachmentIssuedToast: "Upload link issued.",
+  attachmentUrlLabel: "URL",
+  attachmentKeyLabel: "Storage key",
+  attachmentExpiresLabel: "Expires in (seconds)",
+  attachmentsEmpty: "No attachments.",
+  attachmentDownloadLabel: "Download",
+  attachmentIssueFailed: "Could not issue the upload link.",
+
+  // -- P6-T11a: pickers + command-menu remote groups ---------------------------------------
+  partnerPickerPlaceholder: "Select a partner…",
+  itemPickerPlaceholder: "Select an item…",
+  pickerEmptyText: "No matches",
+  commandGroupPartners: "Partners",
+  commandGroupItems: "Items",
+
+  // -- T15-UI: PHASE-009 tax screens --------------------------------------------------------
+  taxCodesTitle: "Tax codes",
+  taxCodesEmpty: "No tax codes yet — create the first one.",
+  taxCodesCode: "Code",
+  taxCodesName: "Name (English)",
+  taxCodesNameAr: "Name (Arabic)",
+  taxCodesCountry: "Country",
+  taxCodesTreatment: "Tax treatment",
+  taxCodesUsage: "Usage",
+  taxCodesCreateTitle: "Create a tax code",
+  taxCodesCreatedToast: "Tax code created.",
+  taxCodesArchive: "Archive code",
+  taxCodesArchiveConfirm: "The archived code disappears from new documents. Continue?",
+  taxCodesArchiveBlocked: "Cannot archive a code referenced by items or categories — reassign them first.",
+  taxCodesArchivedToast: "Tax code archived.",
+  taxTreatmentStandardRated: "Standard rated",
+  taxTreatmentZeroRated: "Zero rated",
+  taxTreatmentExempt: "Exempt",
+  taxTreatmentOutOfScope: "Out of scope",
+  taxTreatmentReverseCharge: "Reverse charge",
+  taxTreatmentNotSubject: "Not subject",
+  taxResolveTitle: "Tax resolution preview",
+  taxResolveDate: "Document date",
+  taxResolveAmount: "Amount",
+  taxResolveCode: "Tax code",
+  taxResolveAction: "Resolve",
+  taxResolveTreatment: "Treatment",
+  taxResolveRate: "Rate",
+  taxResolveBase: "Tax base",
+  taxResolveTax: "Tax",
+  taxResolveGross: "Gross (incl. tax)",
+  taxResolveNotSubject: "This line is not subject to tax — no tax is computed.",
+  taxResolveBoundaryWarning:
+    "Boundary warning (BR-033): a rate of {rate} takes effect on {date} — drafts spanning the boundary are warned on open; posted snapshots never move.",
+  taxRegistrationsTitle: "Tax registrations",
+  taxRegistrationsEmpty: "No tax registrations yet.",
+  taxRegistrationsStatus: "Registration status",
+  taxRegistrationsNumber: "Tax registration number",
+  taxRegistrationsEffectiveFrom: "Effective from",
+  taxRegistrationsEffectiveTo: "Effective to",
+  taxRegistrationsRegistered: "Registered",
+  taxRegistrationsNotRegistered: "Not registered",
+  taxRegistrationsDeregistered: "Deregistered",
+  taxRegistrationsCreateTitle: "Update registration status",
+  taxRegistrationsSavedToast: "Tax registration saved.",
+  taxPacksTitle: "Jurisdiction packs",
+  taxPacksEmpty: "No seeded packs.",
+  taxPacksCountry: "Country",
+  taxPacksVatStatus: "VAT status",
+  taxPacksVatInForce: "In force",
+  taxPacksVatPlanned: "Planned",
+  taxPacksVatNoVat: "No VAT",
+  taxPacksVersion: "Pack version",
+  taxPacksVerification: "Verification",
+  taxPacksVerified: "Verified",
+  taxPacksRequiresVerification: "Requires verification",
+  taxPacksRate: "Rate",
+  taxPacksEffectiveFrom: "Effective from",
+  taxPacksEffectiveTo: "Effective to",
+  taxPacksSource: "Source ref",
+  taxPacksWindowsTitle: "Rate windows",
+  taxPacksNoRates: "No rate windows for this pack.",
+  taxPacksApply: "Pin version",
+  taxPacksApplied: "Pack version pinned for this workspace.",
+  taxPacksBinding: "Pinned version (workspace)",
+  taxPacksBindingNone: "No pin — the seeded version applies automatically.",
+  taxPacksPreviewNote:
+    "Upgrading a pack never rewrites posted snapshots — new windows apply to new documents only (BR-033).",
+  vatReturnTitle: "VAT return",
+  vatReturnEmpty: "No VAT returns yet.",
+  vatReturnCountry: "Country",
+  vatReturnPeriod: "Period",
+  vatReturnPeriodStart: "Period start",
+  vatReturnPeriodEnd: "Period end",
+  vatReturnStatus: "Status",
+  vatReturnDraft: "Draft",
+  vatReturnReady: "Ready",
+  vatReturnFiled: "Filed",
+  vatReturnCreateTitle: "Create a VAT return",
+  vatReturnCreatedToast: "VAT return created.",
+  vatReturnPrepare: "Prepare return",
+  vatReturnPreparedToast: "VAT return prepared.",
+  vatReturnMarkFiled: "Mark as filed",
+  vatReturnFiledToast: "VAT return marked as filed.",
+  vatReturnFilingReference: "Filing reference",
+  vatReturnFilingNote: "Filing note",
+  vatReturnExport: "Export",
+  vatReturnExportCsv: "Export CSV",
+  vatReturnExportXlsx: "Export XLSX",
+  vatReturnSummaryTitle: "Period summary by treatment",
+  vatReturnDirection: "Direction",
+  vatReturnDirectionOutput: "Output",
+  vatReturnDirectionInput: "Input",
+  vatReturnTaxableBase: "Taxable base",
+  vatReturnTaxAmount: "Tax amount",
+  vatReturnCrossCheck: "General-ledger cross-check",
+  vatReturnDocumentSide: "Document side",
+  vatReturnGlSide: "General ledger side",
+  vatReturnOutputTax: "Output tax",
+  vatReturnInputTax: "Input tax (recoverable)",
+  vatReturnInputTaxExpensed: "Input tax (expensed)",
+  vatReturnMismatch:
+    "Cross-check failed (INV-012) — document totals differ from the general ledger; filing stays blocked until both sides agree.",
+  vatReturnReadyNote: "Return is ready — the ledger cross-check agrees",
+  taxErrCodeTaken: "This tax code already exists for this country.",
+  taxErrCodeInUse: "The code is referenced by items or categories — reassign them first.",
+  taxErrCodeArchived: "The tax code is archived and cannot be assigned to new documents.",
+  taxErrRegistrationNumber:
+    "A registration number (3–50 characters) is required while the status is “Registered” and rejected otherwise.",
+  taxErrJurisdiction: "No seeded pack exists for this country.",
+  taxErrNoRateForDate: "No seeded rate covers this date — resolution fails closed, never guessing.",
+  taxErrWindowTaken: "A return for this period already exists.",
+  taxErrCrossCheck: "The general-ledger cross-check failed — review the differences, then re-prepare.",
+  taxErrState: "The VAT return's state does not allow this action.",
+  taxErrAlreadyFiled: "The VAT return is filed and immutable.",
+  taxErrPackBinding: "That pack version is not seeded — upgrades ship as seed migrations only.",
+
+  // -- T14-UI (PHASE-010): inventory & warehousing --------------------------------
+  navInventoryWarehouses: "Warehouses",
+  navInventoryStock: "Stock on hand",
+  navInventoryMoves: "Stock movements",
+  navInventoryTransfers: "Stock transfers",
+  navInventoryCounts: "Stock counting",
+  warehousesTitle: "Warehouses",
+  warehousesEmpty: "No warehouses yet.",
+  warehousesCreateTitle: "Create warehouse",
+  warehousesCodeLabel: "Warehouse code",
+  warehousesNameLabel: "Name (English)",
+  warehousesNameArLabel: "Name (Arabic)",
+  warehousesBranchLabel: "Branch",
+  warehousesGlAccountLabel: "GL inventory account (optional)",
+  warehousesNoteLabel: "Note",
+  warehousesCreatedToast: "Warehouse created.",
+  warehousesDeactivate: "Deactivate",
+  warehousesDeactivateTitle: "Deactivate warehouse",
+  warehousesDeactivateConfirm:
+    "Deactivating blocks new movements on this warehouse; movement history is preserved.",
+  warehousesDeactivatedToast: "Warehouse deactivated.",
+  warehousesReactivate: "Reactivate",
+  warehousesReactivatedToast: "Warehouse reactivated.",
+  warehousesColCode: "Code",
+  warehousesColBranch: "Branch",
+  warehousesColGlAccount: "GL account",
+  stockTitle: "Stock on hand",
+  stockEmpty: "No stock rows yet.",
+  stockFilterWarehouse: "Warehouse",
+  stockColItem: "Item",
+  stockColWarehouse: "Warehouse",
+  stockColQty: "Quantity",
+  stockColAvgCost: "Average cost",
+  stockNegativeBadge: "negative",
+  movesTitle: "Stock movements",
+  movesEmpty: "No stock movements yet.",
+  movesFilterDirection: "Direction",
+  movesFilterKind: "Move kind",
+  movesColDate: "Date",
+  movesColDirection: "Direction",
+  movesColKind: "Kind",
+  movesColUnitCost: "Unit cost",
+  movesColValue: "Value",
+  movesColReason: "Reason",
+  movesColBatch: "Batch",
+  movesColSerial: "Serial",
+  movesColSource: "Source",
+  movesDirectionIn: "IN",
+  movesDirectionOut: "OUT",
+  movesKindReceipt: "Receipt",
+  movesKindIssue: "Issue",
+  movesKindTransferIn: "Transfer in",
+  movesKindTransferOut: "Transfer out",
+  movesKindAdjust: "Adjustment",
+  movesReasonDamage: "Damage",
+  movesReasonExpired: "Expired",
+  movesReasonCountLoss: "Count loss",
+  movesReasonCountGain: "Count gain",
+  movesReasonCustomerReturn: "Customer return",
+  movesReasonOther: "Other",
+  transfersTitle: "Stock transfers",
+  transfersEmpty: "No transfers yet.",
+  transfersColNo: "Transfer no.",
+  transfersColFrom: "From warehouse",
+  transfersColTo: "To warehouse",
+  transfersColLines: "Lines",
+  transfersColDispatchDate: "Dispatched",
+  transfersColReceiveDate: "Received",
+  transfersStatusInTransit: "In transit",
+  transfersNewTitle: "New transfer",
+  transfersFromLabel: "From warehouse",
+  transfersToLabel: "To warehouse",
+  transfersNoteLabel: "Note",
+  transfersLinesTitle: "Transfer lines",
+  transfersLineItemLabel: "Item",
+  transfersLineQtyLabel: "Quantity",
+  transfersAddLine: "Add line",
+  transfersRemoveLine: "Remove line",
+  transfersSameWarehouseError: "Source and destination warehouses must differ.",
+  transfersLineMissingError: "Every line needs an item and a positive quantity.",
+  transfersCreatedToast: "Transfer created (draft).",
+  transfersDispatch: "Dispatch",
+  transfersDispatchedToast: "Transfer dispatched — stock is in transit (not sellable).",
+  transfersReceive: "Receive",
+  transfersReceivedToast: "Transfer received at the destination warehouse.",
+  transfersCancel: "Cancel",
+  transfersCancelledToast: "Transfer cancelled.",
+  countingTitle: "Stock counting",
+  countingEmpty: "No count sessions yet.",
+  countingNewTitle: "New count session",
+  countingWarehouseLabel: "Warehouse",
+  countingBlindLabel: "Blind count (hide book quantities)",
+  countingPickItemsTitle: "Pick items",
+  countingPickSearchPlaceholder: "Search by SKU or name…",
+  countingPickEmpty: "No matching items.",
+  countingSelectedCount: "Selected items",
+  countingCreate: "Create session",
+  countingCreatedToast: "Count session created — system-qty snapshot frozen.",
+  countingColNo: "Count no.",
+  countingColBlind: "Blind",
+  countingBlindYes: "Yes",
+  countingBlindNo: "No",
+  countingColVariance: "Variance",
+  countingOpenSession: "Open session",
+  countingCloseSession: "Close session",
+  countingSnapshotAt: "Snapshot at",
+  countingSessionLinesTitle: "Count lines",
+  countingColLineNo: "Line",
+  countingColSystemQty: "System qty",
+  countingColCountedQty: "Counted qty",
+  countingColDiff: "Diff",
+  countingColValueImpact: "Value impact",
+  countingSaveEntries: "Save counts",
+  countingEntriesSavedToast: "Counted quantities saved.",
+  countingSubmit: "Submit for review",
+  countingSubmittedToast: "Session submitted to variance review.",
+  countingReviewTitle: "Variance review",
+  countingReviewHint:
+    "Review variances before approval — approval posts the count adjustment (loss/gain) through the posting engine.",
+  countingApprove: "Approve",
+  countingApproveSupervisor: "Approve with supervisor override",
+  countingApprovedToast: "Count approved and the adjustment posted.",
+  countingCancel: "Cancel",
+  countingCancelledToast: "Count session cancelled.",
+  countingRecountTitle: "Recount line",
+  countingRecountLineLabel: "Line no.",
+  countingRecountNoteLabel: "Recount reason",
+  countingRecountedToast: "Recount recorded with audit.",
+  countingStatusCounted: "Counted",
+  countingStatusVarianceReview: "Variance review",
+  inventoryErrWarehouseCodeTaken: "Warehouse code is already taken.",
+  inventoryErrWarehouseInactive: "Warehouse is inactive.",
+  inventoryErrWarehouseNotDeactivatable: "Warehouse cannot be deactivated (movements or count sessions in flight).",
+  inventoryErrItemNotStocked: "Item is not stocked at this warehouse.",
+  inventoryErrInsufficientStock: "Insufficient stock (negative stock is off by default).",
+  inventoryErrBatchInsufficient: "Batch quantity is insufficient.",
+  inventoryErrBatchRequired: "Item tracks batches — a batch is required.",
+  inventoryErrBatchTaken: "Batch number is already taken for this item.",
+  inventoryErrSerialRequired: "Item tracks serials — select the units.",
+  inventoryErrSerialNotInStock: "Serial unit is not in stock.",
+  inventoryErrSerialTaken: "Serial number is already taken.",
+  inventoryErrSerialReturnBinding: "A serial return must reference the originally sold unit.",
+  inventoryErrState: "Document state does not allow this action.",
+  inventoryErrTransferEmpty: "A transfer needs at least one line.",
+  inventoryErrTransferSameWarehouse: "Source and destination warehouses must differ.",
+  inventoryErrCountTolerance: "Variance exceeds tolerance — supervisor approval required.",
+  inventoryErrMethodSwitchInFlight: "Cannot switch method with in-flight movements.",
+  inventoryErrMethodSwitchInvalid: "Method switch is not valid (no balance or same method).",
+  inventoryErrMethodSwitchSame: "Item already uses this method.",
+  // PHASE-011 purchasing (T13-UI).
+  purchasingEmpty: "No documents yet",
+  purchasingNoticeCreated: "Document created",
+  purchasingNoticeUpdated: "Updated",
+  purchasingNoticePosted: "Posted",
+  expensesColAccount: "Account",
+  navPurchasingOrders: "Purchase orders",
+  navPurchasingReceipts: "Goods receipts",
+  navPurchasingInvoices: "Supplier invoices",
+  navPurchasingDebitNotes: "Debit notes",
+  navPurchasingAp: "Payables",
+  purchasingOrdersTitle: "Purchasing — Purchase orders",
+  purchasingReceiptsTitle: "Purchasing — Goods receipts",
+  purchasingInvoicesTitle: "Purchasing — Supplier invoices",
+  purchasingDebitNotesTitle: "Purchasing — Debit notes",
+  purchasingApTitle: "Purchasing — Payables",
+  purchasingRequestsSection: "Purchase requests",
+  purchasingOrdersSection: "Purchase orders",
+  purchasingNewRequest: "New purchase request",
+  purchasingNewOrder: "New purchase order",
+  purchasingRequestNo: "Request no.",
+  purchasingNeededBy: "Needed by",
+  purchasingSubmit: "Submit",
+  purchasingApprove: "Approve",
+  purchasingReject: "Reject",
+  purchasingIssue: "Issue",
+  purchasingClose: "Close",
+  purchasingCancel: "Cancel",
+  purchasingOrderNo: "Order no.",
+  purchasingOrderDate: "Order date",
+  purchasingExpectedDate: "Expected date",
+  purchasingSupplier: "Supplier",
+  purchasingLines: "Lines",
+  purchasingAddLine: "Add line",
+  purchasingRemoveLine: "Remove line",
+  purchasingItem: "Item",
+  purchasingQty: "Qty",
+  purchasingUnitPrice: "Unit price",
+  purchasingTaxCode: "Tax code",
+  purchasingUnitCost: "Unit cost",
+  purchasingTotalNet: "Net",
+  purchasingTotalTax: "Tax",
+  purchasingTotalGross: "Gross",
+  purchasingStatus: "Status",
+  purchasingNewReceipt: "New goods receipt",
+  purchasingReceiptNo: "Receipt no.",
+  purchasingReceiptDate: "Receipt date",
+  purchasingWarehouse: "Warehouse",
+  purchasingPo: "Purchase order",
+  purchasingPoLessReason: "PO-less reason (direct purchase)",
+  purchasingPost: "Post",
+  purchasingBatchNo: "Batch no.",
+  purchasingBatchExpiry: "Expiry date",
+  purchasingNewInvoice: "New supplier invoice",
+  purchasingInvoiceNo: "Supplier invoice no.",
+  purchasingInvoiceDate: "Invoice date",
+  purchasingDueDate: "Due date",
+  purchasingInternalNo: "Internal no.",
+  purchasingMatchStatus: "Match status",
+  purchasingMatchPreview: "Three-way match preview",
+  purchasingRecordMatch: "Record match",
+  purchasingDisposition: "Disposition",
+  purchasingDispositionReason: "Disposition reason",
+  purchasingDispositionAccept: "Accept with reason",
+  purchasingMatchOutcomeMatched: "Matched",
+  purchasingMatchOutcomeException: "Exception",
+  purchasingMatchOutcomeDispositioned: "Disposed",
+  purchasingMatchOutcomePending: "Pending",
+  purchasingQtyVariance: "Qty variance %",
+  purchasingPriceVariance: "Price variance %",
+  purchasingNewDebitNote: "New debit note",
+  purchasingNoteNo: "Note no.",
+  purchasingNoteDate: "Note date",
+  purchasingRefInvoice: "Referenced invoice",
+  purchasingApAging: "AP aging",
+  purchasingApStatement: "Supplier statement",
+  purchasingGrniRegister: "GRNI register",
+  purchasingAgingNotDue: "Not due",
+  purchasingAging1_30: "1–30 days",
+  purchasingAging31_60: "31–60 days",
+  purchasingAging61_90: "61–90 days",
+  purchasingAging90Plus: "90+ days",
+  purchasingAgingTotal: "Total",
+  purchasingAsOf: "As of",
+  purchasingOpeningBalance: "Opening balance",
+  purchasingClosingBalance: "Closing balance",
+  purchasingDebit: "Debit",
+  purchasingCredit: "Credit",
+  purchasingBalance: "Balance",
+  purchasingOutstanding: "Outstanding",
+  purchasingReceivedValue: "Received value",
+  purchasingInvoicedValue: "Invoiced value",
+  purchasingGrniRemaining: "Not invoiced",
+  purchasingSelectSupplier: "Select supplier",
+  purchasingSelectWarehouse: "Select warehouse",
+  purchasingSelectPo: "Select purchase order",
+  purchasingNoPo: "No purchase order",
+  purchasingErrState: "Document state does not allow this operation",
+  purchasingErrDuplicate: "Duplicate supplier invoice (number + amount)",
+  purchasingErrMatchMissing: "Record the three-way match outcome first",
+  purchasingErrMatchException: "Undisposed match exceptions — dispose them first",
+  purchasingErrPoLess: "Policy forbids receipts without a purchase order",
+  purchasingErrPoLessReason: "A PO-less reason is required",
+  purchasingErrOverReceipt: "Receipt exceeds the purchase order line",
+  purchasingErrOverInvoice: "Invoiced quantity exceeds the received quantity",
+  purchasingErrNotSupplier: "Partner is not a supplier",
+  purchasingErrGrnSupplier: "GRN line belongs to a different supplier",
+  purchasingErrSelfApproval: "The document creator cannot approve it",
+  purchasingErrReallocation: "Re-allocation exceeds the allowed bounds",
+  // PHASE-012 sales (T13-UI).
+  salesEmpty: "No documents yet",
+  salesNoticeCreated: "Document created",
+  salesNoticeUpdated: "Updated",
+  salesNoticePosted: "Posted",
+  navSalesQuotes: "Quotations",
+  navSalesOrders: "Sales orders",
+  navSalesDeliveries: "Delivery notes",
+  navSalesInvoices: "Sales invoices",
+  navSalesCreditNotes: "Credit notes",
+  navSalesAr: "Receivables",
+  salesQuotesTitle: "Sales — Quotations & orders",
+  salesOrdersTitle: "Sales — Sales orders",
+  salesDeliveriesTitle: "Sales — Delivery notes",
+  salesInvoicesTitle: "Sales — Invoices",
+  salesCreditNotesTitle: "Sales — Credit notes",
+  salesArTitle: "Sales — Receivables",
+  salesQuotesSection: "Quotations",
+  salesOrdersSection: "Sales orders",
+  salesStatus: "Status",
+  salesStatusSent: "Sent",
+  salesNewQuote: "New quotation",
+  salesNewOrder: "New sales order",
+  salesQuoteNo: "Quote no.",
+  salesQuoteDate: "Quote date",
+  salesValidUntil: "Valid until",
+  salesOrderNo: "Order no.",
+  salesOrderDate: "Order date",
+  salesExpectedDate: "Expected date",
+  salesSalesOrder: "Sales order",
+  salesNoOrder: "No sales order",
+  salesCustomer: "Customer",
+  salesSelectCustomer: "Select customer",
+  salesBranch: "Branch",
+  salesSelectBranch: "Select branch",
+  salesWarehouse: "Warehouse",
+  salesSelectWarehouse: "Select warehouse",
+  salesCurrency: "Currency",
+  salesExchangeRate: "Exchange rate",
+  salesItem: "Item",
+  salesQty: "Qty",
+  salesUnitPrice: "Unit price",
+  salesDiscount: "Discount",
+  salesTaxCode: "Tax code",
+  salesAccount: "Account",
+  salesLines: "Lines",
+  salesAddLine: "Add line",
+  salesRemoveLine: "Remove line",
+  salesTotalNet: "Net",
+  salesTotalTax: "Tax",
+  salesTotalGross: "Gross",
+  salesSend: "Send",
+  salesAccept: "Accept & convert",
+  salesReject: "Reject",
+  salesSubmit: "Submit",
+  salesApprove: "Approve",
+  salesIssue: "Issue",
+  salesClose: "Close",
+  salesPost: "Post",
+  salesCancel: "Cancel",
+  salesCancelReason: "Cancel reason",
+  salesReserve: "Reserve stock",
+  salesAcceptWarehouse: "Conversion warehouse",
+  salesNewDelivery: "New delivery note",
+  salesDeliveryNo: "Delivery no.",
+  salesDeliveryDate: "Delivery date",
+  salesDelivery: "Delivery note",
+  salesCogsValue: "COGS value",
+  salesNewInvoice: "New sales invoice",
+  salesInvoiceNo: "Invoice no.",
+  salesInvoiceDate: "Invoice date",
+  salesDueDate: "Due date",
+  salesKind: "Invoice kind",
+  salesKindCash: "Cash",
+  salesKindCredit: "Credit",
+  salesCashAccount: "Cash account",
+  salesSelectCashAccount: "Select cash account",
+  salesOverrideCredit: "Override credit block",
+  salesCreditCheck: "Credit check",
+  salesCreditAllow: "Allow",
+  salesCreditWarn: "Warn",
+  salesCreditBlock: "Block",
+  salesNewCreditNote: "New credit note",
+  salesNoteNo: "Note no.",
+  salesNoteDate: "Note date",
+  salesRefInvoice: "Referenced invoice",
+  salesInvoiceLineId: "Invoice line id",
+  salesReturnToStock: "Return to stock",
+  salesArAging: "AR aging",
+  salesArStatement: "Customer statement",
+  salesArOpenItems: "Open items",
+  salesOpenItemsHint: "These open items are the allocation surface consumed by receipts (FIFO / partial / on-account)",
+  salesAgingNotDue: "Not due",
+  salesAging1_30: "1–30 days",
+  salesAging31_60: "31–60 days",
+  salesAging61_90: "61–90 days",
+  salesAging90Plus: "90+ days",
+  salesAgingTotal: "Total",
+  salesAsOf: "As of",
+  salesOpeningBalance: "Opening balance",
+  salesClosingBalance: "Closing balance",
+  salesDebit: "Debit",
+  salesCredit: "Credit",
+  salesBalance: "Balance",
+  salesOutstanding: "Outstanding",
+  salesBaseBalance: "Base-currency balance",
+  salesSubledgerTie: "AR subledger tie",
+  salesTieOk: "Tied",
+  salesTieBroken: "Broken",
+  salesSource: "Source",
+  salesAmount: "Amount",
+  salesRunOverdueScan: "Overdue scan",
+  salesOverdueScanDone: "Scan complete: {overdue} overdue invoices, {alerted} alerts",
+  salesPrint: "Print",
+  salesPrintDisabled: "Printing arrives with the reporting release (PHASE-013)",
+  salesErrState: "Document state does not allow this operation",
+  salesErrQuotationExpired: "The quotation expired — issue a new one",
+  salesErrCreditLimit: "Credit limit exceeded (block/warn per policy)",
+  salesErrReturnWindow: "Return outside the allowed return window",
+  salesErrPriceChanged: "Price changed — re-open the document to recompute",
+  salesErrItemInactive: "Item is inactive and cannot receive sales documents",
+  salesErrDeliveryInvoiced: "Invoiced quantity exceeds the delivered quantity",
+  salesErrCreditNoteExceeds: "Credit note exceeds the invoice outstanding",
+  salesErrReallocation: "Re-allocation exceeds the allowed bounds",
+
+  // -- T-WEB (PHASE-013): the report workspace (report archetype §7) --------
+  navReports: "Reports",
+  reportsNavWorkspace: "Reports",
+  reportWorkspaceTitle: "Reports workspace",
+  reportWorkspaceCatalog: "Report catalog",
+  reportWorkspaceNoReport: "No report selected yet — pick one from the catalog",
+  reportWorkspaceDateFrom: "From date",
+  reportWorkspaceDateTo: "To date",
+  reportWorkspaceAsOfLabel: "As-of date",
+  reportWorkspaceLocale: "Report language",
+  reportWorkspaceRun: "Run report",
+  reportWorkspaceQueued: "Queued",
+  reportWorkspaceRunning: "Running",
+  reportWorkspaceStage: "Stage",
+  reportWorkspaceStatus: "Status",
+  reportWorkspaceStatusSucceeded: "Succeeded",
+  reportWorkspaceStatusFailed: "Failed",
+  reportWorkspaceDuration: "Duration",
+  reportWorkspaceTotals: "Totals",
+  reportWorkspaceAssertions: "Reconciliation assertions",
+  reportWorkspaceAssertionFailed: "Reconciliation assertion failed — export disabled",
+  reportWorkspaceAsOf: "As of {date}",
+  reportWorkspaceComputedAt: "Computed {datetime}",
+  reportWorkspaceEmpty: "This result has no rows",
+  reportWorkspaceSavedViews: "Saved views",
+  reportWorkspaceSaveView: "Save current view",
+  reportWorkspaceViewNameAr: "View name (Arabic)",
+  reportWorkspaceViewNameEn: "View name (English)",
+  reportWorkspaceApply: "Apply",
+  reportWorkspaceDeleteView: "Delete",
+  reportWorkspaceRunHistory: "Run history",
+  reportWorkspaceRefresh: "Refresh",
+  reportWorkspaceBack: "Back to catalog",
+  reportWorkspaceExportPdf: "Export PDF",
+  reportWorkspaceExportXlsx: "Export XLSX",
+  reportWorkspaceExportCsv: "Export CSV",
+  reportWorkspacePrintPreview: "Print preview",
+  reportWorkspaceExportBlocked: "Export blocked: this result failed its reconciliation check",
+  reportWorkspaceViewSaved: "View saved",
+  reportWorkspaceColReport: "Report",
+  reportWorkspaceNoRuns: "No previous runs",
+
+  // -- T19-WEB (PHASE-014): subscription, billing, onboarding & dashboards --
+  navDashboard: "Dashboard",
+  statusTrial: "Trial",
+  statusPastDue: "Past due",
+  statusGraceReadOnly: "Grace (read-only)",
+  readOnlyBanner:
+    "Read-only mode: grace period — posting is paused; reports, export, and printing stay available. Pay or upgrade the plan to restore posting.",
+  readOnlyPayNow: "Pay now",
+  readOnlyError:
+    "Read-only mode: posting is paused during the grace period — paying is the resolving action",
+  readOnlyReason:
+    "Read-only during the grace period — creating and editing return once payment is made",
+
+  pricingTitle: "Pricing & plans",
+  pricingIntro:
+    "The three self-serve plans — every price and limit is a placeholder carried by the plan data itself (no hard-coded numbers in the page).",
+  pricingPlaceholderNote:
+    "⚠ All prices are placeholders (OQ-002) — pending pricing approval; the numbers shown come from the plan configuration only.",
+  pricingPlaceholderBadge: "Placeholder price — pending pricing approval (OQ-002)",
+  pricingPlansHeading: "Plans",
+  pricingMonthly: "Monthly",
+  pricingAnnual: "Annual",
+  pricingHighlightBadge: "Most suitable",
+  pricingCta: "Choose plan",
+  pricingMatrixHeading: "Feature comparison",
+  pricingMatrixHint:
+    "Each plan's feature-key count within the family, over the three-plan union (derived from the plans' feature keys).",
+  pricingMatrixArea: "Area",
+  pricingMatrixCellOf: "{present} of {total}",
+  pricingFamilyPlatform: "Platform",
+  pricingFamilyAccounting: "Accounting",
+  pricingFamilyTrade: "Master data & trade",
+  pricingFamilyTreasuryTax: "Treasury & tax",
+  pricingFamilyReporting: "Reporting",
+  pricingFamilyGrowth: "Growth tier",
+  pricingHaveAccount: "Already have an account?",
+  pricingGoLogin: "Sign in",
+
+  checkoutTitle: "Checkout",
+  checkoutGraceNote: "This page stays usable in read-only mode — paying is the resolving action.",
+  checkoutPlansHeading: "Choose a plan",
+  checkoutCurrentPlan: "Your current plan",
+  checkoutSelected: "Selected",
+  checkoutChoose: "Choose",
+  checkoutConfirmTitle: "Confirm the plan request",
+  checkoutConfirmMeta: "Plan: {plan} — {price} (placeholder price)",
+  checkoutPeriodLabel: "Period length",
+  checkoutPeriodMonths: "{months} month(s)",
+  checkoutConfirmButton: "Continue to payment",
+  checkoutCancelSelection: "Clear selection",
+  checkoutSessionTitle: "Checkout session",
+  checkoutInvoiceMeta: "Invoice {number} — {plan} plan",
+  checkoutPeriod: "Period",
+  checkoutDueDate: "Due date",
+  checkoutAmount: "Amount",
+  checkoutPayNow: "Pay now (sandbox)",
+  checkoutSimulateFailure: "Simulate payment failure",
+  checkoutSandboxNote:
+    "Sandbox mode: the payment provider runs in sandbox — no real money; payment flows through the same webhook pipeline.",
+  checkoutSuccessTitle: "Payment succeeded",
+  checkoutSuccessBody:
+    "The invoice is settled and the plan is active. It will show as paid in the billing history, and you can continue from the dashboard.",
+  checkoutFailureTitle: "Payment failed (simulated)",
+  checkoutFailureBody:
+    "The failure is recorded — dunning continues per policy, and you can retry from the billing page.",
+  checkoutGoBilling: "Go to billing & subscription",
+  checkoutGoDashboard: "Dashboard",
+  checkoutBackToPlans: "Back to plans",
+  checkoutAlreadySettled: "This session is already settled.",
+  checkoutBlockersTitle: "Downgrade blocked",
+  checkoutBlockerLine:
+    "{usage} {limit} exist; the {plan} plan allows {limitValue} — reduce to {limitValue} or fewer and retry.",
+  checkoutLimitUsers: "users",
+  checkoutLimitBranches: "branches",
+  checkoutLimitWarehouses: "warehouses",
+  checkoutErrorDowngradeBlocked:
+    "The downgrade is blocked while usage exceeds the target plan's limits — see the list below.",
+  checkoutErrorPlanUnchanged: "The subscription is already on this plan.",
+  checkoutErrorSessionNotFound: "Unknown checkout session — it may have expired.",
+  checkoutErrorSessionSettled: "The checkout session is already settled.",
+  checkoutErrorTransition: "The subscription state does not allow this operation.",
+  checkoutErrorLimitExceeded:
+    "Plan limit: {limit} — usage {usage} of {limitValue}. Upgrade the plan or free a seat.",
+  checkoutErrorNoSessionRef: "Could not extract the checkout session ref from the provider URL.",
+
+  billingTitle: "Billing & subscription",
+  billingGraceNote:
+    "Read-only until {date} — paying is available from this page to restore posting.",
+  billingPlanCardTitle: "Current plan",
+  billingNoSubscription: "No active subscription for this tenant.",
+  billingPrice: "Price",
+  billingPeriod: "Period",
+  billingTrialEndsAt: "Trial ends",
+  billingTrialCountdown: "{days} days left",
+  billingTrialDaysNote: "Trial duration is {days} days (placeholder).",
+  billingChangePlan: "Change plan",
+  billingUsageTitle: "Usage",
+  billingUnlimited: "Unlimited",
+  billingWarn80: "80% threshold",
+  billingWarn100: "100%",
+  billingInvoicesTitle: "Billing history",
+  billingNoInvoices: "No invoices yet.",
+  billingColNumber: "Number",
+  billingColPlan: "Plan",
+  billingColPeriod: "Period",
+  billingColAmount: "Amount",
+  billingColDueDate: "Due date",
+  billingColPaidVia: "Paid via",
+  billingPaidViaWebhook: "Payment provider",
+  billingPaidViaManual: "Manual recording",
+  billingEventsTitle: "Billing events",
+  billingNoEvents: "No events yet.",
+  billingViaPlatformAdmin: "via platform admin",
+  billingEventTrialStarted: "Trial started",
+  billingEventTrialExpired: "Trial expired",
+  billingEventGraceEntered: "Grace entered",
+  billingEventDunningWarned: "Dunning warning",
+  billingEventPlanChangeRequested: "Plan change requested",
+  billingEventPlanChanged: "Plan changed",
+  billingEventDowngradeBlocked: "Downgrade blocked",
+  billingEventCheckoutCreated: "Checkout session created",
+  billingEventManualPaymentRecorded: "Manual payment recorded",
+  billingEventSuspensionExecuted: "Suspension executed",
+  billingEventSubscriptionRestored: "Subscription restored",
+  billingEventEntitlementsChanged: "Entitlements changed",
+
+  dashboardTitle: "Dashboard",
+  dashboardFreshness:
+    "Today {date} — every number on this page comes from a report run bound to the same parameters (no parallel math).",
+  dashboardSalesToday: "Sales today",
+  dashboardCashPosition: "Cash position (net today)",
+  dashboardArOverdue: "AR overdue",
+  dashboardStockAlerts: "Stock alerts",
+  dashboardInvoicesCount: "{count} invoices",
+  dashboardAccountsCount: "{count} cash accounts",
+  dashboardCustomersCount: "{count} customers",
+  dashboardStockPreviewHeading: "First 5 alerts (SKU · warehouse — on hand / reorder level)",
+  dashboardDrillAria: "Open the report with the same parameters",
+  dashboardWidgetFailed: "Report run failed",
+  dashboardAssertionFailed: "Reconciliation assertion failed: {ids}",
+  dashboardUsageHeading: "Usage summary",
+  dashboardUsageUnavailable: "Usage summary unavailable — requires the subscription-manage permission.",
+  dashboardTrialBanner: "The trial ends in {days} days",
+  dashboardPastDueBanner: "An invoice is past due",
+  dashboardGoBilling: "Manage subscription",
+  dashboardGraceNote: "The dashboard stays fully usable in read-only mode — reports and exports continue.",
+
+  notificationsTitle: "Notifications",
+  notificationsUnreadCount: "Unread: {count}",
+  notificationsUnreadOnly: "Unread only",
+  notificationsRefresh: "Refresh",
+  notificationsSyncLine: "Unread: {count}",
+  notificationsInboxHeading: "Inbox",
+  notificationsEmpty: "No notifications.",
+  notificationsMarkRead: "Mark as read",
+  notificationsReadAt: "Read:",
+  notificationsPrefsTitle: "Notification preferences",
+  notificationsPrefsHint: "An absent row means both channels are on; preferences suppress only, never fabricate.",
+  notificationsPrefsCategory: "Category",
+  notificationsPrefsInApp: "In-app",
+  notificationsPrefsEmail: "Email",
+  notificationsPrefsSaved: "Preference saved.",
+  notificationsCategoryLimits: "Usage limits",
+  notificationsCategorySubscription: "Subscription",
+  notificationsCategoryReconciliation: "Reconciliation",
+  notificationsCategoryInvoiceOverdue: "Overdue invoices",
+
+  onboardingStepItem: "First item",
+  onboardingStepCustomer: "First customer",
+  onboardingStepInvoice: "First invoice",
+  onboardingStepPrint: "Print",
+  onboardingContinueJourney: "Continue the guided journey",
+  onboardingNeedPcsUom:
+    "Could not find the Piece (PCS) unit of measure — add it on the units screen and retry.",
+  onboardingItemSku: "SKU",
+  onboardingItemName: "Name (English)",
+  onboardingItemNameAr: "Name (Arabic)",
+  onboardingItemPrice: "Sale price",
+  onboardingItemFixed:
+    "Fixed for this step: kind stock · UoM {uom} — both changeable later on the items screen.",
+  onboardingCreateItem: "Create item",
+  onboardingSkipItem: "Skip this step",
+  onboardingCustomerCode: "Code",
+  onboardingCustomerName: "Name (English)",
+  onboardingCustomerNameAr: "Name (Arabic)",
+  onboardingCustomerFixed: "Kind for this step: customer — changeable later on the partners screen.",
+  onboardingCreateCustomer: "Create customer",
+  onboardingSkipCustomer: "Skip this step",
+  onboardingSelectItem: "Select an item",
+  onboardingTaxPreview: "Tax preview",
+  onboardingPreviewEstimate: "(estimate — final numbers are set on create)",
+  onboardingPreviewPending: "Enter quantity and price to see the preview.",
+  onboardingNoTaxNote: "No tax — the guided invoice line carries no tax code.",
+  onboardingInvoiceStageCreated: "Draft created (DRAFT)…",
+  onboardingInvoiceStageSubmitted: "Submitted (PENDING_APPROVAL)…",
+  onboardingInvoiceStageApproved: "Approved (APPROVED)…",
+  onboardingInvoiceStagePosted: "Posted (POSTED) — the official number is assigned.",
+  onboardingCreateInvoice: "Create & post the invoice",
+  onboardingSkipInvoice: "Skip this step",
+  onboardingInvoiceSummary: "Posted invoice summary",
+  onboardingNoPostedInvoice: "No posted invoice yet.",
+  onboardingPrintQueueNote:
+    "Invoice printing arrives with the document print queue — this step is recorded done-with-note; no print route is invented.",
+  onboardingSkipPrint: "Skip printing",
+  onboardingFinish: "Finish the journey",
+  onboardingGoInvoices: "Sales invoices",
+  onboardingGoDashboard: "Dashboard",
+  onboardingCompletedNote: "The onboarding journey is complete — you can now run your business from the dashboard.",
+  onboardingSkippedNote:
+    "Recorded stop at “first invoice posted” — the journey is resumable from here at any time.",
+
+  billingAdminTitle: "Subscription billing (platform console)",
+  billingAdminCaption:
+    "Recordings from this panel are audited under the platform admin's name (via_platform_admin).",
+  billingAdminSubscription: "Subscription",
+  billingAdminNoSubscription: "No subscription for this tenant.",
+  billingAdminManualTitle: "Record a manual payment (manual invoicing fallback)",
+  billingAdminInvoice: "Invoice",
+  billingAdminSelectInvoice: "Pick an invoice (OPEN only)",
+  billingAdminVia: "Via",
+  billingAdminViaBankTransfer: "Bank transfer",
+  billingAdminViaCash: "Cash",
+  billingAdminViaCheque: "Cheque",
+  billingAdminReference: "Reference (min 3 chars)",
+  billingAdminReason: "Reason (min 3 chars)",
+  billingAdminRecordButton: "Record payment",
+  billingAdminNoOpenInvoices: "No OPEN invoices to record a payment against.",
+  billingAdminManualDone: "Payment recorded for invoice {number} — subscription status: {status}",
+  billingAdminLifecycleTitle: "Suspend / restore (billing)",
+  billingAdminSuspendButton: "Suspend",
+  billingAdminRestoreButton: "Restore",
+  billingAdminSuspendDone: "Suspended — {count} sessions killed.",
+  billingAdminRestoreDone: "Restored.",
+  billingAdminDailyPassTitle: "Daily pass",
+  billingAdminDailyPassHint:
+    "Runs the pass on demand: trial expiries, grace expiries, scheduled downgrades, and the documents-counter reconciliation.",
+  billingAdminDailyPassButton: "Run the daily pass",
+  billingAdminDailyPassDone:
+    "Done: trials expired {trials} · suspensions {suspensions} · downgrades applied {applied} · downgrades blocked {blocked} · overdue invoices {overdue} · documents reconciled {reconciled}",
+  billingAdminAuditNote:
+    "Every action from this panel appears in the audit log with the via_platform_admin marker — reason and reference are mandatory.",
+  billingAdminConfirmSuspend: "Confirm suspension",
+  billingAdminConfirmSuspendBody:
+    "Suspension kills the tenant's sessions immediately under the suspension semantics. Continue?",
+  billingAdminConfirmRestore: "Confirm restore",
+  billingAdminConfirmRestoreBody:
+    "Restoration re-enables membership and re-materializes the plan entitlements in a paid posture. Continue?",
+  billingAdminConfirmButton: "Confirm",
+  billingAdminErrorNotOpen: "The target invoice is not OPEN.",
+  billingAdminErrorReasonRequired: "Manual payment recording requires a reason and a reference.",
+
+  // -- PHASE-015 T11 (3-a): onboarding industry step -------------------------
+  onboardingStepIndustry: "Choose your industry",
+  industryIntro:
+    "Start by telling us your industry — your workspace opens speaking your sector's language: its menus, terminology, and workflow defaults. You can also continue without a template.",
+  industryActivityQuestion: "What is your line of business?",
+  industryActivityOther: "Describe your activity in your own words (optional)",
+  industryActivityResolve: "Suggest a template",
+  industryResolvedExact: "Exact match: the suggested template is \"{template}\".",
+  industryResolvedSuggested:
+    "Based on your description we suggest the \"{template}\" template — review and confirm it, or pick another one yourself.",
+  industryNoMatch:
+    "No template matches your description. Pick one from the list below, or continue without a template.",
+  industryTemplatesLabel: "Industry templates",
+  industryCapabilitiesLabel: "Capabilities",
+  industryCapabilitiesPending: "Loading the capability preview…",
+  industryCapIncluded: "Included",
+  industryCapPhaseGated: "coming with PHASE-{phase}",
+  industryCapOptional: "Optional — not on your plan",
+  industryCapBlocked: "Needs a higher plan",
+  industryCapRequired: "required",
+  industrySelect: "Select",
+  industryDeselect: "Deselect",
+  industrySelectedBadge: "Selected",
+  industryBlockedBadge: "Not available on your plan",
+  industrySkipPlain: "No industry template — plain workspace",
+  industryContinue: "Continue",
+  industryApplyAfterProvisionNote:
+    "The template is applied automatically after your workspace is provisioned — and if the apply fails, onboarding continues unaffected.",
+  industryAlreadyAppliedTitle: "Template already applied",
+  industryAlreadyApplied: "Your workspace currently runs the \"{template}\" template",
+  industryLoadError:
+    "Could not load the industry templates — you can continue without one and retry later from the \"Industry & templates\" screen.",
+  industryOutcomeTitle: "Industry template",
+  industryPlainChosen:
+    "Continuing without an industry template — the workspace runs on the platform defaults; you can apply one later from the \"Industry & templates\" screen.",
+  industryAppliedOk: "Template \"{template}\" applied (version {version}).",
+  industryApplyAlready: "The template is already applied — nothing changed.",
+  industryApplyForbidden: "The template was not applied — you do not have the template-apply permission.",
+  industryApplyFailedContinue:
+    "Continue setting up on the platform defaults — your workspace setup is not blocked by this.",
+  industryApplyBlockedPrefix: "The template was not applied:",
+  industryRetryHint:
+    "You can review the templates and plan options later from Settings → \"Industry & templates\".",
+
+  // -- PHASE-015 T11 (3-a): template-derived navigation labels -----------------
+  industryNavComingPhase: "coming with {phase}",
+  industryNavNotInWebApp: "not yet in the web app",
+
+  // -- PHASE-015 T11 (3-a): admin "Industry & templates" screen --------------
+  templatesTitle: "Industry & templates",
+  templatesAppliedCard: "Applied template",
+  templatesNoneApplied:
+    "No industry template is applied — the workspace runs on the platform defaults.",
+  templatesAppliedNotInRegistry:
+    "The applied template has no ACTIVE registry row — contact platform administration.",
+  templatesKey: "Key",
+  templatesName: "Name",
+  templatesAppliedVersion: "Applied version",
+  templatesHash: "Manifest hash",
+  templatesStatus: "Status",
+  templatesStatusActive: "Active",
+  templatesAppliedNote: "The applied-at date is not shown — no API read route exposes it yet.",
+  templatesDriftTitle: "Template updates",
+  templatesDriftPending: "Could not check for template updates right now.",
+  templatesDriftCurrent: "You are on the latest version of the applied template.",
+  templatesDriftBehind:
+    "Data anomaly: the registry version is older than the applied one — contact platform administration.",
+  templatesDriftAvailable: "Update available: version {registry} (currently applied: {applied}).",
+  templatesDriftMajor: "MAJOR version — review the migration note before upgrading.",
+  templatesDriftWhatNext: "Review what will change before upgrading.",
+  templatesDriftRecorded: "The upgrade offer was recorded in your notifications.",
+  templatesDriftReview: "Review changes",
+  templatesDriftNeverAuto: "Template updates are never auto-applied — upgrading is your call.",
+  templatesRegistryTitle: "Available templates",
+  templatesNoPermission:
+    "Read-only view — applying and switching templates requires the \"configuration.templates.apply\" permission.",
+  templatesAppliedBadge: "Currently applied",
+  templatesApplyButton: "Apply",
+  templatesPreviewSwitch: "Preview switch",
+  templatesPreviewExtend: "Preview extend",
+  templatesApplyDone: "Template \"{template}\" applied (version {version}).",
+  templatesApplyAlready: "The template is already applied — nothing changed.",
+  templatesBlockedGeneric:
+    "Blocked: required capabilities are missing from your current plan — choose a higher plan to finish setting up this template.",
+  templatesSwitchDone: "Switched to the \"{template}\" template.",
+  templatesExtendDone: "The \"{template}\" template was added to your workspace.",
+  templatesAckRequiredNote:
+    "This change includes REQUIRED phase-gated capabilities — they arrive later with the coming phases, and that must be acknowledged before proceeding.",
+  templatesAckLabel:
+    "I acknowledge that the phase-gated features ({phases}) arrive later when their phase ships.",
+  templatesDiffTitle: "What will change?",
+  templatesDiffDescription: "{mode} preview — nothing changes until you confirm.",
+  templatesModeSwitch: "switch",
+  templatesModeExtend: "extend",
+  templatesDiffFromTo: "From {from} to {to}",
+  templatesDiffBlocked: "The operation is blocked — missing keys:",
+  templatesDiffAddedCaps: "Added capabilities",
+  templatesDiffAddedIncluded: "Available immediately",
+  templatesDiffAddedPhaseGated: "Phase-gated — arriving later",
+  templatesDiffAddedOptionalMissing: "Optional, not on your plan (their menus stay hidden)",
+  templatesDiffEmpty: "No additions.",
+  templatesDiffArchived: "Archived capabilities",
+  templatesDiffArchivedNote: "Kept read-only — switching never deletes data.",
+  templatesDiffRenamed: "Renamed labels",
+  templatesDiffSeries: "New numbering series",
+  templatesDiffKeptSeries: "Existing series stay unchanged:",
+  templatesDiffInventory: "Inventory default changes",
+  templatesDiffInventoryNote:
+    "Apply to newly created items only — existing item data never changes.",
+  templatesDiffPolicies: "Workflow policies",
+  templatesDiffPolicyConflict: "Conflict recorded — the primary value stays",
+  templatesDiffPins: "Pinned reports",
+  templatesDiffPinsAdded: "Added:",
+  templatesDiffPinsRemoved: "Removed:",
+  templatesDiffChecklist: "Onboarding checklist steps",
+  templatesSwitchButton: "Switch template",
+  templatesExtendButton: "Extend workspace",
+  templatesPoliciesTitle: "Effective policies",
+  templatesPoliciesNote: "The effective values after all layers merged — read-only.",
+  templatesPolicyKey: "Key",
+  templatesPolicyValue: "Value",
+  templatesPolicySource: "Source",
+  templatesPolicySourceTemplate: "Industry template",
+  templatesPolicySourceTenant: "Your setting",
+  templatesPolicyOn: "On",
+  templatesPolicyOff: "Off",
+  templatesPolicyLegend:
+    "\"Industry template\" = a default from the applied template · \"Your setting\" = an explicit value from your settings · \"—\" = the payload does not carry this key's provenance (it may be your explicit setting, a template default, or the platform default).",
+
+  // -- PHASE-017 (T6/T14): automotive + distribution navigation & crumbs ------
+  navSales: "Sales",
+  distributionNavSection: "Distribution",
+  jobCardsTitle: "Job cards",
+  vehiclesTitle: "Vehicles",
+  commissionsTitle: "Commissions",
+  distributionRoutesTitle: "Routes & visits",
+  distributionVanTitle: "Van stock",
+  distributionSettlementsTitle: "Rep settlements",
+  distributionTiersTitle: "Customer tiers",
+
+  // -- PHASE-017-T6 automotive screens (job cards + vehicles) ------------------
+  jobCardsEmpty: "No job cards yet.",
+  jobCardsNew: "New job card",
+  jcFilterAll: "All",
+  jcCardNo: "Card no",
+  jcCustomer: "Customer",
+  jcVehicle: "Vehicle",
+  jcBranch: "Branch",
+  jcWarehouse: "Warehouse",
+  jcPartsIssueMode: "Parts issue mode",
+  jcModeReserve: "Reserve parts (reserve)",
+  jcModeIssueImmediate: "Issue immediately (issue_immediate)",
+  jcOdometer: "Odometer (km)",
+  jcComplaints: "Complaints",
+  jcDiagnosis: "Diagnosis",
+  jcNote: "Note",
+  jcLaborHoursTotal: "Labor hours total",
+  jcLineParts: "Parts",
+  jcLineLabor: "Labor",
+  jcItem: "Item",
+  jcQty: "Qty",
+  jcUnitPrice: "Unit price",
+  jcHourlyRate: "Hourly rate",
+  jcEstimatedHours: "Estimated hours",
+  jcLoggedHours: "Logged hours",
+  jcDiscount: "Discount",
+  jcTaxCode: "Tax code",
+  jcAddLine: "Add line",
+  jcRemoveLine: "Remove line",
+  jcStatusDraft: "Draft",
+  jcStatusInProgress: "In progress",
+  jcStatusCompleted: "Completed",
+  jcStatusInvoiced: "Invoiced",
+  jcStatusCancelled: "Cancelled",
+  jcActionQuotation: "Generate quotation",
+  jcActionApprove: "Customer approval",
+  jcActionComplete: "Complete work",
+  jcActionInvoice: "Issue invoice",
+  jcActionCancel: "Cancel card",
+  jcCancelReason: "Cancellation reason",
+  jcLogHours: "Log hours",
+  jcSearchPlaceholder: "Search by card no or customer…",
+  jcClose: "Close",
+  jcCreated: "Opened at",
+  jcNoticeCreated: "Job card {no} opened.",
+  jcNoticeQuotation: "Quotation {no} generated.",
+  jcNoticeUpdated: "Job card updated.",
+  jcNoticeHoursLogged: "Hours logged.",
+  jcErrState: "This action is not allowed in the card's current state.",
+  jcErrNotCancelable:
+    "Cannot cancel after parts were issued or the card was invoiced — correct with a credit note.",
+  jcErrLineInvalid: "Invalid line — check the item kind, quantity, and hours.",
+  jcErrPosting: "Job-card posting is not configured yet; this action is unavailable.",
+  vehiclesEmpty: "No vehicles registered yet.",
+  vehNew: "New vehicle",
+  vehPartner: "Partner",
+  vehNote: "Note",
+  vehMake: "Make",
+  vehModel: "Model",
+  vehModelYear: "Model year",
+  vehChassis: "Chassis no (VIN)",
+  vehPlate: "Plate no",
+  vehColor: "Color",
+  vehEngineNo: "Engine no",
+  vehOdometer: "Odometer (km)",
+  vehSearchPlaceholder: "Search plate, chassis, or make…",
+  vehStatusActive: "Active",
+  vehStatusArchived: "Archived",
+  vehArchive: "Archive",
+  vehArchiveHint:
+    "The vehicle stays in the registry for history and disappears from new selections.",
+  vehHistory: "Service history",
+  vehHistoryKindJobCard: "Job card",
+  vehHistoryKindInvoice: "Invoice",
+  vehHistoryKindCreditNote: "Credit note",
+  vehHistoryEmpty: "No service history for this vehicle.",
+  vehNoticeCreated: "Vehicle registered.",
+  vehNoticeArchived: "Vehicle archived.",
+  vehErrChassisTaken: "Chassis number is already registered in this tenant.",
+  vehErrArchived: "Vehicle is archived — it is read-only.",
+  vehErrChassisInvalid:
+    "Invalid chassis number: 6–17 characters of A–H, J–N, P, R–Z and digits (VIN shape, no I/O/Q).",
+
+  // -- PHASE-017-T14 distribution + commissions screens ------------------------
+  // (9a-dist) routes & visits + van stock + rep settlements + tiers/FOC + commissions
+
+  // routes & visits (T14 routes screen)
+  distRoutesCreate: "Create route",
+  distRoutesCode: "Code",
+  distRoutesName: "Name",
+  distRoutesRep: "Sales rep",
+  distRoutesVan: "Van",
+  distRoutesDayPattern: "Day pattern",
+  distRoutesDayPatternHint: "Pick at least one day per route — visits are planned for its days only.",
+  distRoutesEmpty: "No routes yet — create the first one.",
+  distRoutesCreatedToast: "Route {code} created.",
+  distRoutesErrCodeTaken: "Route code is already in use in this tenant.",
+  distRoutesErrPlanning: "The planning data is invalid — check the date, day pattern and customers.",
+  distDayMon: "Mon",
+  distDayTue: "Tue",
+  distDayWed: "Wed",
+  distDayThu: "Thu",
+  distDayFri: "Fri",
+  distDaySat: "Sat",
+  distDaySun: "Sun",
+  distCompTitle: "Customer composition",
+  distCompHint: "Order sets the visit sequence when planning; pin the regulars to the top.",
+  distCompDerivedHint: "The current composition is derived from the route's planned visits; saving replaces it in full with the order shown.",
+  distCompCount: "{count} customers",
+  distCompOrder: "Order",
+  distCompPinned: "Pinned",
+  distCompAddCustomer: "Add customer",
+  distCompRemove: "Remove",
+  distCompSave: "Save composition",
+  distCompEmpty: "No customers on this route yet — add some from the list.",
+  distCompSavedToast: "Composition saved ({count}).",
+  distPlanTitle: "Plan visits",
+  distPlanDate: "Planning date",
+  distPlanBtn: "Plan visits for the date",
+  distPlanToast: "Planned {planned} visit(s) ({skipped} already planned).",
+  distBoardTitle: "Visit board",
+  distBoardDate: "Visit date",
+  distBoardAllStatuses: "All statuses",
+  distVisitPlanned: "Planned",
+  distVisitCompleted: "Completed",
+  distVisitSkipped: "Skipped",
+  distVisitMissed: "Missed",
+  distVisitCheckIn: "Check in",
+  distVisitComplete: "Complete",
+  distVisitSkip: "Skip",
+  distVisitCheckedIn: "Checked in",
+  distVisitCustomer: "Customer",
+  distVisitRoute: "Route",
+  distVisitNote: "Note",
+  distVisitEmpty: "No visits match these filters.",
+  distCompleteTitle: "Complete visit",
+  distCompleteInvoice: "Sales invoice (UUID)",
+  distCompleteCreditNote: "Credit note (UUID)",
+  distCompleteReceipt: "Receipt (UUID)",
+  distCompleteHint: "Optional — paste a document UUID to link it to the visit on completion, plus a note if needed.",
+  distVisitCheckedInToast: "Visit checked in.",
+  distVisitCompletedToast: "Visit completed.",
+  distVisitSkippedToast: "Visit skipped.",
+  distErrVisitState: "The visit's state does not allow this action — only PLANNED visits are managed.",
+  distErrVisitDocument: "A linked document does not exist in this tenant.",
+
+  // van stock (T14 van screen)
+  distVanRegister: "Register van",
+  distVanCode: "Code",
+  distVanName: "Name",
+  distVanBranch: "Branch",
+  distVanRep: "Bound rep",
+  distVanEmpty: "No vans registered — register the first one.",
+  distVanRegisteredToast: "Van {code} registered and bound to rep {rep}.",
+  distVanBalancesTitle: "Van balances",
+  distVanPickVan: "Pick a van",
+  distVanItem: "Item",
+  distVanSku: "SKU",
+  distVanQty: "Qty",
+  distVanValue: "Value",
+  distVanTotals: "Totals",
+  distVanBalancesEmpty: "No stock on this van yet — load it from a main warehouse.",
+  distLoadOutTitle: "Load van (load-out)",
+  distLoadOutFrom: "From warehouse",
+  distLoadOutVan: "To van",
+  distLoadOutAddLine: "Add line",
+  distLoadOutBtn: "Load out",
+  distLoadOutToast: "Load-out transfer {no} dispatched — in transit until received.",
+  distUnloadTitle: "Unload van",
+  distUnloadVan: "From van",
+  distUnloadTo: "To warehouse",
+  distUnloadBtn: "Unload",
+  distUnloadToast: "Unload transfer {no} in transit — receive it on the other side.",
+  distTransfersTitle: "In-transit transfers to vans",
+  distTransfersEmpty: "No in-transit transfers to vans right now.",
+  distTransfersVanOnly: "Only transfers addressed to distribution vans are listed (receive refreshes the van stock mirror).",
+  distTransfersReceiveToast: "Transfer received — the van balance now reflects it.",
+  distErrVanCodeTaken: "Warehouse code is already in use in this tenant.",
+  distErrVanRepBinding: "Invalid rep binding — needs an ACTIVE rep not already bound to another van (one van per rep).",
+  distErrVanLoadOut: "The load/unload operation is invalid — check the van, the warehouse and the lines.",
+  distErrVanNotFound: "Van not found (or not a VAN-type warehouse).",
+
+  // rep settlements (T14 settlements screen)
+  distSettlementsOpen: "Open a settlement",
+  distSettlementsRep: "Rep",
+  distSettlementsCashAccount: "Rep cash account",
+  distSettlementsVan: "Van",
+  distSettlementsDate: "Settlement date",
+  distSettlementsOpening: "Opening cash",
+  distSettlementsNo: "Settlement no.",
+  distSettlementsEmpty: "No settlements yet — open today's settlement for a rep.",
+  distSettlementsOpenedToast: "Settlement opened for rep {rep} on {date} (the STL- number lands at posting).",
+  distSettlementAllStatuses: "All statuses",
+  distSettlementDraft: "Draft",
+  distSettlementCounted: "Counted",
+  distSettlementApproved: "Approved",
+  distSettlementPosted: "Posted",
+  distSettlementCancelled: "Cancelled",
+  distSettlementDetail: "Settlement detail",
+  distSettlementLines: "Expected-cash breakdown",
+  distSettlementLineNo: "#",
+  distSettlementComponent: "Component",
+  distSettlementAmount: "Amount",
+  distSettlementDescription: "Description",
+  distSettlementCashSales: "Cash sales",
+  distSettlementCollections: "Collections",
+  distSettlementRefunds: "Cash refunds",
+  distSettlementExpenses: "Rep expenses",
+  distSettlementExpected: "Expected cash",
+  distSettlementCountedCash: "Counted cash",
+  distSettlementVariance: "Variance",
+  distSettlementShortage: "Shortage",
+  distSettlementSurplus: "Surplus",
+  distSettlementNone: "None",
+  distSettlementVarianceReason: "Variance reason",
+  distSettlementApprovalBadge: "Approval required",
+  distSettlementCountAction: "Count drawer",
+  distSettlementApproveAction: "Approve",
+  distSettlementPostAction: "Post",
+  distSettlementCancelAction: "Cancel settlement",
+  distSettlementCancelReason: "Cancel reason",
+  distSettlementDepositAccount: "Deposit account",
+  distSettlementDepositAmount: "Deposit amount",
+  distSettlementDepositHint: "Optional — deposit part of the drawer into another account (bank/box) at posting; never above the counted cash.",
+  distSettlementShift: "Linked shift",
+  distSettlementCountedToast: "Settlement counted — variance {variance} ({direction}).",
+  distSettlementApprovedToast: "Settlement approved.",
+  distSettlementPostedToast: "Settlement {no} posted — the variance and deposit legs are booked.",
+  distSettlementCancelledToast: "Settlement cancelled.",
+  distComponentOpeningCash: "Opening cash",
+  distComponentCashSale: "Cash sale",
+  distComponentCollection: "Collection",
+  distComponentCashRefund: "Cash refund",
+  distComponentRepExpense: "Rep expense",
+  distComponentVariance: "Count variance",
+  distComponentBankDeposit: "Bank deposit",
+  distErrSettlementPendingDocs: "The rep's day still has draft/pending documents — post or cancel them before settling.",
+  distErrSettlementDayLocked: "The rep's day is already locked by a live settlement (or the settlement is POSTED and immutable).",
+  distErrSettlementApprovalRequired: "The variance is beyond tolerance (or an approval policy is active) — a separate approval is required before posting.",
+  distErrSettlementVarianceReason: "A non-zero variance requires a documented reason.",
+  distErrSettlementSelfApproval: "The settlement's creator cannot approve it (creator ≠ approver).",
+  distErrSettlementState: "The settlement's state does not allow this action — count precedes posting.",
+  distErrSettlementNotFound: "Settlement not found in this tenant.",
+
+  // customer tiers + free goods (T14 tiers screen)
+  distTiersCreate: "Create tier",
+  distTiersEdit: "Edit tier",
+  distTiersCode: "Code",
+  distTiersName: "Name",
+  distTiersPriceList: "Price list",
+  distTiersDiscountCap: "Discount cap %",
+  distTiersDiscountCapHint: "Optional 0–100 — caps any discount granted to this tier's customers.",
+  distTiersVisitFrequency: "Visit frequency (days)",
+  distTiersVisitFrequencyHint: "Optional 0–365 — how often this tier's customers are visited.",
+  distTiersEmpty: "No tiers yet — create the first one.",
+  distTiersSavedToast: "Tier {code} saved.",
+  distErrTierCodeTaken: "Tier code is already in use in this tenant.",
+  distErrTierPriceList: "Invalid price list — must be an active SALE list.",
+  distErrTierInvalid: "Invalid tier data (discount cap 0–100, non-negative frequency).",
+  distFocTitle: "Free goods (FOC) rules",
+  distFocCreate: "Create rule",
+  distFocCode: "Code",
+  distFocName: "Name",
+  distFocBuy: "Buy item",
+  distFocBuyQty: "Buy qty",
+  distFocGet: "Get item",
+  distFocGetQty: "Get qty",
+  distFocPerMultiple: "Per multiple",
+  distFocMaxFree: "Max free per order",
+  distFocMaxFreeHint: "Optional — 0 or empty means uncapped.",
+  distFocTier: "Target tier",
+  distFocAnyTier: "Any tier",
+  distFocReason: "Reason code",
+  distFocReasonHint: "Required — why the free goods are granted (BR-008), up to 30 chars.",
+  distFocValidFrom: "Valid from",
+  distFocValidTo: "Valid to",
+  distFocEmpty: "No free-goods rules yet — create the first one (buy X get Y).",
+  distFocSavedToast: "Free-goods rule {code} saved.",
+  distFocErrInvalid: "Invalid rule data (positive qtys, a sane validity window, a reason code).",
+
+  // commissions (T14 commissions screen)
+  commissionsRunsTitle: "Commission runs",
+  commissionsNewRun: "New run",
+  commissionsPeriodFrom: "Period from",
+  commissionsPeriodTo: "Period to",
+  commissionsBasis: "Basis",
+  commissionsBasisInvoiced: "Invoiced",
+  commissionsBasisCollected: "Collected",
+  commissionsTotalBase: "Total base",
+  commissionsTotalCommission: "Total commission",
+  commissionsEmpty: "No runs yet — create one for a period.",
+  commissionsAllStatuses: "All statuses",
+  commissionsStatusDraft: "Draft",
+  commissionsStatusPosted: "Posted",
+  commissionsStatusCancelled: "Cancelled",
+  commissionsRunCreatedToast: "Run created and computed — posting is the accrual point.",
+  commissionsRunPostedToast: "Run posted — the commission accrual is booked (expense/accrual).",
+  commissionsRunCancelledToast: "Run cancelled.",
+  commissionsDetail: "Run detail",
+  commissionsLines: "Commission lines",
+  commissionsRep: "Rep",
+  commissionsBase: "Base",
+  commissionsRate: "Rate %",
+  commissionsAmount: "Commission",
+  commissionsPayout: "Payout",
+  commissionsPayoutAccrued: "Accrued",
+  commissionsPayoutPaid: "Paid",
+  commissionsExcluded: "Excluded — the rep rule basis ≠ the run basis",
+  commissionsNoLines: "No computed lines for this run (no activity, or rules without commission).",
+  commissionsPostRun: "Post run",
+  commissionsCancelRun: "Cancel run",
+  commissionsCancelReason: "Cancel reason",
+  commissionsRulesTitle: "Per-rep commission rules",
+  commissionsRulesHint: "Pick a rep to view and edit their rule (method/rate/basis).",
+  commissionsRuleRep: "Rep",
+  commissionsRuleMethod: "Method",
+  commissionsMethodNone: "No commission",
+  commissionsMethodPercentage: "Percentage",
+  commissionsRuleRate: "Rate %",
+  commissionsRuleRateHint: "0–100 applied to the computed base; leaving it empty with a tiered rule keeps the bands.",
+  commissionsRuleBasis: "Basis",
+  commissionsRuleTiers: "Tier bands",
+  commissionsRuleTiersHint: "Read-only on this screen — entering a flat rate replaces them.",
+  commissionsRuleSavedToast: "Commission rule saved for {rep}.",
+  commErrRuleInvalid: "Invalid rule data (rate 0–100, or well-formed tier bands — never both).",
+  commErrRunState: "The run's state does not allow this action (POSTED runs are immutable — corrections reverse the accrual journal).",
+
+  // -- PHASE-016 T4/T10 — POS (counter, floor, reconciliation, terminals, offline) --
+
+  posNavSection: "Point of sale",
+  posNavCounter: "POS counter",
+  posNavFloor: "Floor plan",
+  posNavReconciliation: "Reconciliation",
+  posNavTerminals: "POS terminals",
+
+  posCounterTitle: "POS — counter sale",
+  posCounterNoTerminals: "No POS terminals registered — register one first.",
+  posCounterRegisterTerminal: "Register terminal",
+  posCounterTerminalLabel: "Terminal",
+  posCounterShiftOpen: "Shift open",
+  posCounterShiftNone: "No open shift",
+  posCounterOpenShiftBtn: "Open shift",
+  posCounterCloseShiftBtn: "Close shift",
+  posCounterZReportLink: "Z report",
+  posCounterScanLabel: "Scan barcode / item code",
+  posCounterScanPlaceholder: "Scan or type a code, then Enter",
+  posCounterScanNotFound: "No item matches that code.",
+  posCounterScanPerf: "Last lookup: {ms}ms",
+  posCounterItemsTitle: "Items",
+  posCounterItemsEmpty: "No sellable items.",
+  posCounterSearchPlaceholder: "Search by name or code…",
+  posCounterCartTitle: "Cart",
+  posCounterCartEmpty: "Cart is empty — add items from the grid or by scanning.",
+  posCounterQty: "Qty",
+  posCounterRemove: "Remove",
+  posCounterTotal: "Total",
+  posCounterTaxNote: "Final tax is computed at posting.",
+  posCounterPayBtn: "Pay",
+  posCounterClearBtn: "Clear cart",
+  posCounterCustomer: "Customer",
+  posCounterWalkIn: "Walk-in customer",
+  posCounterPickCustomer: "Choose customer",
+  posCounterCustomerSearch: "Search by name or code…",
+  posCounterNewSale: "New sale",
+  posCounterSalePosted: "Invoice {no} posted.",
+  posCounterPreloadedCheck: "Table check {no} loaded — paying settles the check and frees the table.",
+  posCounterErrTerminalRequired: "Select a terminal first.",
+  posCounterErrCartEmpty: "Add at least one line.",
+  posCounterErrTerminalInactive: "The terminal is INACTIVE — activate it before selling.",
+  posCounterErrDiscountCeiling: "The discount exceeds the allowed ceiling — a supervisor must approve.",
+  posCounterReturnBtn: "Return",
+  posCounterOfflineQueued: "Offline — sale {no} stored locally pending sync.",
+
+  posShiftOpenTitle: "Open shift on {terminal}",
+  posShiftOpeningAmount: "Opening float",
+  posShiftDenominations: "Denominations (optional)",
+  posShiftDenomination: "Denomination",
+  posShiftCount: "Count",
+  posShiftCountedTotal: "Counted total",
+  posShiftOpenAction: "Open shift",
+  posShiftAlreadyOpen: "A shift is already open on this terminal's till.",
+  posShiftOpenedToast: "Shift {no} opened.",
+  posShiftCloseTitle: "Close shift — blind count",
+  posShiftBlindNote: "Blind count: expected stays hidden until close.",
+  posShiftCloseAction: "Close shift",
+  posShiftClosedToast: "Shift {no} closed.",
+  posShiftSupervisorRequired: "Variance beyond tolerance — supervisor id + PIN + reason required.",
+  posShiftErrOpenMismatch: "An open shift already exists on this till — one open shift per till.",
+  posShiftErrNotOnTerminal: "That shift is not the open shift on this terminal.",
+
+  posTenderTitle: "Payment",
+  posTenderMethod: "Method",
+  posTenderAmount: "Amount",
+  posTenderCash: "Cash",
+  posTenderCard: "Card",
+  posTenderRemaining: "Remaining",
+  posTenderChangeDue: "Change due",
+  posTenderAddRow: "Add tender row",
+  posTenderConfirm: "Confirm payment",
+  posTenderErrInvalid: "Invalid tender amount — must be a positive decimal.",
+  posTenderErrOverflow: "Tendered total far exceeds the sale total — review the rows.",
+  posTenderErrUnderpaid: "Tendered total is below the sale total.",
+
+  posReceiptTitle: "Receipt preview",
+  posReceiptPrint: "Print",
+  posReceiptLoading: "Loading receipt…",
+  posReceiptErrLoad: "Could not load the receipt.",
+  posReceiptOfflineNote: "Local pending-sync receipt — the official number appears once the server accepts it.",
+
+  posReturnTitle: "POS return",
+  posReturnInvoiceLabel: "Original invoice (id or number)",
+  posReturnLoad: "Load invoice",
+  posReturnLines: "Return lines",
+  posReturnReason: "Return reason",
+  posReturnNote: "Note",
+  posReturnSubmit: "Submit return",
+  posReturnPosted: "Credit note {no} posted.",
+  posReturnErrNoLines: "Pick at least one line with a positive qty.",
+  posReturnErrInvoice: "Could not load the original invoice.",
+
+  posFloorTitle: "Floor plan — table service",
+  posFloorBranch: "Branch",
+  posFloorZone: "Zone",
+  posFloorSeats: "Seats",
+  posFloorSortKey: "Sort",
+  posFloorFree: "Free",
+  posFloorOccupied: "Occupied",
+  posFloorTableLabel: "Table label",
+  posFloorOpenCheck: "Open check",
+  posFloorOrderType: "Order type",
+  posFloorGuests: "Guests",
+  posFloorAddTable: "Add table",
+  posFloorTableAdded: "Table added.",
+  posFloorEmpty: "No tables in this branch yet.",
+  posFloorOpenChecks: "Open checks",
+  posFloorCheckNo: "Check no.",
+  posFloorLines: "Lines",
+  posFloorAddItem: "Add item",
+  posFloorSaveLines: "Save lines",
+  posFloorLinesSaved: "Check lines saved.",
+  posFloorKitchenSend: "Send kitchen ticket",
+  posFloorKitchenSent: "Kitchen ticket {no} sent.",
+  posFloorTickets: "Kitchen tickets",
+  posFloorTransfer: "Transfer to table",
+  posFloorTransferTo: "To table",
+  posFloorTransferred: "Check transferred to the new table.",
+  posFloorSplit: "Split check",
+  posFloorSplitHint: "Pick the lines to move to a new check.",
+  posFloorSplitDone: "Moved {n} line(s) to a new check.",
+  posFloorGuestCheck: "Guest check",
+  posFloorPay: "Pay",
+  posFloorCancelCheck: "Cancel check",
+  posFloorCancelReason: "Cancel reason",
+  posFloorCheckCancelled: "Check cancelled and the table freed.",
+  posFloorSent: "Sent",
+  posFloorUnsent: "Unsent",
+  posFloorOrderDineIn: "Dine-in",
+  posFloorOrderTakeaway: "Takeaway",
+  posFloorOrderDelivery: "Delivery",
+  posFloorOrderCounter: "Counter",
+  posFloorCheckPaid: "Paid",
+  posFloorErrCheckNotOpen: "The check is not OPEN — it cannot be modified.",
+  posFloorErrOpenTables: "Open checks still exist — settle or cancel them before closing the day.",
+
+  posReconciliationTitle: "Reconciliation — Z report",
+  posReconciliationDate: "Date",
+  posReconciliationBranch: "Branch",
+  posReconciliationLoad: "Show report",
+  posReconciliationZNumber: "Z number",
+  posReconciliationTotals: "Totals",
+  posReconciliationInvoiceCount: "Invoices",
+  posReconciliationByOrderType: "By order type",
+  posReconciliationByTender: "By tender",
+  posReconciliationByTerminal: "By terminal",
+  posReconciliationByHour: "By hour",
+  posReconciliationOfflinePairs: "Offline reconciliation (OFF- ⇄ official)",
+  posReconciliationOfflineNo: "OFF- no.",
+  posReconciliationOfficialNo: "Official no.",
+  posReconciliationPrint: "Print Z report",
+  posReconciliationEmpty: "No results for this day.",
+  posReconciliationOpenChecks: "Open checks ({n})",
+  posReconciliationRejections: "Rejected sales in the sync queue",
+  posReconciliationColType: "Type",
+  posReconciliationColCount: "Count",
+  posReconciliationColTax: "Tax",
+
+  posTerminalsTitle: "POS terminals",
+  posTerminalsCode: "Code",
+  posTerminalsName: "Name",
+  posTerminalsBranch: "Branch",
+  posTerminalsTill: "Cash till",
+  posTerminalsWarehouse: "Warehouse",
+  posTerminalsReceiptSize: "Receipt size",
+  posTerminalsStatus: "Status",
+  posTerminalsDevice: "Bound device",
+  posTerminalsLastSeen: "Last seen",
+  posTerminalsActive: "Active",
+  posTerminalsInactive: "Inactive",
+  posTerminalsRegister: "Register terminal",
+  posTerminalsRegisterAction: "Register",
+  posTerminalsRegistered: "Terminal {code} registered.",
+  posTerminalsActivate: "Activate",
+  posTerminalsDeactivate: "Deactivate",
+  posTerminalsActivated: "Terminal activated.",
+  posTerminalsDeactivated: "Terminal deactivated.",
+  posTerminalsEnrollDevice: "Enroll device",
+  posTerminalsDeviceName: "Device name",
+  posTerminalsDeviceKey: "Device key",
+  posTerminalsDeviceKeyNote: "Generated locally and shown once — copy it now.",
+  posTerminalsEnrollAction: "Enroll",
+  posTerminalsEnrolled: "Device enrolled.",
+  posTerminalsRevoke: "Revoke device",
+  posTerminalsRevoked: "Device revoked.",
+  posTerminalsErrCodePattern: "Code: 2–30 letters/digits (. _ - allowed).",
+  posTerminalsErrCodeTaken: "That code is already used by another terminal.",
+  posTerminalsEmpty: "No terminals registered.",
+
+  posOfflineBanner: "You are offline — sales are stored locally with an OFF- number and sync when back.",
+  posOfflineQueue: "Sync queue ({n})",
+  posOfflinePendingSync: "PENDING_SYNC",
+  posOfflineSynced: "Synced",
+  posOfflineRejected: "Rejected",
+  posOfflineKept: "Kept locally",
+  posOfflineRetry: "Retry",
+  posOfflineKeep: "Keep",
+  posOfflineRemove: "Remove",
+  posOfflineSyncNow: "Sync now",
+  posOfflineSyncedToast: "Synced {n} sale(s).",
+  posOfflineRejectionReason: "Rejection reason",
+  posOfflineEditResend: "Edit & resend",
+  posOfflineAcceptPrice: "Accept server price",
+  posOfflineCancelWithReason: "Cancel with reason",
+  posOfflineCancelledLocal: "Cancelled locally — the record is kept.",
+  posOfflineReasonPeriodLocked: "The accounting period is locked.",
+  posOfflineReasonPriceChanged: "The item price changed on the server.",
+  posOfflineReasonInsufficientStock: "Insufficient stock for the line.",
+  posOfflineReasonCreditLimit: "The customer credit limit is exceeded.",
+  posOfflineReasonValidation: "The payload failed validation.",
+  posOfflineLocalReceiptTitle: "Local receipt",
+
+  // -- PHASE-018 (T41): manufacturing navigation & screens ---------------------
+  // (boms + production orders + QC inspections + batch genealogy; the
+  // food_manufacturing template's production/traceability surfaces)
+
+  manufacturingNavSection: "Manufacturing",
+  mfgBomsTitle: "Bills of materials",
+  mfgOrdersTitle: "Production orders",
+  mfgQcTitle: "Quality inspections",
+  mfgGenealogyTitle: "Batch genealogy",
+
+  // BOM screen (the version registry + the lines editor + explosion preview)
+  mfgBomsNew: "New version",
+  mfgBomsEmpty: "No bills of materials yet.",
+  mfgBomFilterItem: "Filter by item",
+  mfgBomsAllStatuses: "All statuses",
+  mfgBomStatusDraft: "Draft",
+  mfgBomStatusActive: "Active",
+  mfgBomStatusArchived: "Archived",
+  mfgBomItem: "Output item",
+  mfgBomVersion: "Version",
+  mfgBomYield: "Yield (%)",
+  mfgBomYieldHint: "Greater than 0 and at most 100 — the explosion divides quantities by it.",
+  mfgBomEffectiveFrom: "Effective from",
+  mfgBomNote: "Note",
+  mfgBomOutputUom: "Output unit",
+  mfgBomComponent: "Component",
+  mfgBomQtyPerOutput: "Qty per output unit",
+  mfgBomScrapPct: "Component scrap (%)",
+  mfgBomLines: "Component lines",
+  mfgBomLineNo: "#",
+  mfgBomAddLine: "Add component",
+  mfgBomRemoveLine: "Remove",
+  mfgBomCreateTitle: "New BOM version",
+  mfgBomEditTitle: "Edit BOM (draft)",
+  mfgBomDraftOnlyHint: "Only DRAFT versions accept edits; after activation create a new version.",
+  mfgBomActivate: "Activate",
+  mfgBomActivateTitle: "Activate version",
+  mfgBomArchive: "Archive",
+  mfgBomArchiveHint: "This version stops being the item's active recipe for production orders.",
+  mfgBomCreatedToast: "Version {version} created — edit the lines then activate it.",
+  mfgBomSavedToast: "Version {version} saved.",
+  mfgBomActivatedToast: "Version {version} activated (the previous active version was archived).",
+  mfgBomArchivedToast: "Version {version} archived.",
+  mfgBomWorkspace: "Version workspace",
+  mfgExplodeTitle: "Explosion preview",
+  mfgExplodeQty: "Requested output qty",
+  mfgExplodeBom: "Version (optional)",
+  mfgExplodeBomAuto: "The item's active version",
+  mfgExplodeRun: "Explode",
+  mfgExplodeLevels: "Levels",
+  mfgExplodeColVia: "Via semi-finished",
+  mfgExplodeTotals: "Totals per item",
+  mfgExplodeEmpty: "No results — make sure the item has an explodable version.",
+  mfgExplodeHint: "Level 1 is direct; deeper levels derive from the semi-finished components' own BOMs.",
+  mfgColLevel: "Level",
+
+  // Production-order screen (list + create + the lifecycle workspace)
+  mfgOrdersNew: "New production order",
+  mfgOrdersEmpty: "No production orders yet.",
+  mfgOrdersAllStatuses: "All statuses",
+  mfgOrderStatusDraft: "Draft",
+  mfgOrderStatusReleased: "Released",
+  mfgOrderStatusInProgress: "In progress",
+  mfgOrderStatusCompleted: "Completed",
+  mfgOrderStatusCancelled: "Cancelled",
+  mfgOrderNo: "Order no.",
+  mfgOrderPlannedQty: "Planned qty",
+  mfgOrderActualQty: "Actual qty",
+  mfgOrderFgValue: "FG value",
+  mfgOrderCompletedAt: "Completed at",
+  mfgOrderBranch: "Branch",
+  mfgOrderBom: "BOM version (optional)",
+  mfgOrderBomActive: "The active version at release",
+  mfgOrderPlannedDate: "Planned date",
+  mfgOrderMaterialsWarehouse: "Materials warehouse",
+  mfgOrderFgWarehouse: "Finished-goods warehouse",
+  mfgOrderLaborRate: "Labor rate per unit",
+  mfgOrderOverheadRate: "Overhead rate per unit",
+  mfgOrderRatesHint: "Optional — absorbed into the completion journal at release time when above zero.",
+  mfgOrderCreatedToast: "Production order created (DRAFT) — release it to reserve the PRD number and freeze the plan lines.",
+  mfgOrderDetail: "Production order detail",
+  mfgOrderBatch: "Produced batch",
+  mfgOrderExpiry: "Expiry",
+  mfgOrderWipCredit: "WIP credit",
+  mfgOrderLabor: "Absorbed labor",
+  mfgOrderOverhead: "Absorbed overhead",
+  mfgOrderNoEditHint: "No inline edit — create a replacement order or correct via adjusted consumptions.",
+  mfgOrderPlanLines: "Plan lines (release snapshot)",
+  mfgOrderOverPlan: "Over plan",
+  mfgOrderRelease: "Release",
+  mfgOrderStart: "Start",
+  mfgOrderConsume: "Consume materials",
+  mfgOrderScrap: "Scrap",
+  mfgOrderComplete: "Complete",
+  mfgOrderCancel: "Cancel order",
+  mfgOrderCancelTitle: "Cancel the production order",
+  mfgOrderCancelReason: "Cancel reason",
+  mfgOrderReleasedToast: "Order {no} released and the plan lines were frozen.",
+  mfgOrderStartedToast: "Order {no} is now in progress.",
+  mfgOrderCancelledToast: "The order was cancelled.",
+  mfgConsumeQty: "Consumed qty",
+  mfgConsumeBatch: "Batch (optional)",
+  mfgConsumeBatchAuto: "Automatic (FEFO)",
+  mfgConsumeAt: "Consumption date",
+  mfgConsumeAddLine: "Add line",
+  mfgConsumeToast: "Consumption posted — journal {journal}.",
+  mfgScrapTitle: "Record WIP scrap",
+  mfgScrapQty: "Scrapped qty",
+  mfgScrapReason: "Reason code",
+  mfgScrapValue: "Scrap value",
+  mfgScrapAt: "Scrapped at",
+  mfgScrapToast: "Scrap of {value} posted — journal {journal}.",
+  mfgCompleteTitle: "Complete the production order",
+  mfgCompleteActualQty: "Actual produced qty",
+  mfgCompleteBatchNo: "Batch no. (optional)",
+  mfgCompleteToast: "Order completed — FG value {value}, batch {batch}.",
+  mfgConsumptions: "Consumptions",
+  mfgConsumptionBatch: "Batch",
+  mfgConsumptionUnitCost: "Unit cost",
+  mfgConsumptionValue: "Value",
+  mfgConsumptionJournal: "Journal",
+  mfgScraps: "Recorded scraps",
+
+  // QC screen (the inspection log + the entry dialog)
+  mfgQcNew: "Record inspection",
+  mfgQcEmpty: "No inspections recorded yet.",
+  mfgQcAllTargets: "All targets",
+  mfgQcResultPass: "Pass",
+  mfgQcResultFail: "Fail",
+  mfgQcDispAccept: "Accept",
+  mfgQcDispScrap: "Scrap",
+  mfgQcDispRework: "Rework",
+  mfgQcDispReturn: "Return to supplier",
+  mfgQcDispNone: "No disposition",
+  mfgQcTargetProductionOrder: "Production order",
+  mfgQcTargetGoodsReceipt: "Goods receipt",
+  mfgQcColInspectedAt: "Inspected at",
+  mfgQcColTarget: "Target",
+  mfgQcColGrn: "Goods receipt (id)",
+  mfgQcColBatch: "FG batch",
+  mfgQcColSampled: "Sample",
+  mfgQcCreateTitle: "Record a QC inspection",
+  mfgQcTargetType: "Target type",
+  mfgQcOrder: "Production order (completed)",
+  mfgQcGrnId: "Goods receipt id (UUID)",
+  mfgQcGrnHint: "There is no GRN list API — paste the id from the purchasing screen.",
+  mfgQcResult: "Result",
+  mfgQcSampled: "Sampled inspection",
+  mfgQcSampleSize: "Sample size",
+  mfgQcDisposition: "Disposition",
+  mfgQcDispositionHint: "FAIL requires a disposition; PASS allows none or ACCEPT only; return-to-supplier is goods-receipt-only.",
+  mfgQcCreatedToast: "Inspection recorded ({result}).",
+  mfgQcReleasedToast: "The quarantined batch was released (now active).",
+  mfgQcScrapToast: "QC scrap posted: qty {qty}, value {value} — journal {journal}.",
+
+  // Genealogy screen (the read-only recall search)
+  mfgGenealogyItem: "Item",
+  mfgGenealogyBatchId: "Or paste a batch id (UUID)",
+  mfgGenealogyBatchHint: "Pick an item then a batch, or paste the id directly — this screen is read-only and never posts.",
+  mfgGenealogyUpstream: "Upstream",
+  mfgGenealogyDownstream: "Downstream",
+  mfgGenealogySummary: "Summary",
+  mfgGenealogyBatchCard: "Batch card",
+  mfgGenealogyOnHand: "On hand",
+  mfgGenealogyProducingOrder: "Producing order",
+  mfgGenealogyConsumedBy: "Consumed by orders",
+  mfgGenealogySalesCount: "Sales count",
+  mfgGenealogyInspectionsCount: "Inspections count",
+  mfgBatchStatusActive: "Active",
+  mfgBatchStatusQuarantined: "Quarantined",
+  mfgBatchStatusWrittenOff: "Written off",
+  mfgGenealogyMaterials: "Upstream materials",
+  mfgGenealogyColConsumedBy: "Consumed by",
+  mfgGenealogyColProducedBy: "Produced by",
+  mfgGenealogyProductions: "Downstream productions",
+  mfgGenealogyColFromBatch: "From batch",
+  mfgGenealogyColOrder: "Order",
+  mfgGenealogySales: "Downstream sales",
+  mfgGenealogyColDocType: "Doc type",
+  mfgGenealogyColDocId: "Document",
+  mfgGenealogyColDocDate: "Doc date",
+  mfgGenealogyIdsHint: "This screen shows document ids only — the batch-genealogy report adds their numbers.",
+  mfgDocSalesInvoice: "Sales invoice",
+  mfgDocDeliveryNote: "Delivery note",
+  mfgGenealogyKindMaterial: "Material",
+  mfgGenealogyKindProduced: "Produced",
+  mfgGenealogyKindSold: "Sold",
+
+  // Manufacturing typed errors (manufacturing-errors.ts codes → mfgErr*)
+  mfgErrBomNotFound: "The bill of materials does not exist in this tenant.",
+  mfgErrBomVersionConflict: "That version number is already in use for this item — create a new version.",
+  mfgErrBomNotDraft: "The version is not a draft — editing and activation apply to drafts only.",
+  mfgErrBomNotActive: "The version is not active — only active versions archive.",
+  mfgErrBomActiveExists: "The item already has another active version — archive it first (one active per item).",
+  mfgErrBomLineInvalid: "Invalid component line — check the item, a positive qty, and no duplicate component.",
+  mfgErrBomCycle: "The recipe chain revisits an item — circular bills of materials are rejected.",
+  mfgErrBomTooDeep: "The explosion exceeds the 16-level depth cap.",
+  mfgErrBomItemNotStock: "The item must be a stock item — services never enter bills of materials.",
+  mfgErrBomSelfReference: "An item cannot be a component of its own bill of materials.",
+  mfgErrBomYieldInvalid: "Yield must be greater than 0 and at most 100 (≤ 4 decimal places).",
+  mfgErrBomUomMismatch: "The output unit must match the item's base unit of measure.",
+  mfgErrBomRequired: "The item has no active bill of materials — create and activate one, or pick an explicit version.",
+  mfgErrOrderNotFound: "The production order does not exist in this tenant.",
+  mfgErrOrderState: "The order's state does not allow this action (completed and cancelled are terminal).",
+  mfgErrOrderInputInvalid: "Invalid order data — check the quantities, dates and warehouses.",
+  mfgErrOrderItemNotStock: "The output item must be a stock item — services are never manufactured.",
+  mfgErrConsumptionNotPlanned: "The item is not one of the frozen plan's components — correct with an adjusted consumption of a planned component.",
+  mfgErrScrapReasonRequired: "A scrap reason code is required by the tenant's policy (1–40 characters).",
+  mfgErrScrapExceedsWip: "The scrap value exceeds the order's current WIP balance.",
+  mfgErrCompleteWithoutConsumption: "The order cannot complete before materials are consumed — record a consumption first.",
+  mfgErrCostRounding: "The unit cost cannot represent the FG value at 4 decimal places — review the actual qty.",
+  mfgErrFgShelfLifeRequired: "The item tracks expiry and the shelf-life policy is on, but the item carries no shelf-life days.",
+  mfgErrOrderNotCancelable: "The order has consumptions — corrections are adjusted consumptions, not cancels.",
+  mfgErrInspectionNotFound: "The inspection does not exist in this tenant.",
+  mfgErrInspectionTargetNotFound: "The goods receipt does not exist in this tenant.",
+  mfgErrInspectionTargetInvalid: "Invalid inspection target — a production order must be COMPLETED, and a goods receipt needs its id.",
+  mfgErrInspectionInputInvalid: "Invalid inspection data — check the sample flag, its size, and the date.",
+  mfgErrDispositionRequired: "A FAIL inspection requires a disposition (accept, scrap, rework or return to supplier).",
+  mfgErrDispositionInvalid: "The disposition does not fit the result — PASS allows none or ACCEPT only; return-to-supplier is goods-receipt-only.",
+  mfgErrQcScrapBatchNotQuarantined: "The order has no QUARANTINED finished-goods batch — the QC scrap flow needs a held batch.",
+  mfgErrQcScrapEmptyBatch: "The quarantined batch is empty — no on-hand left to scrap.",
+  mfgErrGenealogyBatchNotFound: "The batch does not exist in this tenant.",
+};
+
+const dictionaries: Record<Locale, Dictionary> = { ar, en };
+
+/**
+ * Gregorian month names (index 0 = January) for the fiscal-start-month
+ * select (P4-T12a onboarding + settings screens). Fiscal years stay
+ * Gregorian by design (A-004) — these are display labels only.
+ */
+export const monthNames: Record<Locale, readonly string[]> = {
+  ar: [
+    "يناير",
+    "فبراير",
+    "مارس",
+    "أبريل",
+    "مايو",
+    "يونيو",
+    "يوليو",
+    "أغسطس",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
+  ],
+  en: [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ],
+};
+
+/**
+ * Key-parity assertion: `Object.keys(ar) === Object.keys(en)`. TypeScript
+ * already guarantees this through the `Dictionary` interface; the runtime
+ * check keeps the parity contract green even if the dictionaries are ever
+ * assembled dynamically. Executed at module load on first import.
+ */
+export function assertDictionaryParity(): void {
+  const arKeys = Object.keys(dictionaries.ar).sort().join(",");
+  const enKeys = Object.keys(dictionaries.en).sort().join(",");
+  if (arKeys !== enKeys) {
+    throw new Error(`dictionary key parity violation between "ar" and "en"`);
+  }
+}
+
+assertDictionaryParity();
+
+export function isLocale(value: string): value is Locale {
+  return locales.includes(value as Locale);
+}
+
+/** The "other" locale — locale switching is a 1:1 link swap. */
+export function otherLocale(locale: Locale): Locale {
+  return locale === "ar" ? "en" : "ar";
+}
+
+export function getDictionary(locale: Locale): Dictionary {
+  return dictionaries[locale];
+}

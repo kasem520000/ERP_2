@@ -1,0 +1,60 @@
+/**
+ * /{locale}/login — public. Already signed in → home. The form posts to the
+ * dedicated BFF session route (POST /api/bff/session) which sets the
+ * httpOnly session cookie; this component never touches the raw token.
+ * T19-WEB (PHASE-014): `?next=…` (the pricing CTAs) redirects there after
+ * login when it is an internal locale-prefixed path (shape-validated; any
+ * other value is ignored — open-redirect safe).
+ */
+import { notFound, redirect } from "next/navigation";
+import type { JSX } from "react";
+
+import { LoginForm } from "../../../components/login-form";
+import { PublicShell } from "../../../components/public-shell";
+import { getDictionary, isLocale, type Locale } from "../../../i18n/dictionaries";
+import { getSessionToken } from "../../../lib/server-api";
+
+/** Only internal locale-prefixed paths are honored (open-redirect guard). */
+function safeNext(rawNext: string | string[] | undefined, locale: Locale): string | undefined {
+  const value = Array.isArray(rawNext) ? rawNext[0] : rawNext;
+  if (value === undefined) {
+    return undefined;
+  }
+  return value.startsWith(`/${locale}/`) && !value.startsWith(`/${locale}//`) ? value : undefined;
+}
+
+export default async function LoginPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<JSX.Element> {
+  const { locale } = await params;
+  if (!isLocale(locale)) {
+    notFound();
+  }
+  const localeValue = locale as Locale;
+  const d = getDictionary(localeValue);
+
+  const token = await getSessionToken();
+  if (token !== undefined) {
+    redirect(`/${locale}`);
+  }
+
+  const next = safeNext((await searchParams).next, localeValue);
+
+  return (
+    <PublicShell locale={localeValue} pagePath="login" title={d.loginTitle}>
+      <LoginForm locale={localeValue} next={next} />
+      <p>
+        <a
+          href={`/${locale}/forgot-password`}
+          className="text-sm text-primary-700 underline-offset-2 hover:underline"
+        >
+          {d.loginForgotLink}
+        </a>
+      </p>
+    </PublicShell>
+  );
+}

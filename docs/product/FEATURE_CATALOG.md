@@ -1,6 +1,6 @@
 # Feature Catalog
 
-> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-02
+> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-04
 
 The canonical, exhaustive registry of product features. Every feature has exactly one
 **feature key** (`module.feature_name`). This file is the single source of truth referenced by:
@@ -320,8 +320,8 @@ General sync foundation and native clients (PHASE-020…022) —
 
 | Feature key | Name (EN · AR) | Description | Priority | Phase | Permission key | Depends on |
 |---|---|---|---|---|---|---|
-| `offline.sync_protocol` | Sync protocol · بروتوكول المزامنة | Outbox/inbox, idempotency keys, per-entity cursors, tombstones, per-entity conflict policies; server authoritative for postings | 2 | 020 | (device-scoped) | `platform.users_roles` |
-| `offline.device_management` | Device management · إدارة الأجهزة | Device registry, activation, revocation, last-seen, per-device sync state | 2 | 020 | `platform.devices.manage` | `offline.sync_protocol` |
+| `offline.sync_protocol` | Sync protocol · بروتوكول المزامنة | Outbox/inbox, idempotency keys, per-entity cursors, tombstones, per-entity conflict policies; server authoritative for postings | 2 | 020 (shipped 2026-11-04) | `sync.settings.manage` (admin plane; data plane device-scoped self) | `platform.users_roles` |
+| `offline.device_management` | Device management · إدارة الأجهزة | Device registry, activation, revocation, last-seen, per-device sync state | 2 | 020 (shipped 2026-11-04) | `identity.devices.manage` + `sync.devices.register`/`sync.devices.revoke` (migration 0029 seeds the sync-plane keys) | `offline.sync_protocol` |
 | `offline.desktop_app` | Desktop application · تطبيق سطح المكتب | Tauri shell (Windows first): offline web-ERP cache, auto-update, keychain, printer integration | 2 | 021 | (app install) | `offline.sync_protocol` |
 | `offline.android_app` | Android application · تطبيق أندرويد | Expo app: personal accounts + field sales with offline cache and push | 2 | 022 | (app install) | `offline.sync_protocol`, `distribution.van_stock` |
 | `offline.mobile_accounts` | Mobile account views · الحسابات على الجوال | Cached, authorized, shareable-only partner data on Android | 2 | 022 | customer-scoped token | `partners.personal_accounts`, `offline.android_app` |

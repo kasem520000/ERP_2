@@ -281,8 +281,18 @@ export async function requireCustomer(customerId: string): Promise<store.Custome
 export async function requireSellableItem(itemId: string) {
   const itemsStore = await import("../../items/infrastructure/items.store");
   const item = await itemsStore.findItemById(itemId);
-  if (item === undefined || item.deletedAt !== null) {
+  if (item === undefined) {
     throw new OrderLineInvalidError(`item ${itemId} does not exist in this tenant`);
+  }
+  // Soft-deleted (tombstoned) master data is the tenant's OWN row — the
+  // no-disclosure principle targets CROSS-tenant probes, not the sync
+  // vocabulary. A deleted item is "deactivated master data" (CONFLICT_
+  // RESOLUTION §3 ITEM_INACTIVE row: cancel / substitute-and-resend), so
+  // the offline client gets the actionable reason, never a generic
+  // VALIDATION_ERROR (PHASE-020 C-11; the 016 registry promise).
+  if (item.deletedAt !== null) {
+    const { ItemInactiveError } = await import("../domain/sales-errors");
+    throw new ItemInactiveError(itemId);
   }
   if (item.status !== undefined && item.status !== null && item.status !== "ACTIVE") {
     const { ItemInactiveError } = await import("../domain/sales-errors");

@@ -76,6 +76,32 @@ export class PosSaleService {
       input.customerId ?? (await this.walkInCustomerId(terminal.branchId, input.actorId));
 
     const invoiceDate = input.invoiceDate ?? new Date().toISOString().slice(0, 10);
+
+    // BR-003 staleness gate on the POS path (PHASE-020 C-09b — the
+    // approve()-side gate predates this; the POS autopost bypassed it, so
+    // a tampered/stale offline price could post silently). Policy-gated
+    // EXACTLY like approve(): when manual overrides are disallowed, every
+    // line's price must match the deterministic resolution — drift is
+    // PRICE_CHANGED, never a silent post. With overrides allowed (the
+    // default), lane pricing stands (016 semantics unchanged).
+    const overrideAllowed =
+      (await store.readSetting<boolean>("sales.price_override_allowed")) ?? true;
+    if (!overrideAllowed) {
+      for (const line of input.lines) {
+        const resolved = await (
+          await import("../pricing")
+        ).resolveSalesPrice({ customerId, itemId: line.itemId, qty: line.qty });
+        if (resolved.source !== "MANUAL" && resolved.unitPrice !== line.unitPrice) {
+          const { PriceChangedError } = await import("../../domain/sales-errors");
+          throw new PriceChangedError({
+            itemId: line.itemId,
+            resolved: resolved.unitPrice,
+            provided: line.unitPrice,
+          });
+        }
+      }
+    }
+
     const created = await this.invoices.create({
       branchId: terminal.branchId,
       customerId,

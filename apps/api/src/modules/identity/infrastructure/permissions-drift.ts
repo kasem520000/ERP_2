@@ -119,6 +119,10 @@ const PERMISSION_SEED_MIGRATIONS: readonly string[] = [
   "apps/api/migrations/0025_automotive_distribution.sql",
   "apps/api/migrations/0026_manufacturing.sql",
   "apps/api/migrations/0027_crm_projects.sql",
+  // PHASE-020: 0029 re-asserts the four sync-plane keys (sync.devices.*,
+  // sync.settings.manage, identity.devices.manage — seeded at 0004 base,
+  // going live with the device registry).
+  "apps/api/migrations/0029_sync_foundation.sql",
 ];
 
 export async function main(): Promise<void> {

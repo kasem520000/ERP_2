@@ -148,7 +148,11 @@ export const TENANT_TABLES_REGISTRY: readonly RegisteredTenantTable[] = [
   { table: "delivery_notes" },
   { table: "delivery_note_lines" },
   { table: "sales_invoices" },
-  { table: "sales_invoice_lines" },
+  // PHASE-020 (migration 0031): the sync update_draft handler replaces
+  // DRAFT lines wholesale (aggregate snapshots — SYNC_PROTOCOL §6.2), so
+  // the lines carry the sanctioned DELETE grant (DRAFT-only, single
+  // writer by OWNER_DEVICE_WINS — posted lines unreachable by design).
+  { table: "sales_invoice_lines", deleteGranted: true },
   { table: "credit_notes" },
   { table: "credit_note_lines" },
   { table: "sales_reallocations" },
@@ -241,6 +245,14 @@ export const TENANT_TABLES_REGISTRY: readonly RegisteredTenantTable[] = [
   { table: "service_orders" },
   { table: "service_order_lines" },
   { table: "crm_time_entries" },
+
+  // PHASE-020 sync cluster (migration 0029_sync_foundation.sql): the
+  // soft-delete GC ledger and the push dedupe ledger. Both carry the
+  // sanctioned DELETE grant (the retention/GC maintenance jobs — the
+  // entitlements/manual-journal-drafts pattern: a job-owned delete, never
+  // a user-plane one).
+  { table: "tombstones", deleteGranted: true },
+  { table: "inbox_commands", deleteGranted: true },
 ];
 
 export const TENANT_TABLE_NAMES: readonly string[] = TENANT_TABLES_REGISTRY.map(

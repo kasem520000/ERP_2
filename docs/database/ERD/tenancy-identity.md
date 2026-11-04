@@ -1,8 +1,10 @@
 # ERD — Tenancy & Identity Cluster
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-10-27 · **Phases:** 002–004
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-04 · **Phases:** 002–004 (devices widened 016/020)
 
-Core attributes only (full column specs: [TABLES/tenancy-identity.md](../TABLES/tenancy-identity.md)).
+Core attributes only (full column specs: [TABLES/tenancy-identity.md](../TABLES/tenancy-identity.md);
+the 020 registry widening + the credential chain live in [TABLES/sync.md](../TABLES/sync.md) +
+[ERD/sync.md](sync.md)).
 All tenant-owned tables additionally carry `tenant_id`, `created_at`, `updated_at`,
 `version` ([DATABASE_CONVENTIONS.md](../DATABASE_CONVENTIONS.md)).
 
@@ -16,6 +18,7 @@ erDiagram
   permissions ||--o{ role_permissions : ""
   users ||--o{ sessions : "authenticates"
   users ||--o{ devices : "registers"
+  devices ||--o{ device_refresh_tokens : "rotation chain (020)"
   users ||--o{ mfa_factors : "enrolls"
   users ||--o{ invitations : "invited-by"
   tenants ||--o{ subscriptions : "subscribes"
@@ -77,8 +80,19 @@ erDiagram
     uuid id PK
     uuid user_id FK
     text platform
+    text device_class "pos-terminal|tauri-desktop|android-field|android-personal (020)"
     text key_hash
+    jsonb trust_flags "audited admin plane (020)"
+    timestamptz data_expires_at "lost-device remote expiry (020)"
     timestamptz revoked_at
+  }
+  device_refresh_tokens {
+    uuid id PK
+    uuid device_id FK "CASCADE"
+    text token_hash UK
+    uuid predecessor_id
+    timestamptz used_at "reuse tripwire"
+    timestamptz expires_at
   }
   mfa_factors {
     uuid id PK

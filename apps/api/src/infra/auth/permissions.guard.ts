@@ -25,11 +25,13 @@ import { REQUIRE_PERMISSIONS_KEY, type RequirePermissionMetadata } from "./requi
  * FORBIDDEN + audit event (risky-action audit rule) in the caller's tenant
  * scope. Effective permissions come from the definer projection
  * (pre-GUC resolution, migration 0003) for the session's ACTIVE membership;
- * self-scoped keys (identity.mfa.manage) are granted to every
- * authenticated user for self-targeted routes only.
+ * self-scoped keys (identity.mfa.manage, sync.devices.revoke for a device's
+ * own user — PHASE-020 SECURITY §4.1, the revoked-terminal self-service
+ * journey; the devices controller additionally enforces ownership) are
+ * granted to every authenticated user for self-targeted routes only.
  */
 
-const SELF_SCOPE_KEYS = new Set(["identity.mfa.manage"]);
+const SELF_SCOPE_KEYS = new Set(["identity.mfa.manage", "sync.devices.revoke"]);
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {

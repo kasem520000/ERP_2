@@ -1,6 +1,6 @@
 # Error Model
 
-> **Status:** STABLE · **Owner:** Offline & API Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Offline & API Architecture · **Updated:** 2026-11-04
 
 The single error envelope, HTTP status mapping, and stable error-code registry for the
 whole API. Codes are **contracts**: clients branch on them, so renaming or re-semanticking
@@ -113,7 +113,8 @@ registry copy; engine document is authoritative)
 | `PRICE_CHANGED` | sync item / 422 REST | line price differs from server price beyond tolerance |
 | `INSUFFICIENT_STOCK` | sync item / 422 REST | availability check failed (`details.availableQty`) |
 | `CREDIT_LIMIT_EXCEEDED` | sync item / 422 REST | partner credit limit exceeded |
-| `ITEM_INACTIVE` / `PARTNER_INACTIVE` | sync item | referenced master data deactivated |
+| `ITEM_INACTIVE` / `PARTNER_INACTIVE` | sync item | referenced master data deactivated (resubmittable: false — soft-deleted/inactive master data must be substituted, not retried) |
+| `FORBIDDEN` | sync item | ONLINE_ONLY entity push or non-owner draft edit (`details.ownerDeviceId`; resubmittable: false) — added PHASE-020 |
 | `DUPLICATE_COMMAND` | sync item meta | duplicate delivery replayed from inbox (`duplicate: true`) |
 
 Adding a code = registry PR + OpenAPI regeneration + client-handling row (§5) — the

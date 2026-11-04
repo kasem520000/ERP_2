@@ -1,88 +1,242 @@
 import { sql } from "drizzle-orm";
 
+import { PERMISSIONS_ENTITY_TYPE } from "@erp/contracts";
+
 import { requireTenantContext } from "../../../infra/db/tenant-context";
-import { isPosFeedEntity, syncFeed } from "./change-log-writer";
-import { decodeCursor, encodeCursor } from "./cursor-tokens";
-import { PosSyncEntityInvalidError } from "../../pos/domain/pos-errors";
+import { PosDeviceNotFoundError, PosSyncEntityInvalidError } from "../../pos/domain/pos-errors";
+import { isFeedEntity, syncFeed } from "./change-log-writer";
+import { decodeCursor, encodeCursor, SYNC_CONTRACT_VERSION } from "./cursor-tokens";
+import { deviceClassOf, isEntityPullableByDevice, loadDevice } from "./feed-groups";
+import { pullPermissionSnapshot } from "./permission-snapshot";
 
 /**
- * PHASE-016 · the narrow pull service (T8; SYNC_PROTOCOL §2): per-entity-
- * type cursors over the POS feed group. The catch-up writer feeds the
- * change_log first (same transaction), then the batch is served strictly
- * in seq order. Page budgets: ≤ 1000 items / ≤ 2 MB (phase §6).
+ * PHASE-020 · the v2 pull service (T5; SYNC_PROTOCOL §2 + MASTER-PLAN §5):
+ * per-entity-type cursors over the device-class feed groups. The catch-up
+ * writer feeds the change_log first (same transaction — a pull never
+ * observes a half-fed change_log), then the batch is served strictly in
+ * seq order with the v2 page budgets: ≤ min(limit, 1000) items AND ≤ 2 MB
+ * serialized (whichever binds first; a single oversized item still rides
+ * alone). The 016 wire shape (`changes[]` + `cursor` + `hasMore`) is kept
+ * verbatim; the v2 envelope adds `nextCursor`/`serverTime`/
+ * `contractVersion` and the C-12 `resync` directive (a cursor beyond the
+ * feed head → bounded restart from 0). `deviceId` is OPTIONAL — the 016
+ * session path (no device id) resolves to the fail-safe pos feed group.
  */
+
+/** A pull on a revoked device is rejected before anything is served
+ * (SYNC_PROTOCOL §1.5 — zero effects on revocation); the entity pullable
+ * gate is 404-equivalent with no existence leak. Both classes live in
+ * domain/sync-errors.ts (the single spelling — request-level errors map
+ * in the ERROR_MODEL filter). */
+export {
+  SyncDeviceRevokedError,
+  SyncEntityNotPulledError,
+} from "../domain/sync-errors";
+import { SyncDeviceRevokedError, SyncEntityNotPulledError } from "../domain/sync-errors";
+
+/** The serialized-page budget (SYNC_PROTOCOL §2.5 delta sizes). */
+export const PULL_PAGE_BYTE_CAP = 2_000_000;
+
+/**
+ * The byte-cap check (pure, exported for unit testing): does adding an
+ * item of `nextItemBytes` to a page already holding `accumulatedBytes`
+ * stay within the 2 MB budget? The page loop never strands a page empty —
+ * the first item always rides (§2.5: a large row may occupy a full page
+ * alone).
+ */
+export function fitsByteCap(accumulatedBytes: number, nextItemBytes: number): boolean {
+  return accumulatedBytes + nextItemBytes <= PULL_PAGE_BYTE_CAP;
+}
+
+/** One served change (v2: the server row `version`, null on DELETE). */
+export interface PullChangeV2 {
+  id: string;
+  seq: number;
+  op: "UPSERT" | "DELETE";
+  payload: Record<string, unknown> | null;
+  changedAt: string;
+  version: number | null;
+}
+
+/** The v2 pull envelope: the 016 shape + the additive v2 fields. */
+export interface PullEnvelopeV2 {
+  entityType: string;
+  /** The current position token (the LAST EMITTED seq — 016 semantics). */
+  cursor: string;
+  hasMore: boolean;
+  changes: readonly PullChangeV2[];
+  /** v2 alias of `cursor` (same token value). */
+  nextCursor?: string;
+  serverTime?: string;
+  contractVersion?: string;
+  /** C-12 directive: restart the feed from seq 0 (bounded restart). */
+  resync?: boolean;
+}
+
+/** 016 compat alias (the 016 name for the v2 envelope). */
+export type PullEnvelope = PullEnvelopeV2;
+
 export async function pull(input: {
   entityType: string;
   cursor: string | null;
   limit?: number;
-}): Promise<PullEnvelope> {
-  if (!isPosFeedEntity(input.entityType)) {
-    throw new PosSyncEntityInvalidError(input.entityType);
-  }
+  deviceId?: string;
+}): Promise<PullEnvelopeV2> {
+  const entityType = input.entityType;
   const limit = Math.min(Math.max(input.limit ?? 500, 1), 1000);
+  const serverTime = new Date().toISOString();
+
+  // (1) Resolve the device (OPTIONAL — the 016 session path passes none):
+  // revoked → typed rejection before anything is served (§1.5).
+  let deviceClass: string | null = null;
+  let userId: string | null = null;
+  if (input.deviceId !== undefined) {
+    const device = await loadDevice(input.deviceId);
+    if (device === undefined) {
+      throw new PosDeviceNotFoundError(input.deviceId);
+    }
+    if (device.revokedAt !== null) {
+      throw new SyncDeviceRevokedError(input.deviceId);
+    }
+    deviceClass = deviceClassOf(device);
+    userId = device.userId;
+  }
+
+  // (2) The pull-scope gate: entity in the device class's feed group (or
+  // the permissions snapshot) — else SYNC_ENTITY_NOT_PULLED, no existence
+  // leak across classes (MASTER-PLAN §5.1).
+  if (!isEntityPullableByDevice(entityType, deviceClass)) {
+    throw new SyncEntityNotPulledError(entityType, deviceClass ?? "pos-terminal (default)");
+  }
+
+  // (3) The permissions snapshot entity: the per-user synthetic feed.
+  if (entityType === PERMISSIONS_ENTITY_TYPE) {
+    if (userId === null) {
+      // The snapshot is per device USER — the 016 session path (no device)
+      // has no user binding on this surface.
+      throw new PosSyncEntityInvalidError(
+        `${PERMISSIONS_ENTITY_TYPE} (pull requires a device — pass deviceId)`,
+      );
+    }
+    const snapshot = await pullPermissionSnapshot({ userId, cursor: input.cursor, limit });
+    const envelope: PullEnvelopeV2 = {
+      entityType,
+      cursor: snapshot.nextCursorToken,
+      nextCursor: snapshot.nextCursorToken,
+      hasMore: snapshot.hasMore,
+      changes: snapshot.changes,
+      serverTime,
+      contractVersion: SYNC_CONTRACT_VERSION,
+    };
+    if (snapshot.resync === true) {
+      envelope.resync = true;
+    }
+    return envelope;
+  }
+
+  // (4) Catch the feed up to the sources (same transaction — a pull never
+  // observes a half-fed change_log). The pullable gate above guarantees a
+  // registered feed entity; the guard is defensive only.
+  if (!isFeedEntity(entityType)) {
+    throw new SyncEntityNotPulledError(entityType, deviceClass ?? "pos-terminal (default)");
+  }
+  await syncFeed(entityType);
+
   const tx = requireTenantContext().tx!;
 
-  // (1) Catch the feed up to the sources (same transaction — a pull never
-  // observes a half-fed change_log).
-  await syncFeed(input.entityType);
-
-  // (2) Serve the batch strictly in seq order from the cursor position.
+  // (5) Cursor decode; invalid → the 016 message contract (restart from
+  // null) — a client holding a stale-format token re-bootstraps.
   const decoded = input.cursor === null ? undefined : decodeCursor(input.cursor);
   if (decoded === undefined) {
-    if (input.cursor !== null) {
-      throw new PosSyncEntityInvalidError(`${input.entityType} (cursor rejected — restart from null)`);
+    if (input.cursor !== null && input.cursor !== "") {
+      throw new PosSyncEntityInvalidError(
+        `${entityType} (cursor rejected — restart from null)`,
+      );
     }
-  } else if (decoded.entityType !== input.entityType) {
+  } else if (decoded.entityType !== entityType) {
     throw new PosSyncEntityInvalidError(
-      `${input.entityType} (cursor belongs to ${decoded.entityType})`,
+      `${entityType} (cursor belongs to ${decoded.entityType})`,
     );
   }
   const afterSeq: number = decoded === undefined ? 0 : decoded.seq;
+
+  // (6) C-12 cursor regression: a token seq beyond the tenant feed head
+  // (restore-from-backup / cross-environment cursor) → the resync
+  // directive — a fresh 0-cursor, zero changes, ledger untouched.
+  const headRows = await tx.execute(sql`
+    SELECT max(seq) AS "max" FROM change_log WHERE entity_type = ${entityType}
+  `);
+  const head = Number(
+    (headRows.rows as unknown as { max: string | number | null }[])[0]?.max ?? 0,
+  );
+  if (afterSeq > head) {
+    const fresh = encodeCursor({ entityType, seq: 0, issuedAt: serverTime });
+    return {
+      entityType,
+      cursor: fresh,
+      nextCursor: fresh,
+      hasMore: false,
+      changes: [],
+      serverTime,
+      contractVersion: SYNC_CONTRACT_VERSION,
+      resync: true,
+    };
+  }
+
+  // (7) Serve the batch strictly in seq order: count cap (limit+1 fetch
+  // detects hasMore) AND the 2 MB byte cap (first item always rides).
   const rows = await tx.execute(sql`
-    SELECT seq, entity_id AS "entityId", op, payload, changed_at AS "changedAt"
+    SELECT seq, entity_id AS "entityId", op, payload, changed_at AS "changedAt",
+           payload->>'version' AS "version"
     FROM change_log
-    WHERE entity_type = ${input.entityType} AND seq > ${afterSeq}
+    WHERE entity_type = ${entityType} AND seq > ${afterSeq}
     ORDER BY seq ASC
     LIMIT ${limit + 1}
   `);
   const all = rows.rows as unknown as {
-    seq: number;
+    seq: number | string;
     entityId: string;
     op: "UPSERT" | "DELETE";
     payload: Record<string, unknown> | null;
     changedAt: string;
+    version: string | null;
   }[];
-  const hasMore = all.length > limit;
-  const batch = hasMore ? all.slice(0, limit) : all;
-  const lastSeq = batch.length > 0 ? batch[batch.length - 1]!.seq : afterSeq;
+  const countCapped = all.length > limit;
+  const candidates = countCapped ? all.slice(0, limit) : all;
 
-  return {
-    entityType: input.entityType,
-    cursor: encodeCursor({
-      entityType: input.entityType,
-      seq: lastSeq,
-      issuedAt: new Date().toISOString(),
-    }),
-    hasMore,
-    changes: batch.map((row) => ({
+  const changes: PullChangeV2[] = [];
+  let bytes = 0;
+  let byteCapped = false;
+  for (const row of candidates) {
+    const change: PullChangeV2 = {
       id: row.entityId,
-      seq: row.seq,
+      seq: Number(row.seq),
       op: row.op,
-      payload: row.payload,
+      // Tombstones flow as op:'DELETE' + payload:null (MASTER-PLAN §1.1);
+      // the stored projection payload stays for the watermark's sake.
+      payload: row.op === "DELETE" ? null : row.payload,
       changedAt: row.changedAt,
-    })),
-  };
-}
+      version: row.op === "DELETE" || row.version === null ? null : Number(row.version),
+    };
+    const itemBytes = Buffer.byteLength(JSON.stringify(change));
+    if (changes.length > 0 && !fitsByteCap(bytes, itemBytes)) {
+      byteCapped = true;
+      break;
+    }
+    changes.push(change);
+    bytes += itemBytes;
+  }
 
-export interface PullEnvelope {
-  entityType: string;
-  cursor: string;
-  hasMore: boolean;
-  changes: readonly {
-    id: string;
-    seq: number;
-    op: "UPSERT" | "DELETE";
-    payload: Record<string, unknown> | null;
-    changedAt: string;
-  }[];
+  const hasMore = countCapped || byteCapped;
+  const lastSeq = changes.length > 0 ? changes[changes.length - 1]!.seq : afterSeq;
+  const token = encodeCursor({ entityType, seq: lastSeq, issuedAt: serverTime });
+  return {
+    entityType,
+    cursor: token,
+    nextCursor: token,
+    hasMore,
+    changes,
+    serverTime,
+    contractVersion: SYNC_CONTRACT_VERSION,
+  };
 }

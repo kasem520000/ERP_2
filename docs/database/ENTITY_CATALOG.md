@@ -1,6 +1,6 @@
 # Entity Catalog
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-02
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-04
 
 All planned entities grouped by owning module, with the phase that introduces them and
 key relationships. This is the catalog-level map; column-level specifications for core
@@ -24,7 +24,8 @@ Legend: **Phase** = first implementation phase · **OC** = offline-creatable
 | `permissions` | Atomic action catalog (seeded) | key (`sales.invoices.post`), module, description | 003 seed | no |
 | `role_permissions` | Role grants | role_id, permission_id | 003 | no |
 | `sessions` | Web sessions | user_id, token_hash, tenant_id (active), expires_at, revoked_at, ip, device_id | 003 | no |
-| `devices` | Registered native clients | user_id, device_key_hash, platform (DESKTOP/ANDROID/pos-terminal), capabilities jsonb, tenant_id, terminal_id, name, last_seen_at, revoked_at | 003 (schema) / 016 (pos-terminal slice) / 020 (generalized) | no |
+| `devices` | Registered native clients | user_id, device_key_hash, platform (DESKTOP/ANDROID/pos-terminal), capabilities jsonb, tenant_id, terminal_id, name, last_seen_at, revoked_at + the 020 registry widening: device_class CHECK (pos-terminal/tauri-desktop/android-field/android-personal), contract_version, attestation_public_key/attestation_nonce/attested_at, trust_flags jsonb, last_pull_at/last_push_at, data_expires_at | 003 (schema) / 016 (pos-terminal slice) / 020 (generalized — LIVE) | no |
+| `device_refresh_tokens` | Device credential rotation chain (identity-owned, service-mediated — the sessions pattern: hash-at-rest, no RLS); used_at is the reuse-detection tripwire, predecessor_id links rotations | device_id (CASCADE), token_hash (unique), predecessor_id, issued_at, expires_at, used_at, revoked_at | 020 | no |
 | `mfa_factors` | TOTP enrollment | user_id, secret_enc, enrolled_at, last_used_at, recovery_codes_hash | 003 | no |
 | `invitations` | Membership invitations | email, tenant_id, role_id, token_hash, expires_at, accepted_at | 003 | no |
 | `plans` | Subscription plans (seeded + admin) | key, name, price, limits jsonb, feature_keys[] | 004 | no |
@@ -129,7 +130,7 @@ Legend: **Phase** = first implementation phase · **OC** = offline-creatable
 | `sales_order_lines` | Order lines + the optional soft-reservation reference | tenant_id, order_id, item_id, qty, unit_price, discount, tax_code_id, net/tax amounts, reservation_id | 012 | no |
 | `delivery_notes` | Goods-out docs | tenant_id, order_id, warehouse_id, status, lines | 012 | no |
 | `delivery_note_lines` | DN lines (issue-cost snapshot — the W-3 provenance) | tenant_id, delivery_id, order_line_id, item_id, qty, unit_price, net_amount, batch_id, serial_ids, issue_unit_cost, issue_value | 012 | no |
-| `sales_invoices` | Billing docs | tenant_id, customer_id, branch_id, invoice_no, invoice_date, due_date, kind (CASH/CREDIT), currency, exchange_rate, totals, tax_summary, posted_journal_ids, status, offline_receipt_no?, einvoice_status, channel (STANDARD/POS), pos_terminal_id?, order_type? (DINE_IN/TAKEAWAY/DELIVERY/COUNTER), pos_table_id?, tenders jsonb (the cash/card split — G-02), job_card_id?/vehicle_id? (017 provenance — the card→invoice chain + per-vehicle history) | 012 → 016 (POS channel columns) → 017 (job-card/vehicle provenance) | POS yes |
+| `sales_invoices` | Billing docs | tenant_id, customer_id, branch_id, invoice_no, invoice_date, due_date, kind (CASH/CREDIT), currency, exchange_rate, totals, tax_summary, posted_journal_ids, status, offline_receipt_no?, einvoice_status, channel (STANDARD/POS), pos_terminal_id?, order_type? (DINE_IN/TAKEAWAY/DELIVERY/COUNTER), pos_table_id?, tenders jsonb (the cash/card split — G-02), job_card_id?/vehicle_id? (017 provenance — the card→invoice chain + per-vehicle history), owner_device_id? (020 — the OWNER_DEVICE_WINS drafts stamp, reassigned by the admin route) | 012 → 016 (POS channel columns) → 017 (job-card/vehicle provenance) → 020 (owner-device drafts) | POS yes |
 | `sales_invoice_lines` | Lines | invoice_id, item_id, qty, uom_id, unit_price, discount, tax_code_id, tax_snapshot, net_amount, tax_amount, batch_id, serial_id, foc_reason_code? (017 BR-008 — zero-price FOC lines carry their reason; net ≥ 0 exactly when reason-coded) | 012 → 017 (FOC reason) | POS yes |
 | `credit_notes` | AR corrections/returns | tenant_id, customer_id, ref_invoice_id, lines, totals, tax_summary, return_stock, job_card_id? (017 warranty-note provenance) | 012 → 017 (job-card link) | no |
 | `credit_note_lines` | Note lines (mandatory invoice_line_id; re-entry cost snapshot) | tenant_id, note_id, invoice_line_id, item_id, qty, unit_price, tax_code_id, tax_snapshot, return_to_stock, batch_id, serial_ids, reentry_unit_cost, reentry_value | 012 | no |
@@ -248,7 +249,7 @@ post + COGS journals carries the project stamp.
 | `vat_returns` | VAT return v1 (draft → ready → filed-by-human; INV-012 cross-check gates ready) | tenant_id, country_code, period_start/end, status, summary jsonb, cross_check jsonb, cross_check_ok, prepared_at/by, filed_at/by, filing_reference | 009 | no |
 | `e_invoicing_submissions` | Submission registry (schema only — adapters PHASE-023) | tenant_id, country_code, adapter_id, source_type, source_id, status (PENDING/GENERATED/SUBMITTED/ACCEPTED/REJECTED/FAILED), payload_digest, authority_reference | 023 (schema 009) | no |
 
-## reporting & platform jobs (PHASE-002/013)
+## reporting & platform jobs (PHASE-002/013; sync substrate 016/020)
 
 | Entity | Purpose | Key fields | Phase | OC |
 |--------|---------|-----------|-------|----|
@@ -259,10 +260,10 @@ post + COGS journals carries the project stamp.
 | `usage_counters` | The §6 usage read model (documents/month per YYYY-MM; structural 'CURRENT' stamps); maintained by the fail-safe ledger-event subscriber + the daily-pass reconcile from journal_entries (the durable truth) | tenant_id, counter_key (documents_per_month/users/branches/warehouses/pos_terminals/offline_devices/industry_addons), period, value | 014 | no |
 | `notifications` | The in-app inbox (PHASE-014 billing-critical subset: limits, subscription states, reconciliation/assertion failures, invoice.overdue; generalized in 015 — stock reorder digests (BR-019) and industry template upgrade offers); bilingual jsonb payloads; `dedupe_key` unique per tenant (once-per-event) | tenant_id, user_id (null = broadcast), category (limits/subscription/reconciliation/invoice_overdue/stock/templates/crm — crm widened 019), severity (info/warning/critical), title/body/action_label jsonb, action_url, dedupe_key, read_at | 014 (categories widened 015) | no |
 | `notification_prefs` | Per-user channel toggles (in-app / email) per category; absent rows = both channels on — preferences suppress, never fabricate | tenant_id, user_id, category (limits/subscription/reconciliation/invoice_overdue/stock/templates/crm — crm widened 019), in_app, email | 014 (domain widened 015/019) | no |
-| `change_log` | Sync change feed — the POS feed group (items/barcodes/uoms/price_list_items/partners/tax_codes + terminal config) writes here inside the owning module's transaction; generalized entity coverage is 020 | tenant_id, entity_type, entity_id, op (UPSERT/DELETE), payload, changed_at, seq | 016 (POS subset) / 020 (generalized) | no |
-| `tombstones` | Soft-delete markers for sync | tenant_id, entity_type, entity_id, deleted_at | 020 | no |
-| `sync_cursors` | Per-device pull positions (server-side hint — opaque signed tokens to clients) | tenant_id, device_id, entity_type, last_seq, acknowledged_at | 016 (POS subset) / 020 (generalized) | no |
-| `inbox_commands` | Processed sync commands (dedupe) | tenant_id, device_id, command_id, processed_at | 020 | no |
+| `change_log` | Sync change feed — the 020 generalized writer (feed groups pos/field/desktop/personal; 9 catch-up entity projections + per-command feed entries + the `permissions` snapshot rows) writes here inside the owning module's transaction; the 016 POS feed group rides unchanged | tenant_id, entity_type, entity_id, op (UPSERT/DELETE), payload, changed_at, seq; hot growth table — see [operations/DEPLOYMENT.md §7](../operations/DEPLOYMENT.md) | 016 (POS subset) / 020 (generalized — LIVE) | no |
+| `tombstones` | Soft-delete markers for sync (the GC ledger — feed entries are the transport; gc_after is the sweep boundary, app-provided with deleted_at; weekly GC job bounded at 5000/loop) | tenant_id, entity_type (shape-checked), entity_id, deleted_at, gc_after; UQ (tenant_id, entity_type, entity_id) | 020 — LIVE | no |
+| `sync_cursors` | Per-device pull positions (server-side hint — opaque signed tokens to clients; the daily cursor.compact pass audits lag and notifies owners of stalled cursors) | tenant_id, device_id, entity_type, last_seq, acknowledged_at | 016 (POS subset) / 020 (generalized — LIVE) | no |
+| `inbox_commands` | Processed sync commands (the push dedupe ledger — one row per EXECUTED command, never DEFERRED; redelivery replays the stored result; the 30-day retention sweep is the audited daily job) | tenant_id, device_id, command_id, idempotency_key, entity_type, intent, status (ACCEPTED/REJECTED), result jsonb, processed_at; UQ (tenant_id, device_id, command_id) | 020 — LIVE | no |
 
 ## industry configuration (PHASE-004/015)
 

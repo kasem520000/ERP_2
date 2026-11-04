@@ -1,6 +1,6 @@
 # Current State
 
-> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-03
+> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-04
 
 What actually exists in this repository right now. Paired with
 [../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) (phase
@@ -44,9 +44,10 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   provider, costing default, ZATCA scope, Yemen scope, observability vendors, and the
   v2.0 expansion set: platform expansion, fixed assets, notes & installments,
   budgeting, payroll scope, consolidation), and this handoff set.
-- **Application code: PHASE-001 … PHASE-018 (all COMPLETE) — the MVP v1.0
+- **Application code: PHASE-001 … PHASE-020 (all COMPLETE) — the MVP v1.0
   release + the industry configuration engine + Point of Sale + the
-  automotive/distribution templates + Manufacturing & Production.** The
+  automotive/distribution templates + Manufacturing & Production + CRM/Service
+  Contracts & Projects + the Offline Synchronization Foundation.** The
   pnpm + Turborepo monorepo with all local gates green (re-verified 2026-11-03):
   - `apps/api` — NestJS with `GET /health/live` + `GET /health/ready` (DB +
     migration state + queue liveness); modules: `audit` (append-only, transactional
@@ -567,7 +568,8 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   billing, onboarding & dashboards + PHASE-015 industry configuration
   framework & priority templates + PHASE-016 Point of Sale + PHASE-017 Automotive &
   Distribution Templates + PHASE-018 Manufacturing & Production + PHASE-019 CRM,
-  Service Contracts & Projects (migrations 0001–0028; the centralized posting engine with the full
+  Service Contracts & Projects + PHASE-020 Offline Synchronization Foundation
+  (migrations 0001–0031; the centralized posting engine with the full
   invariant suite is live and proven by its consumers — treasury posts every
   money movement through it, tax stamps every tax-carrying line with frozen
   rate snapshots BR-033, inventory posts every stock movement through it
@@ -684,6 +686,42 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   section, POSTING_ENGINE §4 production rows incl. qc_scrap, CHART_OF_ACCOUNTS labor/
   overhead purposes, FEATURE_CATALOG permission reconciliation, catalog flips);
   8 new permission keys bring the matrix to 241 = the seed union drift-green.
+  PHASE-020 (2026-11-04) generalizes the PHASE-016 POS slice into the platform-wide
+  offline synchronization foundation: the `sync` module (migrations 0029–0031;
+  schema_version 31) owns the device registry (`devices` widened with device_class /
+  contract_version / attestation substrate / trust_flags / pull-push watermarks /
+  data_expires_at; refresh rotation as one-time-use chained tokens with the
+  used_at reuse tripwire → revoke + alarm, HS256 JWT access tokens, PUBLIC
+  /devices/:id/refresh deriving the tenant from the device user's ACTIVE membership),
+  the change feeds (4 device-class feed groups; the 9-entity catch-up writer +
+  per-command feed entries inside the owning transaction; the `permissions` snapshot
+  feed with the 6d refresh + 7d read-only watermark), pull v2 (opaque signed
+  cursors over contiguous seq windows, 2 MB/500-row page caps, C-12 resync
+  directive, tombstone transport for soft-deleted master data), push v2 (ONE
+  handler registry over owning-module services only — pos_sale/cashier_shift
+  byte-identical to 016, partner contact-merge FIELD_LEVEL_MERGE with the
+  constrained-fields guard, draft invoices OWNER_DEVICE_WINS + STALE_VERSION,
+  ONLINE_ONLY → FORBIDDEN resubmittable:false; inbox dedupe with `duplicate:true`
+  replay incl. the within-batch refinement, per-device rate limit → DEFERRED
+  never-executed-never-recorded, 1 MB batch byte cap), four maintenance jobs
+  (inbox retention 30d, tombstone GC weekly, cursor lag audit daily, feed-health
+  probe 5-min), the reconciliation queue (revoked-device pending ops + drafts
+  reassign), and the admin health aggregate (p95, outbox.lag buckets,
+  device.revoked.pending_ops, alerts) with three platform web screens (devices,
+  sync health, sync reconciliation; NAV_ITEMS permission-gated; i18n 3044).
+  `packages/sync-core` v1 ships the reference client engine (runCycle with
+  recovery → contract gate → permissions-first pull → drain → FIFO push, full-jitter
+  retry, crash recovery + quarantine + cursor-reset re-bootstrap, row-budget LRU
+  pruning, LOCAL_MIGRATIONS v2). Contract version `2026-11-04.1` with the
+  `2026-10-27.1` grace window — a PHASE-016 terminal syncs unchanged (rule 3,
+  interop proven by the chaos suite's legacy legs). The FULL chaos matrix
+  C-01…C-16 + duplicates + D-series device security + Y-series isolation are
+  live in `apps/api/src/__db__/sync/` (9 files / 74 tests green, ledger oracle
+  after every scenario, ~12 s whole-dir wall vs the 15-min budget; sync-core
+  36/36); the chaos suites found and fixed three production bugs in-phase
+  (BR-003 price gate missing on the POS autopost path, ITEM_INACTIVE vocabulary
+  for soft-deleted master data, the 1 MB push byte cap). Byte-exact LRU budgets
+  and the k6 sync-fleet run are honestly deferred to 021/025.
   Infra-bound evidence (hosted CI, compose boot, Testcontainers run, mailpit
   capture, Playwright journey) waived per owner directive 2026-10-28 with
   local-gate equivalence recorded.
@@ -708,7 +746,12 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   replacement, export block on seeded corruption, real-Chromium render +
   the PDF/A stamp, tafqit/CSV/XLSX units, isolation A-tests over
   `report_runs`/`print_templates`; the full suite output is in the
-  completion report)) + visual
+  completion report)) + the PHASE-020 sync
+  suites (db: `src/__db__/sync/` 9 files / 74 tests — chaos-matrix C-01..C-16,
+  duplicates 2×/10×/cross-batch/35d-restored-outbox, device-security D-01/03/04 +
+  tenant spoof, push-isolation Y-01..Y-04, pull/push/policies/devices/jobs;
+  sync-core 36/36 cycle/retry/recovery/pruning/watermark + the 016 chaos slice) +
+  visual
   harness 16 (AR+EN threshold-0 baselines ×95 incl. ShiftPanel ×4 ×2 directions,
   axe 0, geometry, coverage) +
   perf gate (10k-row overhead ≤ 6ms) + CSP probe 4 + negative proofs 3

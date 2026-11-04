@@ -50,9 +50,13 @@ import {
  * CRM set (migration 0027 — crm.leads/tasks_activities/service_contracts/
  * recurring_billing/service_orders + accounting.projects), so the
  * professional_services capabilities and the automotive service_contracts
- * entry resolve LIVE as well.
+ * entry resolve LIVE as well; PHASE-020 shipped the offline sync foundation
+ * (migrations 0029–0031 — the offline.sync_protocol +
+ * offline.device_management plan keys, granted to business too by 0029),
+ * so the sync plane's device registry, feeds, and reconciliation resolve
+ * LIVE for business + enterprise tenants.
  */
-export const CURRENT_SHIPPED_PHASE = "PHASE-019";
+export const CURRENT_SHIPPED_PHASE = "PHASE-020";
 
 /** "PHASE-0NN" → the numeric phase (for ordering). */
 export function phaseNumber(phase: string): number {

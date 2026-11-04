@@ -240,6 +240,23 @@ import {
   BatchProvenanceConflictError,
   BatchQuarantinedError,
 } from "../../modules/inventory/domain/inventory-errors";
+import {
+  SyncCommandInvalidError,
+  SyncContractUnsupportedError,
+  SyncDeviceRevokedError,
+  SyncEntityNotPulledError,
+  SyncRateLimitedError,
+  SyncTenantSuspendedError,
+} from "../../modules/sync/domain/sync-errors";
+import {
+  DeviceAttestationFailedError,
+  DeviceAttestationUnavailableError,
+  DeviceNotFoundError,
+} from "../../modules/sync/application/device-registry-service";
+import {
+  DeviceRefreshInvalidError,
+  DeviceRevokedError,
+} from "../../modules/sync/application/device-tokens";
 
 /**
  * ERROR_MODEL exception filter: the single error envelope —
@@ -765,6 +782,41 @@ function domainStatus(error: DomainError): number {
     return HttpStatus.UNPROCESSABLE_ENTITY;
   }
   if (error instanceof WebhookSignatureInvalidError || error instanceof WebhookReplayError) {
+    return HttpStatus.BAD_REQUEST;
+  }
+  // PHASE-020 (the sync plane; MASTER-PLAN §1.6 — codes double as the
+  // push rejection registry, these are the request-level spellings): the
+  // feed-group 404-equivalent (no existence leak across device classes),
+  // the device/registry not-founds + revocation/suspension gates, the
+  // credential-exchange 401, the v2 contract gate 422, the per-device
+  // rate limiter 429, and the malformed-envelope 400s.
+  if (
+    error instanceof SyncEntityNotPulledError ||
+    error instanceof DeviceNotFoundError
+  ) {
+    return HttpStatus.NOT_FOUND;
+  }
+  if (
+    error instanceof SyncDeviceRevokedError ||
+    error instanceof DeviceRevokedError ||
+    error instanceof SyncTenantSuspendedError
+  ) {
+    return HttpStatus.FORBIDDEN;
+  }
+  if (error instanceof DeviceRefreshInvalidError) {
+    return HttpStatus.UNAUTHORIZED;
+  }
+  if (error instanceof SyncContractUnsupportedError) {
+    return HttpStatus.UNPROCESSABLE_ENTITY;
+  }
+  if (error instanceof SyncRateLimitedError) {
+    return HttpStatus.TOO_MANY_REQUESTS;
+  }
+  if (
+    error instanceof SyncCommandInvalidError ||
+    error instanceof DeviceAttestationUnavailableError ||
+    error instanceof DeviceAttestationFailedError
+  ) {
     return HttpStatus.BAD_REQUEST;
   }
   return HttpStatus.UNPROCESSABLE_ENTITY;

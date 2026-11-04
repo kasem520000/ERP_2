@@ -1,87 +1,84 @@
 # Next Action
 
-> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-03
+> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-04
 
 ## The single next action
 
-**Execute PHASE-019 — CRM, Service Contracts & Projects** per
-[../implementation/phases/PHASE-019.md](../implementation/phases/PHASE-019.md): ship the
-`crm` module — leads with conversion into partners (NEW → QUALIFIED → CONVERTED / LOST
-with reasons; conversion creates or merges the partner with explicit confirmation and
-links the lead forever), tasks/activities/reminders on the PHASE-015 notification rails
-(no ledger effects ever), service contracts with a billing schedule (monthly retainer /
-fixed-fee milestones / hourly against time entries — **the contract posts nothing**),
-recurring billing that generates **DRAFT invoices idempotently per (contract, period)**
-through the ordinary sales-invoice approval/posting chain, deferred-revenue wiring for
-prepaid retainers (`DEFERRED_REVENUE` release at invoice posting), service orders as
-the **generalization of PHASE-017 job cards** (contract link + CRM workflow, NO
-posting-rule fork), and the **projects dimension** (`accounting.projects`) as a
-cost-center-type analytical stamp on documents, journal lines, and reports — then apply
-the `industry.professional_services` template on top.
+**Execute PHASE-021 — Desktop Application** per
+[../implementation/phases/PHASE-021.md](../implementation/phases/PHASE-021.md): ship the
+Windows-first desktop client as a **Tauri v2 shell** around the static-exported web ERP
+([ADR-0013](../architecture/ADR/ADR-0013-tauri-desktop.md)) — Rust-side plugins for local
+SQLite (SQLCipher, WAL) consumed through the PHASE-020 `packages/sync-core` client,
+OS-keychain credential storage (refresh token, device key, SQLite key — access tokens
+memory-only), the **signed auto-update channel with crash-rate-gated staged rollout**,
+crash recovery that preserves the outbox, receipt/printer integration points, and
+WebView2 minimum-version enforcement with graceful degradation. Offline behavior is
+exactly the desktop column of the OFFLINE_CAPABILITIES_MATRIX: cached read models with
+as-of-cursor labels + OFFLINE-DRAFT creation where the matrix allows (rows 6, 7, 10, 11,
+21, 23, 25, 26, 34) — never a disconnected back office; ONLINE-ONLY operations disabled
+with the "requires connection" reason; offline login = app unlock against the cached
+permission snapshot degrading to read-only after the 7-day watermark.
 
-Why now: PHASE-018 is COMPLETE (2026-11-03; evidence:
-[../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) PHASE-018
+Why now: PHASE-020 is COMPLETE (2026-11-04; evidence:
+[../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) PHASE-020
 row + the completion report at
-  `docs/implementation/phases/reports/PHASE-018-COMPLETION.md` — written by the
-  orchestrator with this phase's close-out)
-— **Manufacturing & Production is live**: the `manufacturing` module (versioned BOMs
-with the multi-level explosion, production orders on the documented lifecycle with
-`PRD-{YYYY}-{SEQ:5}` numbering at release, batch-tracked consumption into WIP through
-the inventory issue seam, completion as the single absorption journal — materials +
-labor 5410 + overhead 5420 — receiving the FG batch at computed cost with shelf-life
-expiry, per-order WIP netting to exactly zero, reason-coded scrap, the QUARANTINED QC
-gate, read-only batch genealogy, and the INV-010 WIP reconciliation check live in the
-health center) plus the `industry.food_manufacturing` template at v1.0.0 on the
-unmodified PHASE-015 engine (CURRENT_SHIPPED_PHASE 18; restaurant switch safety
-BR-038 proven; reports registry 66; permission matrix 241 = seed union drift-green).
-PHASE-019 builds directly on it: the job-card generalization seam is documented in the
-PHASE-017 completion report (§2.6 reconciliation — service orders do NOT fork the
-posting rules), the projects dimension extends the proven PHASE-007 cost-centers
-pattern, recurring billing rides the idempotency + approval disciplines the platform
-has proven since INV-013, and the notification rails (inbox + email) are live from
-PHASE-014/015. The PHASE-019 prerequisites note is explicit: "consumes the
-partner/contract patterns 017 stabilized."
+  `docs/implementation/phases/reports/PHASE-020-COMPLETION.md`
+— written by the orchestrator with this phase's close-out)
+— **the Offline Synchronization Foundation is live**: the `sync` module (migrations
+0029–0031, schema_version 31) owns the device registry with `tauri-desktop` as a
+first-class device class, 4 device-class feed groups + the 9-entity catch-up writer +
+the permissions snapshot feed, pull v2 / push v2 with typed per-item results and the
+full conflict-policy set (SERVER_DECISION / FIELD_LEVEL_MERGE / OWNER_DEVICE_WINS /
+ONLINE_ONLY), inbox dedupe + rate limiting + DEFERRED, refresh-token rotation with
+reuse detection, four maintenance jobs, the reconciliation queue + admin health
+aggregate, and the three platform web screens; `packages/sync-core` v1 ships the
+reference client engine (runCycle, retry, recovery, pruning, watermark — LOCAL_MIGRATIONS
+v2). The FULL chaos matrix C-01…C-16 + duplicates + D-series + Y-series suites are green
+and blocking (9 files / 74 tests in `apps/api/src/__db__/sync/`; sync-core 36/36).
+PHASE-021 builds directly on it: the Tauri shell hosts the sync client UNMODIFIED, the
+SQLite store is the LOCAL_DATABASE §1.1 desktop subset with byte-exact LRU budgets
+(020 shipped the documented row-count approximation), and the contract-version gate +
+grace window (`2026-11-04.1` / `2026-10-27.1`) are already enforced server-side.
 
 How:
 
-1. Follow the handoff protocol: read the PHASE-018 material first (the completion
-   report; migration `0026_manufacturing.sql`; the `manufacturing` module — BOM/
-   orders/inspections/genealogy services + the WIP reconciliation wiring; the three
-   018 industry reports in `reporting/registry/industry/phase018.ts`; the
-   `food_manufacturing` template activation in `configuration`), then the
-   consumed-as-is reports: PHASE-017 (job cards + the §2.6 generalization note;
-   commissions runs as the pg-boss + immutable-post pattern), PHASE-012 (the sales
-   invoice chain the drafts flow into), PHASE-007 (cost centers as the projects
-   precedent; `DEFERRED_REVENUE` purpose), PHASE-015 (template engine),
-   PHASE-013 (report contract), PHASE-014 (notification inbox).
-2. Confirm prerequisites per the dependency graph: PHASE-018 ✓ (+ PHASE-017 ✓,
-   PHASE-016 ✓, PHASE-015 ✓, PHASE-014 ✓, PHASE-013 ✓, PHASE-012 ✓, PHASE-011 ✓,
-   PHASE-010 ✓, PHASE-009 ✓, PHASE-008 ✓, PHASE-007 ✓, PHASE-005 ✓, PHASE-004 ✓ —
+1. Follow the handoff protocol: read the PHASE-020 material first (the completion
+   report; migrations `0029`–`0031`; the `sync` module — pull/push/registry/health
+   services, handlers, jobs, the admin controller; `packages/sync-core` — cycle,
+   retry, recovery, pruning, watermark + the LOCAL_MIGRATIONS v2 store contract),
+   then the consumed-as-is specs: ADR-0013 (Tauri shell),
+   [../offline/LOCAL_DATABASE.md](../offline/LOCAL_DATABASE.md) (§1.1 desktop subset,
+   §5 budgets, §6.4 corruption path),
+   [../offline/OFFLINE_CAPABILITIES_MATRIX.md](../offline/OFFLINE_CAPABILITIES_MATRIX.md)
+   (the desktop column),
+   [../offline/SECURITY_AND_DEVICE_MANAGEMENT.md](../offline/SECURITY_AND_DEVICE_MANAGEMENT.md)
+   (§3 keychain, §4 revocation), and
+   [../offline/SYNC_PROTOCOL.md](../offline/SYNC_PROTOCOL.md) (§8 desktop triggers).
+2. Confirm prerequisites per the dependency graph: PHASE-020 ✓ (+ PHASE-019 ✓,
+   PHASE-018 ✓, PHASE-016 ✓ — the POS terminal interop proof, PHASE-013 ✓ (printing),
+   PHASE-005 ✓ (the web UI being wrapped), PHASE-001 ✓ (`apps/desktop` placeholder) —
    all verified in IMPLEMENTATION_STATUS).
-3. Register any intake keys first per the FEATURE_CATALOG §25 protocol (decision
-   record → row → plan/add-on → permission seeds → phase-document reference) — the
-   `crm.*` feature keys and permissions are already catalogued/matrixed (planned
-   rows); confirm entitlement closure before template work.
-4. Honor the binding constraints: the service contract posts nothing — only its
-   generated documents do; billing runs generate DRAFTS idempotently per (contract,
-   period) and never bypass approval policies or period locks; the deferred-revenue
-   reclassification posts through the engine (policy-gated, audited); service orders
-   generalize job cards WITHOUT a posting-rule fork (same invoice chain, same
-   journals); projects stamp journal lines as an analytical dimension (never a GL
-   split); leads convert to partners through the partners module service (BR-025 code
-   rules; merge requires explicit confirmation); the professional-services template
-   applies through the unmodified PHASE-015 engine (BR-038 additive-only semantics).
-5. Do NOT implement PHASE-020+ in the same run.
+3. Register any intake keys first per the FEATURE_CATALOG §25 protocol —
+   `offline.desktop_app` is already catalogued (permission key: app install; depends
+   on `offline.sync_protocol`, granted business+enterprise via the 0029 plan grants).
+4. Honor the binding constraints: the shell hosts the PHASE-020 sync client UNMODIFIED
+   (no protocol forks); app logic stays TypeScript (Rust confined to plugins); no
+   secrets in SQLite, logs, or preferences (keychain only; access tokens memory-only);
+   offline writes only where the capabilities matrix allows (OFFLINE-DRAFT set);
+   honest local states (`DRAFT_LOCAL`/`PENDING_MERGE`/`SYNC_FAILED` rendered
+   distinctly, `PENDING_SYNC` never as posted); the static export must not depend on
+   Next.js server features at runtime (build-target check in CI); signed updates with
+   staged rollout gates; crash recovery preserves the outbox.
+5. Do NOT implement PHASE-022+ in the same run.
 
-## Next eligible: PHASE-019 — CRM, Service Contracts & Projects
+## Next eligible: PHASE-021 — Desktop Application
 
 Per [../planning/PHASE_DEPENDENCY_GRAPH.md](../planning/PHASE_DEPENDENCY_GRAPH.md):
-PHASE-019 requires PHASE-018 ✓ (plus the delivered stack PHASE-017 ✓, PHASE-016 ✓,
-PHASE-015 ✓, PHASE-014 ✓, PHASE-013 ✓, PHASE-012 ✓, PHASE-007 ✓ …). **PHASE-020 —
-Offline Sync Foundation — is parallel-eligible from here** (016 → 020; it must accept
-a PHASE-016 terminal on day one and will generalize the van-sales offline rows the
-capabilities matrix keeps at PHASE-022 — PHASE-018 deliberately shipped zero
-sync-client code, grep-verified). The agent protocol executes one phase at a time.
+PHASE-021 requires PHASE-020 ✓ (plus the delivered stack PHASE-019 ✓, PHASE-018 ✓,
+PHASE-017 ✓, PHASE-016 ✓, PHASE-015 ✓, PHASE-013 ✓, PHASE-005 ✓ …). **PHASE-022 —
+Android Application — becomes parallel-eligible once 021 lands** (the Expo client rides
+the same sync-core engine + device classes; its field/personal feed groups are already
+live server-side). The agent protocol executes one phase at a time.
 
 ## Follow-up obligations (waived evidence — attach at first infra availability)
 
@@ -103,7 +100,7 @@ sync-client code, grep-verified). The agent protocol executes one phase at a tim
 
 ## Do NOT
 
-- Do not implement PHASE-020+ in the same run as PHASE-019.
+- Do not implement PHASE-022+ in the same run as PHASE-021.
 - Do not modify the ADRs or the roadmap without the change-control process
   ([IMPLEMENTATION_PROTOCOL.md](IMPLEMENTATION_PROTOCOL.md) §3).
 - Do not relax the frozen substrates (PHASE-002 infra, PHASE-003 identity trust,

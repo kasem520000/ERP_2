@@ -1,6 +1,6 @@
 # Local Database
 
-> **Status:** STABLE · **Owner:** Offline & API Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE (reference store contract LIVE since 2026-11-04) · **Owner:** Offline & API Architecture · **Updated:** 2026-11-04
 
 Specification of the on-device SQLite store: what it mirrors, how it is versioned, how ids
 are generated, how it is protected, and how it recovers. Binding decisions:
@@ -10,6 +10,15 @@ are generated, how it is protected, and how it recovers. Binding decisions:
 never REAL/float affinity in SQLite).
 
 ## 1. Local schema strategy
+
+> **Status note (2026-11-04, PHASE-020):** `packages/sync-core` v1 ships the reference
+> store contract + engine (LOCAL_MIGRATIONS **v2** — the v1 tables plus `inbox`
+> (command_id pk, processed_at — the §4.4 client-side mirror) and `meta` (key/value —
+> cursor/watermark/contract-gate state), idempotent `CREATE IF NOT EXISTS` so a v1 store
+> and a fresh store converge). The engine (cycle, retry, recovery, pruning, watermark)
+> is validated against the in-memory adapter — a documented transaction pass-through;
+> the real SQLite (better-sqlite3 + SQLCipher) store ships with PHASE-021, which also
+> replaces the row-count LRU budget approximation (§5) with byte-exact budgets.
 
 The local database is a **documented mirrored subset** of the server schema, tailored per
 device class. It is NOT a replica: tables are scoped, some are read-only caches, and the
@@ -132,6 +141,10 @@ the OS keychain/keystore ([SECURITY_AND_DEVICE_MANAGEMENT.md](SECURITY_AND_DEVIC
 2. Pruning is **LRU by last access**, entity-type aware, and only ever removes rows that
    (a) came from a pull feed AND (b) have no local dirty state AND (c) are not referenced
    by an outbox command. Outbox/inbox/meta are never pruned by LRU.
+   *(PHASE-020 implementation note: the shipped budgets are row-count approximations
+   per device class — a documented `BYTES_PER_ROW_APPROX` constant, oldest-synced rows
+   first — because the byte-exact accounting needs the real SQLite store; byte-exact
+   budgets land with PHASE-021, decision-recorded in the 020 completion report.)*
 3. Prune evicting a row the user later needs = transparent re-pull (user-visible as a
    fetch, not an error). Backward cursor re-walk is allowed for re-hydration only, with
    server-side rate protection.

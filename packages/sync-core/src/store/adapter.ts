@@ -29,7 +29,56 @@ export interface StorageAdapter {
   all(sql: string, params?: readonly unknown[]): Record<string, unknown>[];
   /** Query a single row (or undefined). */
   get(sql: string, params?: readonly unknown[]): Record<string, unknown> | undefined;
+
+  // PHASE-020 optional pruning surface (LOCAL_DATABASE §5): adapters that
+  // can enumerate + prune cached business rows implement these; the 016
+  // browser bridge adapter simply doesn't — `pruneStore` no-ops when they
+  // are absent, so every existing transport/adapter keeps compiling.
+  /** The device's business tables (read caches + local write set) —
+   * NEVER the outbox/inbox/cursors/meta machinery. */
+  listBusinessTables?(): string[];
+  /** Row count of one table. */
+  countRows?(table: string): number;
+  /** Delete up to `n` OLDEST-SYNCED, not-dirty rows from one business
+   * table (prune candidates only — never machinery, never dirty rows);
+   * returns the number actually deleted. */
+  deleteOldestSynced?(table: string, n: number): number;
 }
+
+/** The in-memory adapter's full surface (unit tests + the chaos harness
+ * device store) — the optional pruning methods are REQUIRED on it. */
+export interface MemoryAdapter extends StorageAdapter {
+  listBusinessTables(): string[];
+  countRows(table: string): number;
+  deleteOldestSynced(table: string, n: number): number;
+}
+
+/** Local machinery tables (LOCAL_DATABASE §1.2 + §5.2): NEVER pruned by
+ * LRU — the outbox is the source of truth for pending operations. */
+export const MACHINERY_TABLES = [
+  "outbox",
+  "inbox",
+  "cursors",
+  "meta",
+  "schema_migrations",
+] as const;
+
+/** The business tables the PHASE-016/020 local schema tracks: pulled read
+ * caches + the POS write set. Pruning candidates live here only. */
+export const BUSINESS_TABLES = [
+  "items",
+  "barcodes",
+  "uoms",
+  "price_list_items",
+  "partners",
+  "tax_codes",
+  "pos_sales",
+] as const;
+
+/** The local WRITE set (user actions not yet acknowledged by the server —
+ * LOCAL_DATABASE §6.5 "precious" rows): only these get server-state
+ * stamped by push results; read caches take authoritative state via pull. */
+export const WRITE_SET_TABLES = ["pos_sales"] as const;
 
 // -- migrations (LOCAL_DATABASE §2: forward-only, applied at start, one
 // transaction, tracked in schema_migrations) --------------------------------------
@@ -175,7 +224,96 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
       `CREATE INDEX IF NOT EXISTS ix_pos_sales_status ON pos_sales (local_status, created_at)`,
     ],
   },
+  {
+    // PHASE-020 (MASTER-PLAN §13; LOCAL_DATABASE §1.2): the generalized
+    // protocol's core machinery. v1 already created `inbox` + `meta` for
+    // the POS slice; v2 re-asserts them idempotently (CREATE IF NOT
+    // EXISTS) so a fresh store AND a v1 store converge on the same shape —
+    // the W2 cycle engine then owns the meta keys (contractVersion,
+    // permissionSnapshotAt, deviceClass) at runtime through the metaSet
+    // helper. Forward-only, applied once (schema_migrations tracking).
+    version: 2,
+    minContractVersion: "2026-10-27.1",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS inbox (
+         command_id TEXT PRIMARY KEY,
+         processed_at INTEGER NOT NULL
+       )`,
+      `CREATE TABLE IF NOT EXISTS meta (
+         key TEXT PRIMARY KEY,
+         value TEXT NOT NULL
+       )`,
+    ],
+  },
+  {
+    // PHASE-020 W2 (MASTER-PLAN §13): the v2 engine's additive columns —
+    // the LOCAL_DATABASE §1.2 outbox shape (localRef advisory reference +
+    // nextAttemptAt retry pacing) and the server row `version` on every
+    // business table (optimistic-concurrency source, CONFLICT_RESOLUTION
+    // §4; the pull applier's version guard reads it). SQLite has no
+    // IF-NOT-EXISTS for columns, so v1's CREATE stays byte-identical and
+    // this migration carries plain ALTERs: a fresh store runs v1 (old
+    // shape) then v3 (adds columns); a v1/v2 store runs v3 alone. The
+    // in-memory adapter treats DDL as a no-op (rows are shaped by the
+    // explicit column lists every INSERT uses) and reads of missing
+    // columns degrade to null — both stores converge on the same shape.
+    version: 3,
+    minContractVersion: "2026-11-04.1",
+    statements: [
+      `ALTER TABLE outbox ADD COLUMN local_ref TEXT`,
+      `ALTER TABLE outbox ADD COLUMN next_attempt_at INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE items ADD COLUMN version INTEGER`,
+      `ALTER TABLE barcodes ADD COLUMN version INTEGER`,
+      `ALTER TABLE uoms ADD COLUMN version INTEGER`,
+      `ALTER TABLE price_list_items ADD COLUMN version INTEGER`,
+      `ALTER TABLE partners ADD COLUMN version INTEGER`,
+      `ALTER TABLE tax_codes ADD COLUMN version INTEGER`,
+      `ALTER TABLE pos_sales ADD COLUMN version INTEGER`,
+    ],
+  },
 ];
+
+// -- meta helpers (LOCAL_DATABASE §1.2 `meta` key/value; the 016 export
+// names readMeta/writeMeta in store/pull.ts alias these) ---------------------------
+
+/** Read one meta key (null when absent). */
+export function metaGet(adapter: StorageAdapter, key: string): string | null {
+  const row = adapter.get("SELECT * FROM meta WHERE key = ?", [key]);
+  return row === undefined ? null : String(row.value);
+}
+
+/** Upsert one meta key. */
+export function metaSet(adapter: StorageAdapter, key: string, value: string): void {
+  const existing = adapter.get("SELECT * FROM meta WHERE key = ?", [key]);
+  if (existing === undefined) {
+    adapter.run("INSERT INTO meta (key, value) VALUES (?, ?)", [key, value]);
+  } else {
+    adapter.run("UPDATE meta SET value = ? WHERE key = ?", [value, key]);
+  }
+}
+
+/** Delete one meta key (idempotent). */
+export function metaDelete(adapter: StorageAdapter, key: string): void {
+  adapter.run("DELETE FROM meta WHERE key = ?", [key]);
+}
+
+/** Whether the store is quarantined (integrity failure — §6.4 path). */
+export function isQuarantined(adapter: StorageAdapter): boolean {
+  return metaGet(adapter, "quarantined") === "true";
+}
+
+/** Maintain the `cursorCount` integrity checksum: called after every
+ * committed cursor advance/reset so `recoveryPass` can compare the meta
+ * count against the real table (LOCAL_DATABASE §6.3 recovery). */
+export function maintainCursorCount(adapter: StorageAdapter): void {
+  metaSet(adapter, "cursorCount", String(adapter.all("SELECT entity_type FROM cursors").length));
+}
+
+/** Maintain the `inboxCount` integrity checksum: called after every
+ * recorded inbox-mirror row (processed push results). */
+export function maintainInboxCount(adapter: StorageAdapter): void {
+  metaSet(adapter, "inboxCount", String(adapter.all("SELECT command_id FROM inbox").length));
+}
 
 /** Apply pending forward-only migrations in one transaction each (§2.2). */
 export function applyMigrations(adapter: StorageAdapter): void {
@@ -203,7 +341,7 @@ export function applyMigrations(adapter: StorageAdapter): void {
 // -- adapters ------------------------------------------------------------------------
 
 /** The in-memory adapter (unit tests + the chaos harness device store). */
-export function memoryAdapter(): StorageAdapter {
+export function memoryAdapter(): MemoryAdapter {
   const tables = new Map<string, Map<string, Record<string, unknown>>>();
   let nextRowId = 0;
   const rowsOf = (table: string) => {
@@ -353,9 +491,11 @@ export function memoryAdapter(): StorageAdapter {
         }
         return;
       }
-      // DELETE
+      // DELETE (PHASE-020 fix: the WHERE clause is `rest`, not the table
+      // name — the 016 harness never exercised a DELETE ... WHERE, so the
+      // latent bug was dormant; tombstones hit it immediately).
       for (const [key, row] of [...rowsOf(table).entries()]) {
-        if (matcher(row, table, params)) rowsOf(table).delete(key);
+        if (matcher(row, rest, params)) rowsOf(table).delete(key);
       }
     },
     all(sql: string, params: readonly unknown[] = []): Record<string, unknown>[] {
@@ -378,6 +518,44 @@ export function memoryAdapter(): StorageAdapter {
     },
     get(sql: string, params: readonly unknown[] = []): Record<string, unknown> | undefined {
       return this.all(sql, params)[0];
+    },
+    // PHASE-020 pruning surface (LOCAL_DATABASE §5): the memory schema is
+    // fixed, so the business-table list is the constant; deletion picks
+    // the oldest SYNCED, not-dirty rows (write-set rows are precious
+    // until the server acknowledged them; dirty read-cache rows carry
+    // local edits — §5.2 "no local dirty state").
+    listBusinessTables(): string[] {
+      return [...BUSINESS_TABLES];
+    },
+    countRows(table: string): number {
+      return rowsOf(table).size;
+    },
+    deleteOldestSynced(table: string, n: number): number {
+      const candidates = [...rowsOf(table).entries()]
+        .map(([key, row], index) => ({ key, row, index }))
+        .filter(({ row }) => {
+          if (row.dirty === 1) return false; // local edits are never pruned
+          if (table === "pos_sales" && row.local_status !== "SYNCED") {
+            return false; // write set: prunable only after the server acked
+          }
+          return true;
+        })
+        .sort((a, b) => {
+          const stamp = (row: Record<string, unknown>): string => {
+            const value = row.synced_at ?? row.updated_at ?? row.created_at;
+            return typeof value === "string" ? value : "";
+          };
+          const byStamp = stamp(a.row).localeCompare(stamp(b.row));
+          // oldest first; ties keep insertion order (stable + deterministic)
+          return byStamp !== 0 ? byStamp : a.index - b.index;
+        });
+      let deleted = 0;
+      for (const candidate of candidates) {
+        if (deleted >= n) break;
+        rowsOf(table).delete(candidate.key);
+        deleted += 1;
+      }
+      return deleted;
     },
   };
 }

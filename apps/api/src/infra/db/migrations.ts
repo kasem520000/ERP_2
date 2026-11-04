@@ -47,6 +47,23 @@ export const MIGRATIONS: readonly string[] = [
   // migration that created job_cards); this re-issues the CHECK with
   // 'SERVICE_ORDER' added. Additive only — see 0028_crm_service_order_holder.sql.
   "0028_crm_service_order_holder",
+  // PHASE-020 (MASTER-PLAN §3): the offline synchronization foundation —
+  // tombstones + inbox_commands (tenant-owned, RLS), device_refresh_tokens
+  // (the sessions pattern), the devices registry widening, the
+  // sales_invoices owner-device stamp, the sync permission re-assertions
+  // and the offline.* plan grants. See 0029_sync_foundation.sql.
+  "0029_sync_foundation",
+  // PHASE-020 T5 (the substrate fix, agent-ctx/T-P20-2a-pull.md): 0024
+  // granted erp_app INSERT on change_log but missed USAGE on its bigserial
+  // sequence change_log_seq_seq — the feed writers could never append as
+  // erp_app. Additive grant only. See 0030_sync_change_log_sequence_grant.sql.
+  "0030_sync_change_log_sequence_grant",
+  // PHASE-020 T9 (SYNC_PROTOCOL §6.2 aggregate snapshots): the sync
+  // update_draft handler replaces DRAFT invoice lines wholesale
+  // (DELETE + re-INSERT); 0018 never granted DELETE (online drafts are
+  // append-only). DRAFT-only by handler discipline + OWNER_DEVICE_WINS
+  // single-writer. See 0031_sync_draft_line_replace.sql.
+  "0031_sync_draft_line_replace",
 ];
 
 /**

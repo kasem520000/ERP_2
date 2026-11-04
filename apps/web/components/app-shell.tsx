@@ -53,6 +53,13 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   "support-sessions": { group: "navSettings", label: "navSupport" },
   platform: { group: "navPlatformSection", label: "navPlatformConsole" },
   "platform/audit": { group: "navPlatformSection", label: "navPlatformAudit" },
+  // -- PHASE-020 (T14): the sync admin surfaces. The nav registry
+  // (packages/contracts NAV_ITEMS) is frozen this phase, so these ride the
+  // audit-screen fallback mechanism (crumbs only; the sidebar stays
+  // registry-driven).
+  "platform/devices": { group: "navPlatformSection", label: "syncDevicesTitle" },
+  "platform/sync-health": { group: "navPlatformSection", label: "syncHealthTitle" },
+  "platform/sync-reconciliation": { group: "navPlatformSection", label: "syncReconciliationTitle" },
   // -- P6-T11a master-data routes -------------------------------------------
   partners: { group: "navPartners", label: "navPartnersDirectory" },
   "partners/new": { group: "navPartners", label: "navPartnersNew" },

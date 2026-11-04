@@ -1,6 +1,6 @@
 # Sync Protocol
 
-> **Status:** STABLE · **Owner:** Offline & API Architecture · **Updated:** 2026-11-02
+> **Status:** STABLE (generalized foundation LIVE since 2026-11-04) · **Owner:** Offline & API Architecture · **Updated:** 2026-11-04
 
 The normative device↔server synchronization protocol implementing
 [ADR-0012](../architecture/ADR/ADR-0012-offline-sync.md). Transport is HTTPS against the
@@ -309,6 +309,30 @@ metrics feed [../architecture/OBSERVABILITY.md](../architecture/OBSERVABILITY.md
 > `PURPOSE_NOT_MAPPED`), and
 > [DR-016-03](../decisions/DR-016-03-pos-device-transport.md) (devices ride the identity
 > `devices` table with session transport; full device tokens are PHASE-020).
+
+> **SHIPPED 2026-11-04 (PHASE-020).** The generalized foundation is live: the `sync`
+> module (migrations 0029–0031) ships 4 device-class feed groups (pos / field /
+> desktop / personal) + the 9-entity catch-up writer, pull v2 (byte-capped pages +
+> the C-12 resync directive + the `permissions` snapshot feed), push v2 (the handler
+> registry over owning-module services, inbox dedupe, per-device rate limit →
+> DEFERRED, the 1 MB batch cap), the device registry with attestation + refresh
+> rotation (reuse detection revokes), four maintenance jobs, the reconciliation
+> queue, and the admin health aggregate; `packages/sync-core` v1 ships the reference
+> client engine. A PHASE-016 terminal syncs UNCHANGED (rule 3 held; the chaos
+> suite's legacy legs prove interop). Deviations from the letter of this document,
+> decision-recorded in the completion report (DR-P20-05/06/07):
+> (a) the resync trigger is `token seq > max(seq)` for the (tenant, entity) — the
+> "+1" spelling would miss the exactly-at-head+1 stale case;
+> (b) the change feed stores DELETE rows with their source `payload` retained (the
+> watermark reads `payload->>'changedAt'`), while the PULL ENVELOPE nulls payload +
+> version on DELETE and emits `op: "DELETE"` (this document's envelope example calls
+> the op value `"tombstone"` — the wire value is `"DELETE"`; the `tombstones` table
+> is the separate GC ledger);
+> (c) a within-batch duplicate idempotencyKey replays the FIRST result with
+> `duplicate: true` (the 016 leg echoed `{deduped: true}` with no result — the v2
+> refinement lets a flapped client converge without a re-push);
+> plus the notification category for cursor-stall owner alerts is `reconciliation`
+> (the seeded CHECK domain has no `sync` category).
 
 PHASE-016 ships the smallest correct implementation that satisfies real POS offline
 sales; PHASE-020 generalizes without changing the contracts above. **The boundary is

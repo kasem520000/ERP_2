@@ -49,8 +49,14 @@ export async function resolveSalesPrice(input: {
     throw new OrderLineInvalidError(`customer ${input.customerId} does not exist in this tenant`);
   }
   const item = await itemsStore.findItemById(input.itemId);
-  if (item === undefined || item.deletedAt !== null) {
+  if (item === undefined) {
     throw new OrderLineInvalidError(`item ${input.itemId} does not exist in this tenant`);
+  }
+  // Soft-deleted master data = ITEM_INACTIVE vocabulary (CONFLICT_
+  // RESOLUTION §3; PHASE-020 C-11 — same trues-up as requireSellableItem).
+  if (item.deletedAt !== null) {
+    const { ItemInactiveError } = await import("../domain/sales-errors");
+    throw new ItemInactiveError(input.itemId);
   }
 
   // Level 1: the customer's assigned SALES price list.

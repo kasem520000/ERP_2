@@ -1,6 +1,6 @@
 # Monitoring
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-04
 
 Operationalization of [../architecture/OBSERVABILITY.md](../architecture/OBSERVABILITY.md):
 dashboards, the alert catalog with runbook links, on-call basics, SLO/error-budget
@@ -18,7 +18,7 @@ observability wired from PHASE-001/002 as a phase exit criterion.
 | Posting health | PHASE-007 | Documents posted/min by type, posting engine validation failures by invariant code, reversal rate | Invariant failures are **zero-tolerance** (RISK-009): any occurrence is Sev-1 |
 | Backup success | PHASE-002 (config), MVP (drills) | Last dump age, restore-smoke result, PITR window oldest point, WORM config check | Feeds release pre-flight ([DEPLOYMENT.md](DEPLOYMENT.md) §1) and monthly attestation |
 | Tenant isolation | PHASE-003 | **RLS denial counter — target 0**, policy-violation errors, cross-tenant 404-vs-403 audit | Any nonzero count is investigated immediately (RISK-010) |
-| Sync health | PHASE-020 | Push success/latency, pull cursor lag by entity, conflicts by type, rejected pushes by reason code | Feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync |
+| Sync health | PHASE-020 (**LIVE 2026-11-04**) | Push success/p95 latency (7-day window), pull cursor lag by entity, conflicts by type, rejected pushes by reason code, `outbox.lag` gauge buckets (`never\|lt1h\|lt6h\|lt24h\|lt7d\|gt7d` devices), `device.revoked.pending_ops` (devices, pending commands, owned drafts), tombstone GC ledger size, the alert feed | `GET /api/v1/sync/admin/health` (60 s tenant cache) renders the `/[locale]/platform/sync-health` screen; feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync |
 | E-invoicing funnel | PHASE-023 | Submissions by state (pending→signed→submitted→accepted/rejected), latency, rejection reasons, certificate-expiry countdown, sandbox-vs-prod health | Feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing |
 | Client stability | PHASE-021/022 | Crash-free sessions (desktop/Android), update-channel distribution, min-version enforcement hits, update adoption | Staged-rollout gates (10%→50%→100%) read from this dashboard |
 | Business SLO | PHASE-014+ | Failed-login spike, tenant suspension events, signups/onboarding funnel, entitlement overrides | Suspensions are high-signal: they precede churn or abuse |
@@ -26,6 +26,14 @@ observability wired from PHASE-001/002 as a phase exit criterion.
 Metric naming is vendor-agnostic (`erp_<module>_<name>_<unit>`); collection starts as a
 Prometheus-style exporter endpoint with sink choice per
 [../decisions/technical/DR-003-observability-vendors.md](../decisions/technical/DR-003-observability-vendors.md).
+The sync gauges ship with PHASE-020 (2026-11-04): `erp_sync_outbox_lag_devices` (the
+`outbox.lag` bucket histogram — devices per staleness bucket, from
+`devices.last_pull_at`/`last_push_at` watermarks) and
+`erp_sync_device_revoked_pending_ops` (revoked devices / pending inbox commands /
+owned drafts on the reconciliation queue — the same `reconciliation_dismissed` filter
+as the queue screen, so the gauge and the screen agree on "close the queue to zero").
+Both are computed by the tenant-scoped health aggregate
+(`GET /api/v1/sync/admin/health`, 60 s cache) behind `sync.settings.manage`.
 
 ## 2. Health endpoint contract (summary)
 
@@ -57,8 +65,8 @@ no alert exists without one.
 | `SLOBurn` | Error-budget burn 2× (Sev-2) / 4× (Sev-1) | Sev-2/1 | §5 + [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §api | Page per severity |
 | `CertExpiry` | TLS or e-invoicing certificate < 30 days (Sev-3) / < 7 days (Sev-2) | Sev-3→Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket → page under 7 days |
 | `EInvoiceRejectSpike` | Rejection rate > 5% of submissions in 15 min | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket; page if tenant-wide outage |
-| `SyncPushFailSpike` | Push failure > 5% in 15 min (PHASE-020+) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
-| `SyncCursorStall` | Any entity cursor lag > threshold (e.g., 15 min of change_log ahead) | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
+| `SyncPushFailSpike` | Push failure > 5% in 15 min (PHASE-020+; **live 2026-11-04** — the in-product health aggregate fires it at successRate < 90% with ≥ 20 commands over the 7-day window; the metrics pipeline refines to the 15-minute threshold) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
+| `SyncCursorStall` | Any entity cursor lag > threshold (e.g., 15 min of change_log ahead; **live 2026-11-04** — the in-product health aggregate + the daily `sync.cursor.compact` lag audit fire at > 7-day `now() − acknowledged_at`, with deduped owner notifications) | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
 | `ClientCrashRate` | Crash-free sessions below staged-rollout gate | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §escalation | Ticket; rollout halt is automatic per gates |
 | `StorageGrowth` | DB storage > 80% of provisioned | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §database | Ticket; capacity review |
 | `ReplicationLag` | Replica lag > 30 s (when read replica exists) | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §database | Ticket |

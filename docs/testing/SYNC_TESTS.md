@@ -1,6 +1,6 @@
 # Sync Tests — The Chaos Suite
 
-> **Status:** STABLE · **Owner:** Quality Engineering & Sync/Offline Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE (FULL matrix LIVE since 2026-11-04) · **Owner:** Quality Engineering & Sync/Offline Architecture · **Updated:** 2026-11-04
 
 The chaos-test suite for the offline synchronization protocol (directive §12): duplicate
 delivery, reordering, partial failure, crashes, revocation, clock skew, contract skew,
@@ -133,6 +133,21 @@ when only some commands are invalid (C-03), and never partially applies a single
 | PHASE-022 (Android) | Full matrix against Expo/SQLite store; battery/connectivity realism via fault profiles; C-06/C-07/C-13 on-device | blocking |
 | PHASE-023 (integrations) | Re-run C-01..C-04 with e-invoicing submission jobs in the loop (duplicate submission attempts → registry idempotency, no double-clearance) | blocking for adapter release |
 | Every push after PHASE-020 | Full matrix (≤ 15 min budget, [TEST_STRATEGY.md](TEST_STRATEGY.md) §6); long-fuzz variants (random fault soup, 30 min) nightly | blocking / nightly |
+
+**Status note (2026-11-04, PHASE-020 COMPLETE):** the FULL matrix is live in
+`apps/api/src/__db__/sync/` — 9 spec files / 74 tests green on embedded PG16
+(migrations 0001–0031, ~12 s whole-dir wall incl. the PG boot vs the ≤ 15 min budget):
+`chaos-matrix.spec.ts` (C-01…C-16 + a D-04 watermark probe, 19 tests), `duplicates.spec.ts`
+(2×/10×/concurrent-twin/cross-batch/35-day restored outbox), `device-security.spec.ts`
+(D-01/D-03/D-04 + the tenant-spoof leg), `push-isolation.spec.ts` (Y-01…Y-04), and the
+mechanics suites `pull`/`push`/`policies`/`devices`/`jobs` (9/9/8/9/6). The shared
+`_oracle.ts` asserts INV-013/001/002/018, the AR tie, and honest-state markers after
+EVERY scenario; every randomized scenario logs its per-scenario seed (C-01 `0xc01` …)
+so a failure replays byte-identically. `packages/sync-core` carries the client-side
+36 (cycle/retry/recovery/pruning/watermark + the 016 chaos slice). The harness rides
+the in-memory adapter (a documented transaction pass-through — real SQLite lands with
+PHASE-021; the D-04 caveat is recorded in the completion report) and the genuine
+service graph (real posting engine, real PG + RLS) — no domain mocks.
 | PHASE-024/025 | Chaos suite is a hardening + GA gate input; findings feed the security review ([../security/SECURITY_TEST_PLAN.md](../security/SECURITY_TEST_PLAN.md) §10) | release gate |
 
 ## 8. Long-run and soak variants

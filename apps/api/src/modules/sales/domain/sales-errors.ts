@@ -109,6 +109,9 @@ export class PriceChangedError extends DomainError {
     super(
       "PRICE_CHANGED",
       `item ${details.itemId} resolves to unit price ${details.resolved} but the document carries ${details.provided} — the draft references a stale price (re-open to recompute)`,
+      // PHASE-020 C-09b: the offline client renders the current price
+      // (CONFLICT_RESOLUTION §3 — resolved vs provided in details).
+      { itemId: details.itemId, resolved: details.resolved, provided: details.provided },
     );
   }
 }

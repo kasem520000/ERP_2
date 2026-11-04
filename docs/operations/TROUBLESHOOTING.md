@@ -1,6 +1,6 @@
 # Troubleshooting
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-04
 
 Symptom → diagnosis → remediation tables for production and staging. Every entry links
 the authoritative runbook or spec section; alerts that route here are defined in
@@ -76,14 +76,21 @@ Alert: `RLSDenial` (Sev-1 — [MONITORING.md](MONITORING.md) §3).
 | Entitlement changes not taking effect | `entitlements` table row age vs change time (materialization lag); client-side caching TTL | Re-run materialization job; confirm plan change was audited; clients re-check entitlements per contract — never cache longer than the stated TTL | [ENVIRONMENT_CONFIGURATION.md](ENVIRONMENT_CONFIGURATION.md) §4 |
 | Tenant reports "data missing" | User session tenant vs requested tenant; RLS is doing its job if ids mismatch | Verify membership + branch scope; a correct 404 on cross-tenant ids is by design (no existence leak — A7 attack) | [../database/TENANT_ISOLATION.md](../database/TENANT_ISOLATION.md) §5 |
 
-## 7. Offline sync (PHASE-020+)
+## 7. Offline sync (PHASE-020+ — **LIVE 2026-11-04**)
 
-Alerts: `SyncPushFailSpike`, `SyncCursorStall`.
+Alerts: `SyncPushFailSpike` (Sev-2), `SyncCursorStall` (Sev-3) — both live via the
+`GET /api/v1/sync/admin/health` aggregate (60 s cache) + the
+`/[locale]/platform/sync-health` screen; gauges `outbox.lag` (bucket histogram) and
+`device.revoked.pending_ops`.
 
 | Symptom | Diagnosis | Remediation | Runbook |
 |---------|-----------|-------------|---------|
+| **`SyncPushFailSpike`** — push failure spike (successRate < 90% w/ ≥ 20 commands over the 7-day window in-product; > 5% in 15 min on the metrics pipeline) | Health aggregate `rejectionsByReason` (or `SELECT result->>'reason', count(*) FROM inbox_commands WHERE tenant_id=$1 AND processed_at > now()-interval '7 days' GROUP BY 1 ORDER BY 2 DESC;`); correlate with a deploy, a period lock, or a master-data batch (ITEM_INACTIVE/PARTNER_INACTIVE waves) | Reason-coded waves are business-expected (typed, resubmittable-aware) — notify the tenant, never force-merge; a code spike after a deploy (e.g. VALIDATION_ERROR) is a regression → roll back per §4 and treat as a sync-protocol incident | [../offline/SYNC_PROTOCOL.md](../offline/SYNC_PROTOCOL.md) §3.4 |
+| **`SyncCursorStall`** — entity cursor lag > 7 days (in-product) / > threshold of change_log ahead (pipeline) | `SELECT entity_type, last_seq, acknowledged_at, now()-acknowledged_at AS lag FROM sync_cursors WHERE device_id=$1;` vs `SELECT entity_type, max(seq) FROM change_log WHERE tenant_id=$1 GROUP BY 1;`; check `devices.last_pull_at` + the daily `sync.cursor.compact` audit (`sync.cursor_compact_run`) | If the feed head is advancing but the cursor stalls: device connectivity/credential issue (revoked? token reuse? check `devices.revoked_at`); if the feed head itself is stale: producer issue → §jobs and the `sync.feed.health` 5-min probe; a device stuck past its permission watermark is read-only by design (D-04) | [../offline/SYNC_PROTOCOL.md](../offline/SYNC_PROTOCOL.md) §2 |
 | Stuck pull cursor (clients not getting changes) | `SELECT entity_type, last_seq FROM sync_cursors WHERE device_id=$1;` vs `SELECT max(seq) FROM change_log WHERE tenant_id=$1;` — per-entity lag | If change feed is healthy but cursor stalls: device connectivity/heartbeat issue; if change_log lags globally: producer job issue → §jobs | [../offline/SYNC_PROTOCOL.md](../offline/SYNC_PROTOCOL.md) |
-| Rejected pushes triage | Rejection reason codes on `inbox_commands`/document state: period locked, price beyond tolerance, credit limit exceeded, version conflict | These are **by-design actionable errors returned to the device** — verify the device shows them; do not force-merge on the server; tenant resolves the business condition then re-submits | [../accounting/DOCUMENT_LIFECYCLE.md](../accounting/DOCUMENT_LIFECYCLE.md) §4 |
+| Rejected pushes triage | Rejection reason codes on `inbox_commands`/document state: period locked, price beyond tolerance, credit limit exceeded, version conflict, FORBIDDEN (online-only entity or non-owner draft — never resubmittable) | These are **by-design actionable errors returned to the device** — verify the device shows them; do not force-merge on the server; tenant resolves the business condition then re-submits (FORBIDDEN/ONLINE_ONLY items must be cancelled, not retried) | [../accounting/DOCUMENT_LIFECYCLE.md](../accounting/DOCUMENT_LIFECYCLE.md) §4 |
+| Revoked-device pending ops (`device.revoked.pending_ops` > 0 — the reconciliation queue) | `GET /api/v1/sync/admin/reconciliation` (or the `/[locale]/platform/sync-reconciliation` screen): devices with un-acked inbox commands or owned drafts after revocation | Work the queue to zero: reassign owned DRAFTs to a live device (`POST /api/v1/sync/admin/drafts/reassign`) or let the tenant finish them online; un-acked ops keep the device on the queue until a human closes it — never silently dropped | [../offline/SECURITY_AND_DEVICE_MANAGEMENT.md](../offline/SECURITY_AND_DEVICE_MANAGEMENT.md) §4 |
+| Refresh-token reuse — device suddenly revoked | `audit_events` `device.refresh_token_reuse_detected` + the rotation chain (`SELECT id, predecessor_id, used_at, revoked_at FROM device_refresh_tokens WHERE device_id=$1 ORDER BY issued_at;`) | Reuse = possible token theft: the kill switch (revoke + alarm) already fired — treat as a security incident (RISK-010 ladder); re-enroll the device only after the owner confirms possession | [../offline/SECURITY_AND_DEVICE_MANAGEMENT.md](../offline/SECURITY_AND_DEVICE_MANAGEMENT.md) §3 |
 | Duplicate effects suspected after sync | Check posting idempotency: `SELECT tenant_id, source_type, source_id, operation, count(*) FROM journal_entries GROUP BY 1,2,3,4 HAVING count(*)>1;` (must return 0) | If 0 → dedupe worked (client-side duplicates are display-only); if > 0 → **Sev-1** (RISK-011) — incident, freeze sync for that tenant | [../accounting/ACCOUNTING_INVARIANTS.md](../accounting/ACCOUNTING_INVARIANTS.md) INV-013 |
 | Offline POS receipts not reconciling | `offline_receipt_no` present on posted invoices for the terminal/shift window | Re-run the terminal reconciliation view; gaps mean unsynced local sales → device must sync before close of shift | [../accounting/DOCUMENT_LIFECYCLE.md](../accounting/DOCUMENT_LIFECYCLE.md) §4 |
 

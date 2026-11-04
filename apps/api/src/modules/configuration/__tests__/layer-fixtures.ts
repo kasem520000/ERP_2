@@ -131,6 +131,11 @@ const BUSINESS_KEYS: readonly string[] = [
   // so the array_cat was a no-op there); starter does NOT.
   "crm.leads", "crm.tasks_activities", "crm.service_contracts",
   "crm.recurring_billing", "crm.service_orders", "accounting.projects",
+  // PHASE-020 (0029 plan grants): the offline sync foundation — business
+  // gains the sync protocol + device management keys (enterprise already
+  // carries them from the 0008 base seed); the 021/022 app keys
+  // (desktop/android/mobile_accounts) stay enterprise-only until they ship.
+  "offline.sync_protocol", "offline.device_management",
 ];
 
 const ENTERPRISE_KEYS: readonly string[] = [
@@ -146,7 +151,9 @@ const ENTERPRISE_KEYS: readonly string[] = [
   // Likewise the CRM + projects set (0027 granted it to business; the
   // explicit enterprise rows for accounting.projects / crm.* are removed
   // — they now ride the business block above).
-  "offline.sync_protocol", "offline.device_management", "offline.desktop_app",
+  // Likewise the offline sync foundation (0029 granted sync_protocol +
+  // device_management to business; only the 021/022 app keys stay here).
+  "offline.desktop_app",
   "offline.android_app", "offline.mobile_accounts",
 ];
 

@@ -184,21 +184,39 @@ export const memberships = pgTable(
   ],
 );
 
-export const devices = pgTable("devices", {
-  ...standardColumns,
-  userId: uuid("user_id").notNull(),
-  platform: text("platform").notNull(),
-  name: text("name"),
-  deviceKeyHash: text("device_key_hash").notNull(),
-  lastSeenAt: timestamp("last_seen_at", { withTimezone: true, mode: "string" }),
-  revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "string" }),
-  // PHASE-016 narrow pos-terminal slice (SYNC_PROTOCOL §11): capability
-  // scoping + terminal binding (no tenant_id — devices stays
-  // service-mediated, PHASE-003 §4; tenant resolves via the terminal).
-  // The PHASE-020 registry widens this.
-  capabilities: jsonb("capabilities"),
-  terminalId: uuid("terminal_id"),
-});
+export const devices = pgTable(
+  "devices",
+  {
+    ...standardColumns,
+    userId: uuid("user_id").notNull(),
+    platform: text("platform").notNull(),
+    name: text("name"),
+    deviceKeyHash: text("device_key_hash").notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true, mode: "string" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "string" }),
+    // PHASE-016 narrow pos-terminal slice (SYNC_PROTOCOL §11): capability
+    // scoping + terminal binding (no tenant_id — devices stays
+    // service-mediated, PHASE-003 §4; tenant resolves via the terminal).
+    capabilities: jsonb("capabilities"),
+    terminalId: uuid("terminal_id"),
+    // PHASE-020 registry widening (migration 0029; MASTER-PLAN §3/§9): the
+    // device class drives feed groups + capability scoping (platform stays
+    // for 003 compat); contract_version pins the wire protocol the device
+    // speaks; attestation_* is the ed25519 challenge substrate; trust_flags
+    // the audited admin plane; last_pull_at/last_push_at the outbox-lag
+    // gauges; data_expires_at the lost-device remote expiry.
+    contractVersion: text("contract_version"),
+    deviceClass: text("device_class"),
+    attestationPublicKey: text("attestation_public_key"),
+    attestationNonce: text("attestation_nonce"),
+    attestedAt: timestamp("attested_at", { withTimezone: true, mode: "string" }),
+    trustFlags: jsonb("trust_flags").notNull().default(sql`'{}'::jsonb`),
+    lastPullAt: timestamp("last_pull_at", { withTimezone: true, mode: "string" }),
+    lastPushAt: timestamp("last_push_at", { withTimezone: true, mode: "string" }),
+    dataExpiresAt: timestamp("data_expires_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [index("ix_devices_device_class").on(table.deviceClass)],
+);
 
 export const sessions = pgTable(
   "sessions",
@@ -3047,6 +3065,11 @@ export const salesInvoices = pgTable(
     contractId: uuid("contract_id"),
     serviceOrderId: uuid("service_order_id"),
     projectId: uuid("project_id"),
+    // PHASE-020 (migration 0029): the drafts owner-device stamp
+    // (OWNER_DEVICE_WINS, MASTER-PLAN §7) — create_draft stamps the
+    // creating device; update_draft rejects non-owners + stale versions;
+    // the admin reassign route re-stamps.
+    ownerDeviceId: uuid("owner_device_id"),
     note: text("note"),
     noteAr: text("note_ar"),
     submittedAt: timestamp("submitted_at", { withTimezone: true, mode: "string" }),
@@ -3082,6 +3105,10 @@ export const salesInvoices = pgTable(
     index("ix_sales_invoices_tenant_project")
       .on(table.tenantId, table.projectId)
       .where(sql`${table.projectId} IS NOT NULL`),
+    index("ix_sales_invoices_tenant_owner_device").on(table.tenantId, table.ownerDeviceId),
+    index("ix_sales_invoices_owner_device")
+      .on(table.ownerDeviceId)
+      .where(sql`${table.ownerDeviceId} IS NOT NULL`),
   ],
 );
 
@@ -3686,6 +3713,93 @@ export const syncCursors = pgTable(
   (table) => [
     uniqueIndex("uq_sync_cursors_device_entity").on(table.deviceId, table.entityType),
     index("ix_sync_cursors_tenant_device").on(table.tenantId, table.deviceId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// PHASE-020 · Offline Synchronization Foundation (migration
+// 0029_sync_foundation.sql; MASTER-PLAN §3). tombstones + inbox_commands
+// are tenant-owned (RLS macro); device_refresh_tokens is identity-owned,
+// service-mediated (the sessions pattern — no RLS by design).
+// ---------------------------------------------------------------------------
+
+/** The soft-delete GC ledger (MASTER-PLAN §3/§5.7): feed entries (change_log
+ * op:'DELETE' rows) are the transport; this table tracks the GC boundary so
+ * the weekly sweep is bounded and a device that missed a delete within the
+ * horizon can still be told. deleted_at AND gc_after are app-provided. */
+export const tombstones = pgTable(
+  "tombstones",
+  {
+    id: uuid("id").primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    tenantId: uuid("tenant_id").notNull(),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }).notNull(),
+    gcAfter: timestamp("gc_after", { withTimezone: true, mode: "string" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_tombstones_tenant_entity").on(table.tenantId, table.entityType, table.entityId),
+    index("ix_tombstones_tenant_gc").on(table.tenantId, table.gcAfter),
+  ],
+);
+
+/** The push dedupe ledger (MASTER-PLAN §6): one row per EXECUTED command
+ * (ACCEPTED or REJECTED — DEFERRED commands are never recorded); a
+ * redelivery replays the stored result with duplicate:true (C-01/C-04). */
+export const inboxCommands = pgTable(
+  "inbox_commands",
+  {
+    id: uuid("id").primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    tenantId: uuid("tenant_id").notNull(),
+    deviceId: uuid("device_id").notNull(),
+    commandId: text("command_id").notNull(),
+    idempotencyKey: text("idempotency_key").notNull(),
+    entityType: text("entity_type").notNull(),
+    intent: text("intent").notNull(),
+    status: text("status").notNull(),
+    result: jsonb("result").notNull(),
+    processedAt: timestamp("processed_at", { withTimezone: true, mode: "string" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_inbox_commands_device_command").on(
+      table.tenantId,
+      table.deviceId,
+      table.commandId,
+    ),
+    index("ix_inbox_commands_tenant_idempotency").on(table.tenantId, table.idempotencyKey),
+    index("ix_inbox_commands_tenant_processed").on(table.tenantId, table.processedAt),
+  ],
+);
+
+/** Device refresh tokens (identity-owned, service-mediated — the sessions
+ * pattern; MASTER-PLAN §1.4/§9): hash-at-rest, one-time-use rotation chain.
+ * used_at is the reuse-detection tripwire (reuse revokes the device);
+ * predecessor_id links a successor to its consumed predecessor. */
+export const deviceRefreshTokens = pgTable(
+  "device_refresh_tokens",
+  {
+    id: uuid("id").primaryKey(),
+    deviceId: uuid("device_id")
+      .notNull()
+      .references(() => devices.id, { onDelete: "cascade" }),
+    tokenHash: text("token_hash").notNull(),
+    predecessorId: uuid("predecessor_id"),
+    issuedAt: timestamp("issued_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true, mode: "string" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("uq_device_refresh_tokens_token_hash").on(table.tokenHash),
+    index("ix_device_refresh_tokens_device").on(table.deviceId),
   ],
 );
 

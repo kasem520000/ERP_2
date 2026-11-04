@@ -2627,6 +2627,62 @@ export const ROUTE_PERMISSIONS: readonly RoutePermissionRule[] = [
     permission: "crm.service_orders.manage",
   },
 
+  // PHASE-020 (MASTER-PLAN §8; matrix §3.8/§3.9): the device registry
+  // plane (register/attest under the sync register key; list/patch under
+  // the identity manage key; revoke under its own key — self revoke is
+  // allowed, a device may kill its own credential) and the sync admin
+  // plane (health under sync settings; reconciliation + drafts reassign
+  // under the revoke key — both are the revoked-device close-out journey).
+  // The sync data plane itself (status/pull/push/acks) is session-
+  // authenticated self-scope — SESSION_ROUTES below; the device refresh
+  // credential exchange is public — PUBLIC_ROUTES below.
+  {
+    method: "POST",
+    path: "/api/v1/devices",
+    permission: "sync.devices.register",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/devices",
+    permission: "identity.devices.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/devices/:id",
+    permission: "identity.devices.manage",
+  },
+  {
+    method: "PATCH",
+    path: "/api/v1/devices/:id",
+    permission: "identity.devices.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/devices/:id/attest",
+    permission: "sync.devices.register",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/devices/:id/revoke",
+    permission: "sync.devices.revoke",
+    self: true,
+  },
+  {
+    method: "GET",
+    path: "/api/v1/sync/admin/health",
+    permission: "sync.settings.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/sync/admin/reconciliation",
+    permission: "sync.devices.revoke",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/sync/admin/drafts/reassign",
+    permission: "sync.devices.revoke",
+  },
+
 ];
 
 /**
@@ -2661,6 +2717,17 @@ export const SESSION_ROUTES: readonly { method: string; path: string }[] = [
   { method: "DELETE", path: "/api/v1/identity/mfa/totp" },
   { method: "POST", path: "/api/v1/identity/mfa/recovery-codes" },
   { method: "POST", path: "/api/v1/identity/password-change" },
+  // PHASE-020 (MASTER-PLAN §8 rows 8–12; SYNC_PROTOCOL §1): the sync data
+  // plane — every authenticated principal (web session OR device access
+  // token) manages its own device's sync state; the device binding + feed
+  // group + revocation checks are enforced inside the sync services, not
+  // by a permission key (the 016 controllers already gate on pos.sales.sell
+  // sessions; the 020 device-token path resolves the same plane).
+  { method: "GET", path: "/api/v1/sync/status" },
+  { method: "GET", path: "/api/v1/sync/pull" },
+  { method: "POST", path: "/api/v1/sync/push" },
+  { method: "POST", path: "/api/v1/sync/pull/ack" },
+  { method: "POST", path: "/api/v1/sync/push/ack" },
 ];
 
 /**
@@ -2683,6 +2750,11 @@ export const PUBLIC_ROUTES: readonly { method: string; path: string }[] = [
   // session; the HMAC + timestamp window ARE the authentication).
   { method: "GET", path: "/api/v1/public/plans" },
   { method: "POST", path: "/api/v1/platform/billing/webhook" },
+  // PHASE-020 (MASTER-PLAN §8 row 7): the device refresh-token exchange —
+  // the bearer refresh token in the body IS the credential (the login
+  // pattern: no session can exist before credentials rotate); rotation is
+  // idempotent by token, so the Idempotency-Key exemption applies too.
+  { method: "POST", path: "/api/v1/devices/:id/refresh" },
 ];
 
 /** Routes whose POSTs require an Idempotency-Key header (IDEMPOTENCY §1). */

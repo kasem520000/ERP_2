@@ -1,6 +1,5 @@
 import { createHmac } from "node:crypto";
 
-import { env } from "../../../config/env";
 import { keyMaterialForTokens } from "../../identity/infrastructure/reset-token-key";
 
 /**
@@ -8,6 +7,12 @@ import { keyMaterialForTokens } from "../../identity/infrastructure/reset-token-
  * wrappers over `{entityType, seq, issuedAt}` — clients store them
  * verbatim and never parse them; the signature keeps a tampered cursor
  * from reading another feed or skipping the seq order.
+ *
+ * PHASE-020: the encode/decode format is FROZEN (016 clients hold these
+ * tokens verbatim across upgrades); only the contract-version constant
+ * changed — it now re-exports `SYNC_CONTRACT_VERSION` from @erp/contracts
+ * (the single version source, MASTER-PLAN §2; the 016 env-derived local
+ * definition is retired).
  */
 
 export interface CursorClaims {
@@ -55,6 +60,7 @@ function timingSafeEqualString(a: string, b: string): boolean {
 
 /** The sync contract version advertised by /sync/status (§11 rule 3: the
  * generalized PHASE-020 protocol must accept a PHASE-016 terminal on day
- * one — this version gate is how). */
-export const SYNC_CONTRACT_VERSION =
-  env.NODE_ENV === "production" ? "1.0.0-pos" : "1.0.0-pos-dev";
+ * one — the version gate is how). PHASE-020: re-exported from
+ * @erp/contracts — the single source of truth shared with the device-side
+ * sync-core (MASTER-PLAN §2). */
+export { SYNC_CONTRACT_VERSION } from "@erp/contracts";

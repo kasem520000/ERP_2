@@ -19,6 +19,7 @@
     "gate:local": "bash scripts/ci/local-gate.sh",
     "check:rls": "tsx scripts/check-rls.ts",
     "check:permissions-drift": "tsx scripts/check-permissions-drift.ts",
+    "check:capabilities-matrix": "tsx scripts/check-capabilities-matrix.ts",
     "db:dev-credentials": "tsx scripts/db-dev-credentials.ts",
     "db:migrate": "pnpm --filter @erp/api db:migrate",
     "test:db": "turbo run test:db",

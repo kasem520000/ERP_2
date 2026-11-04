@@ -12,7 +12,13 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     expect(files[0]?.tag).toBe("0001_core_infra");
     // PHASE-019 T48: 0028_crm_service_order_holder (the holder-type widening —
     // the deviation recorded in agent-ctx/T48-7-service-orders.md).
-    expect(files.at(-1)?.tag).toBe("0028_crm_service_order_holder");
+    // PHASE-020 W1: 0029_sync_foundation (tombstones + inbox_commands +
+    // device_refresh_tokens + the devices/sales_invoices widenings).
+    // PHASE-020 T5: 0030_sync_change_log_sequence_grant (the 0024 INSERT
+    // grant's missing sequence half — agent-ctx/T-P20-2a-pull.md).
+    // PHASE-020 T9: 0031_sync_draft_line_replace (the update_draft
+    // aggregate-replacement DELETE grant — SYNC_PROTOCOL §6.2).
+    expect(files.at(-1)?.tag).toBe("0031_sync_draft_line_replace");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

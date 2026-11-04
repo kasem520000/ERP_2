@@ -3,6 +3,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import { SessionService } from "../../modules/identity/application/session-service";
 import * as store from "../../modules/identity/infrastructure/identity.store";
+import { verifyAccessToken } from "../../modules/sync/application/device-tokens";
 import { setIdentity, type SessionContext } from "../context/session-context";
 
 /**
@@ -11,6 +12,14 @@ import { setIdentity, type SessionContext } from "../context/session-context";
  * never reads cookies (CSRF-exempt by construction, AUTHENTICATION §1).
  * Failure here is deferred: public routes stay reachable without a
  * session; protected surfaces reject through the PermissionsGuard.
+ *
+ * PHASE-020 (ADR-0015 §3; SYNC_PROTOCOL §1.4): native offline clients
+ * present a 15-min device access token (`Authorization: Bearer <jwt>`
+ * with {sub, deviceId, capabilities} claims) instead of a web session —
+ * the same identity context resolves (user + active membership tenant),
+ * and the sync services re-verify the device row (revocation is enforced
+ * per request, never by token lifetime alone). Session tokens keep
+ * priority when both are presented (the BFF path).
  */
 @Injectable()
 export class SessionMiddleware implements NestMiddleware {
@@ -41,6 +50,43 @@ export class SessionMiddleware implements NestMiddleware {
       } catch {
         // Invalid/expired/revoked token → anonymous; guards will 401 where
         // the surface requires a session (uniform shape, no oracle).
+      }
+    } else {
+      // PHASE-020: the device-token path — Bearer JWT, verified
+      // timing-safe; the active tenant resolves from the user's ACTIVE
+      // membership (the device never names a tenant — MULTI_TENANCY §3;
+      // the definer projection is pre-GUC by design, migration 0003).
+      const authorization = request.header("authorization");
+      if (authorization !== undefined && authorization.startsWith("Bearer ")) {
+        const claims = verifyAccessToken(authorization.slice("Bearer ".length));
+        if (claims !== undefined) {
+          const user = await store.findUserById(claims.sub).catch(() => undefined);
+          if (user !== undefined && user.status !== "DEACTIVATED") {
+            const options = await store
+              .membershipOptions(user.id)
+              .catch(() => [] as store.MembershipOption[]);
+            const active = options.find(
+              (option) =>
+                option.membershipStatus === "ACTIVE" && option.tenantStatus === "ACTIVE",
+            );
+            if (active !== undefined) {
+              setIdentity(request, {
+                // No web session backs a device token — the placeholder
+                // keeps the SessionContext shape (guards never read it for
+                // device traffic; the sync services verify the device row).
+                sessionId: `device:${claims.deviceId}`,
+                userId: user.id,
+                user: {
+                  email: user.email,
+                  fullName: user.fullName,
+                  locale: user.locale,
+                  status: user.status,
+                },
+                activeTenantId: active.tenantId,
+              });
+            }
+          }
+        }
       }
     }
     next();

@@ -3105,6 +3105,133 @@ export interface Dictionary {
   crmErrServiceOrderInput: string;
   crmErrServiceOrderLine: string;
   crmErrServiceOrderPosting: string;
+
+  // -- PHASE-020 (T14): the sync admin screens (device registry, sync
+  // health dashboard, revoked-device reconciliation) ------------------
+  syncDevicesTitle: string;
+  syncHealthTitle: string;
+  syncReconciliationTitle: string;
+  syncDevicesSubtitle: string;
+  syncHealthSubtitle: string;
+  syncReconciliationSubtitle: string;
+
+  // Device registry screen (/platform/devices)
+  syncDevicesEmpty: string;
+  syncDevicesColName: string;
+  syncDevicesColClass: string;
+  syncDevicesColPlatform: string;
+  syncDevicesColContract: string;
+  syncDevicesColAttestation: string;
+  syncDevicesColTrustFlags: string;
+  syncDevicesColLastPull: string;
+  syncDevicesColLastPush: string;
+  syncDevicesColStatus: string;
+  syncDevicesColDataExpiry: string;
+  syncDevicesColPending: string;
+  syncDevicesFilterClass: string;
+  syncDevicesFilterClassAll: string;
+  syncDevicesFilterStatus: string;
+  syncDevicesFilterStatusAll: string;
+  syncDevicesFilterStatusActive: string;
+  syncDevicesFilterStatusRevoked: string;
+  syncDevicesFilterApply: string;
+  syncDevicesClassPosTerminal: string;
+  syncDevicesClassTauriDesktop: string;
+  syncDevicesClassAndroidField: string;
+  syncDevicesClassAndroidPersonal: string;
+  syncDevicesAttested: string;
+  syncDevicesAttestationPending: string;
+  syncDevicesStatusActive: string;
+  syncDevicesStatusRevoked: string;
+  syncDevicesTrustFlagsNone: string;
+  syncDevicesActionRevoke: string;
+  syncDevicesActionFlag: string;
+  syncDevicesActionExpiry: string;
+  syncDevicesActionDetail: string;
+  syncDevicesRevokeTitle: string;
+  syncDevicesRevokeReason: string;
+  syncDevicesRevokeReasonPlaceholder: string;
+  syncDevicesRevokeConfirm: string;
+  syncDevicesRevokeAction: string;
+  syncDevicesRevokedToast: string;
+  syncDevicesFlagTitle: string;
+  syncDevicesFlagKey: string;
+  syncDevicesFlagValue: string;
+  syncDevicesFlagHint: string;
+  syncDevicesFlagAction: string;
+  syncDevicesFlaggedToast: string;
+  syncDevicesExpiryTitle: string;
+  syncDevicesExpiryAt: string;
+  syncDevicesExpiryClear: string;
+  syncDevicesExpiryAction: string;
+  syncDevicesExpirySetToast: string;
+  syncDevicesExpiryClearedToast: string;
+  syncDevicesDetailTitle: string;
+  syncDevicesDetailCursors: string;
+  syncDevicesDetailEntity: string;
+  syncDevicesDetailLastSeq: string;
+  syncDevicesDetailAckedAt: string;
+  syncDevicesDetailNoCursors: string;
+  syncDevicesDetailLoadError: string;
+  syncDevicesPendingCommands: string;
+
+  // Sync health dashboard (/platform/sync-health)
+  syncHealthPushTitle: string;
+  syncHealthPushTotal: string;
+  syncHealthPushAccepted: string;
+  syncHealthPushRejected: string;
+  syncHealthPushDeferred: string;
+  syncHealthPushSuccessRate: string;
+  syncHealthPushP95: string;
+  syncHealthPushP95None: string;
+  syncHealthPullLagTitle: string;
+  syncHealthPullLagEntity: string;
+  syncHealthPullLagMaxLag: string;
+  syncHealthPullLagDevices: string;
+  syncHealthPullLagEmpty: string;
+  syncHealthPullLagNeverAck: string;
+  syncHealthConflictsTitle: string;
+  syncHealthRejectionsTitle: string;
+  syncHealthBreakdownCount: string;
+  syncHealthBreakdownEmpty: string;
+  syncHealthOutboxTitle: string;
+  syncHealthOutboxNever: string;
+  syncHealthOutboxLt1h: string;
+  syncHealthOutboxLt6h: string;
+  syncHealthOutboxLt24h: string;
+  syncHealthOutboxLt7d: string;
+  syncHealthOutboxGt7d: string;
+  syncHealthOutboxDevices: string;
+  syncHealthRevokedTitle: string;
+  syncHealthRevokedDevices: string;
+  syncHealthRevokedPending: string;
+  syncHealthRevokedDrafts: string;
+  syncHealthTombstones: string;
+  syncHealthAlertsTitle: string;
+  syncHealthAlertsEmpty: string;
+  syncHealthAlertSyncCursorStall: string;
+  syncHealthAlertSyncPushFailSpike: string;
+  syncHealthGeneratedAt: string;
+  syncHealthLagDays: string;
+  syncHealthLagHours: string;
+  syncHealthLagMinutes: string;
+
+  // Revoked-device reconciliation queue (/platform/sync-reconciliation)
+  syncReconciliationEmpty: string;
+  syncReconciliationColDevice: string;
+  syncReconciliationColName: string;
+  syncReconciliationColRevokedAt: string;
+  syncReconciliationColPending: string;
+  syncReconciliationColDrafts: string;
+  syncReconciliationColOldest: string;
+  syncReconciliationReassign: string;
+  syncReconciliationReassignTitle: string;
+  syncReconciliationReassignFrom: string;
+  syncReconciliationReassignTo: string;
+  syncReconciliationReassignToPlaceholder: string;
+  syncReconciliationReassignNoTargets: string;
+  syncReconciliationReassignAction: string;
+  syncReconciliationReassignedToast: string;
 }
 
 const ar: Dictionary = {
@@ -6220,6 +6347,139 @@ const ar: Dictionary = {
   crmErrServiceOrderInput: "بيانات أمر الخدمة غير صالحة — تحقق من الشريك والعقد والبنود.",
   crmErrServiceOrderLine: "بند غير صالح — بنود الخدمة تحتاج صنف خدمة بساعات، وبنود القطع تحتاج صنفًا مخزنيًا بكمية.",
   crmErrServiceOrderPosting: "إعدادات الترحيل لأوامر الخدمة غير مكتملة — تواصل مع المسؤول.",
+
+  // -- PHASE-020 (T14): sync admin screens — Arabic --------------------
+  syncDevicesTitle: "إدارة الأجهزة",
+  syncHealthTitle: "صحة المزامنة",
+  syncReconciliationTitle: "تسوية الأجهزة الملغاة",
+  syncDevicesSubtitle:
+    "سجل الأجهزة المسجّلة (النوع، المنصة، إصدار العقد، حالة الإثبات، مؤشرات الثقة، آخر سحب/دفع، انتهاء البيانات) مع إجراءات الإلغاء ووسم الثقة وتحديد انتهاء البيانات.",
+  syncHealthSubtitle:
+    "لوحة صحة المزامنة: نجاح الدفع وزمن المعالجة، تأخر المؤشرات لكل كيان، التعارضات والرفوضات، مقياس تأخر الصادر، والتنبيهات المشتقة.",
+  syncReconciliationSubtitle:
+    "طابور الأجهزة الملغاة ذات الحالة غير المحسومة: أوامر معلّقة ومسودات مملوكة للجهاز — انقل ملكية المسودات لجهاز آخر لإغلاق الطابور.",
+
+  // Device registry screen (/platform/devices)
+  syncDevicesEmpty: "لا توجد أجهزة مسجّلة في هذه المنشأة.",
+  syncDevicesColName: "الجهاز",
+  syncDevicesColClass: "النوع",
+  syncDevicesColPlatform: "المنصة",
+  syncDevicesColContract: "إصدار العقد",
+  syncDevicesColAttestation: "الإثبات",
+  syncDevicesColTrustFlags: "مؤشرات الثقة",
+  syncDevicesColLastPull: "آخر سحب",
+  syncDevicesColLastPush: "آخر دفع",
+  syncDevicesColStatus: "الحالة",
+  syncDevicesColDataExpiry: "انتهاء البيانات",
+  syncDevicesColPending: "أوامر معلّقة",
+  syncDevicesFilterClass: "نوع الجهاز",
+  syncDevicesFilterClassAll: "كل الأنواع",
+  syncDevicesFilterStatus: "الحالة",
+  syncDevicesFilterStatusAll: "كل الحالات",
+  syncDevicesFilterStatusActive: "نشط",
+  syncDevicesFilterStatusRevoked: "ملغى",
+  syncDevicesFilterApply: "تطبيق",
+  syncDevicesClassPosTerminal: "نقطة بيع",
+  syncDevicesClassTauriDesktop: "حاسوب مكتبي",
+  syncDevicesClassAndroidField: "جهاز ميداني",
+  syncDevicesClassAndroidPersonal: "جهاز شخصي",
+  syncDevicesAttested: "مُثبت",
+  syncDevicesAttestationPending: "بانتظار الإثبات",
+  syncDevicesStatusActive: "نشط",
+  syncDevicesStatusRevoked: "ملغى",
+  syncDevicesTrustFlagsNone: "بدون",
+  syncDevicesActionRevoke: "إلغاء الجهاز",
+  syncDevicesActionFlag: "وسم ثقة",
+  syncDevicesActionExpiry: "تحديد انتهاء البيانات",
+  syncDevicesActionDetail: "حالة المزامنة",
+  syncDevicesRevokeTitle: "إلغاء الجهاز",
+  syncDevicesRevokeReason: "السبب (اختياري)",
+  syncDevicesRevokeReasonPlaceholder: "فقدان الجهاز…",
+  syncDevicesRevokeConfirm:
+    "الإلغاء يوقف كل بيانات الاعتماد فورًا ولا يمكن التراجع عنه. هل تريد المتابعة؟",
+  syncDevicesRevokeAction: "إلغاء نهائي",
+  syncDevicesRevokedToast: "تم إلغاء الجهاز.",
+  syncDevicesFlagTitle: "وسم مؤشر ثقة",
+  syncDevicesFlagKey: "المفتاح",
+  syncDevicesFlagValue: "القيمة",
+  syncDevicesFlagHint: "يُدمج مع المؤشرات الحالية (لا يستبدلها) — مثال: مفتاح jailbroken وقيمة suspected.",
+  syncDevicesFlagAction: "وسم",
+  syncDevicesFlaggedToast: "تم دمج مؤشر الثقة.",
+  syncDevicesExpiryTitle: "تحديد انتهاء بيانات الجهاز",
+  syncDevicesExpiryAt: "تنتهي البيانات في",
+  syncDevicesExpiryClear: "إلغاء التحديد",
+  syncDevicesExpiryAction: "حفظ",
+  syncDevicesExpirySetToast: "تم تحديد انتهاء بيانات الجهاز.",
+  syncDevicesExpiryClearedToast: "تم إلغاء انتهاء بيانات الجهاز.",
+  syncDevicesDetailTitle: "حالة مزامنة الجهاز",
+  syncDevicesDetailCursors: "المؤشرات لكل كيان",
+  syncDevicesDetailEntity: "الكيان",
+  syncDevicesDetailLastSeq: "آخر تسلسل",
+  syncDevicesDetailAckedAt: "تاريخ الإقرار",
+  syncDevicesDetailNoCursors: "لا توجد مؤشرات لهذا الجهاز بعد.",
+  syncDevicesDetailLoadError: "تعذّر تحميل حالة المزامنة.",
+  syncDevicesPendingCommands: "أوامر معلّقة: {count}",
+
+  // Sync health dashboard (/platform/sync-health)
+  syncHealthPushTitle: "إحصاءات الدفع (آخر 7 أيام)",
+  syncHealthPushTotal: "الإجمالي",
+  syncHealthPushAccepted: "مقبولة",
+  syncHealthPushRejected: "مرفوضة",
+  syncHealthPushDeferred: "مؤجّلة",
+  syncHealthPushSuccessRate: "نسبة النجاح",
+  syncHealthPushP95: "زمن المعالجة p95",
+  syncHealthPushP95None: "لا عينات",
+  syncHealthPullLagTitle: "تأخر مؤشرات السحب لكل كيان",
+  syncHealthPullLagEntity: "الكيان",
+  syncHealthPullLagMaxLag: "أقصى تأخر",
+  syncHealthPullLagDevices: "الأجهزة",
+  syncHealthPullLagEmpty: "لا توجد مؤشرات مُقرّة بعد.",
+  syncHealthPullLagNeverAck: "لم يُقرّ بعد",
+  syncHealthConflictsTitle: "التعارضات حسب نوع الأمر",
+  syncHealthRejectionsTitle: "الرفوضات حسب السبب",
+  syncHealthBreakdownCount: "العدد",
+  syncHealthBreakdownEmpty: "لا رفوضات خلال النافذة.",
+  syncHealthOutboxTitle: "مقياس تأخر الصادر (حسب آخر دفع)",
+  syncHealthOutboxNever: "لم يدفع أبدًا",
+  syncHealthOutboxLt1h: "أقل من ساعة",
+  syncHealthOutboxLt6h: "أقل من 6 ساعات",
+  syncHealthOutboxLt24h: "أقل من 24 ساعة",
+  syncHealthOutboxLt7d: "أقل من 7 أيام",
+  syncHealthOutboxGt7d: "أكثر من 7 أيام",
+  syncHealthOutboxDevices: "جهازًا",
+  syncHealthRevokedTitle: "الأجهزة الملغاة ذات عمليات معلّقة",
+  syncHealthRevokedDevices: "أجهزة",
+  syncHealthRevokedPending: "أوامر معلّقة",
+  syncHealthRevokedDrafts: "مسودات مملوكة",
+  syncHealthTombstones: "سجلات الحذف (GC)",
+  syncHealthAlertsTitle: "التنبيهات",
+  syncHealthAlertsEmpty: "لا تنبيهات — كل المؤشرات ضمن الحدود.",
+  syncHealthAlertSyncCursorStall:
+    "كيان «{entity}» لم يُقرّ مؤشر سحب منذ {days} يومًا ({devices} جهازًا متأثرًا).",
+  syncHealthAlertSyncPushFailSpike:
+    "نسبة نجاح الدفع {rate}% خلال آخر 7 أيام ({total} أمرًا، {rejected} مرفوضًا) — أدنى من حد 90%.",
+  syncHealthGeneratedAt: "تم إنشاء التقرير:",
+  syncHealthLagDays: "يومًا",
+  syncHealthLagHours: "ساعات",
+  syncHealthLagMinutes: "دقائق",
+
+  // Revoked-device reconciliation queue (/platform/sync-reconciliation)
+  syncReconciliationEmpty: "الطابور فارغ — لا أجهزة ملغاة ذات حالة معلّقة.",
+  syncReconciliationColDevice: "المعرّف",
+  syncReconciliationColName: "الجهاز",
+  syncReconciliationColRevokedAt: "تاريخ الإلغاء",
+  syncReconciliationColPending: "أوامر معلّقة",
+  syncReconciliationColDrafts: "مسودات مملوكة",
+  syncReconciliationColOldest: "أقدم معلّق",
+  syncReconciliationReassign: "نقل ملكية المسودات",
+  syncReconciliationReassignTitle: "نقل ملكية المسودات",
+  syncReconciliationReassignFrom: "من الجهاز (ملغى)",
+  syncReconciliationReassignTo: "إلى الجهاز",
+  syncReconciliationReassignToPlaceholder: "اختر جهازًا نشطًا…",
+  syncReconciliationReassignNoTargets:
+    "تعذّر جلب قائمة الأجهزة النشطة — أدخل معرّف الجهاز الهدف يدويًا.",
+  syncReconciliationReassignAction: "نقل الملكية",
+  syncReconciliationReassignedToast: "تم نقل ملكية {count} مسودة.",
 };
 
 const en: Dictionary = {
@@ -9344,6 +9604,139 @@ const en: Dictionary = {
   crmErrServiceOrderInput: "Invalid service order input — check the partner, the contract and the lines.",
   crmErrServiceOrderLine: "Invalid line — service lines need a SERVICE item with hours; parts lines need a STOCK item with a qty.",
   crmErrServiceOrderPosting: "The service-order posting configuration is incomplete — contact the administrator.",
+
+  // -- PHASE-020 (T14): sync admin screens — English -------------------
+  syncDevicesTitle: "Device management",
+  syncHealthTitle: "Sync health",
+  syncReconciliationTitle: "Revoked-device reconciliation",
+  syncDevicesSubtitle:
+    "The registered device registry (class, platform, contract version, attestation state, trust flags, last pull/push, data expiry) with the revoke / trust-flag / data-expiry actions.",
+  syncHealthSubtitle:
+    "The sync health dashboard: push success and processing latency, cursor lag per entity, conflicts and rejections, the outbox lag gauge, and derived alerts.",
+  syncReconciliationSubtitle:
+    "The revoked-device queue for unresolved state — pending commands and device-owned drafts; reassign draft ownership to close the queue.",
+
+  // Device registry screen (/platform/devices)
+  syncDevicesEmpty: "No devices are registered in this tenant.",
+  syncDevicesColName: "Device",
+  syncDevicesColClass: "Class",
+  syncDevicesColPlatform: "Platform",
+  syncDevicesColContract: "Contract",
+  syncDevicesColAttestation: "Attestation",
+  syncDevicesColTrustFlags: "Trust flags",
+  syncDevicesColLastPull: "Last pull",
+  syncDevicesColLastPush: "Last push",
+  syncDevicesColStatus: "Status",
+  syncDevicesColDataExpiry: "Data expiry",
+  syncDevicesColPending: "Pending commands",
+  syncDevicesFilterClass: "Device class",
+  syncDevicesFilterClassAll: "All classes",
+  syncDevicesFilterStatus: "Status",
+  syncDevicesFilterStatusAll: "All statuses",
+  syncDevicesFilterStatusActive: "Active",
+  syncDevicesFilterStatusRevoked: "Revoked",
+  syncDevicesFilterApply: "Apply",
+  syncDevicesClassPosTerminal: "POS terminal",
+  syncDevicesClassTauriDesktop: "Tauri desktop",
+  syncDevicesClassAndroidField: "Android field",
+  syncDevicesClassAndroidPersonal: "Android personal",
+  syncDevicesAttested: "Attested",
+  syncDevicesAttestationPending: "Attestation pending",
+  syncDevicesStatusActive: "Active",
+  syncDevicesStatusRevoked: "Revoked",
+  syncDevicesTrustFlagsNone: "None",
+  syncDevicesActionRevoke: "Revoke device",
+  syncDevicesActionFlag: "Flag trust",
+  syncDevicesActionExpiry: "Set data expiry",
+  syncDevicesActionDetail: "Sync state",
+  syncDevicesRevokeTitle: "Revoke device",
+  syncDevicesRevokeReason: "Reason (optional)",
+  syncDevicesRevokeReasonPlaceholder: "Device lost…",
+  syncDevicesRevokeConfirm:
+    "Revocation kills every credential immediately and cannot be undone. Continue?",
+  syncDevicesRevokeAction: "Revoke permanently",
+  syncDevicesRevokedToast: "The device has been revoked.",
+  syncDevicesFlagTitle: "Flag device trust",
+  syncDevicesFlagKey: "Key",
+  syncDevicesFlagValue: "Value",
+  syncDevicesFlagHint: "Merged into the existing flags (never replaces them) — e.g. key jailbroken, value suspected.",
+  syncDevicesFlagAction: "Flag",
+  syncDevicesFlaggedToast: "The trust flag was merged.",
+  syncDevicesExpiryTitle: "Set the device data expiry",
+  syncDevicesExpiryAt: "Data expires at",
+  syncDevicesExpiryClear: "Clear",
+  syncDevicesExpiryAction: "Save",
+  syncDevicesExpirySetToast: "The device data expiry was set.",
+  syncDevicesExpiryClearedToast: "The device data expiry was cleared.",
+  syncDevicesDetailTitle: "Device sync state",
+  syncDevicesDetailCursors: "Per-entity cursors",
+  syncDevicesDetailEntity: "Entity",
+  syncDevicesDetailLastSeq: "Last seq",
+  syncDevicesDetailAckedAt: "Acknowledged",
+  syncDevicesDetailNoCursors: "This device has no cursors yet.",
+  syncDevicesDetailLoadError: "Failed to load the sync state.",
+  syncDevicesPendingCommands: "Pending commands: {count}",
+
+  // Sync health dashboard (/platform/sync-health)
+  syncHealthPushTitle: "Push stats (last 7 days)",
+  syncHealthPushTotal: "Total",
+  syncHealthPushAccepted: "Accepted",
+  syncHealthPushRejected: "Rejected",
+  syncHealthPushDeferred: "Deferred",
+  syncHealthPushSuccessRate: "Success rate",
+  syncHealthPushP95: "p95 processing",
+  syncHealthPushP95None: "No samples",
+  syncHealthPullLagTitle: "Pull cursor lag by entity",
+  syncHealthPullLagEntity: "Entity",
+  syncHealthPullLagMaxLag: "Max lag",
+  syncHealthPullLagDevices: "Devices",
+  syncHealthPullLagEmpty: "No acknowledged cursors yet.",
+  syncHealthPullLagNeverAck: "Never acknowledged",
+  syncHealthConflictsTitle: "Conflicts by command type",
+  syncHealthRejectionsTitle: "Rejections by reason",
+  syncHealthBreakdownCount: "Count",
+  syncHealthBreakdownEmpty: "No rejections in the window.",
+  syncHealthOutboxTitle: "Outbox lag gauge (by last push)",
+  syncHealthOutboxNever: "Never pushed",
+  syncHealthOutboxLt1h: "Under 1 hour",
+  syncHealthOutboxLt6h: "Under 6 hours",
+  syncHealthOutboxLt24h: "Under 24 hours",
+  syncHealthOutboxLt7d: "Under 7 days",
+  syncHealthOutboxGt7d: "Over 7 days",
+  syncHealthOutboxDevices: "devices",
+  syncHealthRevokedTitle: "Revoked devices with pending ops",
+  syncHealthRevokedDevices: "devices",
+  syncHealthRevokedPending: "Pending commands",
+  syncHealthRevokedDrafts: "Owned drafts",
+  syncHealthTombstones: "Tombstones (GC ledger)",
+  syncHealthAlertsTitle: "Alerts",
+  syncHealthAlertsEmpty: "No alerts — every gauge is within its threshold.",
+  syncHealthAlertSyncCursorStall:
+    "Entity \"{entity}\" has not acknowledged a pull cursor for {days} days ({devices} device(s) affected).",
+  syncHealthAlertSyncPushFailSpike:
+    "Push success rate is {rate}% over the last 7 days ({total} commands, {rejected} rejected) — below the 90% threshold.",
+  syncHealthGeneratedAt: "Report generated:",
+  syncHealthLagDays: "days",
+  syncHealthLagHours: "hours",
+  syncHealthLagMinutes: "minutes",
+
+  // Revoked-device reconciliation queue (/platform/sync-reconciliation)
+  syncReconciliationEmpty: "The queue is empty — no revoked devices carry unresolved state.",
+  syncReconciliationColDevice: "Id",
+  syncReconciliationColName: "Device",
+  syncReconciliationColRevokedAt: "Revoked at",
+  syncReconciliationColPending: "Pending commands",
+  syncReconciliationColDrafts: "Owned drafts",
+  syncReconciliationColOldest: "Oldest pending",
+  syncReconciliationReassign: "Reassign drafts",
+  syncReconciliationReassignTitle: "Reassign draft ownership",
+  syncReconciliationReassignFrom: "From device (revoked)",
+  syncReconciliationReassignTo: "To device",
+  syncReconciliationReassignToPlaceholder: "Pick an active device…",
+  syncReconciliationReassignNoTargets:
+    "Could not load the active-device list — enter the target device id manually.",
+  syncReconciliationReassignAction: "Reassign",
+  syncReconciliationReassignedToast: "Reassigned ownership of {count} draft(s).",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

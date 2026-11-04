@@ -148,8 +148,11 @@ count BR-021) + `blind_count` (DEFAULT true) — runtime writes stay treasury-ow
 through its published service (MODULE_BOUNDARIES). `devices` gains the `pos-terminal`
 platform value + `capabilities`/`tenant_id`/`terminal_id`. The narrow sync slice —
 `change_log` (POS feed group: items/barcodes/uoms/price_list_items/partners/tax_codes)
-and `sync_cursors` (per-device × entity-type pull positions) — is
-[SYNC_PROTOCOL.md §11](../../offline/SYNC_PROTOCOL.md)'s boundary in schema form. The
+and `sync_cursors` (per-device × entity-type pull positions) — was
+[SYNC_PROTOCOL.md §11](../../offline/SYNC_PROTOCOL.md)'s boundary in schema form until
+PHASE-020 generalized it (migrations 0029–0031: `tombstones` + `inbox_commands` +
+`device_refresh_tokens` + the `devices` registry widening + `owner_device_id` — the
+full column specs now live in [sync.md](sync.md)). The
 CoA template gains the additive `CARD_RECEIVABLE` marker (1151 — fail-closed
 `PURPOSE_NOT_MAPPED` until the tenant maps it; [DR-016-02](../../decisions/DR-016-02-card-receivable-mapping.md)).
 Grants: SELECT/INSERT/UPDATE on the six new tables for `erp_app`, SELECT for

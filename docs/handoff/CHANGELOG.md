@@ -1,8 +1,46 @@
 # Changelog
 
-> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-03
+> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-04
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
+
+- 2026-11-04 — **PHASE-020 — Offline Synchronization Foundation (COMPLETE)**: the
+  platform-wide `sync` module generalizing the PHASE-016 POS slice (which keeps
+  working byte-identically — wire compat is §11 rule 3, proven by the chaos
+  suite's legacy legs). Migrations `0029_sync_foundation.sql` (tombstones +
+  inbox_commands both tenant-owned + RLS; device_refresh_tokens identity-owned
+  sessions-pattern; the devices registry widening — device_class, contract_version,
+  attestation substrate, trust_flags, pull/push watermarks, data_expires_at;
+  sales_invoices.owner_device_id) + `0030` (the 0024 sequence-grant gap on
+  change_log) + `0031` (the sync update_draft line-replace grant). Server: 4
+  device-class feed groups + the 9-entity catch-up writer + per-command feed
+  entries in the same transaction; pull v2 (opaque signed cursors, contiguous
+  seq windows, 2 MB page byte cap, C-12 resync, tombstone transport,
+  permissions snapshot feed with the 7-day read-only watermark); push v2 (ONE
+  handler registry calling owning-module services only — pos_sale/cashier_shift
+  SERVER_DECISION byte-identical to 016, partner:contact_merge FIELD_LEVEL_MERGE,
+  sales_invoice drafts OWNER_DEVICE_WINS + STALE_VERSION, ONLINE_ONLY →
+  FORBIDDEN resubmittable:false; inbox replay with `duplicate:true` incl. the
+  within-batch refinement; per-device rate limit → DEFERRED never-executed
+  never-recorded; 1 MB batch byte cap); device registry with attestation-lite
+  + refresh rotation (one-time-use chain, used_at reuse tripwire → revoke +
+  alarm, the kill switch survives the failure response) + revocation with the
+  pending-ops reconciliation queue and admin drafts.reassign; 4 maintenance
+  jobs (inbox.retention 30d / tombstone.gc weekly / cursor.compact daily /
+  feed.health 5-min); admin health aggregate (p95, outbox.lag gauge buckets,
+  device.revoked.pending_ops, SyncPushFailSpike/SyncCursorStall alerts) — 15
+  routes (devices ×7, sync ×5, admin ×3). `packages/sync-core` v1: runCycle
+  engine, full-jitter retry, crash recovery + quarantine + cursor-reset
+  re-bootstrap, row-budget LRU pruning, permission watermark; LOCAL_MIGRATIONS
+  v2. Web: 3 platform screens (devices, sync-health, sync-reconciliation) +
+  NAV_ITEMS rows; i18n 2926→3044. Contract `2026-11-04.1` (grace
+  `2026-10-27.1`). **Tests: `apps/api/src/__db__/sync/` 9 files / 74 green**
+  (chaos C-01..C-16, duplicates, device-security D, isolation Y — ledger oracle
+  after every scenario; ~12 s wall vs the 15-min budget) + sync-core 36/36 +
+  sales/pos regression 57/57; three production bugs found by the suites and
+  fixed in-phase (BR-003 price gate on the POS autopost path, ITEM_INACTIVE
+  vocabulary + resubmittable:false, the 1 MB push byte cap). Byte-exact LRU
+  budgets + k6 sync-fleet staged-not-executed honestly deferred (021/025).
 
 - 2026-11-03 — **PHASE-019 — CRM, Service Contracts & Projects (COMPLETE)**: the
   `crm` module (leads with conversion into partners, tasks/activities/reminders on

@@ -59,6 +59,9 @@ const NO_UPDATE_GRANT = new Set([
   // cannot be rewritten).
   "purchase_reallocations",
   "purchase_reallocation_lines",
+  // PHASE-020 (migration 0029): the push dedupe ledger is INSERT + DELETE
+  // only (the retention job's sweep) — replays rewrite nothing, ever.
+  "inbox_commands",
   // PHASE-012 (migration 0019): the sales mirror — INSERT-only by grants.
   "sales_reallocations",
   "sales_reallocation_lines",
@@ -1319,6 +1322,30 @@ async function seedFixtures(superuser: {
      ON CONFLICT (id) DO NOTHING`,
     [TENANT_A, TENANT_B],
   );
+  // PHASE-020 fixtures (migration 0029): the sync cluster — one GC-ledger
+  // row + one push-dedupe row per tenant (device_id is a bare uuid, no FK
+  // — the same shape the sync_cursors fixtures ride). Idempotent.
+  await superuser.query(
+    `INSERT INTO tombstones (id, tenant_id, entity_type, entity_id, deleted_at, gc_after)
+     VALUES
+       ('3c3c3c3c-0000-4000-8000-000000000001', $1, 'items',
+        '3c3c3c3c-0000-4000-8000-00000000aa01', now(), now() + interval '90 days'),
+       ('3c3c3c3c-0000-4000-8000-000000000002', $2, 'items',
+        '3c3c3c3c-0000-4000-8000-00000000aa02', now(), now() + interval '90 days')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO inbox_commands (id, tenant_id, device_id, command_id, idempotency_key,
+                                entity_type, intent, status, result, processed_at)
+     VALUES
+       ('3d3d3d3d-0000-4000-8000-000000000001', $1, 'dddddddd-0000-4000-8000-000000000001',
+        'iso-inbox-cmd-a', 'iso-inbox-key-a', 'pos_sale', 'create', 'ACCEPTED', '{}'::jsonb, now()),
+       ('3d3d3d3d-0000-4000-8000-000000000002', $2, 'dddddddd-0000-4000-8000-000000000002',
+        'iso-inbox-cmd-b', 'iso-inbox-key-b', 'pos_sale', 'create', 'ACCEPTED', '{}'::jsonb, now())
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
 
   // PHASE-017 fixtures (migration 0025): the automotive/distribution
   // cluster — one row per registered table per tenant, FK-consistent
@@ -1896,6 +1923,16 @@ const OWN_ROW: Record<string, [string, string]> = {
     "26262626-0000-4000-8000-000000000001",
     "26262626-0000-4000-8000-000000000002",
   ],
+  // PHASE-020 sync cluster (migration 0029): the soft-delete GC ledger +
+  // the push dedupe ledger (both deleteGranted — the retention/GC jobs).
+  tombstones: [
+    "3c3c3c3c-0000-4000-8000-000000000001",
+    "3c3c3c3c-0000-4000-8000-000000000002",
+  ],
+  inbox_commands: [
+    "3d3d3d3d-0000-4000-8000-000000000001",
+    "3d3d3d3d-0000-4000-8000-000000000002",
+  ],
   // PHASE-017 automotive & distribution cluster (migration 0025).
   vehicles: [
     "27272727-0000-4000-8000-000000000001",
@@ -2372,6 +2409,14 @@ const MISMATCHED_INSERT: Record<string, string> = {
   sync_cursors: `INSERT INTO sync_cursors (id, tenant_id, device_id, entity_type, last_seq)
      VALUES ('7c7c7c7c-3000-4000-8000-000000000003', $1,
        'dddddddd-0000-4000-8000-000000000002', 'items', 1)`,
+  tombstones: `INSERT INTO tombstones (id, tenant_id, entity_type, entity_id, deleted_at, gc_after)
+     VALUES ('3c3c3c3c-0000-4000-8000-000000000003', $1, 'items',
+       '3c3c3c3c-0000-4000-8000-00000000aa03', now(), now() + interval '90 days')`,
+  inbox_commands: `INSERT INTO inbox_commands (id, tenant_id, device_id, command_id, idempotency_key,
+                                              entity_type, intent, status, result, processed_at)
+     VALUES ('3d3d3d3d-0000-4000-8000-000000000003', $1, 'dddddddd-0000-4000-8000-000000000002',
+       'iso-attack-inbox-cmd', 'iso-attack-inbox-key', 'pos_sale', 'create', 'REJECTED',
+       '{}'::jsonb, now())`,
   // PHASE-017 automotive & distribution cluster (migration 0025).
   vehicles: `INSERT INTO vehicles (id, tenant_id, partner_id, make, model)
      VALUES ('7d7d7d7d-3000-4000-8000-000000000003', $1,
@@ -2662,7 +2707,9 @@ describe("generated attack suite A1–A10 — as erp_app", () => {
                               ? "type"
                               : table === "change_log"
                                 ? "payload"
-                                : "updated_at";
+                                : table === "inbox_commands"
+                                  ? "result"
+                                  : "updated_at";
         await expect(
           app.query(`UPDATE ${table} SET ${column} = ${column} WHERE ${idColumn} = $1`, [
             foreignRow,
@@ -2689,6 +2736,14 @@ describe("generated attack suite A1–A10 — as erp_app", () => {
         // 0022): probe the mutable qty column.
         const touched = await app.query(
           `UPDATE item_components SET qty = qty WHERE id = $1`,
+          [foreignRow],
+        );
+        expect(touched.rowCount).toBe(0);
+      } else if (table === "tombstones") {
+        // PHASE-020 (migration 0029): the GC ledger carries no updated_at
+        // (created + deleted_at/gc_after horizons only) — probe gc_after.
+        const touched = await app.query(
+          `UPDATE tombstones SET gc_after = gc_after WHERE id = $1`,
           [foreignRow],
         );
         expect(touched.rowCount).toBe(0);

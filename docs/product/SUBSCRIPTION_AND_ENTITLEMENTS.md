@@ -1,6 +1,6 @@
 # Subscription and Entitlements
 
-> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-02
+> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-04
 
 **Delivery status (PHASE-014, 2026-11-01):** the mechanics described in this file are
 **LIVE in the MVP release** — plan seeds, entitlement materialization with
@@ -131,6 +131,17 @@ creation blocked).
 > proven retail → professional_services over a real posted invoice). The
 > `crm.contract_deposits` / `crm.late_fees` intake pair stays deferred
 > behind the §17 decision record (RISK-019) — never silently granted.
+
+> **Add-on wiring (PHASE-020, migration `0029_sync_foundation.sql`).** The offline
+> foundation lights up on **business + enterprise**: migration 0029 grants
+> `offline.sync_protocol` + `offline.device_management` to both plans (the idempotent
+> array_cat guard; enterprise already carried both from the 0008 base seed — the guard
+> is a no-op there; starter does NOT get them, and its plan limits already cap offline
+> devices). Both keys resolve **live** at CURRENT_SHIPPED_PHASE 20 (2026-11-04): the
+> `sync` module + `packages/sync-core` + the three platform screens (devices, sync
+> health, sync reconciliation) are shipped — see the PHASE-020 completion report. The
+> client-app keys (`offline.desktop_app` 021, `offline.android_app` /
+> `offline.mobile_accounts` 022) stay phase-gated until their apps ship.
 
 ### 3.1 Financial Depth Pack (Blueprint v2.0 — PLACEHOLDER pricing ⚠)
 

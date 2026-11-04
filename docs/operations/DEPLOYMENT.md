@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-04
 
 How the Platform is deployed to staging and production: pre-flight checks, the deploy
 sequence, migration safety, rollback, and first-deploy bootstrap. Topology and release
@@ -179,7 +179,7 @@ Run once per environment (staging first, then production at MVP):
 |-------|---------------------------|
 | PHASE-014 (MVP) | First production bootstrap executed from §6; staging auto-deploy live; subscription/billing provider credentials provisioned ([../decisions/product/DR-002-payment-provider-selection.md](../decisions/product/DR-002-payment-provider-selection.md)) |
 | PHASE-016 (POS) | POS terminals are registered devices, not deployments — but deploys during POS pilots must announce terminal offline windows; offline sale queue (scoped sync) means **worker restarts drain in-flight reconciliation jobs first** (§2 step 5 checks queue depth) |
-| PHASE-020 | `change_log` growth monitoring added to pre-flight (backup freshness includes change-feed retention) |
+| PHASE-020 (**LIVE 2026-11-04**) | `change_log` growth monitoring added to pre-flight: the feed writes a row per change inside every owning transaction (9 catch-up entity projections + per-command push entries + permission snapshots), so it is the platform's hot growth table. Pre-flight checks: (a) the `sync.feed.health` probe (5-min job) is green — feed head age per (tenant, entity) with change pending; (b) the `ix_change_log_tenant_entity_seq` index is present and used (the pull page window scan); (c) table size trend reviewed vs the `StorageGrowth` alert — growth is unbounded by design (the feed is the transport), bounded operationally by the sibling jobs (inbox retention 30 d, tombstone GC weekly). Backup freshness includes change-feed retention. **Partitioning decision trigger**: when sustained size or the pull-page p95 degrades (T-05 load evidence), open a range-partitioning decision record for `change_log` (seq-range partitions + a partition-aware writer); until then the single-table index is proven at T-05 volumes |
 | PHASE-021/022 (desktop/Android) | **Server deploys precede client announcements**; client release channels: signed Tauri bundles + staged updater rollout (10%→50%→100% with crash-rate gates), Play Store staged rollout + minimum-version enforcement; breaking-change windows respect offline clients lagging behind ([../planning/RELEASE_STRATEGY.md](../planning/RELEASE_STRATEGY.md) §Rollout) |
 | PHASE-023 | E-invoicing certificates provisioned per [../security/SECRETS_MANAGEMENT.md](../security/SECRETS_MANAGEMENT.md) **before** adapter enablement; adapter rollout flags default off per tenant jurisdiction; submission monitoring on the deploy watch list |
 | PHASE-025 (GA) | DR drill evidence + restore test evidence are pre-flight inputs for the GA release; SLO dashboards and error-budget burn alerts active ([MONITORING.md](MONITORING.md) §5) |

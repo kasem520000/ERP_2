@@ -1,0 +1,253 @@
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Req } from "@nestjs/common";
+import type { Request } from "express";
+import { z } from "zod";
+import { sql } from "drizzle-orm";
+
+import { DEVICE_CLASSES, SYNC_CONTRACT_VERSION } from "@erp/contracts";
+
+import { identityOf, type SessionContext } from "../../../infra/context/session-context";
+import { RequirePermissions } from "../../../infra/auth/require-permissions.decorator";
+import { envelope } from "../../../infra/http/envelope";
+import { getDb } from "../../../infra/db/client";
+import { withTenant } from "../../../infra/db/tenant-context";
+import {
+  effectivePermissions,
+  ForbiddenError,
+  membershipOptions,
+  TenantContextRequiredError,
+  UnauthenticatedError,
+} from "../../identity/api/identity";
+import { DeviceNotFoundError, DeviceRegistryService } from "../application/device-registry-service";
+import {
+  DeviceRefreshInvalidError,
+  DeviceRevokedError,
+  reapplyRefreshReuseRevocation,
+  rotateRefreshToken,
+} from "../application/device-tokens";
+
+/**
+ * PHASE-020 · device registry routes (T3; MASTER-PLAN §8 rows 1–7;
+ * SECURITY_AND_DEVICE_MANAGEMENT §1–§4; ADR-0015 §3; SYNC_PROTOCOL §1).
+ *
+ * Row 1–6 are permission-guarded tenant routes (the interceptor wraps the
+ * handler in withTenant so the registry service and its audit events share
+ * one unit of work). Row 7 — `POST /api/v1/devices/:id/refresh` — is the
+ * PUBLIC credential exchange (route-permissions PUBLIC_ROUTES, the login
+ * pattern: the bearer refresh token in the body IS the credential, no
+ * session can exist before credentials rotate). The refresh route derives
+ * its tenant scope the way login does: device → user → ACTIVE membership
+ * (definer projection, pre-GUC) → withTenant(rotation).
+ */
+
+const UUID = z.string().uuid();
+
+const registerSchema = z.object({
+  deviceName: z.string().min(2).max(120),
+  deviceClass: z.enum(DEVICE_CLASSES),
+  platform: z.string().min(2).max(40).optional(),
+  platformVersion: z.string().max(80).optional(),
+  appVersion: z.string().max(80).optional(),
+  contractVersion: z.string().max(40).optional(),
+  deviceKeyPublic: z.string().min(16).max(400).optional(),
+  capabilities: z.array(z.string().min(1).max(40)).max(20).optional(),
+  platformAttestation: z.string().min(4).max(2000).optional(),
+});
+
+const patchSchema = z.object({
+  trustFlags: z.record(z.string(), z.unknown()).optional(),
+  dataExpiresAt: z.string().datetime().nullable().optional(),
+});
+
+const attestSchema = z.object({ signature: z.string().min(8).max(2000) });
+const revokeSchema = z.object({ reason: z.string().min(1).max(500).optional() });
+const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200) });
+
+/** Duplicated locally per the module convention (never import from a sibling
+ * controller): the session identity or 401. */
+function requireIdentity(request: Request): SessionContext {
+  const identity = identityOf(request);
+  if (identity === undefined) {
+    throw new UnauthenticatedError();
+  }
+  return identity;
+}
+
+/** Guarded routes require an active tenant scope (the PermissionsGuard
+ * already rejects null activeTenantId — this is the typed belt). */
+function requireActiveTenant(identity: SessionContext): string {
+  if (identity.activeTenantId === null) {
+    throw new TenantContextRequiredError();
+  }
+  return identity.activeTenantId;
+}
+
+/** Context-less device lookup for the public refresh route (devices is
+ * service-mediated — no RLS, no tenant GUC needed). */
+async function findDeviceUser(deviceId: string): Promise<{ userId: string } | undefined> {
+  const rows = await getDb().execute(sql`
+    SELECT user_id AS "userId" FROM devices WHERE id = ${deviceId} LIMIT 1
+  `);
+  return (rows.rows as unknown as { userId: string }[])[0];
+}
+
+@Controller("api/v1/devices")
+export class DevicesController {
+  constructor(private readonly registry: DeviceRegistryService) {}
+
+  /** Row 1 — register a device; the enrollment secret is returned ONCE. */
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @RequirePermissions("sync.devices.register")
+  async register(@Req() request: Request, @Body() body: unknown) {
+    const identity = requireIdentity(request);
+    const tenantId = requireActiveTenant(identity);
+    const input = registerSchema.parse(body);
+    const result = await this.registry.register({
+      actorId: identity.userId,
+      tenantId,
+      deviceName: input.deviceName,
+      deviceClass: input.deviceClass,
+      platform: input.platform,
+      platformVersion: input.platformVersion,
+      appVersion: input.appVersion,
+      contractVersion: input.contractVersion,
+      deviceKeyPublic: input.deviceKeyPublic,
+      capabilities: input.capabilities,
+      platformAttestation: input.platformAttestation,
+    });
+    return envelope({
+      deviceId: result.device.id,
+      attestationNonce: result.attestationNonce,
+      enrollmentSecret: result.enrollmentSecret,
+      contractVersion: SYNC_CONTRACT_VERSION,
+    });
+  }
+
+  /** Row 2 — the registry table (web `/platform/devices`). */
+  @Get()
+  @RequirePermissions("identity.devices.manage")
+  async list(@Req() request: Request) {
+    const identity = requireIdentity(request);
+    const tenantId = requireActiveTenant(identity);
+    return envelope(await this.registry.list({ tenantId }));
+  }
+
+  /** Row 3 — the detail view (drawer with per-entity cursor state). */
+  @Get(":id")
+  @RequirePermissions("identity.devices.manage")
+  async get(@Param("id") id: string) {
+    return envelope(await this.registry.get({ deviceId: UUID.parse(id) }));
+  }
+
+  /** Row 4 — the admin plane: trust flags (merge) + remote data expiry. */
+  @Patch(":id")
+  @RequirePermissions("identity.devices.manage")
+  async patch(@Req() request: Request, @Param("id") id: string, @Body() body: unknown) {
+    const identity = requireIdentity(request);
+    requireActiveTenant(identity);
+    const input = patchSchema.parse(body);
+    const deviceId = UUID.parse(id);
+    let trustFlags: Record<string, unknown> | undefined;
+    let dataExpiresAt: Date | null | undefined;
+    if (input.trustFlags !== undefined) {
+      trustFlags = await this.registry.flagTrust({
+        deviceId,
+        actorId: identity.userId,
+        flags: input.trustFlags,
+      });
+    }
+    if (input.dataExpiresAt !== undefined) {
+      const result = await this.registry.expireData({
+        deviceId,
+        actorId: identity.userId,
+        expiresAt: input.dataExpiresAt,
+      });
+      dataExpiresAt = result.dataExpiresAt;
+    }
+    return envelope({ deviceId, trustFlags, dataExpiresAt });
+  }
+
+  /** Row 5 — attestation-lite: prove possession of the registered key. */
+  @Post(":id/attest")
+  @RequirePermissions("sync.devices.register")
+  async attest(@Param("id") id: string, @Body() body: unknown) {
+    const input = attestSchema.parse(body);
+    return envelope(
+      await this.registry.attest({ deviceId: UUID.parse(id), signature: input.signature }),
+    );
+  }
+
+  /**
+   * Row 6 — revoke (the kill switch). The route registry marks the key
+   * `self: true`: self-revoke (session user owns the device) and admin
+   * revoke are both allowed — the handler enforces the ownership boundary,
+   * the guard enforces the key (or the widened self scope).
+   */
+  @Post(":id/revoke")
+  @RequirePermissions("sync.devices.revoke", { self: true })
+  async revoke(@Req() request: Request, @Param("id") id: string, @Body() body: unknown) {
+    const identity = requireIdentity(request);
+    const tenantId = requireActiveTenant(identity);
+    const input = revokeSchema.parse(body);
+    const deviceId = UUID.parse(id);
+    const detail = await this.registry.get({ deviceId });
+    const self = detail.device.userId === identity.userId;
+    const admin = (await effectivePermissions(identity.userId, tenantId)).has("sync.devices.revoke");
+    if (!self && !admin) {
+      throw new ForbiddenError("sync.devices.revoke");
+    }
+    return envelope(
+      await this.registry.revoke({
+        deviceId,
+        actorId: identity.userId,
+        reason: input.reason,
+        admin,
+      }),
+    );
+  }
+
+  /**
+   * Row 7 — PUBLIC credential exchange (PUBLIC_ROUTES; the login pattern).
+   * Tenant derivation: device → user → ACTIVE membership (definer
+   * projection, pre-GUC) → withTenant. On the reuse path the rotation throws
+   * AFTER revoking — withTenant rolls the unit of work back with the throw,
+   * so the controller re-applies the kill switch in its own committed scope
+   * (idempotent, no double alarm). The M-05 revocation must SURVIVE the
+   * failure response it causes.
+   */
+  @Post(":id/refresh")
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Param("id") id: string, @Body() body: unknown) {
+    const input = refreshSchema.parse(body);
+    const deviceId = UUID.parse(id);
+    const device = await findDeviceUser(deviceId);
+    if (device === undefined) {
+      throw new DeviceNotFoundError(deviceId);
+    }
+    const options = await membershipOptions(device.userId);
+    const active = options.find(
+      (option) =>
+        option.tenantId !== null &&
+        option.membershipStatus === "ACTIVE" &&
+        option.tenantStatus === "ACTIVE",
+    );
+    if (active === undefined) {
+      throw new DeviceRefreshInvalidError(
+        "the device user has no active membership — credential exchange unavailable",
+      );
+    }
+    try {
+      const rotated = await withTenant(active.tenantId, () =>
+        rotateRefreshToken({ deviceId, token: input.refreshToken }),
+      );
+      return envelope(rotated);
+    } catch (error) {
+      if (error instanceof DeviceRevokedError) {
+        await withTenant(active.tenantId, () =>
+          reapplyRefreshReuseRevocation({ deviceId }),
+        ).catch(() => undefined);
+      }
+      throw error;
+    }
+  }
+}

@@ -63,7 +63,7 @@ const GOLDEN: Readonly<
   },
   "industry.retail × business": {
     template: RETAIL_MANIFEST,
-    hash: "sha256:e42d0ae397506576e3b32c17fa14f46bac0bfa2f05ba7efcea629896f36bfe51",
+    hash: "sha256:c32d2bc8eac2eb814d5c7ce95dcbef064369d1cab95707cd4340637c6bb2561f",
   },
   "industry.retail × enterprise": {
     template: RETAIL_MANIFEST,
@@ -75,7 +75,7 @@ const GOLDEN: Readonly<
   },
   "industry.grocery × business": {
     template: GROCERY_MANIFEST,
-    hash: "sha256:584deea54541e60774b3d01c204546ac9659eeabb0232bba967262c6382bf4e2",
+    hash: "sha256:bfac33332b7fd47997b70d81e34b5c9162966ed649d6fdbe92dddea6b8eaa528",
   },
   "industry.grocery × enterprise": {
     template: GROCERY_MANIFEST,
@@ -87,7 +87,7 @@ const GOLDEN: Readonly<
   },
   "industry.restaurant × business": {
     template: RESTAURANT_MANIFEST,
-    hash: "sha256:2f2be5e730e6e135bada13d81a8258b63373008f0626d68e515298c36028c923",
+    hash: "sha256:a3d8d005044a4b0d4debd695b98ed08f472c6dda1f659d9cd79cd67e6ff3ad4e",
   },
   "industry.restaurant × enterprise": {
     template: RESTAURANT_MANIFEST,
@@ -100,7 +100,7 @@ const GOLDEN: Readonly<
   },
   "industry.automotive × business": {
     template: AUTOMOTIVE_TEMPLATE_MANIFEST,
-    hash: "sha256:06249c46472cfe6623635e35b96e4d634e9f5c848d18d9b3af4c983a66159d62",
+    hash: "sha256:f8b1e3cb14f94119572ca666e80100fe84422270938f392799384083e54a828d",
   },
   "industry.automotive × enterprise": {
     template: AUTOMOTIVE_TEMPLATE_MANIFEST,
@@ -112,7 +112,7 @@ const GOLDEN: Readonly<
   },
   "industry.distribution × business": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
-    hash: "sha256:e14881d954db7360a211fb66512f6e0bd6f4859cef28f9ed60e5ce09e7601d7d",
+    hash: "sha256:50758aab1d63d8182b6c000c6666104ce0d16818ea53111aba2b174adaa2b18f",
   },
   "industry.distribution × enterprise": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
@@ -125,7 +125,7 @@ const GOLDEN: Readonly<
   },
   "industry.food_manufacturing × business": {
     template: FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
-    hash: "sha256:f54439610a0edaee72e477a875666ac625bab4b3477905ade15c11dd51833cfa",
+    hash: "sha256:ba98dacd8467149863dae37b8ac89fd548ae8575a4a7e849876a90b093a15774",
   },
   "industry.food_manufacturing × enterprise": {
     template: FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
@@ -138,7 +138,7 @@ const GOLDEN: Readonly<
   },
   "industry.professional_services × business": {
     template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
-    hash: "sha256:8353be21bc9ad51891b685c3e30864edda83ef1b82c7b5f2964de3888b47e9c6",
+    hash: "sha256:e5b6c557bf37b75cd3d9591f93e9f7acb543fd86129cf9c963142d67916bf90c",
   },
   "industry.professional_services × enterprise": {
     template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
@@ -147,7 +147,7 @@ const GOLDEN: Readonly<
   // The platform-default tenant (no template applied — L1 neutral).
   "(no template) × business": {
     template: null,
-    hash: "sha256:48ebd6f99c82b0af1cb575ea08c4db055521a78a630c471891c15d6734709405",
+    hash: "sha256:cc4c714d205842a1b8da9a9d3ab7909f8f19fef07dc1d43678964304a102cfbb",
   },
 });
 

@@ -36,7 +36,8 @@ export type DataSourceModule =
   | "reporting"
   | "pos" // PHASE-016: the pos module query surface (Z-report contracts)
   | "distribution" // PHASE-017: the distribution query surface (settlements/van/routes)
-  | "manufacturing"; // PHASE-018: the manufacturing query surface (production cost/genealogy/QC)
+  | "manufacturing" // PHASE-018: the manufacturing query surface (production cost/genealogy/QC)
+  | "crm"; // PHASE-019: the CRM query surface (contract revenue schedule / time billing)
 
 export interface DataSourceDecl {
   readonly module: DataSourceModule;
@@ -157,6 +158,10 @@ export interface ReportParams {
   readonly vehicleId?: string;
   /** PHASE-018 (industry): the batch of `manufacturing.batch_genealogy`. */
   readonly batchId?: string;
+  /** PHASE-019 (industry): the contract of `services.contract_revenue_schedule`. */
+  readonly contractId?: string;
+  /** PHASE-019 (industry): the project of `services.time_billing_summary`. */
+  readonly projectId?: string;
   readonly customerId?: string;
   readonly supplierId?: string;
   readonly itemId?: string;

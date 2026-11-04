@@ -7,9 +7,10 @@ import type { WorkflowPolicyValue } from "@erp/contracts";
  * the platform policy registry; unknown keys are rejected").
  *
  * A manifest may only set policy keys THIS registry knows — every key used
- * by the six shipped templates (retail / grocery / restaurant + the
+ * by the seven shipped templates (retail / grocery / restaurant + the
  * PHASE-017 automotive / distribution pair + the PHASE-018
- * food_manufacturing template, v1.0.0,
+ * food_manufacturing template + the PHASE-019 professional_services
+ * template, v1.0.0,
  * `packages/contracts/src/industry/templates.ts`) is transcribed below with
  * its canonical type, owning module, and optional mapping onto a
  * SETTINGS_REGISTRY key (L5 override surface).
@@ -268,6 +269,57 @@ export const POLICY_REGISTRY: Readonly<Record<string, PolicyDefinition>> = Objec
     description:
       "PHASE-018 §5 variance review: after each consume, cumulative consumed qty above planned × (1 + threshold/100) flags the order line (over_plan) and raises the stock-category review notification — consumption is never blocked; correction is an adjusted consumption.",
   } satisfies PolicyDefinition),
+  // --- professional services (PHASE-019) ------------------------------------
+  "contract_billing_mode": Object.freeze({
+    key: "contract_billing_mode",
+    valueType: "enum",
+    enumValues: Object.freeze([
+      "retainer_or_milestones",
+      "retainer",
+      "milestones",
+      "hourly",
+    ]),
+    default: "retainer_or_milestones",
+    module: "crm",
+    settingsKey: "crm.contract_billing_mode",
+    description:
+      "PHASE-019 §9: the fee-model family the practice runs on (retainer / milestones / hourly, or the combined retainer_or_milestones default); gates which schedule grid the contract editor expands and which fee-item inputs it requires.",
+  } satisfies PolicyDefinition),
+  "time_entries_require_case": booleanPolicy(
+    "time_entries_require_case",
+    "crm",
+    true,
+    "PHASE-019 §6: recording a time entry requires a project (case) — typed TIME_ENTRY_CASE_REQUIRED; turning it off allows non-project time (tracking-only, still billable when pulled by contract billing).",
+    "crm.time_entries_require_case",
+  ),
+  "unbilled_time_review_before_invoice": booleanPolicy(
+    "unbilled_time_review_before_invoice",
+    "crm",
+    true,
+    "PHASE-019 §6: the weekly review (DRAFT → APPROVED) is the gate before any time entry may be pulled into an invoice — only APPROVED entries are billable.",
+    "crm.unbilled_time_review_before_invoice",
+  ),
+  "invoice_approval_required": booleanPolicy(
+    "invoice_approval_required",
+    "crm",
+    true,
+    "PHASE-019 §5: recurring-billing drafts stay DRAFT for manual approve+post (BR-034 SoD — the run's POLICY_ACTOR drafts can never self-approve); turning it off auto-submits them to PENDING_APPROVAL, never auto-posts.",
+    "crm.invoice_approval_required",
+  ),
+  "invoice_numbering_per_series": booleanPolicy(
+    "invoice_numbering_per_series",
+    "crm",
+    false,
+    "PHASE-019 §9 documented posture v1: numbering stays the standard SAL/INV series (no per-contract-series fork); the key ships false and services read it as informational.",
+    "crm.invoice_numbering_per_series",
+  ),
+  "narrative_required_on_time_billing": booleanPolicy(
+    "narrative_required_on_time_billing",
+    "crm",
+    true,
+    "PHASE-019 §5: hourly billing pulls only entries with a non-empty narrative (the honest timeslip) — empty-narrative entries are listed needsNarrative in the preview and skipped, never silently billed.",
+    "crm.narrative_required_on_time_billing",
+  ),
 });
 
 export const POLICY_KEYS: readonly string[] = Object.keys(POLICY_REGISTRY);

@@ -5,6 +5,7 @@ import {
   DISTRIBUTION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
+  PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
   RESTAURANT_MANIFEST,
   RETAIL_MANIFEST,
   SHIPPED_TEMPLATE_MANIFESTS,
@@ -18,17 +19,21 @@ import {
 } from "../index";
 
 /**
- * PHASE-015 T3 test hook (extended by PHASE-017 T2 and PHASE-018 T2): all
- * six v1.0.0 manifests validate against the §3 schema; negative fixtures
- * are rejected with the precise issue; the content hash is canonical and
- * deterministic (applied_manifest_hash). The automotive/distribution pair
- * is transcribed verbatim from the migration 0025 registry seeds (the
- * canonical source; the automotive pins carry the reconciled live report
- * keys `inventory.valuation` + `ar.aging`). The food_manufacturing
+ * PHASE-015 T3 test hook (extended by PHASE-017 T2, PHASE-018 T2, and
+ * PHASE-019 T2): all seven v1.0.0 manifests validate against the §3 schema;
+ * negative fixtures are rejected with the precise issue; the content hash is
+ * canonical and deterministic (applied_manifest_hash). The automotive/
+ * distribution pair is transcribed verbatim from the migration 0025 registry
+ * seeds (the canonical source; the automotive pins carry the reconciled live
+ * report keys `inventory.valuation` + `ar.aging`). The food_manufacturing
  * template is transcribed verbatim from the migration 0026 registry seed
  * (docs mirror: docs/industries/templates/manifests/
  * manifest.food_manufacturing.json) and pins the live manufacturing report
- * keys.
+ * keys. The professional_services template is transcribed verbatim from the
+ * migration 0027 registry seed (docs mirror:
+ * docs/industries/templates/manifests/manifest.professional_services.json —
+ * the §12 doc reconciliation applied: bom_production N/A entry dropped,
+ * ar_aging pinned to the live `ar.aging` registry key).
  */
 
 function cloneManifest(manifest: IndustryTemplateManifest): IndustryTemplateManifest {
@@ -81,14 +86,14 @@ function expectSingleIssue(
   }
 }
 
-describe("shipped industry template manifests (v1.0.0 — retail / grocery / restaurant / automotive / distribution / food_manufacturing)", () => {
-  it("all six parse against the §3 schema and round-trip identically", () => {
+describe("shipped industry template manifests (v1.0.0 — retail / grocery / restaurant / automotive / distribution / food_manufacturing / professional_services)", () => {
+  it("all seven parse against the §3 schema and round-trip identically", () => {
     for (const manifest of SHIPPED_TEMPLATE_MANIFESTS) {
       expect(parseIndustryTemplateManifest(manifest)).toStrictEqual(manifest);
     }
   });
 
-  it("the registry ships exactly the six ids at 1.0.0", () => {
+  it("the registry ships exactly the seven ids at 1.0.0", () => {
     expect(SHIPPED_TEMPLATE_MANIFESTS.map((manifest) => manifest.id)).toEqual([
       "industry.retail",
       "industry.grocery",
@@ -96,6 +101,7 @@ describe("shipped industry template manifests (v1.0.0 — retail / grocery / res
       "industry.automotive",
       "industry.distribution",
       "industry.food_manufacturing",
+      "industry.professional_services",
     ]);
     expect(SHIPPED_TEMPLATE_MANIFESTS.every((manifest) => manifest.version === "1.0.0")).toBe(true);
   });
@@ -189,6 +195,96 @@ describe("shipped industry template manifests (v1.0.0 — retail / grocery / res
         per_branch: true,
         reserve_on_approval: true,
       });
+  });
+
+  it("the PHASE-019 template pins the practice/billing navigation and the crm policy set (0027)", () => {
+    // The report pins: the two PHASE-019 services.* registry keys plus the
+    // composed already-live `ar.aging` (the §12 doc reconciliation — the
+    // pre-0027 doc draft said partners.ar_aging) and sales.commissions_due.
+    expect(
+      PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.report_defaults.map((pin) => pin.report_key),
+    ).toEqual([
+      "services.contract_revenue_schedule",
+      "services.time_billing_summary",
+      "ar.aging",
+      "sales.commissions_due",
+    ]);
+    expect(
+      PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.report_defaults.find(
+        (pin) => pin.report_key === "ar.aging",
+      ),
+    ).toMatchObject({ pinned: true, dashboard: false, default_period: "this_month" });
+    // The practice/billing navigation groups ship as-is with the §14 target
+    // keys (crm.time / crm.contracts / crm.recurring_billing /
+    // accounting.projects).
+    expect(
+      PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.navigation_manifest.groups.map(
+        (group) => group.id,
+      ),
+    ).toEqual(["practice", "billing"]);
+    const practice = PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.navigation_manifest.groups.find(
+      (group) => group.id === "practice",
+    )!;
+    expect(practice.items.map((item) => item.target)).toEqual([
+      "accounting.projects",
+      "crm.time",
+      "crm.contracts",
+    ]);
+    const billing = PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.navigation_manifest.groups.find(
+      (group) => group.id === "billing",
+    )!;
+    expect(billing.items.map((item) => item.target)).toEqual([
+      "crm.recurring_billing",
+      "sales.invoices",
+      "partners.statements",
+    ]);
+    // The PHASE-019 intake set rides in the required keys (the 0027 plan
+    // grants cover it on business/enterprise; starter excluded).
+    for (const key of [
+      "crm.service_contracts",
+      "crm.recurring_billing",
+      "accounting.projects",
+    ]) {
+      expect(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.required_feature_keys).toContain(key);
+    }
+    // The six §9 workflow policies land as L1 defaults (module "crm"; the
+    // crm.* names map onto the SETTINGS_REGISTRY keys via POLICY_REGISTRY
+    // settingsKey — e.g. contract_billing_mode → crm.contract_billing_mode).
+    expect(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.workflow_policies).toEqual({
+      contract_billing_mode: "retainer_or_milestones",
+      time_entries_require_case: true,
+      unbilled_time_review_before_invoice: true,
+      invoice_approval_required: true,
+      invoice_numbering_per_series: false,
+      narrative_required_on_time_billing: true,
+    });
+    // The INV-/RCP-/CN- numbering rules (contract_invoice is a series-bearing
+    // §3 document type; all four series are tenant-level, assigned at
+    // posting).
+    expect(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.document_numbering_defaults.contract_invoice)
+      .toEqual({
+        prefix: "INV",
+        format: "INV-{yyyy}-{seq:6}",
+        per_branch: false,
+        reserve_on_approval: false,
+      });
+    expect(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.document_numbering_defaults.receipt).toEqual({
+      prefix: "RCP",
+      format: "RCP-{yyyy}-{seq:6}",
+      per_branch: false,
+      reserve_on_approval: false,
+    });
+    expect(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.document_numbering_defaults.credit_note).toEqual({
+      prefix: "CN",
+      format: "CN-{yyyy}-{seq:5}",
+      per_branch: false,
+      reserve_on_approval: false,
+    });
+    // The terminology carries the practice-management Arabic (svc.case).
+    expect(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.terminology_overrides["svc.case"]).toEqual({
+      en: "Case / Matter",
+      ar: "القضية / الملف",
+    });
   });
 });
 
@@ -387,6 +483,67 @@ describe("negative fixtures — each §3 violation is rejected with the right is
       code: "invalid_value",
       path: ["report_defaults", 0, "default_period"],
     });
+  });
+
+  // PHASE-019 negative fixtures on the professional_services manifest —
+  // one surgical §3 violation per case against the newest template's own
+  // shape (three §3 surfaces never exercised by (a)–(p)).
+  it("(q) professional_services: workflow policy key outside lower_snake_case", () => {
+    const draft = cloneManifest(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST);
+    (draft.workflow_policies as Record<string, unknown>)["Contract Billing Mode"] =
+      "retainer_or_milestones";
+    const result = IndustryTemplateManifestSchema.safeParse(draft);
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("unreachable: expected the mutated manifest to be rejected");
+    }
+    expect(result.error.issues).toHaveLength(1);
+    expect(result.error.issues[0]).toMatchObject({
+      // zod 4 record-key violations report the generic `invalid_key` code
+      // ("Invalid key in record") — the path pins the offending key.
+      code: "invalid_key",
+      path: ["workflow_policies", "Contract Billing Mode"],
+    });
+  });
+
+  it("(r) professional_services: numbering default keyed by a non-series-bearing document type", () => {
+    const draft = cloneManifest(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST);
+    // `service_contract` (the document lifecycle table) is NOT one of the
+    // §3 series-bearing DOCUMENT_TYPES (contract numbers are contract-side
+    // state, never a tenant numbering series).
+    (draft.document_numbering_defaults as Record<string, unknown>).service_contract = {
+      prefix: "CT",
+      format: "CT-{yyyy}-{seq:5}",
+      per_branch: false,
+      reserve_on_approval: true,
+    };
+    const result = IndustryTemplateManifestSchema.safeParse(draft);
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("unreachable: expected the mutated manifest to be rejected");
+    }
+    expect(result.error.issues).toHaveLength(1);
+    expect(result.error.issues[0]).toMatchObject({
+      code: "unrecognized_keys",
+      path: ["document_numbering_defaults"],
+    });
+    expect(result.error.issues[0]!.message).toMatch(/service_contract/);
+  });
+
+  it("(s) professional_services: capability with an empty feature_keys array (minItems 1)", () => {
+    const draft = cloneManifest(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST);
+    draft.capability_prerequisites.commissions!.feature_keys = [];
+    const result = IndustryTemplateManifestSchema.safeParse(draft);
+    expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("unreachable: expected the mutated manifest to be rejected");
+    }
+    expect(result.error.issues).toHaveLength(1);
+    expect(result.error.issues[0]).toMatchObject({
+      code: "too_small",
+      path: ["capability_prerequisites", "commissions", "feature_keys"],
+    });
+    expect(result.error.issues[0]!.message).toMatch(/at least one key/);
   });
 });
 

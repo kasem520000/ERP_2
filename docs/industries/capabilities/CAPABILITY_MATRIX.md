@@ -472,10 +472,10 @@ capability is phase-gated/optional and degrades per [../README.md](../README.md)
 
 | Proposed key | Capability | Definition (one line) | Target phase |
 |---|---|---|---|
-| `crm.rental_contracts` | `rental_contracts` | Rental specialization of service contracts: reservation, pickup/return, rate tables, availability | PHASE-019 |
-| `crm.contract_deposits` | `deposits_late_fees` | Contract security deposits as on-account credit items (BR-027), optionally posted to `DEPOSITS_RECEIVED` | PHASE-019 |
-| `crm.late_fees` | `deposits_late_fees` | Contract-term late-return/late-payment charge generation | PHASE-019 |
-| `distribution.shipment_tracking` | `shipment_tracking` | Shipment/consignment records with milestone status and aging | PHASE-019 |
+| `crm.rental_contracts` | `rental_contracts` | Rental specialization of service contracts: reservation, pickup/return, rate tables, availability | **deferred** (PHASE-019 shipped without it — decision record in [../../implementation/phases/reports/PHASE-019-COMPLETION.md](../../implementation/phases/reports/PHASE-019-COMPLETION.md); the base `service_contracts` capability is live) |
+| `crm.contract_deposits` | `deposits_late_fees` | Contract security deposits as on-account credit items (BR-027), optionally posted to `DEPOSITS_RECEIVED` | **deferred** (same decision record — advances use the plain on-account + DEFERRED_REVENUE reclass path; the DEPOSITS_RECEIVED liability split is NOT implemented) |
+| `crm.late_fees` | `deposits_late_fees` | Contract-term late-return/late-payment charge generation | **deferred** (same decision record) |
+| `distribution.shipment_tracking` | `shipment_tracking` | Shipment/consignment records with milestone status and aging | **deferred** (same decision record; manual milestones re-targeted with the PHASE-023 adapters) |
 
 > **Intake completions:** `pos.table_service` + `pos.kitchen_display` (PHASE-016) and
 > `sales.job_cards` (PHASE-017) were proposed here and have since completed the §5

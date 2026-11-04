@@ -55,11 +55,11 @@ includes everything of the plan to its left):
 | Module area | Starter | Business adds | Enterprise adds |
 |---|---|---|---|
 | platform | `platform.registration`, `platform.onboarding`, `platform.branches`, `platform.users_roles`, `platform.audit_trail`, `platform.data_export` | `platform.notifications` (in-app) | — |
-| accounting | `accounting.chart_of_accounts`, `accounting.fiscal_calendar`, `accounting.journal_entries`, `accounting.approvals`, `accounting.general_ledger`, `accounting.opening_balances`, `accounting.period_close`, `accounting.year_end_close`, `accounting.reconciliation` | `accounting.multi_currency`, `accounting.cost_centers` | `accounting.projects` |
+| accounting | `accounting.chart_of_accounts`, `accounting.fiscal_calendar`, `accounting.journal_entries`, `accounting.approvals`, `accounting.general_ledger`, `accounting.opening_balances`, `accounting.period_close`, `accounting.year_end_close`, `accounting.reconciliation` | `accounting.multi_currency`, `accounting.cost_centers`, `accounting.projects` (PHASE-019 grant) | — |
 | master data & trade | `partners.*` (directory, credit_terms, statements), `items.*` (core), `inventory.stock_ledger`, `inventory.valuation`, `inventory.multi_warehouse`, `sales.quotations`…`sales.receivables_aging` core chain, `purchasing.requests`…`purchasing.three_way_matching` | `inventory.batch_tracking`, `inventory.serial_tracking`, `inventory.stock_counts`, `inventory.stock_transfers`, `sales.credit_limits`, `partners.credit_management`, `purchasing.landed_costs`, `inventory.reservations` (PHASE-017 grant), `sales.commissions` (PHASE-017 grant) | `inventory.reorder_levels` |
 | treasury & tax | `treasury.accounts`, `treasury.receipts_disbursements`, `treasury.expenses`, `treasury.expense_categories`, `tax.engine`, `tax.codes`, `tax.registrations`, `tax.jurisdiction_packs`, `tax.vat_return` | `treasury.petty_cash`, `treasury.cash_transfers`, `treasury.bank_reconciliation`, `treasury.cashier_shifts`, `treasury.cheques` | `tax.einvoicing_framework` (adapters per jurisdiction add-on) |
 | reporting | `reporting.engine`, `reporting.financial_statements`, `reporting.operational_reports` (core), `reporting.print_templates`, `reporting.exports` | `reporting.dashboards` | `reporting.scheduled_reports` |
-| growth tier | — | `pos.terminals`, `pos.sales`, `pos.shifts`, `pos.receipts`, `pos.barcode_scanning`, `pos.offline_queue`, `industry.template_engine`, `industry.terminology`, one industry add-on of choice, `sales.job_cards` + `distribution.*` (routes, van_stock, settlements, customer_tiers, free_goods — PHASE-017 grants) | `crm.*`, `manufacturing.*`, `industry.addons` (3), `offline.desktop_app`, `offline.android_app`, `offline.mobile_accounts`, `offline.device_management` |
+| growth tier | — | `pos.terminals`, `pos.sales`, `pos.shifts`, `pos.receipts`, `pos.barcode_scanning`, `pos.offline_queue`, `industry.template_engine`, `industry.terminology`, one industry add-on of choice, `sales.job_cards` + `distribution.*` (routes, van_stock, settlements, customer_tiers, free_goods — PHASE-017 grants), `crm.*` (leads, tasks_activities, service_contracts, recurring_billing, service_orders — PHASE-019 grant), `manufacturing.*` (PHASE-018 grant) | `industry.addons` (3), `offline.desktop_app`, `offline.android_app`, `offline.mobile_accounts`, `offline.device_management` |
 
 ## 3. Industry add-ons (PLACEHOLDER pricing ⚠)
 
@@ -71,10 +71,10 @@ Add-ons bundle a template + the feature keys that template emphasizes
 | Retail pack | `industry.retail` | `pos.*` set, `items.barcodes`, `treasury.cashier_shifts` |
 | Grocery pack | `industry.grocery` | Retail pack + `inventory.batch_tracking`, `items.units_of_measure` |
 | Restaurant pack | `industry.restaurant` | Retail pack + `items.composite_products` |
-| Automotive pack | `industry.automotive` | `sales.job_cards`, `sales.quotations`, `inventory.reservations`, `inventory.serial_tracking`, `treasury.cashier_shifts` (parts counter sale rides the optional `pos.*` set) — **SHIPPED PHASE-017**; `crm.service_orders` generalization arrives PHASE-019 |
+| Automotive pack | `industry.automotive` | `sales.job_cards`, `sales.quotations`, `inventory.reservations`, `inventory.serial_tracking`, `treasury.cashier_shifts` (parts counter sale rides the optional `pos.*` set) — **SHIPPED PHASE-017**; `crm.service_orders` generalization shipped PHASE-019 |
 | Distribution pack | `industry.distribution` | `distribution.*` (routes, van_stock, settlements, customer_tiers, free_goods), `sales.commissions`, `inventory.batch_tracking` — **SHIPPED PHASE-017**; offline van selling (`offline.android_app`) arrives PHASE-022 |
 | Food manufacturing pack | `industry.food_manufacturing` | `manufacturing.*` (BOM, production orders, WIP, costing, scrap, batch genealogy, QC), `inventory.batch_tracking` — **SHIPPED PHASE-018**; restaurants' prep-recipe (`bom_production`) entries are live configuration for `industry.restaurant` tenants carrying this add-on |
-| Professional services pack | `industry.professional_services` | `crm.service_contracts`, `crm.recurring_billing`, `accounting.projects` |
+| Professional services pack | `industry.professional_services` | `crm.service_contracts`, `crm.recurring_billing`, `accounting.projects`, `crm.leads`, `crm.tasks_activities`, `crm.service_orders` — **SHIPPED PHASE-019** |
 | Rental / logistics pack | `industry.rental_logistics` | `crm.service_contracts`, `inventory.serial_tracking`, `crm.recurring_billing` |
 | Wholesale pack | `industry.wholesale` | `items.price_lists` (qty-break tiers), `partners.credit_terms`, `sales.credit_limits`, `distribution.routes` (optional), `notes.received` |
 | Electronics pack | `industry.electronics` | `inventory.serial_tracking` (IMEI), `crm.service_orders` (repairs), `pos.*` set |
@@ -115,6 +115,22 @@ creation blocked).
 > missing the manufacturing keys) blocks apply with the exact missing chain, and the
 > restaurant template without this add-on hides its optional prep-recipe entries
 > cleanly (BR-038 additive-only switching proven restaurant → food_manufacturing).
+
+> **Add-on wiring (PHASE-019, migration `0027_crm_projects.sql`).** The
+> professional services pack lights up on **business + enterprise**: migration
+> 0027 grants the six CRM+projects feature keys — `crm.leads`,
+> `crm.tasks_activities`, `crm.service_contracts`, `crm.recurring_billing`,
+> `crm.service_orders`, and `accounting.projects` — to both plans (starter
+> does NOT get them; enterprise already carried them from the 0008 base
+> seed). `industry.professional_services` is seeded at v1.0.0 (byte-equal to
+> the docs manifest and the contracts constant) and applies through the
+> unmodified PHASE-015 engine at CURRENT_SHIPPED_PHASE 19; degraded
+> entitlement (a plan missing the crm keys) blocks apply with the exact
+> missing chain, and the automotive template without this add-on hides its
+> optional `service_contracts` entry cleanly (BR-038 additive-only switching
+> proven retail → professional_services over a real posted invoice). The
+> `crm.contract_deposits` / `crm.late_fees` intake pair stays deferred
+> behind the §17 decision record (RISK-019) — never silently granted.
 
 ### 3.1 Financial Depth Pack (Blueprint v2.0 — PLACEHOLDER pricing ⚠)
 

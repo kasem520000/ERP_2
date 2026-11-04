@@ -254,7 +254,7 @@ describe("provisionWorkspace (acceptance 2)", () => {
     );
     expect(first.accounts.created).toBe(50);
     expect(first.accounts.existing).toBe(0);
-    expect(first.purposes.created).toBe(24);
+    expect(first.purposes.created).toBe(25);
     // owner was cloned at registration → 8 system-role clones here (owner
     // already exists: created 7, existing 1? — the registration clones
     // 'owner'; provision clones the remaining 8 keys incl. owner as skip).
@@ -277,7 +277,7 @@ describe("provisionWorkspace (acceptance 2)", () => {
       [created.tenantId],
     );
     await su.end();
-    expect(accounts.rows).toHaveLength(50); // 42 + 1151 + 2150/5250 (0024/0025) + 1160/5120/5400/5410/5420 (0026)
+    expect(accounts.rows).toHaveLength(50); // 42 + 1151 + 2150/5250 (0024/0025) + 1160/5120/5400/5410/5420 (0026; 0027 adds no account row — the 2130 template row is UPDATED in place)
     expect(accounts.rows.find((row) => row.code === "1000")?.name_ar).toBe("الأصول");
     expect(accounts.rows.find((row) => row.code === "1111")?.is_postable).toBe(true);
     expect(accounts.rows.find((row) => row.code === "1000")?.is_postable).toBe(false);
@@ -289,12 +289,13 @@ describe("provisionWorkspace (acceptance 2)", () => {
     expect(second.accounts.created).toBe(0);
     expect(second.accounts.existing).toBe(50);
     expect(second.purposes.created).toBe(0);
-    expect(second.purposes.existing).toBe(24);
+    expect(second.purposes.existing).toBe(25);
     expect(second.roles.created).toEqual([]);
 
-    // still exactly 50 accounts / 24 active purposes / 9 roles after 0026
-    // (the 1160/5120/5410/5420 markers + the 5400 group; the group row
-    // carries no purpose_key)
+    // still exactly 50 accounts / 25 active purposes / 9 roles after 0027
+    // (the 1160/5120/5410/5420 markers + the 5400 group from 0026 — the
+    // group row carries no purpose_key; 0027 UPDATEs the 2130 template row
+    // in place to the DEFERRED_REVENUE marker, +1 purpose, no new account)
     const after = await superuserClient();
     const counts = await after.query<{
       accounts: number;
@@ -310,7 +311,7 @@ describe("provisionWorkspace (acceptance 2)", () => {
     await after.end();
     // 8 tenant roles: owner (registration) + the 7 business templates —
     // platform_admin is platform staff only, never a tenant role (§2).
-    expect(counts.rows[0]).toEqual({ accounts: 50, purposes: 24, roles: 8 });
+    expect(counts.rows[0]).toEqual({ accounts: 50, purposes: 25, roles: 8 });
 
     // numbering + fiscal + jurisdiction settings written (policy rows only)
     const settings = await superuserClient();

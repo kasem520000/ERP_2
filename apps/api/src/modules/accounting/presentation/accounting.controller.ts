@@ -24,6 +24,7 @@ import { PeriodService } from "../application/period-service";
 import { FxService } from "../application/fx-service";
 import { NumberingService } from "../application/numbering-service";
 import { ReconciliationService } from "../application/reconciliation-service";
+import { ProjectCodeTakenError, ProjectNotFoundError } from "../domain/accounting-errors";
 
 /**
  * Accounting routes (PHASE-007 §4; matrix §3.1): CoA + purposes, fiscal
@@ -95,6 +96,36 @@ const costCenterPatchSchema = z.object({
   nameAr: z.string().min(1).max(200).nullish(),
   isActive: z.boolean().optional(),
 });
+
+/** PHASE-019 (§8): the projects trio mirrors the cost-center trio — the
+ * DB CHECK's code shape is enforced at the edge too, and the lifecycle is
+ * a status flip (OPEN|CLOSED; a CLOSED project rejects NEW journal-line
+ * stamps at the engine while posted history stays). */
+const projectCreateSchema = z.object({
+  code: z.string().min(1).max(20).regex(/^[A-Za-z0-9_-]{1,20}$/, "project code shape"),
+  name: z.string().min(1).max(200),
+  nameAr: z.string().min(1).max(200).nullish(),
+  parentId: z.string().uuid().nullish(),
+});
+
+const projectPatchSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  nameAr: z.string().min(1).max(200).nullish(),
+  status: z.enum(["OPEN", "CLOSED"]).optional(),
+});
+
+/** uq_projects_tenant_code surfaced typed: the natural-key 23505 (walk the
+ * drizzle cause chain — the tier-service pattern). */
+function isUniqueViolation(error: unknown): boolean {
+  let candidate: unknown = error;
+  for (let depth = 0; depth < 4 && candidate !== null && candidate !== undefined; depth += 1) {
+    if (typeof candidate === "object" && (candidate as { code?: string }).code === "23505") {
+      return true;
+    }
+    candidate = (candidate as { cause?: unknown }).cause;
+  }
+  return false;
+}
 
 @Controller("api/v1/accounting")
 export class AccountingController {
@@ -360,6 +391,93 @@ export class AccountingController {
       nameAr: input.nameAr,
       isActive: input.isActive,
     });
+    return envelope(updated);
+  }
+
+  // -- projects (PHASE-019 §8 — the cost-center trio mirror) ----------------------
+
+  @Get("projects")
+  @RequirePermissions("accounting.journal_entries.view")
+  async listProjects(): Promise<unknown> {
+    const { listProjects } = await import("../infrastructure/accounting.store");
+    return envelope(await listProjects());
+  }
+
+  @Post("projects")
+  @RequirePermissions("accounting.projects.manage")
+  @HttpCode(HttpStatus.OK)
+  async createProject(@Req() request: Request, @Body() body: unknown): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = projectCreateSchema.parse(body);
+    const { insertProject } = await import("../infrastructure/accounting.store");
+    let created: Awaited<ReturnType<typeof insertProject>>;
+    try {
+      created = await insertProject({
+        code: input.code,
+        name: input.name,
+        nameAr: input.nameAr ?? null,
+        parentId: input.parentId ?? null,
+      });
+    } catch (error) {
+      // uq_projects_tenant_code is the source of truth; the 23505 surfaces
+      // as the typed 409 (duplicate codes must never leak a 500).
+      if (isUniqueViolation(error)) {
+        throw new ProjectCodeTakenError(input.code);
+      }
+      throw error;
+    }
+    await this.audit.record({
+      action: "accounting.project_created",
+      entityType: "project",
+      entityId: created.id,
+      actorId: identity.userId,
+      after: { code: created.code, name: created.name, status: created.status },
+    });
+    return envelope(created);
+  }
+
+  @Patch("projects/:id")
+  @RequirePermissions("accounting.projects.manage")
+  async patchProject(
+    @Req() request: Request,
+    @Param("id") id: string,
+    @Body() body: unknown,
+  ): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = projectPatchSchema.parse(body);
+    const { findProjectById, updateProject } = await import("../infrastructure/accounting.store");
+    const before = await findProjectById(id);
+    if (before === undefined) {
+      throw new ProjectNotFoundError(id);
+    }
+    const updated = await updateProject(id, {
+      name: input.name,
+      nameAr: input.nameAr,
+      status: input.status,
+    });
+    if (updated === undefined) {
+      throw new ProjectNotFoundError(id);
+    }
+    await this.audit.record({
+      action: "accounting.project_updated",
+      entityType: "project",
+      entityId: id,
+      actorId: identity.userId,
+      before: { name: before.name, status: before.status },
+      after: { name: updated.name, status: updated.status },
+    });
+    // OPEN↔CLOSED both allowed; the reopen (CLOSED→OPEN) gets its own event
+    // (the accounting.period_reopened naming precedent).
+    if (before.status === "CLOSED" && updated.status === "OPEN") {
+      await this.audit.record({
+        action: "accounting.project_reopened",
+        entityType: "project",
+        entityId: id,
+        actorId: identity.userId,
+        before: { status: before.status },
+        after: { status: updated.status },
+      });
+    }
     return envelope(updated);
   }
 

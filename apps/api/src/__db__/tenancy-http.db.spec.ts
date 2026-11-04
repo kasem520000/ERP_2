@@ -205,9 +205,11 @@ describe("owner journey: login → onboarding → branches → settings", () => 
     // SERVICE_REVENUE marker (45 accounts / 20 purposes); 0026 adds the
     // 1160 WIP + 5120 PRODUCTION_SCRAP markers, the 5400 absorption group
     // (no purpose) and its 5410/5420 labor/overhead leaves (50 accounts /
-    // 24 purposes).
+    // 24 purposes); 0027 UPDATEs the 2130 template row in place to the
+    // DEFERRED_REVENUE marker (50 accounts / 25 purposes — no new account
+    // row, the pre-019 slot already existed as a plain row).
     expect(diff.accounts.created).toBe(50);
-    expect(diff.purposes.created).toBe(24);
+    expect(diff.purposes.created).toBe(25);
 
     const reRun = await request(
       "POST",

@@ -10,7 +10,9 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     const files = readMigrationFiles();
     expect(files.map((file) => file.tag)).toEqual([...MIGRATIONS]);
     expect(files[0]?.tag).toBe("0001_core_infra");
-    expect(files.at(-1)?.tag).toBe("0026_manufacturing");
+    // PHASE-019 T48: 0028_crm_service_order_holder (the holder-type widening —
+    // the deviation recorded in agent-ctx/T48-7-service-orders.md).
+    expect(files.at(-1)?.tag).toBe("0028_crm_service_order_holder");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

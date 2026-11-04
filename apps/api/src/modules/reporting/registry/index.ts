@@ -97,6 +97,10 @@ import {
   manufacturingBatchGenealogyContract,
   manufacturingQcInspectionLogContract,
 } from "./industry/phase018";
+import {
+  servicesContractRevenueScheduleContract,
+  servicesTimeBillingSummaryContract,
+} from "./industry/phase019";
 
 export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   // §1 financial statements
@@ -181,6 +185,10 @@ export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   manufacturingProductionCostContract,
   manufacturingBatchGenealogyContract,
   manufacturingQcInspectionLogContract,
+  // §10 industry (industries/reports/README PHASE-019 rows — the
+  // professional-services services set)
+  servicesContractRevenueScheduleContract,
+  servicesTimeBillingSummaryContract,
 ]);
 
 export { validateRegistry, registrySnapshot } from "./runtime";

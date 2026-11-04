@@ -31,9 +31,10 @@ function tenantTx(): TenantDb {
 }
 
 /**
- * Notification categories: the PHASE-014 billing-critical set plus the
+ * Notification categories: the PHASE-014 billing-critical set, the
  * PHASE-015 generalization (stock reorder alerts; industry template
- * upgrade offers).
+ * upgrade offers), and the PHASE-019 crm set (task reminders — the 05:30
+ * sweep's in-app leg).
  */
 export type NotificationCategory =
   | "limits"
@@ -41,7 +42,8 @@ export type NotificationCategory =
   | "reconciliation"
   | "invoice_overdue"
   | "stock"
-  | "templates";
+  | "templates"
+  | "crm";
 export type NotificationSeverity = "info" | "warning" | "critical";
 
 export interface BilingualText {
@@ -151,7 +153,12 @@ export class InboxService {
   async notifyOwner(
     email: EmailService | null,
     input: RecordNotificationInput & {
-      emailTemplate: "limit_warning" | "subscription_state" | "invoice_overdue";
+      emailTemplate:
+        | "limit_warning"
+        | "subscription_state"
+        | "invoice_overdue"
+        /** PHASE-019 (§3): the task-reminder sweep's email leg. */
+        | "task_reminder";
       emailVariables: Record<string, string>;
     },
   ): Promise<{ inbox: boolean; email: boolean }> {

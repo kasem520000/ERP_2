@@ -4,6 +4,11 @@
  * → account movements (running balance) → posted entry detail (lines +
  * source chain, INV-006) + the journal-register data feed. Statement
  * rendering arrives PHASE-013.
+ *
+ * PHASE-019 (T50): the browser gains the optional project filter (the T44
+ * `projectId` query param on /gl/accounts, /gl/accounts/:id/movements and
+ * /gl/journal-register) — an additive Select bound to accounting/projects
+ * (the supporting read degrades to empty, hiding nothing when unavailable).
  */
 import { notFound, redirect } from "next/navigation";
 import type { JSX } from "react";
@@ -14,7 +19,7 @@ import { AccountingGl } from "../../../../components/accounting-gl";
 import { AppShell } from "../../../../components/app-shell";
 import { RetryButton } from "../../../../components/retry-button";
 import { getDictionary, isLocale, type Locale } from "../../../../i18n/dictionaries";
-import type { AccountBalanceRow, JournalRegisterRow } from "../../../../lib/api-types";
+import type { AccountBalanceRow, JournalRegisterRow, ProjectRow } from "../../../../lib/api-types";
 import { localizedApiError } from "../../../../lib/messages";
 import { fetchApi, requireSessionToken } from "../../../../lib/server-api";
 
@@ -32,9 +37,11 @@ export default async function GlPage({
 
   await requireSessionToken(localeValue);
 
-  const [balances, register] = await Promise.all([
+  const [balances, register, projects] = await Promise.all([
     fetchApi<readonly AccountBalanceRow[]>("accounting/gl/accounts"),
     fetchApi<readonly JournalRegisterRow[]>("accounting/gl/journal-register?limit=100"),
+    // Supporting read (degrades to empty): the project filter pool.
+    fetchApi<readonly ProjectRow[]>("accounting/projects"),
   ]);
   if (
     (!balances.ok && balances.status === 401) ||
@@ -62,6 +69,7 @@ export default async function GlPage({
         locale={localeValue}
         initialBalances={balances.data}
         initialRegister={register.ok ? register.data : []}
+        projects={projects.ok ? projects.data : []}
       />
     );
   }

@@ -306,7 +306,7 @@ describe("PHASE-014 subscription lifecycle (T4)", () => {
     // The invoice was for the BUSINESS plan — entitlements follow it.
     const state = await entitlementState(TENANT_BL);
     expect(state.get("reporting.dashboards")?.source).toBe("PLAN");
-    expect(state.get("crm.leads")).toBeUndefined(); // enterprise-only key dropped
+    expect(state.get("industry.addons")).toBeUndefined(); // enterprise-only key dropped (crm.leads joined business at 019 — 0027 plan grants)
   });
 
   it("trial expiry without payment → grace + entitlements with grace expiry", async () => {

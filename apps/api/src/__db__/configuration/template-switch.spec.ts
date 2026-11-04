@@ -105,11 +105,14 @@ describe("template-switch — additive-only safety (README §8 #5)", () => {
       switchService.preview(owner, { targetTemplateKey: "industry.grocery", mode: "switch" }),
     );
 
-    // Added capabilities split per §4: at PHASE-018 the whole grocery set
+    // Added capabilities split per §4: at PHASE-019 the whole grocery set
     // is LIVE on the business plan (the 0025 grants cover the tier + promo
-    // keys; the 0026 grants put manufacturing.qc on business and the phase
-    // bump lifted the last gate) — even the OPTIONAL qc_inspections entry
-    // resolves INCLUDED; nothing labels coming-soon any more.
+    // keys; the 0026 grants put manufacturing.qc on business; the 0027
+    // grants put the crm set on business too) — even the OPTIONAL
+    // qc_inspections entry resolves INCLUDED; nothing labels coming-soon
+    // any more. Re-checked at the 019 bump: ZERO R9 pins moved (grocery's
+    // set was already fully live at 018; the 0027 crm keys touch no grocery
+    // capability).
     expect(diff.fromTemplate).toEqual({ key: "industry.retail", version: "1.0.0" });
     expect(diff.toTemplate).toEqual({
       key: "industry.grocery",
@@ -170,9 +173,11 @@ describe("template-switch — additive-only safety (README §8 #5)", () => {
       removed: ["pos.sales_by_terminal", "retail.imei_register"],
     });
     // The acknowledgement contract: NO REQUIRED-phase-gated differences
-    // remain at PHASE-018 — customer_price_tiers went live at 017 (the
-    // 0025 grant + the phase bump) and qc_inspections at 018 (the 0026
-    // grant + this bump), so this switch needs no acknowledgement.
+    // remain at PHASE-019 — customer_price_tiers went live at 017 (the
+    // 0025 grant + the phase bump), qc_inspections at 018 (the 0026 grant
+    // + that bump), and the 019 bump moves nothing here (no grocery
+    // capability carries a crm.* key), so this switch needs no
+    // acknowledgement.
     expect(diff.acknowledgementRequired).toBe(false);
     expect(diff.acknowledgementPhases).toEqual([]);
     expect(diff.blocked).toBe(false);

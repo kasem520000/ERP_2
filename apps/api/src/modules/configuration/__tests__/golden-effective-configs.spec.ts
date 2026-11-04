@@ -5,6 +5,7 @@ import {
   DISTRIBUTION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
+  PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
   RESTAURANT_MANIFEST,
   RETAIL_MANIFEST,
   hashManifestJson,
@@ -17,10 +18,11 @@ import { PLAN_KEYS, layerInputsFixture, l1Of, type PlanKey } from "./layer-fixtu
 /**
  * PHASE-015 §6 golden effective-configs (CONFIGURATION_ENGINE §10 #2):
  * one pinned, hashed effective config per shipped template × plan ×
- * jurisdiction example — the six v1.0.0 manifests (retail / grocery /
+ * jurisdiction example — the seven v1.0.0 manifests (retail / grocery /
  * restaurant + the PHASE-017 automotive / distribution pair + the
- * PHASE-018 food manufacturing template) × the plan seeds
- * (migration 0008/0021/0024/0025/0026) × the SA jurisdiction seed
+ * PHASE-018 food manufacturing template + the PHASE-019 professional
+ * services template) × the plan seeds
+ * (migration 0008/0021/0024/0025/0026/0027) × the SA jurisdiction seed
  * (migration 0013, pack 1.0.0-baseline, VAT in force, registered tenant).
  *
  * A resolution change that alters any golden hash fails CI unless the
@@ -41,6 +43,15 @@ import { PLAN_KEYS, layerInputsFixture, l1Of, type PlanKey } from "./layer-fixtu
  * as platform defaults (SETTINGS_REGISTRY defaults are the lowest rung of
  * the hashed §5 policies). The three new food_manufacturing rows pin with
  * the rest.
+ *
+ * PHASE-019 review note: every pin moved again — the 0027 plan grants
+ * added the six CRM+projects keys to business (enterprise already had
+ * them; starter untouched), and the SEVEN new SETTINGS_REGISTRY keys (the
+ * six crm.* policy keys + the platform-only crm.defer_advance_recognition)
+ * land in every tenant's policy map as platform defaults (the §5 policies
+ * map is part of the hashed content). The old→new table is recorded in
+ * agent-ctx/T43-2-template.md; the three new professional_services rows
+ * pin with the rest.
  */
 
 const GOLDEN: Readonly<
@@ -48,82 +59,95 @@ const GOLDEN: Readonly<
 > = Object.freeze({
   "industry.retail × starter": {
     template: RETAIL_MANIFEST,
-    hash: "sha256:f1a45d08e47aa1a63fede2559d56ce85a13697cc897bc7c39b01255f6a8fddbb",
+    hash: "sha256:b8b224a305efd894b2638304f14c6f7366f1fc65f3ff6b76ce4d9468dc3e06c5",
   },
   "industry.retail × business": {
     template: RETAIL_MANIFEST,
-    hash: "sha256:0ce16dc289a5babbdb54329c0544a3065a38eaed5fdad4837eb7bd49ec0bc07f",
+    hash: "sha256:e42d0ae397506576e3b32c17fa14f46bac0bfa2f05ba7efcea629896f36bfe51",
   },
   "industry.retail × enterprise": {
     template: RETAIL_MANIFEST,
-    hash: "sha256:14c3a245a75d875dd372e73c37d748b841be1b089ec51651dd3d3c9a62d13678",
+    hash: "sha256:e8b0ea1e1bd2e5089ec428c4cd4b7619fdce773d6c59b677a9cafcd51978435b",
   },
   "industry.grocery × starter": {
     template: GROCERY_MANIFEST,
-    hash: "sha256:ed454222eb2b7fba92f29b6cd44f908782f27263dc95b293d150db3db540ba16",
+    hash: "sha256:784e3636e041822a1cf89666c2649f37c410728b61c5f847cefa2efeb7d922ea",
   },
   "industry.grocery × business": {
     template: GROCERY_MANIFEST,
-    hash: "sha256:cc9cc93d1b2b400c265e3562b984a3a740ebac9ea7aa09ad23e1edd6195e7386",
+    hash: "sha256:584deea54541e60774b3d01c204546ac9659eeabb0232bba967262c6382bf4e2",
   },
   "industry.grocery × enterprise": {
     template: GROCERY_MANIFEST,
-    hash: "sha256:a936b485a38e551bab5d5d75b94a8abd1b8fe74cc39afb25d4e4c4fc15c79eca",
+    hash: "sha256:454ef52039c4cc93efa28f0e152fdd2d3812389b26f98da186f0240a9deeb448",
   },
   "industry.restaurant × starter": {
     template: RESTAURANT_MANIFEST,
-    hash: "sha256:9ca1b313cd0be6ccb0f64f1f67dff5b4a6576a8043bd2c213ec36080939ae2a2",
+    hash: "sha256:44bf3f272a9215caf5986537a34fd218def0b3373f668c568862281e7f9303c5",
   },
   "industry.restaurant × business": {
     template: RESTAURANT_MANIFEST,
-    hash: "sha256:8176497a4e8db1f5b4ba655ff6d041b564a3d82189b5dae336c4f1482a577b25",
+    hash: "sha256:2f2be5e730e6e135bada13d81a8258b63373008f0626d68e515298c36028c923",
   },
   "industry.restaurant × enterprise": {
     template: RESTAURANT_MANIFEST,
-    hash: "sha256:3e78517a723ca19d3100e85ebea47fbe24b9b1cafdb78bcee69ba1ea66183a0d",
+    hash: "sha256:cd067efe0f89e0d70fd8a00acc27f25110772cfa45a9b4500abc457f02b0326e",
   },
   // -- PHASE-017 pair (migration 0025 seeds; starter = degraded back-office)
   "industry.automotive × starter": {
     template: AUTOMOTIVE_TEMPLATE_MANIFEST,
-    hash: "sha256:8f05f3bebf9bbd1b7a811b6da44d3ce4b9509d97c79df2adc4dc684fa2272287",
+    hash: "sha256:1ea0705e0b0105b0469b6cbe508bfe8dc8778ce45fea5db940d8efe2cfa7bdbc",
   },
   "industry.automotive × business": {
     template: AUTOMOTIVE_TEMPLATE_MANIFEST,
-    hash: "sha256:b8e94c7a9062c38e3f7338d982c79e30c649e62a61fa03f738d3327ed78ddfb3",
+    hash: "sha256:06249c46472cfe6623635e35b96e4d634e9f5c848d18d9b3af4c983a66159d62",
   },
   "industry.automotive × enterprise": {
     template: AUTOMOTIVE_TEMPLATE_MANIFEST,
-    hash: "sha256:191283eca605aa225c0b98e07319d08739118e95c306a1e8935001e7d3265c36",
+    hash: "sha256:a25be7ecbcb6732c27cb2586ad56ad471acdf7d297faff591575bf5e1170f902",
   },
   "industry.distribution × starter": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
-    hash: "sha256:89ae25dd341c25ccc53967d2c0f68494a110e24e58300398bf5f306e0e0ab2da",
+    hash: "sha256:b4c8573bf6c543d57108e370b2e5228810e0a45b4056e597d8d0965812ec0ea0",
   },
   "industry.distribution × business": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
-    hash: "sha256:f62571129dbb29ae265925d22486717c4d1fee0e6f1b8701788685b8f8f951d5",
+    hash: "sha256:e14881d954db7360a211fb66512f6e0bd6f4859cef28f9ed60e5ce09e7601d7d",
   },
   "industry.distribution × enterprise": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
-    hash: "sha256:0c3f9cd6671135633e94086c884fc07b8606e73662869382214447526549a245",
+    hash: "sha256:97b935892cfb35c8ded75a4ed1bf1ae2edfcd5aab18daba31853575f0e4a8ff5",
   },
   // -- PHASE-018 (migration 0026 seed; starter = degraded back-office)
   "industry.food_manufacturing × starter": {
     template: FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
-    hash: "sha256:99a4e9605a944d5b1ad5adbde11f487d176d24aaa455b86f4f64c31eb81e1779",
+    hash: "sha256:e5b5d8664142749e648a9f16baf7d9fb6a1140f7bbc27086736b879ac17ece8c",
   },
   "industry.food_manufacturing × business": {
     template: FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
-    hash: "sha256:b9a8971082610cb88c131134f9efceb2743f48e127cfa8f24865863b23dbf62e",
+    hash: "sha256:f54439610a0edaee72e477a875666ac625bab4b3477905ade15c11dd51833cfa",
   },
   "industry.food_manufacturing × enterprise": {
     template: FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
-    hash: "sha256:471bf1a8fe7c8ad47208d6e481f8e8b1e812e15671735cc0f1e49529d1f39a80",
+    hash: "sha256:07ea44a2f80ba810fbed7762b4ce0cb0dec05c85993420ceb54f6eff1638a9b1",
+  },
+  // -- PHASE-019 (migration 0027 seed; starter = degraded back-office)
+  "industry.professional_services × starter": {
+    template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
+    hash: "sha256:b8ea666c1fc4c7d728be68359de7f5882e09233c6ae6c142c4603167c7ac85f7",
+  },
+  "industry.professional_services × business": {
+    template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
+    hash: "sha256:8353be21bc9ad51891b685c3e30864edda83ef1b82c7b5f2964de3888b47e9c6",
+  },
+  "industry.professional_services × enterprise": {
+    template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
+    hash: "sha256:1683e56a5e7df787c5a016c8c1dadcccbffc6cf9c08bff812d118a51814e135c",
   },
   // The platform-default tenant (no template applied — L1 neutral).
   "(no template) × business": {
     template: null,
-    hash: "sha256:5011609fc96a6ca47427bdeff903f5c63b99234d6031ffe9cf81dda4e8651cc6",
+    hash: "sha256:48ebd6f99c82b0af1cb575ea08c4db055521a78a630c471891c15d6734709405",
   },
 });
 
@@ -362,13 +386,56 @@ describe("golden effective-configs: template × plan × jurisdiction SA (pinned 
     expect(food.policies["inventory.fefo_for_expiry_items"]).toBe(true);
     expect(food.layers.l8_installed.manufacturing).toBe(true);
 
+    // Professional services on business (PHASE-019): the full CRM+projects
+    // set resolves LIVE on the 0027 grants — the practice/billing groups
+    // derive with the crm module enabled, the §9 workflow policies land as
+    // L1 defaults (contract_billing_mode retainer_or_milestones), and the
+    // crm module installs (L8 from default_modules_enabled).
+    const services = composeTenantStaticConfig(
+      layerInputsFixture({ template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST, plan: "business" }),
+    );
+    expect(services.layers.l4_entitlements.missing).toEqual([]);
+    expect(services.ui.navigation).toEqual(["practice", "billing"]);
+    const practiceGroup = services.ui.navigation_tree.find((group) => group.id === "practice")!;
+    expect(practiceGroup.items.map((item) => item.id)).toEqual(["cases", "timesheets", "contracts"]);
+    expect(
+      services.ui.navigation_tree.find((group) => group.id === "billing")!.items.map(
+        (item) => item.id,
+      ),
+    ).toEqual(["recurring", "invoices", "statements"]);
+    expect(services.ui.terminology["svc.case"]).toEqual({
+      en: "Case / Matter",
+      ar: "القضية / الملف",
+    });
+    expect(services.ui.terminology["doc.contract"]).toEqual({
+      en: "Service contract",
+      ar: "عقد الخدمات",
+    });
+    expect(services.policies["crm.contract_billing_mode"]).toBe("retainer_or_milestones"); // L1 manifest default
+    expect(services.policies["crm.time_entries_require_case"]).toBe(true);
+    expect(services.policies["crm.unbilled_time_review_before_invoice"]).toBe(true);
+    expect(services.policies["crm.invoice_approval_required"]).toBe(true);
+    expect(services.policies["crm.invoice_numbering_per_series"]).toBe(false);
+    expect(services.policies["crm.narrative_required_on_time_billing"]).toBe(true);
+    expect(services.policies["inventory.fefo_for_expiry_items"]).toBe(false);
+    expect(services.layers.l8_installed.crm).toBe(true);
+
     // The platform defaults (no template): the four manufacturing keys ride
     // the SETTINGS_REGISTRY defaults into every tenant's policy map — the
-    // manufacturing services read them via resolved config (PHASE-018 §6).
+    // manufacturing services read them via resolved config (PHASE-018 §6);
+    // likewise the SEVEN PHASE-019 keys (§18 lesson 5: ALL golden rows move
+    // because these land in every tenant's policies map).
     expect(noTemplate.policies["manufacturing.qc_gate"]).toBe("off");
     expect(noTemplate.policies["manufacturing.scrap_reason_required"]).toBe(true);
     expect(noTemplate.policies["manufacturing.fg_batch_expiry_from_shelf_life"]).toBe(true);
     expect(noTemplate.policies["manufacturing.consumption_variance_threshold_pct"]).toBe(5);
+    expect(noTemplate.policies["crm.contract_billing_mode"]).toBe("retainer_or_milestones");
+    expect(noTemplate.policies["crm.time_entries_require_case"]).toBe(true);
+    expect(noTemplate.policies["crm.unbilled_time_review_before_invoice"]).toBe(true);
+    expect(noTemplate.policies["crm.invoice_approval_required"]).toBe(true);
+    expect(noTemplate.policies["crm.invoice_numbering_per_series"]).toBe(false);
+    expect(noTemplate.policies["crm.narrative_required_on_time_billing"]).toBe(true);
+    expect(noTemplate.policies["crm.defer_advance_recognition"]).toBe(false); // platform-only key
   });
 
   it("distinct inputs produce distinct pins (the pins are content, not form)", () => {

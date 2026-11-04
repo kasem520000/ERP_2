@@ -1,13 +1,14 @@
 import type { IndustryTemplateManifest } from "./manifest";
 
 /**
- * The six shipped v1.0.0 templates — the three PHASE-015 priority ones
+ * The seven shipped v1.0.0 templates — the three PHASE-015 priority ones
  * (transcribed VERBATIM from the normative template documents), the
  * two PHASE-017 industry templates (transcribed VERBATIM from the
- * migration 0025 registry seeds), and the PHASE-018 manufacturing
- * template (transcribed VERBATIM from the migration 0026 registry seed;
- * the seeds are canonical; every key, every Arabic string, every
- * numbering rule):
+ * migration 0025 registry seeds), the PHASE-018 manufacturing
+ * template (transcribed VERBATIM from the migration 0026 registry seed),
+ * and the PHASE-019 professional-services template (transcribed VERBATIM
+ * from the migration 0027 registry seed; the seeds are canonical; every
+ * key, every Arabic string, every numbering rule):
  *
  *   - RETAIL_MANIFEST      docs/industries/templates/retail.md
  *   - GROCERY_MANIFEST     docs/industries/templates/grocery-supermarket.md
@@ -18,6 +19,8 @@ import type { IndustryTemplateManifest } from "./manifest";
  *     docs/industries/templates/manifests/manifest.distribution.json)
  *   - FOOD_MANUFACTURING_TEMPLATE_MANIFEST apps/api/migrations/0026 (docs
  *     mirror: docs/industries/templates/manifests/manifest.food_manufacturing.json)
+ *   - PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST apps/api/migrations/0027 (docs
+ *     mirror: docs/industries/templates/manifests/manifest.professional_services.json)
  *
  * CI (scripts/validate-manifests.ts, wired into scripts/ci/local-gate.sh)
  * re-parses each constant against the §3 schema so contracts and docs cannot
@@ -1555,6 +1558,250 @@ export const FOOD_MANUFACTURING_TEMPLATE_MANIFEST: IndustryTemplateManifest = de
   },
 });
 
+/**
+ * Professional Services v1.0.0 (PHASE-019) — service contracts with
+ * retainer/milestone/hourly fee models, recurring billing runs over the
+ * expanded schedule grid, and the projects (cases) dimension: practice
+ * management for law, accounting, and consulting offices. Transcribed
+ * VERBATIM from the migration 0027 registry seed (`industry_templates` row
+ * `industry.professional_services`; the canonical source is
+ * docs/industries/templates/manifests/manifest.professional_services.json —
+ * the §12 doc reconciliation applied there: the bom_production N/A entry
+ * dropped, the ar_aging pin reconciled to the live `ar.aging` registry key).
+ */
+export const PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST: IndustryTemplateManifest = deepFreeze({
+  id: "industry.professional_services",
+  name: "Professional Services",
+  name_ar: "المكاتب المهنية",
+  version: "1.0.0",
+  required_feature_keys: [
+    "industry.template_engine",
+    "items.item_master",
+    "crm.service_contracts",
+    "crm.recurring_billing",
+    "accounting.projects",
+    "sales.invoices",
+    "partners.statements",
+  ],
+  default_modules_enabled: [
+    "accounting",
+    "partners",
+    "items",
+    "sales",
+    "treasury",
+    "tax",
+    "reporting",
+    "crm",
+    "configuration",
+  ],
+  terminology_overrides: {
+    "svc.case": { en: "Case / Matter", ar: "القضية / الملف" },
+    "svc.time_entry": { en: "Time entry", ar: "تسجيل الوقت" },
+    "svc.timesheet": { en: "Timesheet", ar: "كشف الساعات" },
+    "svc.billable": { en: "Billable", ar: "قابل للفوترة" },
+    "fee.fixed_fee": { en: "Fixed fee", ar: "أتعاب مقطوعة" },
+    "fee.hourly": { en: "Hourly fee", ar: "أتعاب بالساعة" },
+    "fee.retainer": { en: "Retainer", ar: "أتعاب دورية" },
+    "billing.milestone": { en: "Milestone", ar: "دفعة مرحلية" },
+    "doc.contract": { en: "Service contract", ar: "عقد الخدمات" },
+    "acc.project": { en: "Project", ar: "المشروع" },
+  },
+  navigation_manifest: {
+    groups: [
+      {
+        id: "practice",
+        label: { en: "Practice", ar: "المكتب" },
+        order: 1,
+        items: [
+          {
+            id: "cases",
+            label: { en: "Cases / Projects", ar: "القضايا / المشاريع" },
+            target: "accounting.projects",
+          },
+          {
+            id: "timesheets",
+            label: { en: "Time & timesheets", ar: "الوقت وكشوف الساعات" },
+            target: "crm.time",
+          },
+          {
+            id: "contracts",
+            label: { en: "Service contracts", ar: "عقود الخدمات" },
+            target: "crm.contracts",
+          },
+        ],
+      },
+      {
+        id: "billing",
+        label: { en: "Billing", ar: "الفوترة" },
+        order: 2,
+        items: [
+          {
+            id: "recurring",
+            label: { en: "Recurring invoices", ar: "الفواتير الدورية" },
+            target: "crm.recurring_billing",
+          },
+          {
+            id: "invoices",
+            label: { en: "Invoices", ar: "الفواتير" },
+            target: "sales.invoices",
+          },
+          {
+            id: "statements",
+            label: { en: "Client statements", ar: "كشوف حسابات العملاء" },
+            target: "partners.statements",
+          },
+        ],
+      },
+    ],
+  },
+  workflow_policies: {
+    contract_billing_mode: "retainer_or_milestones",
+    time_entries_require_case: true,
+    unbilled_time_review_before_invoice: true,
+    invoice_approval_required: true,
+    invoice_numbering_per_series: false,
+    narrative_required_on_time_billing: true,
+  },
+  document_numbering_defaults: {
+    contract_invoice: {
+      prefix: "INV",
+      format: "INV-{yyyy}-{seq:6}",
+      per_branch: false,
+      reserve_on_approval: false,
+    },
+    sales_invoice: {
+      prefix: "INV",
+      format: "INV-{yyyy}-{seq:6}",
+      per_branch: false,
+      reserve_on_approval: false,
+    },
+    receipt: {
+      prefix: "RCP",
+      format: "RCP-{yyyy}-{seq:6}",
+      per_branch: false,
+      reserve_on_approval: false,
+    },
+    credit_note: {
+      prefix: "CN",
+      format: "CN-{yyyy}-{seq:5}",
+      per_branch: false,
+      reserve_on_approval: false,
+    },
+  },
+  inventory_policy_defaults: {
+    costing_method: "WAC",
+    default_track_batch: false,
+    default_track_expiry: false,
+    default_track_serial: false,
+    default_imei_tracking: false,
+    fefo_picking: false,
+    allow_negative_stock: false,
+  },
+  report_defaults: [
+    {
+      report_key: "services.contract_revenue_schedule",
+      pinned: true,
+      dashboard: true,
+      default_period: "this_month",
+    },
+    {
+      report_key: "services.time_billing_summary",
+      pinned: true,
+      dashboard: true,
+      default_period: "this_month",
+    },
+    {
+      report_key: "ar.aging",
+      pinned: true,
+      dashboard: false,
+      default_period: "this_month",
+    },
+    {
+      report_key: "sales.commissions_due",
+      pinned: true,
+      dashboard: false,
+      default_period: "this_month",
+    },
+  ],
+  onboarding_steps: [
+    {
+      id: "coa_confirm",
+      title: {
+        en: "Confirm chart of accounts (fee revenue natures)",
+        ar: "تأكيد دليل الحسابات (طبيعة إيرادات الأتعاب)",
+      },
+      required: true,
+    },
+    {
+      id: "clients",
+      title: {
+        en: "Clients & engagement contacts",
+        ar: "العملاء وجهات التعامل",
+      },
+      required: true,
+    },
+    {
+      id: "fee_items",
+      title: {
+        en: "Fee items (hourly, fixed, disbursements)",
+        ar: "بنود الأتعاب (بالساعة، مقطوعة، مصروفات نائبة)",
+      },
+      required: true,
+    },
+    {
+      id: "first_contract",
+      title: {
+        en: "First service contract",
+        ar: "أول عقد خدمات",
+      },
+      required: true,
+    },
+    {
+      id: "billing_run",
+      title: {
+        en: "Run first recurring billing cycle",
+        ar: "تشغيل أول دورة فوترة دورية",
+      },
+      required: false,
+    },
+    {
+      id: "projects",
+      title: {
+        en: "Open projects/cases",
+        ar: "فتح المشاريع/القضايا",
+      },
+      required: false,
+    },
+  ],
+  capability_prerequisites: {
+    service_contracts: {
+      level: "REQUIRED",
+      feature_keys: ["crm.service_contracts"],
+      available_from_phase: "PHASE-019",
+    },
+    recurring_billing: {
+      level: "REQUIRED",
+      feature_keys: ["crm.recurring_billing"],
+      available_from_phase: "PHASE-019",
+    },
+    deposits_late_fees: {
+      level: "OPTIONAL",
+      feature_keys: ["crm.contract_deposits", "crm.late_fees"],
+      available_from_phase: "PHASE-019",
+    },
+    commissions: {
+      level: "OPTIONAL",
+      feature_keys: ["sales.commissions"],
+      available_from_phase: "PHASE-017",
+    },
+    job_cards: {
+      level: "OPTIONAL",
+      feature_keys: ["sales.job_cards"],
+      available_from_phase: "PHASE-017",
+    },
+  },
+});
+
 /** Every manifest shipped by this build — the CI validation set (§8). */
 export const SHIPPED_TEMPLATE_MANIFESTS: readonly IndustryTemplateManifest[] = Object.freeze([
   RETAIL_MANIFEST,
@@ -1563,4 +1810,5 @@ export const SHIPPED_TEMPLATE_MANIFESTS: readonly IndustryTemplateManifest[] = O
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
+  PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
 ]);

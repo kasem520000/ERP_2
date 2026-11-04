@@ -10,6 +10,10 @@ import { GlQueries } from "../application/gl-queries";
  * account balances + movements with drill-down, the journal-register data
  * feed, and the entry detail with its source-document chain (INV-006).
  * Statement RENDERING arrives with the reporting engine (PHASE-013).
+ * PHASE-019 (§8): every feed gains an optional `projectId` query param —
+ * the projects dimension slice (query params are not route-registry
+ * rows; the passthrough mirrors from/to/sourceType, unvalidated at the
+ * edge exactly like them).
  */
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "ISO date");
@@ -24,8 +28,9 @@ export class GlController {
   async balances(
     @Query("from") from?: string,
     @Query("to") to?: string,
+    @Query("projectId") projectId?: string,
   ): Promise<unknown> {
-    return envelope(await this.gl.accountBalances({ fromDate: from, toDate: to }));
+    return envelope(await this.gl.accountBalances({ fromDate: from, toDate: to, projectId }));
   }
 
   @Get("gl/accounts/:id/movements")
@@ -35,6 +40,7 @@ export class GlController {
     @Query("from") from?: string,
     @Query("to") to?: string,
     @Query("limit") limit?: string,
+    @Query("projectId") projectId?: string,
   ): Promise<unknown> {
     return envelope(
       await this.gl.accountMovements({
@@ -42,6 +48,7 @@ export class GlController {
         fromDate: from,
         toDate: to,
         limit: LIMIT.parse(limit ?? undefined),
+        projectId,
       }),
     );
   }
@@ -53,6 +60,7 @@ export class GlController {
     @Query("to") to?: string,
     @Query("sourceType") sourceType?: string,
     @Query("limit") limit?: string,
+    @Query("projectId") projectId?: string,
   ): Promise<unknown> {
     void DATE;
     return envelope(
@@ -61,6 +69,7 @@ export class GlController {
         toDate: to,
         sourceType,
         limit: LIMIT.parse(limit ?? undefined),
+        projectId,
       }),
     );
   }

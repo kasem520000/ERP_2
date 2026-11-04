@@ -3,6 +3,7 @@ import {
   DISTRIBUTION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
+  PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
   RESTAURANT_MANIFEST,
   RETAIL_MANIFEST,
   hashManifestJson,
@@ -22,9 +23,9 @@ import type {
 } from "../domain/layer-model";
 
 /**
- * Unit-test layer-input fixtures (PHASE-015 §6): the six shipped
- * manifests × the three plan seeds (migration 0008/0021/0024/0025/0026 key
- * and limits lists, transcribed) × the SA jurisdiction seed (migration
+ * Unit-test layer-input fixtures (PHASE-015 §6): the seven shipped
+ * manifests × the three plan seeds (migration 0008/0021/0024/0025/0026/0027
+ * key and limits lists, transcribed) × the SA jurisdiction seed (migration
  * 0013). Shared by config-resolution.spec (property/precedence tests) and
  * golden-effective-configs.spec (pinned hashes).
  */
@@ -36,6 +37,7 @@ export const SHIPPED_TEMPLATES: readonly IndustryTemplateManifest[] = [
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
+  PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
 ];
 
 /** L1 from a shipped manifest (applied state, no tenant overrides). */
@@ -124,21 +126,26 @@ const BUSINESS_KEYS: readonly string[] = [
   "manufacturing.bom", "manufacturing.production_orders", "manufacturing.wip",
   "manufacturing.costing", "manufacturing.scrap", "manufacturing.batch_genealogy",
   "manufacturing.qc",
+  // PHASE-019 (0027 plan grants): the CRM + projects set — business gains
+  // the six keys (enterprise already carries them from the 0008 base seed,
+  // so the array_cat was a no-op there); starter does NOT.
+  "crm.leads", "crm.tasks_activities", "crm.service_contracts",
+  "crm.recurring_billing", "crm.service_orders", "accounting.projects",
 ];
 
 const ENTERPRISE_KEYS: readonly string[] = [
   ...BUSINESS_KEYS,
-  "accounting.projects",
   "partners.personal_accounts",
   "inventory.reorder_levels",
   "tax.einvoicing_framework",
   "reporting.scheduled_reports",
   "industry.addons",
-  "crm.leads", "crm.tasks_activities", "crm.service_contracts",
-  "crm.recurring_billing", "crm.service_orders",
   // The manufacturing set rides in via BUSINESS_KEYS (the 0008 base seed
   // granted it to enterprise; 0026 granted it to business too — listed once,
   // in the business block above, so the spread stays duplicate-free).
+  // Likewise the CRM + projects set (0027 granted it to business; the
+  // explicit enterprise rows for accounting.projects / crm.* are removed
+  // — they now ride the business block above).
   "offline.sync_protocol", "offline.device_management", "offline.desktop_app",
   "offline.android_app", "offline.mobile_accounts",
 ];

@@ -120,6 +120,34 @@ import {
   QcScrapBatchNotQuarantinedError,
 } from "../../modules/manufacturing/domain/manufacturing-errors";
 import {
+  ActivityInputInvalidError,
+  AdvanceInsufficientOnAccountError,
+  AdvanceStateError,
+  ContractInputInvalidError,
+  ContractNotFoundError,
+  ContractStateError,
+  ContractTermInvalidError,
+  LeadConvertedError,
+  LeadInputInvalidError,
+  LeadLostReasonRequiredError,
+  LeadMergeTargetRequiredError,
+  LeadNotFoundError,
+  ScheduleEntryNotFoundError,
+  ServiceOrderInputInvalidError,
+  ServiceOrderLineError,
+  ServiceOrderNotFoundError,
+  ServiceOrderPostingNotConfiguredError,
+  ServiceOrderStateError,
+  TaskInputInvalidError,
+  TaskNotFoundError,
+  TaskStateError,
+  TimeEntryCaseRequiredError,
+  TimeEntryInputInvalidError,
+  TimeEntryNotFoundError,
+  TimeEntryStateError,
+  TimesheetEmptyError,
+} from "../../modules/crm/domain/crm-errors";
+import {
   BarcodeNotFoundError,
   BarcodeTakenError,
   CategoryCodeTakenError,
@@ -170,6 +198,8 @@ import {
   GlAccountNotFoundError,
   JournalDraftNotFoundError,
   PeriodNotFoundError,
+  ProjectCodeTakenError,
+  ProjectNotFoundError,
   RecurringJournalNotFoundError,
 } from "../../modules/accounting/domain/accounting-errors";
 import {
@@ -387,7 +417,10 @@ function domainStatus(error: DomainError): number {
     error instanceof PeriodNotFoundError ||
     error instanceof JournalDraftNotFoundError ||
     error instanceof RecurringJournalNotFoundError ||
-    error instanceof GlAccountNotFoundError
+    error instanceof GlAccountNotFoundError ||
+    // PHASE-019 (T44): the projects dimension's controller surface — PATCH
+    // by id is a resource lookup (the module's 404 shape, A7 parity).
+    error instanceof ProjectNotFoundError
   ) {
     return HttpStatus.NOT_FOUND;
   }
@@ -526,7 +559,10 @@ function domainStatus(error: DomainError): number {
     error instanceof OpeningBalanceDraftExistsError ||
     error instanceof PartnerArchivedError ||
     error instanceof ItemArchivedError ||
-    error instanceof PartnerInvalidTransitionError
+    error instanceof PartnerInvalidTransitionError ||
+    // PHASE-019 (T44): the projects natural key (uq_projects_tenant_code
+    // surfaced typed — duplicate project codes are 409 conflicts).
+    error instanceof ProjectCodeTakenError
   ) {
     return HttpStatus.CONFLICT;
   }
@@ -621,6 +657,63 @@ function domainStatus(error: DomainError): number {
     error instanceof InspectionDispositionRequiredError ||
     error instanceof InspectionDispositionInvalidError ||
     error instanceof QcScrapEmptyBatchError
+  ) {
+    return HttpStatus.UNPROCESSABLE_ENTITY;
+  }
+  // PHASE-019 crm (T45 — leads + tasks/activities): the 404 not-founds
+  // (lead, task — A7 parity; the MERGE target probe reads identically for
+  // unknown vs foreign partners), the 409 state conflicts (the converted
+  // lead's immutability + off-lifecycle task transitions), and the 422
+  // policy class (input shapes, the lost-reason requirement).
+  // PHASE-019 crm (T46 — contracts/schedule/advances/time): the same three
+  // classes — 404 not-founds (contract, schedule entry, time entry), 409
+  // state conflicts (contract lifecycle, advance guards, timeslip
+  // transitions), 422 policy class (contract input/term shapes, the
+  // on-account insufficiency, the case-required policy, timeslip shapes,
+  // the empty-timesheet review).
+  // PHASE-019 crm (T48 — service orders): the job-card error family mapped
+  // — 404 not-found (A7), 409 lifecycle (the folded never-cancelable guard
+  // rides the same code, the T46 ADVANCE_STATE precedent), 422 the
+  // input/line classes. SERVICE_ORDER_POSTING_NOT_CONFIGURED is a wiring
+  // fault, not a client input: 503 (retryable posture — the module wires
+  // the port at controller construction, so this is the belt).
+  if (
+    error instanceof LeadNotFoundError ||
+    error instanceof TaskNotFoundError ||
+    error instanceof LeadMergeTargetRequiredError ||
+    error instanceof ContractNotFoundError ||
+    error instanceof ScheduleEntryNotFoundError ||
+    error instanceof TimeEntryNotFoundError ||
+    error instanceof ServiceOrderNotFoundError
+  ) {
+    return HttpStatus.NOT_FOUND;
+  }
+  if (
+    error instanceof LeadConvertedError ||
+    error instanceof TaskStateError ||
+    error instanceof ContractStateError ||
+    error instanceof AdvanceStateError ||
+    error instanceof TimeEntryStateError ||
+    error instanceof ServiceOrderStateError
+  ) {
+    return HttpStatus.CONFLICT;
+  }
+  if (error instanceof ServiceOrderPostingNotConfiguredError) {
+    return HttpStatus.SERVICE_UNAVAILABLE;
+  }
+  if (
+    error instanceof LeadInputInvalidError ||
+    error instanceof LeadLostReasonRequiredError ||
+    error instanceof TaskInputInvalidError ||
+    error instanceof ActivityInputInvalidError ||
+    error instanceof ContractInputInvalidError ||
+    error instanceof ContractTermInvalidError ||
+    error instanceof AdvanceInsufficientOnAccountError ||
+    error instanceof TimeEntryCaseRequiredError ||
+    error instanceof TimeEntryInputInvalidError ||
+    error instanceof TimesheetEmptyError ||
+    error instanceof ServiceOrderInputInvalidError ||
+    error instanceof ServiceOrderLineError
   ) {
     return HttpStatus.UNPROCESSABLE_ENTITY;
   }

@@ -14,7 +14,7 @@ as NestJS modules with a strict internal layout (`api/` = published surface,
 | `shared-kernel` (package) | Cross-cutting primitives | — | ids (UUIDv7), Money/Quantity/Rate, Result, Clock, localization keys | P-001 |
 | `identity` | Users, authentication, sessions, devices, MFA | users, memberships, sessions, devices, mfa_factors, recovery | authenticate, session ctx, user lookup, permission checks | P-003 |
 | `tenancy` | Tenants, branches, settings, entitlements | tenants, branches, tenant_settings, plans, subscriptions, entitlements | tenant ctx, resolveEntitlements, branch registry | P-003/004 |
-| `accounting` | CoA, periods, currencies, journals, **posting engine**, GL, FX, closing | accounts, account_purposes, fiscal_years, fiscal_periods, currencies, exchange_rates, journal_entries, journal_lines, cost_centers | PostingEngine.post/reverse, CoA queries, period checks, GL queries | P-007 |
+| `accounting` | CoA, periods, currencies, journals, **posting engine**, GL, FX, closing | accounts, account_purposes, fiscal_years, fiscal_periods, currencies, exchange_rates, journal_entries, journal_lines, cost_centers, **projects (P-019)** | PostingEngine.post/reverse, CoA queries, period checks, GL queries | P-007 (projects P-019) |
 | `partners` | Customers/suppliers, credit terms, statements, subledger | partners, partner_contacts, partner_addresses, credit_terms, partner_balances | partner lookup, credit check, subledger queries | P-006 |
 | `items` | Item master, categories, UoM, barcodes, price lists | items, item_categories, uoms, uom_conversions, barcodes, price_lists, price_list_items | item/UoM/pricing resolution | P-006 |
 | `inventory` | Warehouses, stock ledger, valuation, batches/serials, counts, transfers | warehouses, stock_moves, stock_layers, item_warehouse_settings, stock_counts, stock_transfers, item_batches, item_serials | reserve/issue/receive stock, valuation queries, availability | P-010 |
@@ -27,7 +27,7 @@ as NestJS modules with a strict internal layout (`api/` = published surface,
 | `files` | Attachments, exports storage | file_objects | signed URL issuance, upload validation | P-002 |
 | `audit` | Immutable audit events | audit_events | recordEvent (used via decorator/interceptor) | P-003 |
 | `configuration` | Industry templates, feature config resolution | industry_templates, tenant_industry_config, feature_flags | resolveEffectiveConfig(tenant) | P-004/015 |
-| `crm` | Leads, tasks, activities, contracts, service orders | leads, tasks, activities, service_contracts, service_orders | — | P-019 |
+| `crm` | Leads, tasks, activities, contracts, service orders, time | leads, crm_tasks, crm_activities, service_contracts, **contract_billing_schedule, contract_invoices, contract_advances (P-019)**, service_orders, service_order_lines, **crm_time_entries (P-019)** | — | P-019 |
 | `manufacturing` | BOM, production orders, WIP, QC, costing | bills_of_materials, production_orders, production_consumptions, inspections | production costing services | P-018 |
 | `distribution` | Routes, van stock, rep settlements | routes, route_visits, van_stock, rep_settlements | settlement services | P-017 |
 | `sync` | Device registry, change feeds, sync endpoints, cursors, tombstones, dedupe | sync_devices (mirror of identity devices' sync state), change_log, tombstones, sync_cursors, inbox_commands | pull/push contracts, device registration | P-016 (POS subset) / P-020 (full) |

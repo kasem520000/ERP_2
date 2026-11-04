@@ -15,6 +15,7 @@ import {
   DataTable,
   DocumentStatusBadge,
   Input,
+  Select,
   formatMoneyDisplay,
 } from "@erp/ui";
 
@@ -25,6 +26,7 @@ import type {
   JournalEntryRow,
   JournalLineRow,
   JournalRegisterRow,
+  ProjectRow,
 } from "../lib/api-types";
 import { bffFetch } from "../lib/client-api";
 import { localizedAccountingError, localizedDocumentStatus } from "../lib/messages";
@@ -42,10 +44,13 @@ export function AccountingGl({
   locale,
   initialBalances,
   initialRegister,
+  projects,
 }: {
   locale: Locale;
   initialBalances: readonly AccountBalanceRow[];
   initialRegister: readonly JournalRegisterRow[];
+  /** PHASE-019 (T50): the project filter pool (T44's projectId param). */
+  projects: readonly ProjectRow[];
 }): JSX.Element {
   const d = getDictionary(locale);
   const [balances, setBalances] = useState<readonly AccountBalanceRow[]>(initialBalances);
@@ -55,6 +60,8 @@ export function AccountingGl({
   const [detail, setDetail] = useState<EntryDetail | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  // PHASE-019 (T50): the optional project filter (T44's query param).
+  const [projectId, setProjectId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -66,6 +73,9 @@ export function AccountingGl({
     }
     if (to !== "") {
       search.set("to", to);
+    }
+    if (projectId !== "") {
+      search.set("projectId", projectId);
     }
     const suffix = search.size === 0 ? "" : `?${search.toString()}`;
     const [balancesResult, registerResult] = await Promise.all([
@@ -79,7 +89,7 @@ export function AccountingGl({
     }
     setBalances(balancesResult.data);
     setRegister(registerResult.ok ? registerResult.data : []);
-  }, [d, from, to]);
+  }, [d, from, to, projectId]);
 
   const loadMovements = useCallback(
     async (account: AccountBalanceRow): Promise<void> => {
@@ -93,6 +103,9 @@ export function AccountingGl({
       if (to !== "") {
         search.set("to", to);
       }
+      if (projectId !== "") {
+        search.set("projectId", projectId);
+      }
       const result = await bffFetch<{
         account: { id: string };
         movements: readonly GlMovementRow[];
@@ -105,7 +118,7 @@ export function AccountingGl({
       }
       setMovements(result.data.movements);
     },
-    [d, from, to],
+    [d, from, to, projectId],
   );
 
   useEffect(() => {
@@ -148,6 +161,20 @@ export function AccountingGl({
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <Input label={d.accountingFromDate} value={from} onValueChange={setFrom} mono bidiIsolate placeholder="2026-01-01" />
           <Input label={d.accountingToDate} value={to} onValueChange={setTo} mono bidiIsolate placeholder="2026-12-31" />
+          {/* PHASE-019 (T50): the optional project filter (T44's param). */}
+          <Select
+            label={d.accountingGlProjectFilter}
+            value={projectId}
+            onValueChange={setProjectId}
+            placeholder="—"
+            options={[
+              { value: "", label: d.accountingGlAllProjects },
+              ...projects.map((project) => ({
+                value: project.id,
+                label: `${project.code} · ${project.name}`,
+              })),
+            ]}
+          />
           <Button variant="secondary" onClick={() => void reloadBalances()} loading={busy}>
             {d.commonOpen}
           </Button>

@@ -76,7 +76,7 @@ accounting effects: [../workflows/industry-workflows.md](../workflows/industry-w
   "report_defaults": [
     { "report_key": "services.contract_revenue_schedule", "pinned": true, "dashboard": true, "default_period": "this_month" },
     { "report_key": "services.time_billing_summary", "pinned": true, "dashboard": true, "default_period": "this_month" },
-    { "report_key": "partners.ar_aging", "pinned": true, "dashboard": false, "default_period": "this_month" },
+    { "report_key": "ar.aging", "pinned": true, "dashboard": false, "default_period": "this_month" },
     { "report_key": "sales.commissions_due", "pinned": true, "dashboard": false, "default_period": "this_month" }
   ],
   "onboarding_steps": [
@@ -90,7 +90,6 @@ accounting effects: [../workflows/industry-workflows.md](../workflows/industry-w
   "capability_prerequisites": {
     "service_contracts": { "level": "REQUIRED", "feature_keys": ["crm.service_contracts"], "available_from_phase": "PHASE-019" },
     "recurring_billing": { "level": "REQUIRED", "feature_keys": ["crm.recurring_billing"], "available_from_phase": "PHASE-019" },
-    "bom_production": { "level": "N/A", "feature_keys": [], "available_from_phase": "PHASE-018" },
     "deposits_late_fees": { "level": "OPTIONAL", "feature_keys": ["crm.contract_deposits", "crm.late_fees"], "available_from_phase": "PHASE-019" },
     "commissions": { "level": "OPTIONAL", "feature_keys": ["sales.commissions"], "available_from_phase": "PHASE-017" },
     "job_cards": { "level": "OPTIONAL", "feature_keys": ["sales.job_cards"], "available_from_phase": "PHASE-017" }
@@ -98,9 +97,11 @@ accounting effects: [../workflows/industry-workflows.md](../workflows/industry-w
 }
 ```
 
-*Note: `bom_production` is listed at N/A level in prerequisites for machine-readability of
-the "not applicable" answer; it is not enabled, and the stock modules are absent from
-`default_modules_enabled`.*
+*Note: `bom_production` (factory production) is not applicable to professional-services
+firms, so the capability is simply absent from `capability_prerequisites` — the §3
+manifest schema (README §3) requires every entry to carry a live feature-key set at a
+REQUIRED/OPTIONAL level, and a not-applicable capability contributes no keys; it is
+not enabled, and the stock modules are absent from `default_modules_enabled`.*
 
 ## Enabled features (exact keys)
 
@@ -176,7 +177,9 @@ Numbered steps and per-step journals:
 
 `services.contract_revenue_schedule` (contracted vs invoiced vs backlog — dashboard),
 `services.time_billing_summary` (recorded vs billable vs invoiced hours),
-`partners.ar_aging`, `sales.commissions_due` — see [../reports/README.md](../reports/README.md).
+`ar.aging`, `sales.commissions_due` — see [../reports/README.md](../reports/README.md).
+The `ar.aging` pin is the live registry key (the 0025 automotive reconciliation
+precedent — `partners.ar_aging` was the pre-013 planning id).
 
 ## Out of scope for this template
 

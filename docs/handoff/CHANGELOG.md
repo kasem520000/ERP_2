@@ -4,6 +4,42 @@
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
 
+- 2026-11-03 — **PHASE-019 — CRM, Service Contracts & Projects (COMPLETE)**: the
+  `crm` module (leads with conversion into partners, tasks/activities/reminders on
+  the notification rails, service contracts with the recurring billing schedule,
+  time entries + weekly timesheet review, service orders generalizing the
+  PHASE-017 job cards with NO posting-rule fork) + the `accounting.projects`
+  analytical dimension (journal-line stamping through the engine —
+  PROJECT_NOT_FOUND/PROJECT_CLOSED fail-closed; GL filters; the cost-centers
+  pattern) + the `industry.professional_services` template on the unmodified
+  PHASE-015 engine. Migrations `0027_crm_projects.sql` (11 new RLS'd tenant
+  tables + widenings incl. `journal_lines.project_id` +
+  `manual_journal_lines.project_id` + the CoA marker **2130 DEFERRED_REVENUE** —
+  the verified §2 gap) + `0028_crm_service_order_holder.sql`
+  (stock_reservations.holder_type + SERVICE_ORDER). **The contract posts nothing;
+  only its generated documents do**: billing runs (monthly pg-boss job + manual)
+  generate DRAFT invoices through the REAL SalesInvoiceService — idempotent per
+  (contract, period) via the contract_invoices partial uniques (double-fire and
+  manual+scheduled overlap ⇒ ZERO duplicates, INV-013); LOCKED periods skipped +
+  listed (INV-011); approval policies never bypassed (BR-034). **Deferred
+  revenue**: advances tag against on-account receipt credit (BR-027) → policy ON
+  posts **J-DEF [DR AR (partner, projectId) · CR DEFERRED_REVENUE]**; at invoice
+  posting the contract-billing port fires **J-REL [DR DEFERRED_REVENUE · CR AR
+  (partner, projectId)]** in the same UoW + the receipt→invoice allocation —
+  revenue NEVER recognized before the billed period (the 2025-12 revenue == 0
+  golden), INV-009 tied at every step. Reports registry 66→68
+  (`services.contract_revenue_schedule` — GL tie tolerance 0 + the
+  schedule=invoiced+draft+backlog reconciliation + ar.aging-matching overdue
+  buckets; `services.time_billing_summary`). 45 routes (readonly-sweep
+  violations 29→0); permission seeds 241→243; template activation
+  (CURRENT_SHIPPED_PHASE 19, 6 manifest policies + the platform-only
+  `crm.defer_advance_recognition`, templates-019.spec 7/7 incl. BR-038 switch
+  safety). Web: 7 CRM screens + `/accounting/projects` + the GL project filter;
+  i18n 2556→2926. **Full DB suite 106 files / 1687 tests ALL GREEN** (embedded
+  PG16, migrations 0001–0028) + unit 404/404. The rental-logistics intake set
+  (`crm.rental_contracts`, `crm.contract_deposits`, `crm.late_fees`,
+  `distribution.shipment_tracking`) **deferred behind the decision record**
+  (INDUSTRY_CATALOG + CAPABILITY_MATRIX §3 annotated — RISK-019/020).
 - 2026-11-03 — **PHASE-018 — Manufacturing & Production (COMPLETE)**: migration
   `0026_manufacturing.sql` (schema_version 26) — 7 new RLS'd tenant tables +
   additive widenings + CoA markers + the template seed + permission/plan/role

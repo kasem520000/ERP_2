@@ -340,6 +340,62 @@ export const SETTINGS_REGISTRY: Readonly<Record<string, SettingDefinition>> = Ob
     description:
       "PHASE-018 §5: after each consumption, cumulative consumed quantity above planned × (1 + threshold/100) flags the order line (over_plan) and raises the stock-category review notification — consumption is never blocked.",
   }),
+  // PHASE-019 professional-services keys (the §9 policy surface; the
+  // professional_services manifest sets the six as L1 defaults via
+  // workflow_policies, and the crm services read them from the resolved
+  // effective config's policies map).
+  "crm.contract_billing_mode": Object.freeze({
+    key: "crm.contract_billing_mode",
+    schema: z.enum(["retainer_or_milestones", "retainer", "milestones", "hourly"]),
+    default: "retainer_or_milestones",
+    description:
+      "PHASE-019 §9: the fee-model family (retainer / milestones / hourly; the combined retainer_or_milestones default) — gates the schedule grid the contract editor expands.",
+  }),
+  "crm.time_entries_require_case": Object.freeze({
+    key: "crm.time_entries_require_case",
+    schema: z.boolean(),
+    default: true,
+    description:
+      "PHASE-019 §6: recording a time entry requires a project (case) — typed TIME_ENTRY_CASE_REQUIRED; off allows non-project time.",
+  }),
+  "crm.unbilled_time_review_before_invoice": Object.freeze({
+    key: "crm.unbilled_time_review_before_invoice",
+    schema: z.boolean(),
+    default: true,
+    description:
+      "PHASE-019 §6: the weekly review (DRAFT → APPROVED) gates billing — only APPROVED time entries are pullable into an invoice.",
+  }),
+  "crm.invoice_approval_required": Object.freeze({
+    key: "crm.invoice_approval_required",
+    schema: z.boolean(),
+    default: true,
+    description:
+      "PHASE-019 §5: recurring-billing drafts stay DRAFT for manual approve+post (BR-034 SoD); off auto-submits them to PENDING_APPROVAL, never auto-posts.",
+  }),
+  "crm.invoice_numbering_per_series": Object.freeze({
+    key: "crm.invoice_numbering_per_series",
+    schema: z.boolean(),
+    default: false,
+    description:
+      "PHASE-019 §9 documented posture v1: numbering stays the standard series (no per-contract-series fork); informational key, ships false.",
+  }),
+  "crm.narrative_required_on_time_billing": Object.freeze({
+    key: "crm.narrative_required_on_time_billing",
+    schema: z.boolean(),
+    default: true,
+    description:
+      "PHASE-019 §5: hourly billing pulls only entries with a non-empty narrative (the honest timeslip); empty-narrative entries are listed needsNarrative and skipped.",
+  }),
+  // PHASE-019 platform-only key (§9): NOT in the manifest — the advance
+  // deferral reclass is a tenant-level L5 decision (golden tests set it
+  // true); services read it via readEffectiveSetting.
+  "crm.defer_advance_recognition": Object.freeze({
+    key: "crm.defer_advance_recognition",
+    schema: z.boolean(),
+    default: false,
+    description:
+      "PHASE-019 §4: when true, tagging a contract advance posts the reclass journal (DR AR control · CR DEFERRED_REVENUE, projectId-stamped) and posting a contract invoice releases it (DR DEFERRED · CR AR, allocated); false (platform default) keeps advances as plain on-account credits (BR-027 pure link-only).",
+  }),
 });
 
 export const SETTING_KEYS: readonly string[] = Object.keys(SETTINGS_REGISTRY);

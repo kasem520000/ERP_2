@@ -55,6 +55,7 @@ export interface JournalLineRow {
   itemId: string | null;
   costCenterId: string | null;
   taxCodeId: string | null;
+  projectId: string | null;
   memo: string | null;
   memoAr: string | null;
 }
@@ -69,7 +70,7 @@ const ENTRY_COLUMNS = sql`id, entry_no AS "entryNo", entry_date AS "entryDate",
 const LINE_COLUMNS = sql`l.id, l.journal_entry_id AS "journalEntryId", l.line_no AS "lineNo",
   l.account_id AS "accountId", a.code AS "accountCode", l.direction, l.amount, l.base_amount AS "baseAmount",
   l.partner_id AS "partnerId", l.item_id AS "itemId", l.cost_center_id AS "costCenterId",
-  l.tax_code_id AS "taxCodeId", l.memo, l.memo_ar AS "memoAr"`;
+  l.tax_code_id AS "taxCodeId", l.project_id AS "projectId", l.memo, l.memo_ar AS "memoAr"`;
 
 export async function findEntryById(id: string): Promise<JournalEntryRow | undefined> {
   const rows = await tenantTx().execute(sql`
@@ -160,15 +161,15 @@ async function insertLine(
   const rows = await tenantTx().execute(sql`
     INSERT INTO journal_lines (id, tenant_id, journal_entry_id, line_no, account_id, direction,
                                amount, base_amount, partner_id, item_id, cost_center_id, tax_code_id,
-                               memo, memo_ar)
+                               project_id, memo, memo_ar)
     VALUES (${generateUuidV7()}, erp.current_tenant_id(), ${entryId}, ${line.lineNo}, ${line.accountId},
             ${line.direction}, ${line.amount}, ${line.baseAmount}, ${line.partnerId ?? null},
             ${line.itemId ?? null}, ${line.costCenterId ?? null}, ${line.taxCodeId ?? null},
-            ${line.memo?.en ?? null}, ${line.memo?.ar ?? null})
+            ${line.projectId ?? null}, ${line.memo?.en ?? null}, ${line.memo?.ar ?? null})
     RETURNING id, journal_entry_id AS "journalEntryId", line_no AS "lineNo", account_id AS "accountId",
               direction, amount, base_amount AS "baseAmount", partner_id AS "partnerId",
               item_id AS "itemId", cost_center_id AS "costCenterId", tax_code_id AS "taxCodeId",
-              memo, memo_ar AS "memoAr"
+              project_id AS "projectId", memo, memo_ar AS "memoAr"
   `);
   return (rows.rows as unknown as JournalLineRow[])[0]!;
 }
@@ -276,6 +277,9 @@ export interface GlMovementRow {
   partnerId: string | null;
   itemId: string | null;
   costCenterId: string | null;
+  /** PHASE-019 (§8): the projects dimension stamp on the movement feed
+   * (the GL browser's project column — mirrors costCenterId). */
+  projectId: string | null;
   balanceAfter?: string;
 }
 
@@ -284,15 +288,19 @@ export async function accountMovements(input: {
   fromDate?: string;
   toDate?: string;
   limit: number;
+  /** PHASE-019 (§8): restrict the feed to one project's lines (NULL = all). */
+  projectId?: string;
 }): Promise<GlMovementRow[]> {
   const rows = await tenantTx().execute(sql`
     SELECT l.journal_entry_id AS "journalEntryId", e.entry_no AS "entryNo", e.entry_date AS "entryDate",
            l.line_no AS "lineNo", l.direction, l.amount, l.base_amount AS "baseAmount",
-           l.memo, l.partner_id AS "partnerId", l.item_id AS "itemId", l.cost_center_id AS "costCenterId"
+           l.memo, l.partner_id AS "partnerId", l.item_id AS "itemId", l.cost_center_id AS "costCenterId",
+           l.project_id AS "projectId"
     FROM journal_lines l JOIN journal_entries e ON e.id = l.journal_entry_id
     WHERE l.account_id = ${input.accountId}
       AND (${input.fromDate ?? null}::date IS NULL OR e.entry_date >= ${input.fromDate ?? null})
       AND (${input.toDate ?? null}::date IS NULL OR e.entry_date <= ${input.toDate ?? null})
+      AND (${input.projectId ?? null}::uuid IS NULL OR l.project_id = ${input.projectId ?? null})
     ORDER BY e.entry_date, e.id, l.line_no
     LIMIT ${input.limit}
   `);
@@ -313,6 +321,10 @@ export interface AccountBalanceRow {
 export async function trialBalances(input: {
   fromDate?: string;
   toDate?: string;
+  /** PHASE-019 (§8): restrict the window to one project's lines (NULL = all)
+   * — project-filtered totals equal the unfiltered slice sums by
+   * construction (the same journal_lines rows, sliced). */
+  projectId?: string;
 }): Promise<AccountBalanceRow[]> {
   const rows = await tenantTx().execute(sql`
     SELECT a.id AS "accountId", a.code, a.name, a.name_ar AS "nameAr", a.type,
@@ -320,6 +332,7 @@ export async function trialBalances(input: {
            COALESCE(SUM(CASE WHEN l.direction = 'CREDIT' THEN l.base_amount ELSE 0 END), 0)::text AS credit,
            COALESCE(SUM(CASE WHEN l.direction = 'DEBIT' THEN l.base_amount ELSE -l.base_amount END), 0)::text AS balance
     FROM accounts a LEFT JOIN journal_lines l ON l.account_id = a.id
+      AND (${input.projectId ?? null}::uuid IS NULL OR l.project_id = ${input.projectId ?? null})
       AND EXISTS (
         SELECT 1 FROM journal_entries e
         WHERE e.id = l.journal_entry_id
@@ -351,6 +364,10 @@ export async function journalRegister(input: {
   toDate?: string;
   sourceType?: string;
   limit: number;
+  /** PHASE-019 (§8): restrict the register to entries carrying at least
+   * one line of the project — the totals then sum ONLY that project's
+   * lines within each entry (NULL = the unfiltered register). */
+  projectId?: string;
 }): Promise<JournalRegisterRow[]> {
   const rows = await tenantTx().execute(sql`
     SELECT e.id, e.entry_no AS "entryNo", e.entry_date AS "entryDate", e.description,
@@ -358,9 +375,17 @@ export async function journalRegister(input: {
            COALESCE(SUM(CASE WHEN l.direction = 'DEBIT' THEN l.amount ELSE 0 END), 0)::text AS "totalDebit",
            COALESCE(SUM(CASE WHEN l.direction = 'CREDIT' THEN l.amount ELSE 0 END), 0)::text AS "totalCredit"
     FROM journal_entries e LEFT JOIN journal_lines l ON l.journal_entry_id = e.id
+      AND (${input.projectId ?? null}::uuid IS NULL OR l.project_id = ${input.projectId ?? null})
     WHERE (${input.fromDate ?? null}::date IS NULL OR e.entry_date >= ${input.fromDate ?? null})
       AND (${input.toDate ?? null}::date IS NULL OR e.entry_date <= ${input.toDate ?? null})
       AND (${input.sourceType ?? null}::text IS NULL OR e.source_type = ${input.sourceType ?? null})
+      AND (
+        ${input.projectId ?? null}::uuid IS NULL
+        OR EXISTS (
+          SELECT 1 FROM journal_lines pl
+          WHERE pl.journal_entry_id = e.id AND pl.project_id = ${input.projectId ?? null}
+        )
+      )
     GROUP BY e.id ORDER BY e.entry_date DESC, e.id DESC
     LIMIT ${input.limit}
   `);
@@ -455,6 +480,11 @@ export interface ManualJournalLineInput {
   itemId: string | null;
   costCenterId: string | null;
   taxCodeId: string | null;
+  /** PHASE-019 (§8): the projects dimension stamp on the DRAFT substrate
+   * (persisted to manual_journal_lines.project_id; the consumer wiring —
+   * zod per line + buildSpec — lands with T44). Optional here so existing
+   * callers compile unchanged; absent stamps travel as NULL. */
+  projectId?: string | null;
   memo: string | null;
   memoAr: string | null;
 }
@@ -462,6 +492,8 @@ export interface ManualJournalLineInput {
 export interface ManualJournalLine extends ManualJournalLineInput {
   id: string;
   manualJournalId: string;
+  /** Stored stamp (NULL when the line carries none). */
+  projectId: string | null;
 }
 
 const MANUAL_COLUMNS = sql`id, status, entry_date AS "entryDate", currency_code AS "currencyCode",
@@ -588,10 +620,11 @@ export async function replaceManualJournalLines(
   for (const line of lines) {
     await tenantTx().execute(sql`
       INSERT INTO manual_journal_lines (id, tenant_id, manual_journal_id, line_no, account_id, direction,
-                                        amount, partner_id, item_id, cost_center_id, tax_code_id, memo, memo_ar)
+                                        amount, partner_id, item_id, cost_center_id, tax_code_id,
+                                        project_id, memo, memo_ar)
       VALUES (${generateUuidV7()}, erp.current_tenant_id(), ${manualJournalId}, ${line.lineNo},
               ${line.accountId}, ${line.direction}, ${line.amount}, ${line.partnerId}, ${line.itemId},
-              ${line.costCenterId}, ${line.taxCodeId}, ${line.memo}, ${line.memoAr})
+              ${line.costCenterId}, ${line.taxCodeId}, ${line.projectId ?? null}, ${line.memo}, ${line.memoAr})
     `);
   }
 }
@@ -602,7 +635,8 @@ export async function listManualJournalLines(
   const rows = await tenantTx().execute(sql`
     SELECT id, manual_journal_id AS "manualJournalId", line_no AS "lineNo", account_id AS "accountId",
            direction, amount, partner_id AS "partnerId", item_id AS "itemId",
-           cost_center_id AS "costCenterId", tax_code_id AS "taxCodeId", memo, memo_ar AS "memoAr"
+           cost_center_id AS "costCenterId", tax_code_id AS "taxCodeId",
+           project_id AS "projectId", memo, memo_ar AS "memoAr"
     FROM manual_journal_lines WHERE manual_journal_id = ${manualJournalId} ORDER BY line_no
   `);
   return rows.rows as unknown as ManualJournalLine[];

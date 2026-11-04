@@ -38,7 +38,7 @@ import {
 
 /**
  * The phase whose features have SHIPPED platform-wide. A capability whose
- * `available_from_phase` is ≤ this is live today; "PHASE-019"+ = gated.
+ * `available_from_phase` is ≤ this is live today; "PHASE-020"+ = gated.
  * Bump this constant with the roadmap (a phase-scoped constant, not a
  * config knob — it is a statement about the running build). PHASE-017
  * shipped `sales.job_cards` + the distribution set (migration 0025), so
@@ -46,9 +46,13 @@ import {
  * LIVE at that rung; PHASE-018 shipped the manufacturing set (migration
  * 0026 — the bom/production_orders/wip/costing/scrap/batch_genealogy/qc
  * keys), so the food_manufacturing capabilities and the automotive/
- * grocery qc_inspections entries resolve LIVE too.
+ * grocery qc_inspections entries resolve LIVE too; PHASE-019 shipped the
+ * CRM set (migration 0027 — crm.leads/tasks_activities/service_contracts/
+ * recurring_billing/service_orders + accounting.projects), so the
+ * professional_services capabilities and the automotive service_contracts
+ * entry resolve LIVE as well.
  */
-export const CURRENT_SHIPPED_PHASE = "PHASE-018";
+export const CURRENT_SHIPPED_PHASE = "PHASE-019";
 
 /** "PHASE-0NN" → the numeric phase (for ordering). */
 export function phaseNumber(phase: string): number {

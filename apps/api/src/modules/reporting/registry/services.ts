@@ -10,6 +10,7 @@ import { PosQueriesService } from "../../pos/application/pos-queries";
 import { AutomotiveQueriesService } from "./industry/automotive-queries";
 import { DistributionQueriesService } from "./industry/distribution-queries";
 import { ManufacturingQueriesService } from "./industry/manufacturing-queries";
+import { CrmQueriesService } from "./industry/crm-queries";
 import { TreasuryQueriesService } from "../../treasury/application/treasury-queries";
 import { PartnerQueriesService } from "../../partners/application/partner-queries";
 import { TaxQueriesService } from "../../tax/application/tax-queries";
@@ -43,6 +44,8 @@ export interface ReportingServices {
   distribution: DistributionQueriesService;
   /** PHASE-018 · the manufacturing query surface (production cost + materials GL tie, the batch-genealogy recall walk with sales doc numbers, the QC inspection log). */
   manufacturing: ManufacturingQueriesService;
+  /** PHASE-019 · the CRM query surface (contract revenue schedule + revenue GL tie + the AR overdue open-item buckets, the time-billing summary). */
+  crm: CrmQueriesService;
   treasury: TreasuryQueriesService;
   partners: PartnerQueriesService;
   tax: TaxQueriesService;
@@ -67,6 +70,7 @@ export function reportingServices(): ReportingServices {
       automotive: new AutomotiveQueriesService(),
       distribution: new DistributionQueriesService(),
       manufacturing: new ManufacturingQueriesService(),
+      crm: new CrmQueriesService(),
       treasury: new TreasuryQueriesService(),
       partners: new PartnerQueriesService(),
       tax: new TaxQueriesService(),

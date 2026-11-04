@@ -223,6 +223,24 @@ export const TENANT_TABLES_REGISTRY: readonly RegisteredTenantTable[] = [
   { table: "production_consumptions" },
   { table: "production_scraps" },
   { table: "inspections" },
+
+  // PHASE-019 CRM/service-billing cluster (migration 0027_crm_projects.sql):
+  // the projects dimension (accounting-owned), the crm intake (leads, tasks,
+  // activities), the service-contract family (contracts + billing schedule +
+  // the invoices idempotency guard + advances), service orders + lines (the
+  // job-card generalization, tombstone-based), and time entries. All
+  // status-lifecycled — no delete grants anywhere in the cluster.
+  { table: "projects" },
+  { table: "leads" },
+  { table: "crm_tasks" },
+  { table: "crm_activities" },
+  { table: "service_contracts" },
+  { table: "contract_billing_schedule" },
+  { table: "contract_invoices" },
+  { table: "contract_advances" },
+  { table: "service_orders" },
+  { table: "service_order_lines" },
+  { table: "crm_time_entries" },
 ];
 
 export const TENANT_TABLE_NAMES: readonly string[] = TENANT_TABLES_REGISTRY.map(

@@ -35,6 +35,11 @@ export interface DraftLineInput {
   partnerId?: string | null;
   itemId?: string | null;
   costCenterId?: string | null;
+  /** PHASE-019 (§8): the projects dimension stamp per line — the
+   * costCenterId pattern verbatim (drafts persist it to
+   * manual_journal_lines.project_id; buildSpec copies it into
+   * JournalLineSpec where the engine validates OPEN + existence). */
+  projectId?: string | null;
   taxCodeId?: string | null;
   memo?: string | null;
   memoAr?: string | null;
@@ -117,6 +122,7 @@ export class JournalService {
       partnerId: line.partnerId ?? null,
       itemId: line.itemId ?? null,
       costCenterId: line.costCenterId ?? null,
+      projectId: line.projectId ?? null,
       taxCodeId: line.taxCodeId ?? null,
       memo: line.memo ?? null,
       memoAr: line.memoAr ?? null,
@@ -157,6 +163,7 @@ export class JournalService {
         partnerId: line.partnerId ?? null,
         itemId: line.itemId ?? null,
         costCenterId: line.costCenterId ?? null,
+        projectId: line.projectId ?? null,
         taxCodeId: line.taxCodeId ?? null,
         memo: line.memo ?? null,
         memoAr: line.memoAr ?? null,
@@ -574,6 +581,7 @@ export class JournalService {
       partnerId: line.partnerId ?? undefined,
       itemId: line.itemId ?? undefined,
       costCenterId: line.costCenterId ?? undefined,
+      projectId: line.projectId ?? undefined,
       taxCodeId: line.taxCodeId ?? undefined,
       memo: { en: line.memo ?? undefined, ar: line.memoAr ?? undefined },
     }));

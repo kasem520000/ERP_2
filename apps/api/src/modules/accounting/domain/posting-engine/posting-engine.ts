@@ -17,6 +17,8 @@ import {
   missingPartnerOnControl,
   periodLocked,
   periodNotFound,
+  projectClosed,
+  projectNotFound,
   purposeNotMapped,
 } from "./posting-errors";
 
@@ -66,6 +68,11 @@ export interface PostingReadModel {
   >;
   /** Active purpose mapping (V1: exactly one active per purpose per tenant). */
   findActivePurposeAccount(purposeKey: string): Promise<{ accountId: string } | undefined>;
+  /** PHASE-019 (§8): the projects dimension stamp target (mirrors
+   * findActivePurposeAccount's shape). */
+  findProject(
+    projectId: string,
+  ): Promise<{ id: string; status: "OPEN" | "CLOSED" } | undefined>;
   /** The active AR/AP control account ids (INV-009 subledger consistency). */
   findArApControlAccounts(): Promise<{ arControlAccountId: string; apControlAccountId: string }>;
   /** Tenant base currency (ISO-4217) for FX validation. */
@@ -183,6 +190,7 @@ export class PostingEngine {
     const { arControlAccountId, apControlAccountId } = await model.findArApControlAccounts();
     const resolved: PostingPlan["lines"] = [];
     const accountCache = new Map<string, Awaited<ReturnType<PostingReadModel["findAccount"]>>>();
+    const projectCache = new Map<string, { id: string; status: "OPEN" | "CLOSED" }>();
     for (const line of spec.lines) {
       let accountId: string;
       let purposeKey: string | undefined;
@@ -231,6 +239,19 @@ export class PostingEngine {
           purposeKey: purposeKey ?? "AR/AP_CONTROL",
         });
       }
+      // (6b) PHASE-019 (§8): the projects dimension stamp — the unknown id
+      // fails closed (no fallback dimension) and a CLOSED project rejects
+      // NEW stamps (posted history stays). Cached per post like accounts.
+      if (line.projectId !== undefined && !projectCache.has(line.projectId)) {
+        const found = await model.findProject(line.projectId);
+        if (found === undefined) {
+          throw projectNotFound({ projectId: line.projectId });
+        }
+        if (found.status !== "OPEN") {
+          throw projectClosed({ projectId: line.projectId });
+        }
+        projectCache.set(line.projectId, found);
+      }
       const baseAmount = isForeign
         ? money(dec(line.amount).times(effectiveRate))
         : money(dec(line.amount));
@@ -245,6 +266,7 @@ export class PostingEngine {
         itemId: line.itemId,
         costCenterId: line.costCenterId,
         taxCodeId: line.taxCodeId,
+        projectId: line.projectId,
         memo: line.memo,
         isArApControl,
       });
@@ -321,6 +343,7 @@ export function lineOf(partial: Partial<JournalLineSpec> & { direction: Directio
     itemId: partial.itemId,
     costCenterId: partial.costCenterId,
     taxCodeId: partial.taxCodeId,
+    projectId: partial.projectId,
     memo: partial.memo,
   };
 }

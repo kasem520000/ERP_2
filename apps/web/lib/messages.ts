@@ -496,6 +496,13 @@ export function localizedAccountingError(
     case "PERIOD_STATE_ERROR":
     case "APPROVALS_PENDING":
       return d.accountingErrState;
+    // -- PHASE-019 (T50): the projects dimension (T44's typed codes).
+    case "PROJECT_NOT_FOUND":
+      return d.errorsNotFound;
+    case "PROJECT_CODE_TAKEN":
+      return d.accountingProjectErrCodeTaken;
+    case "PROJECT_CLOSED":
+      return d.accountingErrState;
     default:
       return error.message !== "" ? error.message : d.errorsGeneric;
   }
@@ -1614,4 +1621,240 @@ export function localizedSaleDocType(d: Dictionary, docType: string): string {
     delivery_note: d.mfgDocDeliveryNote,
   };
   return map[docType] ?? docType;
+}
+
+// -- PHASE-019 (T50): crm ----------------------------------------------------------
+
+/**
+ * CRM module error mapping (crm-errors.ts codes → dictionary). Every typed
+ * code of the 45-route surface carries its own key; posting-engine codes
+ * (PERIOD_LOCKED, PROJECT_NOT_FOUND/CLOSED, PURPOSE_NOT_MAPPED, …) fall back
+ * to the API message; unknown codes fall through the generic ladder (the
+ * localizedManufacturingError pattern — each screen calls this directly,
+ * NOT wired into localizedApiError).
+ */
+export function localizedCrmError(
+  d: Dictionary,
+  error: ApiErrorBody,
+  retryAfterSeconds?: number,
+): string {
+  switch (error.code) {
+    // -- T45: leads + tasks/activities
+    case "LEAD_NOT_FOUND":
+      return d.crmErrLeadNotFound;
+    case "LEAD_INPUT_INVALID":
+      return d.crmErrLeadInputInvalid;
+    case "LEAD_CONVERTED":
+      return d.crmErrLeadConverted;
+    case "LEAD_LOST_REASON_REQUIRED":
+      return d.crmErrLeadLostReason;
+    case "LEAD_MERGE_TARGET_REQUIRED":
+      return d.crmErrLeadMergeTarget;
+    case "TASK_NOT_FOUND":
+      return d.crmErrTaskNotFound;
+    case "TASK_STATE":
+      return d.crmErrTaskState;
+    case "TASK_INPUT_INVALID":
+      return d.crmErrTaskInput;
+    case "ACTIVITY_INPUT_INVALID":
+      return d.crmErrActivityInput;
+    // -- T46: contracts + schedule + advances + time
+    case "CONTRACT_NOT_FOUND":
+      return d.crmErrContractNotFound;
+    case "CONTRACT_STATE":
+      return d.crmErrContractState;
+    case "CONTRACT_INPUT_INVALID":
+      return d.crmErrContractInput;
+    case "CONTRACT_TERM_INVALID":
+      return d.crmErrContractTerm;
+    case "SCHEDULE_ENTRY_NOT_FOUND":
+      return d.crmErrScheduleNotFound;
+    case "ADVANCE_STATE":
+      return d.crmErrAdvanceState;
+    case "ADVANCE_INSUFFICIENT_ON_ACCOUNT":
+      return d.crmErrAdvanceInsufficient;
+    case "TIME_ENTRY_NOT_FOUND":
+      return d.crmErrTimeNotFound;
+    case "TIME_ENTRY_STATE":
+      return d.crmErrTimeState;
+    case "TIME_ENTRY_INPUT_INVALID":
+      return d.crmErrTimeInput;
+    case "TIME_ENTRY_CASE_REQUIRED":
+      return d.crmErrTimeCaseRequired;
+    case "TIMESHEET_EMPTY":
+      return d.crmErrTimesheetEmpty;
+    // -- T48: service orders
+    case "SERVICE_ORDER_NOT_FOUND":
+      return d.crmErrServiceOrderNotFound;
+    case "SERVICE_ORDER_STATE":
+      return d.crmErrServiceOrderState;
+    case "SERVICE_ORDER_INPUT_INVALID":
+      return d.crmErrServiceOrderInput;
+    case "SERVICE_ORDER_LINE_ERROR":
+      return d.crmErrServiceOrderLine;
+    case "SERVICE_ORDER_POSTING_NOT_CONFIGURED":
+      return d.crmErrServiceOrderPosting;
+    // -- the posting-engine / accounting codes the crm surfaces rethrow
+    case "PERIOD_LOCKED":
+    case "PROJECT_NOT_FOUND":
+    case "PROJECT_CLOSED":
+    case "PURPOSE_NOT_MAPPED":
+    case "POSTING_NOT_CONFIGURED":
+    case "POSTING_REJECTED":
+    case "EXCHANGE_RATE_MISSING":
+    case "PARTNER_NOT_FOUND":
+      return error.message !== "" ? error.message : d.errorsGeneric;
+    default:
+      return localizedApiError(d, error, retryAfterSeconds);
+  }
+}
+
+/** Lead statuses (the §2 pipeline). */
+export function localizedLeadStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    NEW: d.crmLeadStatusNew,
+    QUALIFIED: d.crmLeadStatusQualified,
+    CONVERTED: d.crmLeadStatusConverted,
+    LOST: d.crmLeadStatusLost,
+  };
+  return map[status] ?? status;
+}
+
+/** Lead sources (the §2 CHECK vocabulary). */
+export function localizedLeadSource(d: Dictionary, source: string): string {
+  const map: Record<string, string> = {
+    WALK_IN: d.crmLeadSourceWalkIn,
+    REFERRAL: d.crmLeadSourceReferral,
+    WEBSITE: d.crmLeadSourceWebsite,
+    CAMPAIGN: d.crmLeadSourceCampaign,
+    CALL: d.crmLeadSourceCall,
+    OTHER: d.crmLeadSourceOther,
+  };
+  return map[source] ?? source;
+}
+
+/** Task statuses (OPEN → DONE/CANCELLED; §3). */
+export function localizedTaskStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    OPEN: d.crmTaskStatusOpen,
+    DONE: d.crmTaskStatusDone,
+    CANCELLED: d.crmTaskStatusCancelled,
+  };
+  return map[status] ?? status;
+}
+
+/** Activity kinds (CALL/MEETING/EMAIL/NOTE; §3). */
+export function localizedActivityKind(d: Dictionary, kind: string): string {
+  const map: Record<string, string> = {
+    CALL: d.crmActivityKindCall,
+    MEETING: d.crmActivityKindMeeting,
+    EMAIL: d.crmActivityKindEmail,
+    NOTE: d.crmActivityKindNote,
+  };
+  return map[kind] ?? kind;
+}
+
+/** Task related-anchor types (§3). */
+export function localizedRelatedType(d: Dictionary, relatedType: string): string {
+  const map: Record<string, string> = {
+    LEAD: d.crmTaskRelatedLead,
+    PARTNER: d.crmTaskRelatedPartner,
+    CONTRACT: d.crmTaskRelatedContract,
+    SERVICE_ORDER: d.crmTaskRelatedServiceOrder,
+  };
+  return map[relatedType] ?? relatedType;
+}
+
+/** Contract statuses (DRAFT → ACTIVE/CANCELLED/RENEWED; §4). */
+export function localizedContractStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    DRAFT: d.crmContractStatusDraft,
+    ACTIVE: d.crmContractStatusActive,
+    CANCELLED: d.crmContractStatusCancelled,
+    RENEWED: d.crmContractStatusRenewed,
+  };
+  return map[status] ?? status;
+}
+
+/** Contract fee models (§4). */
+export function localizedFeeModel(d: Dictionary, feeModel: string): string {
+  const map: Record<string, string> = {
+    RETAINER: d.crmFeeModelRetainer,
+    MILESTONES: d.crmFeeModelMilestones,
+    HOURLY: d.crmFeeModelHourly,
+  };
+  return map[feeModel] ?? feeModel;
+}
+
+/** Schedule entry types (§4 grid vocabulary). */
+export function localizedScheduleEntryType(d: Dictionary, entryType: string): string {
+  const map: Record<string, string> = {
+    RETAINER_PERIOD: d.crmScheduleEntryRetainer,
+    MILESTONE: d.crmScheduleEntryMilestone,
+    HOURLY_PERIOD: d.crmScheduleEntryHourly,
+  };
+  return map[entryType] ?? entryType;
+}
+
+/** Schedule entry statuses (PLANNED/INVOICED/SKIPPED; §4). */
+export function localizedScheduleStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    PLANNED: d.crmScheduleStatusPlanned,
+    INVOICED: d.crmScheduleStatusInvoiced,
+    SKIPPED: d.crmScheduleStatusSkipped,
+  };
+  return map[status] ?? status;
+}
+
+/** Advance statuses (HELD/RELEASED; §4). */
+export function localizedAdvanceStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    HELD: d.crmAdvanceStatusHeld,
+    RELEASED: d.crmAdvanceStatusReleased,
+  };
+  return map[status] ?? status;
+}
+
+/** Time-entry statuses (DRAFT/APPROVED/BILLED/VOID; §6). */
+export function localizedTimeEntryStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    DRAFT: d.crmTimeStatusDraft,
+    APPROVED: d.crmTimeStatusApproved,
+    BILLED: d.crmTimeStatusBilled,
+    VOID: d.crmTimeStatusVoid,
+  };
+  return map[status] ?? status;
+}
+
+/** Service-order statuses (the job-card lifecycle; §7). */
+export function localizedServiceOrderStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    DRAFT: d.crmServiceOrderStatusDraft,
+    IN_PROGRESS: d.crmServiceOrderStatusInProgress,
+    COMPLETED: d.crmServiceOrderStatusCompleted,
+    INVOICED: d.crmServiceOrderStatusInvoiced,
+    CANCELLED: d.crmServiceOrderStatusCancelled,
+  };
+  return map[status] ?? status;
+}
+
+/** Service-order line statuses (PENDING/RESERVED/ISSUED/INVOICED/VOID; §7). */
+export function localizedServiceOrderLineStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    PENDING: d.crmServiceOrderLineStatusPending,
+    RESERVED: d.crmServiceOrderLineStatusReserved,
+    ISSUED: d.crmServiceOrderLineStatusIssued,
+    INVOICED: d.crmServiceOrderLineStatusInvoiced,
+    VOID: d.crmServiceOrderLineStatusVoid,
+  };
+  return map[status] ?? status;
+}
+
+/** Project statuses (OPEN/CLOSED — a CLOSED project rejects new stamps; §8). */
+export function localizedProjectStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    OPEN: d.accountingProjectStatusOpen,
+    CLOSED: d.accountingProjectStatusClosed,
+  };
+  return map[status] ?? status;
 }

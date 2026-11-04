@@ -689,6 +689,12 @@ export interface SalesInvoiceRow {
   // produced this invoice, and for which vehicle (per-vehicle history).
   jobCardId: string | null;
   vehicleId: string | null;
+  // PHASE-019 (0027): the service-billing provenance trio — contract
+  // (recurring-billing link), service order (work-order invoice), project
+  // (analytical stamp carried onto the post + COGS journal lines).
+  contractId: string | null;
+  serviceOrderId: string | null;
+  projectId: string | null;
 }
 
 /** PHASE-016: a POS tender split line (jsonb on sales_invoices). */
@@ -709,7 +715,8 @@ const INVOICE_COLUMNS = sql`id, branch_id AS "branchId", customer_id AS "custome
   posted_cogs_journal_id AS "postedCogsJournalId",
   channel, pos_terminal_id AS "posTerminalId", order_type AS "orderType",
   pos_table_id AS "posTableId", offline_receipt_no AS "offlineReceiptNo", tenders,
-  job_card_id AS "jobCardId", vehicle_id AS "vehicleId"`;
+  job_card_id AS "jobCardId", vehicle_id AS "vehicleId",
+  contract_id AS "contractId", service_order_id AS "serviceOrderId", project_id AS "projectId"`;
 
 export async function insertSalesInvoice(input: {
   /** PHASE-016: the offline-sync client id (ADR-0006) — same id across
@@ -746,6 +753,12 @@ export async function insertSalesInvoice(input: {
    * existence — the callers validate; sales-owned provenance only). */
   jobCardId?: string | null;
   vehicleId?: string | null;
+  /** PHASE-019 (0027): the service-billing provenance trio (composite FKs
+   * in the migration; existence validated at the application layer — the
+   * contract-billing port can replace the contract read). */
+  contractId?: string | null;
+  serviceOrderId?: string | null;
+  projectId?: string | null;
   lines: readonly {
     itemId: string | null;
     accountId: string | null;
@@ -774,7 +787,8 @@ export async function insertSalesInvoice(input: {
                                 warehouse_id, cash_account_id, total_net, total_tax, total_gross,
                                 tax_summary, credit_check, note, note_ar, created_by,
                                 channel, pos_terminal_id, order_type, pos_table_id,
-                                offline_receipt_no, tenders, job_card_id, vehicle_id)
+                                offline_receipt_no, tenders, job_card_id, vehicle_id,
+                                contract_id, service_order_id, project_id)
     VALUES (${id}, erp.current_tenant_id(), ${input.branchId}, ${input.customerId}, ${input.salesRepId},
             ${input.kind}, ${input.invoiceDate}, ${input.dueDate}, ${input.currencyCode}, ${input.exchangeRate},
             ${input.orderId}, ${input.deliveryId}, ${input.warehouseId}, ${input.cashAccountId},
@@ -784,7 +798,8 @@ export async function insertSalesInvoice(input: {
             ${input.channel ?? "STANDARD"}, ${input.posTerminalId ?? null}, ${input.orderType ?? null},
             ${input.posTableId ?? null}, ${input.offlineReceiptNo ?? null},
             ${input.tenders === undefined || input.tenders === null ? null : JSON.stringify(input.tenders)}::jsonb,
-            ${input.jobCardId ?? null}, ${input.vehicleId ?? null})
+            ${input.jobCardId ?? null}, ${input.vehicleId ?? null},
+            ${input.contractId ?? null}, ${input.serviceOrderId ?? null}, ${input.projectId ?? null})
   `);
   let lineNo = 0;
   for (const line of input.lines) {
@@ -844,6 +859,27 @@ export async function listSalesInvoices(filter: {
     ORDER BY created_at DESC LIMIT ${filter.limit}
   `);
   return rows.rows as unknown as SalesInvoiceRow[];
+}
+
+// PHASE-019 (0027): infrastructure-level existence reads for the
+// service-billing provenance trio. These are SALES-OWNED, read-only probes
+// into the crm-owned tables (the composite FKs in the migration guarantee
+// referential shape; these probes give the application layer its typed
+// not-found errors BEFORE the insert). The contract-billing port
+// (SalesInvoiceService.setContractBillingPort) can replace the contract
+// read with the crm module's richer validateContract.
+export async function findContractExists(contractId: string): Promise<boolean> {
+  const rows = await tenantTx().execute<{ ok: boolean }>(sql`
+    SELECT true AS ok FROM service_contracts WHERE id = ${contractId} LIMIT 1
+  `);
+  return (rows.rows[0] as { ok: boolean } | undefined)?.ok === true;
+}
+
+export async function findServiceOrderExists(serviceOrderId: string): Promise<boolean> {
+  const rows = await tenantTx().execute<{ ok: boolean }>(sql`
+    SELECT true AS ok FROM service_orders WHERE id = ${serviceOrderId} LIMIT 1
+  `);
+  return (rows.rows[0] as { ok: boolean } | undefined)?.ok === true;
 }
 
 export interface SalesInvoiceLineRow {

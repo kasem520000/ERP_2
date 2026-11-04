@@ -566,7 +566,8 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   PHASE-013 reporting, statements & printing + PHASE-014 subscriptions,
   billing, onboarding & dashboards + PHASE-015 industry configuration
   framework & priority templates + PHASE-016 Point of Sale + PHASE-017 Automotive &
-  Distribution Templates + PHASE-018 Manufacturing & Production (migrations 0001–0026; the centralized posting engine with the full
+  Distribution Templates + PHASE-018 Manufacturing & Production + PHASE-019 CRM,
+  Service Contracts & Projects (migrations 0001–0028; the centralized posting engine with the full
   invariant suite is live and proven by its consumers — treasury posts every
   money movement through it, tax stamps every tax-carrying line with frozen
   rate snapshots BR-033, inventory posts every stock movement through it

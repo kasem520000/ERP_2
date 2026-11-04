@@ -1563,6 +1563,135 @@ async function seedFixtures(superuser: {
     [TENANT_A, TENANT_B],
   );
 
+  // PHASE-019 fixtures (migration 0027): the crm/service-billing cluster —
+  // one row per registered table per tenant, FK-consistent against the
+  // partners/items/branches/warehouses/receipts/sales_invoices fixtures
+  // (projects standalone; leads keep partner NULL at NEW; tasks/activities
+  // point at the own lead — polymorphic, no FK; contracts need partners;
+  // schedule/advances need contracts + items/receipts; contract_invoices
+  // needs contracts + sales_invoices with period_key NULL — the schedule
+  // fixture holds the period key; service orders need partners + branches
+  // + warehouses; time entries need projects + contracts + items),
+  // idempotent.
+  await superuser.query(
+    `INSERT INTO projects (id, tenant_id, code, name, name_ar, status)
+     VALUES
+       ('a1a1a1a1-0000-4000-8000-000000000001', $1, 'ISO', 'Project A', 'مشروع أ', 'OPEN'),
+       ('a1a1a1a1-0000-4000-8000-000000000002', $2, 'ISO', 'Project B', 'مشروع ب', 'OPEN')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO leads (id, tenant_id, name, source, status)
+     VALUES
+       ('91919191-0000-4000-8000-000000000001', $1, 'Lead A', 'WEBSITE', 'NEW'),
+       ('91919191-0000-4000-8000-000000000002', $2, 'Lead B', 'WEBSITE', 'NEW')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO crm_tasks (id, tenant_id, title, related_type, related_id, status)
+     VALUES
+       ('92929292-0000-4000-8000-000000000001', $1, 'Task A', 'LEAD',
+        '91919191-0000-4000-8000-000000000001', 'OPEN'),
+       ('92929292-0000-4000-8000-000000000002', $2, 'Task B', 'LEAD',
+        '91919191-0000-4000-8000-000000000002', 'OPEN')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO crm_activities (id, tenant_id, kind, related_type, related_id,
+                                 occurred_at, summary)
+     VALUES
+       ('93939393-0000-4000-8000-000000000001', $1, 'NOTE', 'LEAD',
+        '91919191-0000-4000-8000-000000000001', now(), 'Activity A'),
+       ('93939393-0000-4000-8000-000000000002', $2, 'NOTE', 'LEAD',
+        '91919191-0000-4000-8000-000000000002', now(), 'Activity B')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO service_contracts (id, tenant_id, partner_id, project_id, title, fee_model,
+                                    start_date, end_date, monthly_amount, currency_code, status)
+     VALUES
+       ('94949494-0000-4000-8000-000000000001', $1, 'b5b5b5b5-0000-4000-8000-000000000001',
+        'a1a1a1a1-0000-4000-8000-000000000001', 'Contract A', 'RETAINER',
+        '2027-01-01', '2027-06-30', 100, 'SAR', 'DRAFT'),
+       ('94949494-0000-4000-8000-000000000002', $2, 'b5b5b5b5-0000-4000-8000-000000000002',
+        'a1a1a1a1-0000-4000-8000-000000000002', 'Contract B', 'RETAINER',
+        '2027-01-01', '2027-06-30', 100, 'SAR', 'DRAFT')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO contract_billing_schedule (id, tenant_id, contract_id, entry_type, period_key,
+                                             period_start, period_end, bill_date, amount,
+                                             fee_item_id, status)
+     VALUES
+       ('95959595-0000-4000-8000-000000000001', $1, '94949494-0000-4000-8000-000000000001',
+        'RETAINER_PERIOD', '2027-01', '2027-01-01', '2027-01-31', '2027-01-01', 100,
+        'babababa-0000-4000-8000-000000000001', 'PLANNED'),
+       ('95959595-0000-4000-8000-000000000002', $2, '94949494-0000-4000-8000-000000000002',
+        'RETAINER_PERIOD', '2027-01', '2027-01-01', '2027-01-31', '2027-01-01', 100,
+        'babababa-0000-4000-8000-000000000002', 'PLANNED')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO contract_invoices (id, tenant_id, contract_id, invoice_id, period_key, status)
+     VALUES
+       ('96969696-0000-4000-8000-000000000001', $1, '94949494-0000-4000-8000-000000000001',
+        '77777777-0000-4000-8000-000000000001', NULL, 'GENERATED'),
+       ('96969696-0000-4000-8000-000000000002', $2, '94949494-0000-4000-8000-000000000002',
+        '77777777-0000-4000-8000-000000000002', NULL, 'GENERATED')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO contract_advances (id, tenant_id, contract_id, receipt_id, amount, status)
+     VALUES
+       ('97979797-0000-4000-8000-000000000001', $1, '94949494-0000-4000-8000-000000000001',
+        'd3d3d3d3-0000-4000-8000-000000000001', 50, 'HELD'),
+       ('97979797-0000-4000-8000-000000000002', $2, '94949494-0000-4000-8000-000000000002',
+        'd3d3d3d3-0000-4000-8000-000000000002', 50, 'HELD')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO service_orders (id, tenant_id, branch_id, partner_id, warehouse_id, status)
+     VALUES
+       ('98989898-0000-4000-8000-000000000001', $1, 'abababab-0000-4000-8000-000000000001',
+        'b5b5b5b5-0000-4000-8000-000000000001', 'f0f0f0f0-1000-4000-8000-000000000001', 'DRAFT'),
+       ('98989898-0000-4000-8000-000000000002', $2, 'abababab-0000-4000-8000-000000000002',
+        'b5b5b5b5-0000-4000-8000-000000000002', 'f0f0f0f0-1000-4000-8000-000000000002', 'DRAFT')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO service_order_lines (id, tenant_id, order_id, line_no, line_type, item_id,
+                                      estimated_hours, unit_price, qty, status)
+     VALUES
+       ('99999999-0000-4000-8000-000000000001', $1, '98989898-0000-4000-8000-000000000001',
+        1, 'SERVICE', 'babababa-0000-4000-8000-000000000001', 3, 150, 1, 'PENDING'),
+       ('99999999-0000-4000-8000-000000000002', $2, '98989898-0000-4000-8000-000000000002',
+        1, 'SERVICE', 'babababa-0000-4000-8000-000000000002', 3, 150, 1, 'PENDING')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO crm_time_entries (id, tenant_id, entry_date, hours, fee_item_id, project_id,
+                                   contract_id, unit_rate, narrative, billable, status)
+     VALUES
+       ('a0a0a0a0-0000-4000-8000-000000000001', $1, '2027-02-03', 2,
+        'babababa-0000-4000-8000-000000000001', 'a1a1a1a1-0000-4000-8000-000000000001',
+        '94949494-0000-4000-8000-000000000001', 250, 'Drafting', true, 'DRAFT'),
+       ('a0a0a0a0-0000-4000-8000-000000000002', $2, '2027-02-03', 2,
+        'babababa-0000-4000-8000-000000000002', 'a1a1a1a1-0000-4000-8000-000000000002',
+        '94949494-0000-4000-8000-000000000002', 250, 'Drafting', true, 'DRAFT')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+
   // -- seedFixtures end --
 
 }
@@ -1848,6 +1977,51 @@ const OWN_ROW: Record<string, [string, string]> = {
   inspections: [
     "3a3a3a3a-0000-4000-8000-000000000001",
     "3a3a3a3a-0000-4000-8000-000000000002",
+  ],
+  // PHASE-019 crm/service-billing cluster (migration 0027).
+  projects: [
+    "a1a1a1a1-0000-4000-8000-000000000001",
+    "a1a1a1a1-0000-4000-8000-000000000002",
+  ],
+  leads: [
+    "91919191-0000-4000-8000-000000000001",
+    "91919191-0000-4000-8000-000000000002",
+  ],
+  crm_tasks: [
+    "92929292-0000-4000-8000-000000000001",
+    "92929292-0000-4000-8000-000000000002",
+  ],
+  crm_activities: [
+    "93939393-0000-4000-8000-000000000001",
+    "93939393-0000-4000-8000-000000000002",
+  ],
+  service_contracts: [
+    "94949494-0000-4000-8000-000000000001",
+    "94949494-0000-4000-8000-000000000002",
+  ],
+  contract_billing_schedule: [
+    "95959595-0000-4000-8000-000000000001",
+    "95959595-0000-4000-8000-000000000002",
+  ],
+  contract_invoices: [
+    "96969696-0000-4000-8000-000000000001",
+    "96969696-0000-4000-8000-000000000002",
+  ],
+  contract_advances: [
+    "97979797-0000-4000-8000-000000000001",
+    "97979797-0000-4000-8000-000000000002",
+  ],
+  service_orders: [
+    "98989898-0000-4000-8000-000000000001",
+    "98989898-0000-4000-8000-000000000002",
+  ],
+  service_order_lines: [
+    "99999999-0000-4000-8000-000000000001",
+    "99999999-0000-4000-8000-000000000002",
+  ],
+  crm_time_entries: [
+    "a0a0a0a0-0000-4000-8000-000000000001",
+    "a0a0a0a0-0000-4000-8000-000000000002",
   ],
 };
 
@@ -2280,6 +2454,55 @@ const MISMATCHED_INSERT: Record<string, string> = {
   inspections: `INSERT INTO inspections (id, tenant_id, target_type, order_id, result, inspected_at)
      VALUES ('90909090-3000-4000-8000-000000000003', $1, 'production_order',
        '36363636-0000-4000-8000-000000000002', 'PASS', now())`,
+  // PHASE-019 crm/service-billing cluster (migration 0027) — FK targets are
+  // the FOREIGN tenant's own fixture rows so the RLS WITH CHECK is the
+  // isolated rejection (period keys/line numbers 9 avoid the sibling
+  // fixtures' uniques; contract_invoices keeps period_key NULL so the
+  // schedule fixture's partial unique is untouched).
+  projects: `INSERT INTO projects (id, tenant_id, code, name, status)
+     VALUES ('91919191-3000-4000-8000-000000000003', $1, 'ATK', 'Attack Project', 'OPEN')`,
+  leads: `INSERT INTO leads (id, tenant_id, name, source, status)
+     VALUES ('92929292-3000-4000-8000-000000000003', $1, 'Attack Lead', 'CALL', 'NEW')`,
+  crm_tasks: `INSERT INTO crm_tasks (id, tenant_id, title, related_type, related_id, status)
+     VALUES ('93939393-3000-4000-8000-000000000003', $1, 'Attack Task', 'LEAD',
+       '91919191-0000-4000-8000-000000000002', 'OPEN')`,
+  crm_activities: `INSERT INTO crm_activities (id, tenant_id, kind, related_type, related_id,
+                                    occurred_at, summary)
+     VALUES ('94949494-3000-4000-8000-000000000003', $1, 'NOTE', 'LEAD',
+       '91919191-0000-4000-8000-000000000002', now(), 'Attack Activity')`,
+  service_contracts: `INSERT INTO service_contracts (id, tenant_id, partner_id, title, fee_model,
+                                        start_date, end_date, monthly_amount,
+                                        currency_code, status)
+     VALUES ('95959595-3000-4000-8000-000000000003', $1, 'b5b5b5b5-0000-4000-8000-000000000002',
+       'Attack Contract', 'RETAINER', '2027-01-01', '2027-06-30', 100, 'SAR', 'DRAFT')`,
+  contract_billing_schedule: `INSERT INTO contract_billing_schedule (id, tenant_id, contract_id,
+                                              entry_type, period_key, period_start,
+                                              period_end, bill_date, amount,
+                                              fee_item_id, status)
+     VALUES ('96969696-3000-4000-8000-000000000003', $1, '94949494-0000-4000-8000-000000000002',
+       'RETAINER_PERIOD', '2027-09', '2027-09-01', '2027-09-30', '2027-09-01', 100,
+       'babababa-0000-4000-8000-000000000002', 'PLANNED')`,
+  contract_invoices: `INSERT INTO contract_invoices (id, tenant_id, contract_id, invoice_id, status)
+     VALUES ('97979797-3000-4000-8000-000000000003', $1, '94949494-0000-4000-8000-000000000002',
+       '77777777-0000-4000-8000-000000000002', 'GENERATED')`,
+  contract_advances: `INSERT INTO contract_advances (id, tenant_id, contract_id, receipt_id,
+                                        amount, status)
+     VALUES ('98989898-3000-4000-8000-000000000003', $1, '94949494-0000-4000-8000-000000000002',
+       'd3d3d3d3-0000-4000-8000-000000000002', 25, 'HELD')`,
+  service_orders: `INSERT INTO service_orders (id, tenant_id, branch_id, partner_id, warehouse_id,
+                                  status)
+     VALUES ('99999999-3000-4000-8000-000000000003', $1, 'abababab-0000-4000-8000-000000000002',
+       'b5b5b5b5-0000-4000-8000-000000000002', 'f0f0f0f0-1000-4000-8000-000000000002', 'DRAFT')`,
+  service_order_lines: `INSERT INTO service_order_lines (id, tenant_id, order_id, line_no, line_type,
+                                        item_id, estimated_hours, unit_price, qty, status)
+     VALUES ('a0a0a0a0-3000-4000-8000-000000000003', $1, '98989898-0000-4000-8000-000000000002',
+       9, 'SERVICE', 'babababa-0000-4000-8000-000000000002', 3, 150, 1, 'PENDING')`,
+  crm_time_entries: `INSERT INTO crm_time_entries (id, tenant_id, entry_date, hours, fee_item_id,
+                                   project_id, contract_id, unit_rate, narrative,
+                                   billable, status)
+     VALUES ('a1a1a1a1-3000-4000-8000-000000000003', $1, '2027-02-03', 1,
+       'babababa-0000-4000-8000-000000000002', 'a1a1a1a1-0000-4000-8000-000000000002',
+       '94949494-0000-4000-8000-000000000002', 250, 'Attack entry', true, 'DRAFT')`,
 };
 
 beforeAll(async () => {

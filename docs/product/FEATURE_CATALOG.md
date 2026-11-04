@@ -120,7 +120,7 @@ through the centralized engine ([ADR-0007](../architecture/ADR/ADR-0007-centrali
 | `accounting.opening_balances` | Opening balances · الأرصدة الافتتاحية | Draft opening balances for accounts, partners, cash, and stock (PHASE-006 drafts); posted once via opening period (PHASE-007) | MVP | 006 (draft) / 007 (post) | `accounting.opening_balances.post` | `accounting.fiscal_calendar` |
 | `accounting.multi_currency` | Multi-currency · تعدد العملات | Dated exchange-rate table, per-document rate override, realized FX differences at settlement, optional unrealized revaluation run | MVP | 007 | `accounting.multi_currency` | `accounting.journal_entries` |
 | `accounting.cost_centers` | Cost centers · مراكز التكلفة | Analytical dimension on journal lines; basic tree at PHASE-007 | MVP | 007 | `accounting.cost_centers.manage` | `accounting.journal_entries` |
-| `accounting.projects` | Projects dimension · المشاريع | Second analytical dimension linked to service contracts and job costing | 1 | 019 | `accounting.projects.manage` | `accounting.cost_centers` |
+| `accounting.projects` | Projects dimension · المشاريع | Second analytical dimension linked to service contracts and job costing | 1 | 019 (shipped 2026-11-03) | `accounting.projects.manage` | `accounting.cost_centers` |
 | `accounting.period_close` | Period close · إقفال الفترة | System-verified close checklist (subledgers, bank recs, recurring journals, FX, counts, VAT) → SOFT_CLOSED → LOCKED; monitored reopen | MVP | 007 | `accounting.period_close` | `accounting.fiscal_calendar` |
 | `accounting.year_end_close` | Year-end close · إقفال السنة | Closing entry to retained earnings, reversible as a unit; prior-year statements immutable | MVP | 007 | `accounting.year_end_close` | `accounting.period_close` |
 | `accounting.reconciliation` | Reconciliation health center · مساحة المطابقة | Scheduled + on-demand subledger↔control checks (AR, AP, inventory, WIP, cash, VAT, GRNI) with drift triage; flagship screen | MVP | 007 (jobs) / 013 (workspace) | `accounting.reconciliation.run` | `accounting.general_ledger` |
@@ -257,15 +257,15 @@ Report contract, statements, printing — rendering rules in the reporting works
 
 ## 13. Module: crm
 
-Leads-to-contract pipeline and service delivery (PHASE-019).
+Leads-to-contract pipeline and service delivery (PHASE-019; shipped 2026-11-03).
 
 | Feature key | Name (EN · AR) | Description | Priority | Phase | Permission key | Depends on |
 |---|---|---|---|---|---|---|
-| `crm.leads` | Leads · العملاء المحتملون | Lead capture, status pipeline, source tracking, conversion to partner | 1 | 019 | `crm.leads.manage` | `partners.directory` |
-| `crm.tasks_activities` | Tasks & activities · المهام والأنشطة | Follow-ups, calls, meetings linked to leads/partners/contracts | 1 | 019 | `crm.tasks.manage` | `crm.leads` |
-| `crm.service_contracts` | Service contracts · عقود الخدمة | Contract terms, coverage, billing schedule linked to partners | 1 | 019 | `crm.contracts.manage` | `partners.directory` |
-| `crm.recurring_billing` | Recurring billing · الفوترة الدورية | Scheduled invoice generation from contract billing schedules; drafts → normal approval flow | 1 | 019 | `crm.contracts.bill` | `crm.service_contracts`, `sales.invoices` |
-| `crm.service_orders` | Service orders · أوامر الخدمة | Service delivery documents (job cards) with parts consumption and labor lines | 1 | 019 | `crm.service_orders.manage` | `crm.service_contracts`, `inventory.stock_ledger` |
+| `crm.leads` | Leads · العملاء المحتملون | Lead capture, status pipeline, source tracking, conversion to partner | 1 | 019 (shipped 2026-11-03) | `crm.leads.manage` | `partners.directory` |
+| `crm.tasks_activities` | Tasks & activities · المهام والأنشطة | Follow-ups, calls, meetings linked to leads/partners/contracts | 1 | 019 (shipped 2026-11-03) | `crm.tasks.manage` + `crm.activities.manage` (migration 0027 seeds both) | `crm.leads` |
+| `crm.service_contracts` | Service contracts · عقود الخدمة | Contract terms, coverage, billing schedule linked to partners | 1 | 019 (shipped 2026-11-03) | `crm.contracts.manage` | `partners.directory` |
+| `crm.recurring_billing` | Recurring billing · الفوترة الدورية | Scheduled invoice generation from contract billing schedules; drafts → normal approval flow | 1 | 019 (shipped 2026-11-03) | `crm.contracts.bill` | `crm.service_contracts`, `sales.invoices` |
+| `crm.service_orders` | Service orders · أوامر الخدمة | Service delivery documents (job cards) with parts consumption and labor lines | 1 | 019 (shipped 2026-11-03) | `crm.service_orders.manage` | `crm.service_contracts`, `inventory.stock_ledger` |
 
 ## 14. Module: manufacturing
 

@@ -57,6 +57,7 @@ const SOURCE_MODULES: readonly DataSourceModule[] = [
   "pos", // PHASE-016: the pos module query surface (Z-report contracts)
   "distribution", // PHASE-017: the distribution query surface (settlements/van stock/routes)
   "manufacturing", // PHASE-018: the manufacturing query surface (production cost/genealogy/QC)
+  "crm", // PHASE-019: the CRM query surface (contract revenue schedule / time billing)
 ];
 
 const dataSourceSchema = z.object({
@@ -182,12 +183,13 @@ const MODULE_DATA_PHASE: Readonly<Record<DataSourceModule, number>> = Object.fre
   pos: 16, // PHASE-016: the pos query surface (by-terminal/by-hour/shift tie)
   distribution: 17, // PHASE-017: routes/visits/vans/settlements query surfaces
   manufacturing: 18, // PHASE-018: production cost / batch genealogy / QC query surfaces
+  crm: 19, // PHASE-019: contract revenue schedule / time billing query surfaces
 });
 
-const REGISTERED_PHASE_WINDOW = 18; // PHASE-013 window, widened by the
+const REGISTERED_PHASE_WINDOW = 19; // PHASE-013 window, widened by the
 // delivering phases that registered contracts over real query surfaces:
 // 15 (industry reports) + 16 (the POS set) + 17 (distribution) + 18
-// (manufacturing — see MODULE_DATA_PHASE).
+// (manufacturing) + 19 (CRM — see MODULE_DATA_PHASE).
 
 /** Financial reports must carry the §11 minimum assertion set (§16 checklist). */
 const FINANCIAL_MINIMUM_ASSERTIONS: Readonly<Record<string, readonly string[]>> = Object.freeze({

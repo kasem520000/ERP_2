@@ -4,6 +4,7 @@ import {
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
+  PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
   RESTAURANT_MANIFEST,
   RETAIL_MANIFEST,
 } from "@erp/contracts";
@@ -37,11 +38,13 @@ describe("phase gate helpers", () => {
     expect(phaseNumber("PHASE-016")).toBe(16);
     expect(phaseNumber("PHASE-017")).toBe(17);
     expect(phaseNumber("PHASE-018")).toBe(18);
+    expect(phaseNumber("PHASE-019")).toBe(19);
     expect(() => phaseNumber("PHASE-16")).toThrow();
   });
 
-  it("CURRENT_SHIPPED_PHASE is PHASE-018 (the manufacturing set shipped with it)", () => {
-    expect(CURRENT_SHIPPED_PHASE).toBe("PHASE-018");
+  it("CURRENT_SHIPPED_PHASE is PHASE-019 (the CRM + projects set shipped with it)", () => {
+    expect(CURRENT_SHIPPED_PHASE).toBe("PHASE-019");
+    expect(phaseNumber(CURRENT_SHIPPED_PHASE)).toBe(19);
   });
 });
 
@@ -104,13 +107,14 @@ describe("capability classification (industries/README §4)", () => {
     expect(stateOf(check, "job_cards")).toMatchObject({ status: "included" });
     expect(stateOf(check, "commissions")?.status).toBe("included");
     expect(stateOf(check, "landed_costs")?.status).toBe("included");
-    // OPTIONAL later-phase capabilities label coming-soon (019). The
-    // PHASE-018 qc_inspections entry resolved LIVE at the 018 bump: the
-    // 0026 plan grants put manufacturing.qc on business AND the phase
-    // shipped — INCLUDED, not phase_gated.
+    // OPTIONAL later-phase capabilities label coming-soon (020 — the
+    // rental-logistics intake horizon). The PHASE-018 qc_inspections entry
+    // resolved LIVE at the 018 bump; the PHASE-019 service_contracts entry
+    // resolved LIVE at THIS bump (the 0027 plan grants put crm.service_contracts
+    // on business AND the phase shipped) — INCLUDED, not phase_gated.
     expect(stateOf(check, "service_contracts")).toMatchObject({
-      status: "phase_gated",
-      phase: "PHASE-019",
+      status: "included",
+      featureKeys: ["crm.service_contracts"],
     });
     expect(stateOf(check, "qc_inspections")).toMatchObject({
       status: "included",
@@ -174,13 +178,21 @@ describe("capability classification (industries/README §4)", () => {
     });
     // An OPTIONAL capability whose roadmap phase has not shipped labels
     // coming-soon instead — hidden vs phase_gated is exactly the §4 optional
-    // split. At CURRENT_SHIPPED_PHASE 18 the PHASE-017 promo set is live on
-    // the 0025 grants, so the later-phase example is automotive's
-    // service_contracts (PHASE-019, crm.service_contracts off-plan).
-    const autoCheck = checkPrerequisites(AUTOMOTIVE_TEMPLATE_MANIFEST, keys);
-    expect(stateOf(autoCheck, "service_contracts")).toMatchObject({
+    // split. No shipped manifest carries an OPTIONAL capability past
+    // PHASE-019 any more (the 0027 grants put the crm set on business and
+    // the 019 bump lifted the last gate), so the later-phase example is a
+    // synthetic OPTIONAL PHASE-020 entry (the rental-logistics intake
+    // horizon, §17 — crm.rental_contracts is not yet a catalog key).
+    const autoWithLater = JSON.parse(JSON.stringify(AUTOMOTIVE_TEMPLATE_MANIFEST)) as typeof AUTOMOTIVE_TEMPLATE_MANIFEST;
+    autoWithLater.capability_prerequisites.rental_logistics = {
+      level: "OPTIONAL",
+      feature_keys: ["crm.rental_contracts"],
+      available_from_phase: "PHASE-020",
+    };
+    const laterCheck = checkPrerequisites(autoWithLater, keys);
+    expect(stateOf(laterCheck, "rental_logistics")).toMatchObject({
       status: "phase_gated",
-      phase: "PHASE-019",
+      phase: "PHASE-020",
     });
     // Retail's free_goods_promo (PHASE-017 keys) is now included on the
     // post-0025 business set — the gate lifted with the phase bump.
@@ -200,30 +212,51 @@ describe("capability classification (industries/README §4)", () => {
     });
   });
 
-  it("a REQUIRED capability beyond the shipped phase still phase-gates (the mechanism outlives the 018 bump)", () => {
-    // No shipped template carries a REQUIRED capability past PHASE-018 any
-    // more (the bump is the point of this task — food_manufacturing's set
+  it("a REQUIRED capability beyond the shipped phase still phase-gates (the mechanism outlives the 019 bump)", () => {
+    // No shipped template carries a REQUIRED capability past PHASE-019 any
+    // more (the bump is the point of this task — professional_services's set
     // resolves LIVE), so prove the §4 mechanism on a synthetic manifest: a
-    // REQUIRED PHASE-019 capability whose key is off-plan ⇒ phase_gated +
+    // REQUIRED PHASE-020 capability whose key is off-plan ⇒ phase_gated +
     // requiresAcknowledgement — the switch flow's acknowledgement contract
     // (TemplateSwitchAcknowledgementRequiredError) keys off exactly this
-    // flag. (A PHASE-018 synthetic no longer works: the phase shipped and
-    // the 0026 grants put the manufacturing keys on the business plan, so
-    // such a capability classifies included, not gated.)
+    // flag. (A PHASE-019 synthetic no longer works: the phase shipped and
+    // the 0027 grants put the crm keys on the business plan, so such a
+    // capability classifies included, not gated. §18 lesson 5 moved the
+    // proof to accounting.fixed_assets@PHASE-020 — a real catalog key that
+    // no plan grants today.)
     const synthetic = JSON.parse(JSON.stringify(GROCERY_MANIFEST)) as typeof GROCERY_MANIFEST;
-    synthetic.capability_prerequisites["service_contracts"] = {
+    synthetic.capability_prerequisites.fixed_assets = {
       level: "REQUIRED",
-      feature_keys: ["crm.service_contracts"],
-      available_from_phase: "PHASE-019",
+      feature_keys: ["accounting.fixed_assets"],
+      available_from_phase: "PHASE-020",
     };
     const check = checkPrerequisites(synthetic, business());
     expect(check.status).toBe("ok"); // phase-gated keys are satisfied-but-labeled
-    expect(stateOf(check, "service_contracts")).toMatchObject({
+    expect(stateOf(check, "fixed_assets")).toMatchObject({
       status: "phase_gated",
-      phase: "PHASE-019",
-      missingKeys: ["crm.service_contracts"],
+      phase: "PHASE-020",
+      missingKeys: ["accounting.fixed_assets"],
     });
     expect(check.requiresAcknowledgement).toBe(true);
+  });
+
+  it("professional_services × business: the full practice set is INCLUDED (0027 grants)", () => {
+    const check = checkPrerequisites(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST, business());
+    expect(check.status).toBe("ok");
+    expect(check.missingChain).toEqual([]);
+    expect(check.closureViolations).toEqual([]);
+    for (const capabilityId of ["service_contracts", "recurring_billing", "commissions", "job_cards"]) {
+      expect(stateOf(check, capabilityId), capabilityId).toMatchObject({ status: "included" });
+    }
+    // The deposits_late_fees entry (OPTIONAL, crm.contract_deposits +
+    // crm.late_fees — the §17 pending-intake set) degrades HIDDEN on the
+    // shipped phase 19 (an ungrantable key on a shipped capability is an
+    // upgrade path, never a coming-soon label).
+    expect(stateOf(check, "deposits_late_fees")).toMatchObject({
+      status: "hidden",
+      missingKeys: ["crm.contract_deposits", "crm.late_fees"],
+    });
+    expect(check.requiresAcknowledgement).toBe(false);
   });
 });
 

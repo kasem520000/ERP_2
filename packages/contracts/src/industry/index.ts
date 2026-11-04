@@ -1,10 +1,11 @@
 /**
  * @erp/contracts — industry-template manifest contracts (PHASE-015 T3):
- * the zod mirror of the industries/README §3 JSON Schema, the six shipped
+ * the zod mirror of the industries/README §3 JSON Schema, the seven shipped
  * v1.0.0 template manifests (retail / grocery / restaurant + the PHASE-017
  * automotive / distribution pair + the PHASE-018 food manufacturing
- * template), fail-closed parsing, and the deterministic canonical-JSON
- * content hash behind `applied_manifest_hash`.
+ * template + the PHASE-019 professional services template), fail-closed
+ * parsing, and the deterministic canonical-JSON content hash behind
+ * `applied_manifest_hash`.
  */
 export {
   DOCUMENT_TYPES,
@@ -45,6 +46,7 @@ export {
   DISTRIBUTION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
+  PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
   RESTAURANT_MANIFEST,
   RETAIL_MANIFEST,
   SHIPPED_TEMPLATE_MANIFESTS,

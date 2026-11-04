@@ -194,7 +194,7 @@
       "default_period": "this_month"
     },
     {
-      "report_key": "partners.ar_aging",
+      "report_key": "ar.aging",
       "pinned": true,
       "dashboard": false,
       "default_period": "this_month"
@@ -270,11 +270,6 @@
         "crm.recurring_billing"
       ],
       "available_from_phase": "PHASE-019"
-    },
-    "bom_production": {
-      "level": "N/A",
-      "feature_keys": [],
-      "available_from_phase": "PHASE-018"
     },
     "deposits_late_fees": {
       "level": "OPTIONAL",

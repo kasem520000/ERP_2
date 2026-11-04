@@ -30,7 +30,9 @@ export type PostingErrorCode =
   | "MISSING_FX_RATE"
   | "ALREADY_POSTED"
   | "ALREADY_REVERSED"
-  | "INVALID_AMOUNT";
+  | "INVALID_AMOUNT"
+  | "PROJECT_NOT_FOUND"
+  | "PROJECT_CLOSED";
 
 export function entryNotBalanced(details: {
   debit: string;
@@ -140,6 +142,26 @@ export function invalidAmount(details: { amount: string }): PostingError {
   return new PostingError(
     "INVALID_AMOUNT",
     `amount ${details.amount} must be a positive decimal`,
+    details,
+  );
+}
+
+/** PHASE-019 (§8): the projects dimension stamp — unknown id fails closed
+ * (no fallback dimension), 404-parity with PERIOD_NOT_FOUND. */
+export function projectNotFound(details: { projectId: string }): PostingError {
+  return new PostingError(
+    "PROJECT_NOT_FOUND",
+    `project ${details.projectId} does not exist in this tenant — the stamp fails closed (PHASE-019 §8)`,
+    details,
+  );
+}
+
+/** PHASE-019 (§8): a CLOSED project rejects NEW journal-line stamps (posted
+ * history stays); the 422 mirrors PERIOD_LOCKED. */
+export function projectClosed(details: { projectId: string }): PostingError {
+  return new PostingError(
+    "PROJECT_CLOSED",
+    `project ${details.projectId} is CLOSED — new journal-line stamps are rejected (posted history stays; PHASE-019 §8)`,
     details,
   );
 }

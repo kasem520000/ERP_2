@@ -105,7 +105,7 @@ template ships `name` + `nameAr`.
 | 2100 | Current liabilities | الالتزامات المتداولة | LIABILITY (group) |
 | 2110 | Accounts payable | الموردون (الدائنون) | LIABILITY ← AP_CONTROL |
 | 2120 | VAT payable | ض.ق.م المستحقة | LIABILITY ← VAT_PAYABLE |
-| 2130 | Accrued expenses | مصاريف مستحقة | LIABILITY |
+| 2130 | Deferred revenue | الإيرادات المؤجلة | LIABILITY ← DEFERRED_REVENUE (renamed from Accrued expenses by 0027; the pre-019 slot held a plain row — existing tenants map once, fail-closed `PURPOSE_NOT_MAPPED` until then) |
 | 2140 | Customer deposits | دفعات مقدمة من العملاء | LIABILITY ← DEPOSITS_RECEIVED |
 | 2200 | Long-term liabilities | التزامات طويلة الأجل | LIABILITY (group) |
 | 3000 | Equity | حقوق الملكية | EQUITY (group) |

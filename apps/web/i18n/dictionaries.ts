@@ -2709,6 +2709,402 @@ export interface Dictionary {
   mfgErrQcScrapBatchNotQuarantined: string;
   mfgErrQcScrapEmptyBatch: string;
   mfgErrGenealogyBatchNotFound: string;
+
+  // -- PHASE-019 (T50): crm navigation & screens ---------------------
+  // (leads pipeline + tasks/activities + service contracts + recurring
+  // billing + time entries + service orders + the projects dimension +
+  // the GL project filter + the dashboard CRM card)
+
+  crmNavSection: string;
+  crmPipelineTitle: string;
+  crmTasksTitle: string;
+  crmContractsTitle: string;
+  crmBillingTitle: string;
+  crmTimeTitle: string;
+  crmServiceOrdersTitle: string;
+  accountingProjectsTitle: string;
+
+  // GL project filter (the T44 projectId query param)
+  accountingGlProjectFilter: string;
+  accountingGlAllProjects: string;
+
+  // Lead pipeline screen (the board + conversion wizard + lose dialog)
+  crmLeadsNew: string;
+  crmLeadsEmpty: string;
+  crmLeadsAllStatuses: string;
+  crmLeadStatusNew: string;
+  crmLeadStatusQualified: string;
+  crmLeadStatusConverted: string;
+  crmLeadStatusLost: string;
+  crmLeadColName: string;
+  crmLeadColCompany: string;
+  crmLeadColContact: string;
+  crmLeadColSource: string;
+  crmLeadColOwner: string;
+  crmLeadColPartner: string;
+  crmLeadColCreated: string;
+  crmLeadColLostReason: string;
+  crmLeadSourceWalkIn: string;
+  crmLeadSourceReferral: string;
+  crmLeadSourceWebsite: string;
+  crmLeadSourceCampaign: string;
+  crmLeadSourceCall: string;
+  crmLeadSourceOther: string;
+  crmLeadCreateTitle: string;
+  crmLeadEditTitle: string;
+  crmLeadName: string;
+  crmLeadNameAr: string;
+  crmLeadPhone: string;
+  crmLeadEmail: string;
+  crmLeadCompany: string;
+  crmLeadSource: string;
+  crmLeadOwner: string;
+  crmLeadNote: string;
+  crmLeadConvert: string;
+  crmLeadConvertTitle: string;
+  crmLeadConvertMode: string;
+  crmLeadConvertNewPartner: string;
+  crmLeadConvertMerge: string;
+  crmLeadConvertPartner: string;
+  crmLeadConvertHint: string;
+  crmLeadLose: string;
+  crmLeadLoseTitle: string;
+  crmLeadLoseReason: string;
+  crmLeadCreatedToast: string;
+  crmLeadSavedToast: string;
+  crmLeadConvertedToast: string;
+  crmLeadLostToast: string;
+
+  // Tasks + activities screen (future work + the logged-past timeline)
+  crmTasksNew: string;
+  crmTasksEmpty: string;
+  crmTasksAllStatuses: string;
+  crmTaskStatusOpen: string;
+  crmTaskStatusDone: string;
+  crmTaskStatusCancelled: string;
+  crmTaskColTitle: string;
+  crmTaskColDue: string;
+  crmTaskColRemind: string;
+  crmTaskColAssignee: string;
+  crmTaskColRelated: string;
+  crmTaskCreateTitle: string;
+  crmTaskEditTitle: string;
+  crmTaskTitleLabel: string;
+  crmTaskAssignee: string;
+  crmTaskDueDate: string;
+  crmTaskRemindAt: string;
+  crmTaskRemindTime: string;
+  crmTaskNote: string;
+  crmTaskRelatedType: string;
+  crmTaskRelatedLead: string;
+  crmTaskRelatedPartner: string;
+  crmTaskRelatedContract: string;
+  crmTaskRelatedServiceOrder: string;
+  crmTaskRelatedTarget: string;
+  crmTaskCreatedToast: string;
+  crmTaskSavedToast: string;
+  crmTaskComplete: string;
+  crmTaskCompletedToast: string;
+  crmTaskCancelledToast: string;
+  crmActivitiesTitle: string;
+  crmActivitiesEmpty: string;
+  crmActivitiesHint: string;
+  crmActivityColOccurredAt: string;
+  crmActivityColKind: string;
+  crmActivityColSummary: string;
+  crmActivityColDuration: string;
+  crmActivityKindCall: string;
+  crmActivityKindMeeting: string;
+  crmActivityKindEmail: string;
+  crmActivityKindNote: string;
+  crmActivityLogTitle: string;
+  crmActivityKindLabel: string;
+  crmActivityOccurredAt: string;
+  crmActivityOccurredTime: string;
+  crmActivitySummary: string;
+  crmActivityDuration: string;
+  crmActivityLoggedToast: string;
+
+  // Service contracts screen (list + create/edit + schedule + preview + advances)
+  crmContractsNew: string;
+  crmContractsEmpty: string;
+  crmContractsAllStatuses: string;
+  crmContractStatusDraft: string;
+  crmContractStatusActive: string;
+  crmContractStatusCancelled: string;
+  crmContractStatusRenewed: string;
+  crmContractExpiredChip: string;
+  crmContractColNo: string;
+  crmContractColPartner: string;
+  crmContractColTitle: string;
+  crmContractColFeeModel: string;
+  crmContractColTerm: string;
+  crmContractColMonthly: string;
+  crmFeeModelRetainer: string;
+  crmFeeModelMilestones: string;
+  crmFeeModelHourly: string;
+  crmContractCreateTitle: string;
+  crmContractPartner: string;
+  crmContractProject: string;
+  crmContractTitleLabel: string;
+  crmContractTitleAr: string;
+  crmContractScope: string;
+  crmContractFeeModel: string;
+  crmContractStartDate: string;
+  crmContractEndDate: string;
+  crmContractMonthlyAmount: string;
+  crmContractFeeItem: string;
+  crmContractFeeItemHint: string;
+  crmContractNote: string;
+  crmContractMilestones: string;
+  crmContractMilestoneLabel: string;
+  crmContractMilestoneDue: string;
+  crmContractMilestoneAmount: string;
+  crmContractAddMilestone: string;
+  crmContractRemoveMilestone: string;
+  crmContractEditTitle: string;
+  crmContractWorkspace: string;
+  crmContractActivatedAt: string;
+  crmContractRenewedTo: string;
+  crmContractCancelReasonLabel: string;
+  crmContractActivate: string;
+  crmContractActivateHint: string;
+  crmContractCancelAction: string;
+  crmContractCancelTitle: string;
+  crmContractRenew: string;
+  crmContractRenewTitle: string;
+  crmContractRenewStart: string;
+  crmContractRenewEnd: string;
+  crmContractRenewHint: string;
+  crmContractCreatedToast: string;
+  crmContractSavedToast: string;
+  crmContractActivatedToast: string;
+  crmContractCancelledToast: string;
+  crmContractRenewedToast: string;
+  crmScheduleTitle: string;
+  crmScheduleEmpty: string;
+  crmScheduleColEntryType: string;
+  crmScheduleColPeriod: string;
+  crmScheduleColWindow: string;
+  crmScheduleColBillDate: string;
+  crmScheduleColAmount: string;
+  crmScheduleColMilestone: string;
+  crmScheduleEntryRetainer: string;
+  crmScheduleEntryMilestone: string;
+  crmScheduleEntryHourly: string;
+  crmScheduleStatusPlanned: string;
+  crmScheduleStatusInvoiced: string;
+  crmScheduleStatusSkipped: string;
+  crmPreviewTitle: string;
+  crmPreviewAsOf: string;
+  crmPreviewRun: string;
+  crmPreviewEmpty: string;
+  crmPreviewLockedChip: string;
+  crmPreviewNarrativeChip: string;
+  crmPreviewPullable: string;
+  crmPreviewNeedsNarrative: string;
+  crmAdvancesTitle: string;
+  crmAdvancesEmpty: string;
+  crmAdvancesTag: string;
+  crmAdvancesTagTitle: string;
+  crmAdvanceReceipt: string;
+  crmAdvanceNote: string;
+  crmAdvancePolicyHint: string;
+  crmAdvanceColReceipt: string;
+  crmAdvanceColAmount: string;
+  crmAdvanceColStatus: string;
+  crmAdvanceColJournals: string;
+  crmAdvanceStatusHeld: string;
+  crmAdvanceStatusReleased: string;
+  crmAdvanceTaggedToast: string;
+
+  // Recurring billing screen (runs history + manual run + drafts review)
+  crmBillingRunsTitle: string;
+  crmBillingRunsEmpty: string;
+  crmBillingColAt: string;
+  crmBillingColActor: string;
+  crmBillingColAsOf: string;
+  crmBillingColScanned: string;
+  crmBillingColDrafts: string;
+  crmBillingColLocked: string;
+  crmBillingColDuplicates: string;
+  crmBillingColNarrative: string;
+  crmBillingRunAction: string;
+  crmBillingRunTitle: string;
+  crmBillingRunAsOf: string;
+  crmBillingPreviewAll: string;
+  crmBillingPreviewTitle: string;
+  crmBillingPreviewEmpty: string;
+  crmBillingPreviewContract: string;
+  crmBillingRunToast: string;
+  crmBillingDraftsTitle: string;
+  crmBillingDraftsEmpty: string;
+  crmBillingDraftsColContract: string;
+  crmBillingDraftsColInvoice: string;
+  crmBillingDraftsColPeriod: string;
+  crmBillingDraftsColMilestone: string;
+  crmBillingDraftsColCreatedAt: string;
+  crmBillingDraftsLink: string;
+
+  // Time entries screen (timeslips + weekly review)
+  crmTimeNew: string;
+  crmTimeEmpty: string;
+  crmTimeColDate: string;
+  crmTimeColProject: string;
+  crmTimeColFeeItem: string;
+  crmTimeColHours: string;
+  crmTimeColRate: string;
+  crmTimeColNarrative: string;
+  crmTimeColBillable: string;
+  crmTimeColEarner: string;
+  crmTimeCreateTitle: string;
+  crmTimeEditTitle: string;
+  crmTimeEntryDate: string;
+  crmTimeHours: string;
+  crmTimeFeeItem: string;
+  crmTimeProject: string;
+  crmTimeCaseHint: string;
+  crmTimeContract: string;
+  crmTimeFeeEarner: string;
+  crmTimeRate: string;
+  crmTimeRateHint: string;
+  crmTimeNarrative: string;
+  crmTimeBillable: string;
+  crmTimeYes: string;
+  crmTimeNo: string;
+  crmTimeCreatedToast: string;
+  crmTimeSavedToast: string;
+  crmTimeVoid: string;
+  crmTimeVoidedToast: string;
+  crmTimeStatusDraft: string;
+  crmTimeStatusApproved: string;
+  crmTimeStatusBilled: string;
+  crmTimeStatusVoid: string;
+  crmTimeReviewTitle: string;
+  crmTimeReviewWeek: string;
+  crmTimeReviewHint: string;
+  crmTimeReviewToast: string;
+
+  // Service orders screen (the job-card workspace pattern)
+  crmServiceOrdersNew: string;
+  crmServiceOrdersEmpty: string;
+  crmServiceOrdersAllStatuses: string;
+  crmServiceOrderStatusDraft: string;
+  crmServiceOrderStatusInProgress: string;
+  crmServiceOrderStatusCompleted: string;
+  crmServiceOrderStatusInvoiced: string;
+  crmServiceOrderStatusCancelled: string;
+  crmServiceOrderColNo: string;
+  crmServiceOrderColPartner: string;
+  crmServiceOrderColContract: string;
+  crmServiceOrderCreateTitle: string;
+  crmServiceOrderPartner: string;
+  crmServiceOrderContract: string;
+  crmServiceOrderContractHint: string;
+  crmServiceOrderLines: string;
+  crmServiceOrderLineType: string;
+  crmServiceOrderLineService: string;
+  crmServiceOrderLineParts: string;
+  crmServiceOrderItem: string;
+  crmServiceOrderDescription: string;
+  crmServiceOrderHours: string;
+  crmServiceOrderQty: string;
+  crmServiceOrderUnitPrice: string;
+  crmServiceOrderAddLine: string;
+  crmServiceOrderRemoveLine: string;
+  crmServiceOrderWorkspace: string;
+  crmServiceOrderEditTitle: string;
+  crmServiceOrderApprove: string;
+  crmServiceOrderApproveTitle: string;
+  crmServiceOrderIssueMode: string;
+  crmServiceOrderIssueReserve: string;
+  crmServiceOrderIssueImmediate: string;
+  crmServiceOrderLogHours: string;
+  crmServiceOrderLogHoursTitle: string;
+  crmServiceOrderLine: string;
+  crmServiceOrderComplete: string;
+  crmServiceOrderInvoiceAction: string;
+  crmServiceOrderCancelAction: string;
+  crmServiceOrderCancelTitle: string;
+  crmServiceOrderCancelReason: string;
+  crmServiceOrderCreatedToast: string;
+  crmServiceOrderSavedToast: string;
+  crmServiceOrderApprovedToast: string;
+  crmServiceOrderHoursToast: string;
+  crmServiceOrderCompletedToast: string;
+  crmServiceOrderInvoicedToast: string;
+  crmServiceOrderCancelledToast: string;
+  crmServiceOrderColLineNo: string;
+  crmServiceOrderColLineType: string;
+  crmServiceOrderColItem: string;
+  crmServiceOrderColHours: string;
+  crmServiceOrderColQty: string;
+  crmServiceOrderColPrice: string;
+  crmServiceOrderColLogged: string;
+  crmServiceOrderColStatus: string;
+  crmServiceOrderLineStatusPending: string;
+  crmServiceOrderLineStatusReserved: string;
+  crmServiceOrderLineStatusIssued: string;
+  crmServiceOrderLineStatusInvoiced: string;
+  crmServiceOrderLineStatusVoid: string;
+  crmServiceOrderIssueValue: string;
+
+  // Projects screen (accounting.projects — the cost-center mirror)
+  accountingProjectsNew: string;
+  accountingProjectsEmpty: string;
+  accountingProjectColParent: string;
+  accountingProjectCreateTitle: string;
+  accountingProjectCode: string;
+  accountingProjectCodeHint: string;
+  accountingProjectNameAr: string;
+  accountingProjectParent: string;
+  accountingProjectStatusOpen: string;
+  accountingProjectStatusClosed: string;
+  accountingProjectEditTitle: string;
+  accountingProjectClose: string;
+  accountingProjectReopen: string;
+  accountingProjectCloseTitle: string;
+  accountingProjectCloseHint: string;
+  accountingProjectCreatedToast: string;
+  accountingProjectSavedToast: string;
+  accountingProjectStatusToast: string;
+  accountingProjectErrCodeTaken: string;
+
+  // Dashboard CRM card (the permission-gated summary section)
+  dashboardCrmTitle: string;
+  dashboardCrmPipeline: string;
+  dashboardCrmFollowUps: string;
+  dashboardCrmExpiring: string;
+  dashboardCrmUpcoming: string;
+  dashboardCrmOpen: string;
+
+  // CRM typed errors (crm-errors.ts codes → crmErr*)
+  crmErrLeadNotFound: string;
+  crmErrLeadInputInvalid: string;
+  crmErrLeadConverted: string;
+  crmErrLeadLostReason: string;
+  crmErrLeadMergeTarget: string;
+  crmErrTaskNotFound: string;
+  crmErrTaskState: string;
+  crmErrTaskInput: string;
+  crmErrActivityInput: string;
+  crmErrContractNotFound: string;
+  crmErrContractState: string;
+  crmErrContractInput: string;
+  crmErrContractTerm: string;
+  crmErrScheduleNotFound: string;
+  crmErrAdvanceState: string;
+  crmErrAdvanceInsufficient: string;
+  crmErrTimeNotFound: string;
+  crmErrTimeState: string;
+  crmErrTimeInput: string;
+  crmErrTimeCaseRequired: string;
+  crmErrTimesheetEmpty: string;
+  crmErrServiceOrderNotFound: string;
+  crmErrServiceOrderState: string;
+  crmErrServiceOrderInput: string;
+  crmErrServiceOrderLine: string;
+  crmErrServiceOrderPosting: string;
 }
 
 const ar: Dictionary = {
@@ -5428,6 +5824,402 @@ const ar: Dictionary = {
   mfgErrQcScrapBatchNotQuarantined: "لا توجد دفعة إنتاج تام محجوزة للفحص على الأمر — الإتلاف يتطلب دفعة محجوزة.",
   mfgErrQcScrapEmptyBatch: "الدفعة المحجوزة فارغة — لا رصيد متبقٍ لإتلافه.",
   mfgErrGenealogyBatchNotFound: "الدفعة غير موجودة في هذه المنشأة.",
+
+  // -- PHASE-019 (T50): crm navigation & screens ---------------------
+  // (leads pipeline + tasks/activities + service contracts + recurring
+  // billing + time entries + service orders + the projects dimension +
+  // the GL project filter + the dashboard CRM card)
+
+  crmNavSection: "إدارة العملاء",
+  crmPipelineTitle: "قمع العملاء المحتملين",
+  crmTasksTitle: "مهام المتابعة والأنشطة",
+  crmContractsTitle: "عقود الخدمات",
+  crmBillingTitle: "الفوترة الدورية",
+  crmTimeTitle: "سجل الوقت",
+  crmServiceOrdersTitle: "أوامر الخدمة",
+  accountingProjectsTitle: "المشاريع",
+
+  // GL project filter (the T44 projectId query param)
+  accountingGlProjectFilter: "مشروع",
+  accountingGlAllProjects: "كل المشاريع",
+
+  // Lead pipeline screen (the board + conversion wizard + lose dialog)
+  crmLeadsNew: "عميل محتمل جديد",
+  crmLeadsEmpty: "لا يوجد عملاء محتملون بعد.",
+  crmLeadsAllStatuses: "كل الحالات",
+  crmLeadStatusNew: "جديد",
+  crmLeadStatusQualified: "مؤهَّل",
+  crmLeadStatusConverted: "محوَّل",
+  crmLeadStatusLost: "مفقود",
+  crmLeadColName: "الاسم",
+  crmLeadColCompany: "الجهة",
+  crmLeadColContact: "التواصل",
+  crmLeadColSource: "المصدر",
+  crmLeadColOwner: "المسؤول",
+  crmLeadColPartner: "الشريك",
+  crmLeadColCreated: "أُنشئ في",
+  crmLeadColLostReason: "سبب الفقد",
+  crmLeadSourceWalkIn: "زيارة مباشرة",
+  crmLeadSourceReferral: "ترشيح",
+  crmLeadSourceWebsite: "الموقع الإلكتروني",
+  crmLeadSourceCampaign: "حملة تسويقية",
+  crmLeadSourceCall: "مكالمة",
+  crmLeadSourceOther: "أخرى",
+  crmLeadCreateTitle: "تسجيل عميل محتمل",
+  crmLeadEditTitle: "تعديل العميل المحتمل",
+  crmLeadName: "الاسم",
+  crmLeadNameAr: "الاسم بالعربية",
+  crmLeadPhone: "الهاتف",
+  crmLeadEmail: "البريد الإلكتروني",
+  crmLeadCompany: "الجهة / الشركة",
+  crmLeadSource: "المصدر",
+  crmLeadOwner: "مندوب المبيعات المسؤول",
+  crmLeadNote: "ملاحظة",
+  crmLeadConvert: "تحويل",
+  crmLeadConvertTitle: "تحويل العميل المحتمل إلى شريك",
+  crmLeadConvertMode: "طريقة التحويل",
+  crmLeadConvertNewPartner: "إنشاء شريك جديد",
+  crmLeadConvertMerge: "ربط بشريك قائم",
+  crmLeadConvertPartner: "الشريك الهدف",
+  crmLeadConvertHint: "التحويل نهائي — يرتبط العميل المحتمل بالشريك للأبد ولا يقبل أي تعديل بعده.",
+  crmLeadLose: "تسجيل فقد",
+  crmLeadLoseTitle: "تسجيل فقد العميل المحتمل",
+  crmLeadLoseReason: "سبب الفقد (1–200 حرفًا)",
+  crmLeadCreatedToast: "سُجّل العميل المحتمل.",
+  crmLeadSavedToast: "حُفظت تعديلات العميل المحتمل.",
+  crmLeadConvertedToast: "حوّل العميل المحتمل — الشريك {partner}.",
+  crmLeadLostToast: "سُجّل فقد العميل المحتمل.",
+
+  // Tasks + activities screen (future work + the logged-past timeline)
+  crmTasksNew: "مهمة جديدة",
+  crmTasksEmpty: "لا توجد مهام بعد.",
+  crmTasksAllStatuses: "كل الحالات",
+  crmTaskStatusOpen: "مفتوحة",
+  crmTaskStatusDone: "منجزة",
+  crmTaskStatusCancelled: "ملغاة",
+  crmTaskColTitle: "المهمة",
+  crmTaskColDue: "الاستحقاق",
+  crmTaskColRemind: "التذكير",
+  crmTaskColAssignee: "المكلَّف",
+  crmTaskColRelated: "مرتبطة بـ",
+  crmTaskCreateTitle: "مهمة متابعة جديدة",
+  crmTaskEditTitle: "تعديل المهمة",
+  crmTaskTitleLabel: "عنوان المهمة",
+  crmTaskAssignee: "المكلَّف",
+  crmTaskDueDate: "تاريخ الاستحقاق",
+  crmTaskRemindAt: "تاريخ التذكير",
+  crmTaskRemindTime: "وقت التذكير",
+  crmTaskNote: "ملاحظة",
+  crmTaskRelatedType: "نوع الارتباط",
+  crmTaskRelatedLead: "عميل محتمل",
+  crmTaskRelatedPartner: "شريك",
+  crmTaskRelatedContract: "عقد خدمات",
+  crmTaskRelatedServiceOrder: "أمر خدمة",
+  crmTaskRelatedTarget: "السجل المرتبط",
+  crmTaskCreatedToast: "أُنشئت المهمة.",
+  crmTaskSavedToast: "حُفظت تعديلات المهمة.",
+  crmTaskComplete: "إنجاز",
+  crmTaskCompletedToast: "أُنجزت المهمة.",
+  crmTaskCancelledToast: "أُلغيت المهمة.",
+  crmActivitiesTitle: "سجل الأنشطة",
+  crmActivitiesEmpty: "لا توجد أنشطة مسجّلة لهذا الارتباط.",
+  crmActivitiesHint: "اختر مهمة لعرض أنشطة سجلها المرتبط — الأنشطة تُجلب عند التحديد.",
+  crmActivityColOccurredAt: "التاريخ",
+  crmActivityColKind: "النوع",
+  crmActivityColSummary: "الملخص",
+  crmActivityColDuration: "المدة (دقيقة)",
+  crmActivityKindCall: "مكالمة",
+  crmActivityKindMeeting: "اجتماع",
+  crmActivityKindEmail: "بريد إلكتروني",
+  crmActivityKindNote: "ملاحظة",
+  crmActivityLogTitle: "تسجيل نشاط",
+  crmActivityKindLabel: "نوع النشاط",
+  crmActivityOccurredAt: "تاريخ النشاط",
+  crmActivityOccurredTime: "وقت النشاط",
+  crmActivitySummary: "الملخص",
+  crmActivityDuration: "المدة بالدقائق (اختياري)",
+  crmActivityLoggedToast: "سُجّل النشاط.",
+
+  // Service contracts screen (list + create/edit + schedule + preview + advances)
+  crmContractsNew: "عقد جديد",
+  crmContractsEmpty: "لا توجد عقود بعد.",
+  crmContractsAllStatuses: "كل الحالات",
+  crmContractStatusDraft: "مسودة",
+  crmContractStatusActive: "نشط",
+  crmContractStatusCancelled: "ملغى",
+  crmContractStatusRenewed: "مُجدَّد",
+  crmContractExpiredChip: "منتهي",
+  crmContractColNo: "رقم العقد",
+  crmContractColPartner: "الشريك",
+  crmContractColTitle: "العنوان",
+  crmContractColFeeModel: "نموذج الأتعاب",
+  crmContractColTerm: "المدة",
+  crmContractColMonthly: "المبلغ الشهري",
+  crmFeeModelRetainer: "أتعاب شهرية",
+  crmFeeModelMilestones: "دفعات مراحل",
+  crmFeeModelHourly: "بالساعة",
+  crmContractCreateTitle: "عقد خدمات جديد",
+  crmContractPartner: "الشريك (عميل)",
+  crmContractProject: "المشروع (اختياري)",
+  crmContractTitleLabel: "عنوان العقد",
+  crmContractTitleAr: "العنوان بالعربية",
+  crmContractScope: "نطاق العمل",
+  crmContractFeeModel: "نموذج الأتعاب",
+  crmContractStartDate: "تاريخ البداية",
+  crmContractEndDate: "تاريخ النهاية",
+  crmContractMonthlyAmount: "المبلغ الشهري (للأتعاب الشهرية)",
+  crmContractFeeItem: "بند الخدمة الافتراضي",
+  crmContractFeeItemHint: "يُثبَّت في بنود جدول الفوترة عند الإنشاء (بند من نوع خدمة).",
+  crmContractNote: "ملاحظة",
+  crmContractMilestones: "دفعات المراحل",
+  crmContractMilestoneLabel: "اسم المرحلة",
+  crmContractMilestoneDue: "تاريخ الاستحقاق",
+  crmContractMilestoneAmount: "المبلغ",
+  crmContractAddMilestone: "إضافة مرحلة",
+  crmContractRemoveMilestone: "حذف المرحلة",
+  crmContractEditTitle: "تعديل العقد (مسودة)",
+  crmContractWorkspace: "مساحة عمل العقد",
+  crmContractActivatedAt: "تاريخ التفعيل",
+  crmContractRenewedTo: "العقد البديل",
+  crmContractCancelReasonLabel: "سبب الإلغاء",
+  crmContractActivate: "تفعيل",
+  crmContractActivateHint: "التفعيل يحجز رقم العقد (CT-) ويثبّت جدول الفوترة النهائي — لا يقبل العقد النشط التعديل بعدها.",
+  crmContractCancelAction: "إلغاء العقد",
+  crmContractCancelTitle: "إلغاء عقد الخدمات",
+  crmContractRenew: "تجديد",
+  crmContractRenewTitle: "تجديد العقد",
+  crmContractRenewStart: "بداية المدة الجديدة (اختياري)",
+  crmContractRenewEnd: "نهاية المدة الجديدة (اختياري)",
+  crmContractRenewHint: "ينشئ التجديد عقد مسودة جديدًا بنسخة من بنود العقد الحالي ويربطه بهذا العقد.",
+  crmContractCreatedToast: "أُنشئ العقد (مسودة) — ثبّت الجدول عند التفعيل.",
+  crmContractSavedToast: "حُفظت تعديلات العقد.",
+  crmContractActivatedToast: "فُعّل العقد — الرقم {no}.",
+  crmContractCancelledToast: "أُلغي العقد.",
+  crmContractRenewedToast: "أُنشئ عقد التجديد — الرقم {no}.",
+  crmScheduleTitle: "جدول الفوترة",
+  crmScheduleEmpty: "لا توجد بنود في الجدول.",
+  crmScheduleColEntryType: "النوع",
+  crmScheduleColPeriod: "الفترة",
+  crmScheduleColWindow: "النافذة",
+  crmScheduleColBillDate: "تاريخ الفوترة",
+  crmScheduleColAmount: "المبلغ",
+  crmScheduleColMilestone: "المرحلة",
+  crmScheduleEntryRetainer: "أتعاب شهرية",
+  crmScheduleEntryMilestone: "دفعة مرحلة",
+  crmScheduleEntryHourly: "فترة ساعات",
+  crmScheduleStatusPlanned: "مخططة",
+  crmScheduleStatusInvoiced: "مفوترة",
+  crmScheduleStatusSkipped: "متخطاة",
+  crmPreviewTitle: "معاينة الفوترة",
+  crmPreviewAsOf: "حتى تاريخ",
+  crmPreviewRun: "عرض المعاينة",
+  crmPreviewEmpty: "لا توجد بنود مستحقة حتى التاريخ المحدد.",
+  crmPreviewLockedChip: "فترة مقفلة",
+  crmPreviewNarrativeChip: "بلا وصف",
+  crmPreviewPullable: "بنود وقت قابلة للفوترة",
+  crmPreviewNeedsNarrative: "بنود تحتاج وصفًا قبل الفوترة",
+  crmAdvancesTitle: "الدفعات المقدمة",
+  crmAdvancesEmpty: "لا توجد دفعات مقدمة مرتبطة بهذا العقد.",
+  crmAdvancesTag: "ربط دفعة مقدمة",
+  crmAdvancesTagTitle: "ربط دفعة مقدمة بالعقد",
+  crmAdvanceReceipt: "سند القبض",
+  crmAdvanceNote: "ملاحظة",
+  crmAdvancePolicyHint: "يُربط من رصيد السند غير المخصص؛ وسياسة المنشأة تحدد ترحيل قيد الإرجاء تلقائيًا.",
+  crmAdvanceColReceipt: "سند القبض",
+  crmAdvanceColAmount: "المبلغ",
+  crmAdvanceColStatus: "الحالة",
+  crmAdvanceColJournals: "القيود",
+  crmAdvanceStatusHeld: "معلقة",
+  crmAdvanceStatusReleased: "مُفرج عنها",
+  crmAdvanceTaggedToast: "رُبطت الدفعة المقدمة بالعقد.",
+
+  // Recurring billing screen (runs history + manual run + drafts review)
+  crmBillingRunsTitle: "سجل تشغيلات الفوترة",
+  crmBillingRunsEmpty: "لم تُشغَّل الفوترة الدورية بعد.",
+  crmBillingColAt: "الوقت",
+  crmBillingColActor: "المشغِّل",
+  crmBillingColAsOf: "حتى تاريخ",
+  crmBillingColScanned: "عقود مفحوصة",
+  crmBillingColDrafts: "مسودات",
+  crmBillingColLocked: "مقفلة",
+  crmBillingColDuplicates: "مكررة",
+  crmBillingColNarrative: "بلا وصف",
+  crmBillingRunAction: "تشغيل الفوترة",
+  crmBillingRunTitle: "تشغيل فوترة دورية",
+  crmBillingRunAsOf: "حتى تاريخ",
+  crmBillingPreviewAll: "معاينة جافة (كل العقود النشطة)",
+  crmBillingPreviewTitle: "المعاينة الجافة",
+  crmBillingPreviewEmpty: "لا توجد بنود مستحقة حتى التاريخ المحدد.",
+  crmBillingPreviewContract: "العقد",
+  crmBillingRunToast: "اكتمل التشغيل — {drafts} مسودة فاتورة، و{scanned} عقد مفحوص.",
+  crmBillingDraftsTitle: "فواتير العقود (المسودات والتاريخ)",
+  crmBillingDraftsEmpty: "لا توجد فواتير مولدة من العقود بعد.",
+  crmBillingDraftsColContract: "العقد",
+  crmBillingDraftsColInvoice: "الفاتورة",
+  crmBillingDraftsColPeriod: "الفترة",
+  crmBillingDraftsColMilestone: "المرحلة",
+  crmBillingDraftsColCreatedAt: "أُنشئت في",
+  crmBillingDraftsLink: "فتح شاشة فواتير البيع",
+
+  // Time entries screen (timeslips + weekly review)
+  crmTimeNew: "تسجيل وقت",
+  crmTimeEmpty: "لا توجد قيود وقت بعد.",
+  crmTimeColDate: "التاريخ",
+  crmTimeColProject: "المشروع",
+  crmTimeColFeeItem: "بند الخدمة",
+  crmTimeColHours: "الساعات",
+  crmTimeColRate: "السعر/ساعة",
+  crmTimeColNarrative: "الوصف",
+  crmTimeColBillable: "قابلة للفوترة",
+  crmTimeColEarner: "مقدم الخدمة",
+  crmTimeCreateTitle: "تسجيل وقت",
+  crmTimeEditTitle: "تعديل قيد الوقت",
+  crmTimeEntryDate: "تاريخ القيد",
+  crmTimeHours: "الساعات",
+  crmTimeFeeItem: "بند الخدمة",
+  crmTimeProject: "المشروع",
+  crmTimeCaseHint: "سياسة المنشأة تتطلب مشروعًا (قضية) على كل قيد وقت.",
+  crmTimeContract: "العقد (اختياري — يحدد السعر من قائمة الأسعار)",
+  crmTimeFeeEarner: "مقدم الخدمة",
+  crmTimeRate: "السعر/ساعة (يدوي — اختياري)",
+  crmTimeRateHint: "يُثبَّت السعر لحظة التسجيل ولا يُعاد حسابه لاحقًا؛ اتركه فارغًا ليُقرأ من قائمة أسعار شريك العقد.",
+  crmTimeNarrative: "الوصف (مطلوب للفوترة بالساعة)",
+  crmTimeBillable: "قابلة للفوترة",
+  crmTimeYes: "نعم",
+  crmTimeNo: "لا",
+  crmTimeCreatedToast: "سُجّل الوقت.",
+  crmTimeSavedToast: "حُفظ قيد الوقت.",
+  crmTimeVoid: "إبطال",
+  crmTimeVoidedToast: "أُبطل قيد الوقت.",
+  crmTimeStatusDraft: "مسودة",
+  crmTimeStatusApproved: "معتمد",
+  crmTimeStatusBilled: "مفوتر",
+  crmTimeStatusVoid: "مبطل",
+  crmTimeReviewTitle: "اعتماد كشف الأسبوع",
+  crmTimeReviewWeek: "بداية الأسبوع (الاثنين)",
+  crmTimeReviewHint: "يعتمد كل قيود الوقت المسودة في الأسبوع المحدد (الاثنين → الأحد).",
+  crmTimeReviewToast: "اعتُمد {count} قيد وقت للأسبوع {week}.",
+
+  // Service orders screen (the job-card workspace pattern)
+  crmServiceOrdersNew: "أمر خدمة جديد",
+  crmServiceOrdersEmpty: "لا توجد أوامر خدمة بعد.",
+  crmServiceOrdersAllStatuses: "كل الحالات",
+  crmServiceOrderStatusDraft: "مسودة",
+  crmServiceOrderStatusInProgress: "قيد التنفيذ",
+  crmServiceOrderStatusCompleted: "مكتمل",
+  crmServiceOrderStatusInvoiced: "مفوتر",
+  crmServiceOrderStatusCancelled: "ملغى",
+  crmServiceOrderColNo: "رقم الأمر",
+  crmServiceOrderColPartner: "الشريك",
+  crmServiceOrderColContract: "العقد",
+  crmServiceOrderCreateTitle: "أمر خدمة جديد",
+  crmServiceOrderPartner: "الشريك (عميل)",
+  crmServiceOrderContract: "العقد (اختياري)",
+  crmServiceOrderContractHint: "الربط بالعقد للربط الإجرائي فقط ولا يغيّر أي قيد محاسبي.",
+  crmServiceOrderLines: "بنود الأمر",
+  crmServiceOrderLineType: "النوع",
+  crmServiceOrderLineService: "خدمة",
+  crmServiceOrderLineParts: "قطع",
+  crmServiceOrderItem: "الصنف",
+  crmServiceOrderDescription: "الوصف",
+  crmServiceOrderHours: "الساعات المقدرة",
+  crmServiceOrderQty: "الكمية",
+  crmServiceOrderUnitPrice: "سعر الوحدة",
+  crmServiceOrderAddLine: "إضافة بند",
+  crmServiceOrderRemoveLine: "حذف البند",
+  crmServiceOrderWorkspace: "مساحة عمل أمر الخدمة",
+  crmServiceOrderEditTitle: "تعديل أمر الخدمة (مسودة)",
+  crmServiceOrderApprove: "اعتماد",
+  crmServiceOrderApproveTitle: "اعتماد أمر الخدمة",
+  crmServiceOrderIssueMode: "سياسة صرف القطع",
+  crmServiceOrderIssueImmediate: "صرف فوري (قيد تكلفة عند الاعتماد)",
+  crmServiceOrderIssueReserve: "حجز (يُستهلك عند الفوترة)",
+  crmServiceOrderLogHours: "تسجيل ساعات",
+  crmServiceOrderLogHoursTitle: "تسجيل ساعات على بند خدمة",
+  crmServiceOrderLine: "البند",
+  crmServiceOrderComplete: "إكمال",
+  crmServiceOrderInvoiceAction: "فوترة",
+  crmServiceOrderCancelAction: "إلغاء الأمر",
+  crmServiceOrderCancelTitle: "إلغاء أمر الخدمة",
+  crmServiceOrderCancelReason: "سبب الإلغاء",
+  crmServiceOrderCreatedToast: "أُنشئ أمر الخدمة — الرقم {no}.",
+  crmServiceOrderSavedToast: "حُفظت تعديلات أمر الخدمة.",
+  crmServiceOrderApprovedToast: "اعتُمد أمر الخدمة.",
+  crmServiceOrderHoursToast: "سُجلت الساعات على البند.",
+  crmServiceOrderCompletedToast: "اكتمل أمر الخدمة.",
+  crmServiceOrderInvoicedToast: "فُوتر أمر الخدمة — الفاتورة {invoice}.",
+  crmServiceOrderCancelledToast: "أُلغي أمر الخدمة.",
+  crmServiceOrderColLineNo: "#",
+  crmServiceOrderColLineType: "النوع",
+  crmServiceOrderColItem: "الصنف",
+  crmServiceOrderColHours: "الساعات",
+  crmServiceOrderColQty: "الكمية",
+  crmServiceOrderColPrice: "السعر",
+  crmServiceOrderColLogged: "المسجلة",
+  crmServiceOrderColStatus: "الحالة",
+  crmServiceOrderLineStatusPending: "منتظر",
+  crmServiceOrderLineStatusReserved: "محجوز",
+  crmServiceOrderLineStatusIssued: "مصروف",
+  crmServiceOrderLineStatusInvoiced: "مفوتر",
+  crmServiceOrderLineStatusVoid: "ملغى",
+  crmServiceOrderIssueValue: "قيمة الصرف",
+
+  // Projects screen (accounting.projects — the cost-center mirror)
+  accountingProjectsNew: "مشروع جديد",
+  accountingProjectsEmpty: "لا توجد مشاريع بعد.",
+  accountingProjectColParent: "المشروع الأب",
+  accountingProjectCreateTitle: "مشروع جديد",
+  accountingProjectCode: "رمز المشروع",
+  accountingProjectCodeHint: "حروف وأرقام وشرطات فقط، 1–20 حرفًا (مثال: CASE-01).",
+  accountingProjectNameAr: "الاسم بالعربية",
+  accountingProjectParent: "المشروع الأب (اختياري)",
+  accountingProjectStatusOpen: "مفتوح",
+  accountingProjectStatusClosed: "مغلق",
+  accountingProjectEditTitle: "تعديل المشروع",
+  accountingProjectClose: "إغلاق",
+  accountingProjectReopen: "إعادة فتح",
+  accountingProjectCloseTitle: "إغلاق المشروع",
+  accountingProjectCloseHint: "المشروع المغلق يرفض قيود اليومية الجديدة وتبقى قيوده المسجلة كما هي.",
+  accountingProjectCreatedToast: "أُنشئ المشروع.",
+  accountingProjectSavedToast: "حُفظت تعديلات المشروع.",
+  accountingProjectStatusToast: "حُدّثت حالة المشروع.",
+  accountingProjectErrCodeTaken: "رمز المشروع مستخدم مسبقًا في هذه المنشأة.",
+
+  // Dashboard CRM card (the permission-gated summary section)
+  dashboardCrmTitle: "لمحة إدارة العملاء",
+  dashboardCrmPipeline: "القمع: {newCount} جديد · {qualifiedCount} مؤهَّل",
+  dashboardCrmFollowUps: "متابعات اليوم: {dueToday} · متأخرة: {overdue}",
+  dashboardCrmExpiring: "عقود تنتهي خلال 30 يومًا: {count}",
+  dashboardCrmUpcoming: "بنود فوترة خلال 7 أيام: {count}",
+  dashboardCrmOpen: "فتح قمع العملاء",
+
+  // CRM typed errors (crm-errors.ts codes → crmErr*)
+  crmErrLeadNotFound: "العميل المحتمل غير موجود في هذه المنشأة.",
+  crmErrLeadInputInvalid: "بيانات العميل المحتمل غير صالحة — راجع الحقول.",
+  crmErrLeadConverted: "العميل المحتمل محوَّل أو مغلق — لا يقبل هذه العملية.",
+  crmErrLeadLostReason: "تسجيل الفقد يتطلب سببًا (1–200 حرفًا).",
+  crmErrLeadMergeTarget: "هدف الربط غير صالح — يجب أن يكون شريكًا عميلًا قائمًا في هذه المنشأة.",
+  crmErrTaskNotFound: "المهمة غير موجودة في هذه المنشأة.",
+  crmErrTaskState: "حالة المهمة لا تسمح بهذه العملية.",
+  crmErrTaskInput: "بيانات المهمة غير صالحة — تحقق من العنوان والارتباط والتواريخ.",
+  crmErrActivityInput: "بيانات النشاط غير صالحة — تحقق من النوع والملخص والتاريخ.",
+  crmErrContractNotFound: "عقد الخدمات غير موجود في هذه المنشأة.",
+  crmErrContractState: "حالة العقد لا تسمح بهذه العملية (المسودة فقط تقبل التعديل والتفعيل).",
+  crmErrContractInput: "بيانات العقد غير صالحة — تحقق من الشريك والمدة ونموذج الأتعاب وبنود الخدمة.",
+  crmErrContractTerm: "مدة العقد غير صالحة — النهاية يجب أن تكون في البداية أو بعدها.",
+  crmErrScheduleNotFound: "بند الجدول غير موجود في هذه المنشأة.",
+  crmErrAdvanceState: "سند القبض لا يصلح لهذه الدفعة — تحقق من حالته وشريكه وعملته وعدم تكرار الربط.",
+  crmErrAdvanceInsufficient: "رصيد السند غير المخصص لا يكفي لقيمة الدفعة المطلوبة.",
+  crmErrTimeNotFound: "قيد الوقت غير موجود في هذه المنشأة.",
+  crmErrTimeState: "حالة قيد الوقت لا تسمح بهذه العملية.",
+  crmErrTimeInput: "بيانات قيد الوقت غير صالحة — تحقق من الساعات وبند الخدمة والسعر.",
+  crmErrTimeCaseRequired: "سياسة المنشأة تتطلب مشروعًا (قضية) على كل قيد وقت.",
+  crmErrTimesheetEmpty: "لا توجد قيود وقت مسودة في هذا الأسبوع لاعتمادها.",
+  crmErrServiceOrderNotFound: "أمر الخدمة غير موجود في هذه المنشأة.",
+  crmErrServiceOrderState: "حالة أمر الخدمة لا تسمح بهذه العملية (المفوتر لا يُلغى — التصحيح بإشعار دائن).",
+  crmErrServiceOrderInput: "بيانات أمر الخدمة غير صالحة — تحقق من الشريك والعقد والبنود.",
+  crmErrServiceOrderLine: "بند غير صالح — بنود الخدمة تحتاج صنف خدمة بساعات، وبنود القطع تحتاج صنفًا مخزنيًا بكمية.",
+  crmErrServiceOrderPosting: "إعدادات الترحيل لأوامر الخدمة غير مكتملة — تواصل مع المسؤول.",
 };
 
 const en: Dictionary = {
@@ -8156,6 +8948,402 @@ const en: Dictionary = {
   mfgErrQcScrapBatchNotQuarantined: "The order has no QUARANTINED finished-goods batch — the QC scrap flow needs a held batch.",
   mfgErrQcScrapEmptyBatch: "The quarantined batch is empty — no on-hand left to scrap.",
   mfgErrGenealogyBatchNotFound: "The batch does not exist in this tenant.",
+
+  // -- PHASE-019 (T50): crm navigation & screens ---------------------
+  // (leads pipeline + tasks/activities + service contracts + recurring
+  // billing + time entries + service orders + the projects dimension +
+  // the GL project filter + the dashboard CRM card)
+
+  crmNavSection: "CRM",
+  crmPipelineTitle: "Lead pipeline",
+  crmTasksTitle: "Follow-up tasks & activities",
+  crmContractsTitle: "Service contracts",
+  crmBillingTitle: "Recurring billing",
+  crmTimeTitle: "Time entries",
+  crmServiceOrdersTitle: "Service orders",
+  accountingProjectsTitle: "Projects",
+
+  // GL project filter (the T44 projectId query param)
+  accountingGlProjectFilter: "Project",
+  accountingGlAllProjects: "All projects",
+
+  // Lead pipeline screen (the board + conversion wizard + lose dialog)
+  crmLeadsNew: "New lead",
+  crmLeadsEmpty: "No leads recorded yet.",
+  crmLeadsAllStatuses: "All statuses",
+  crmLeadStatusNew: "New",
+  crmLeadStatusQualified: "Qualified",
+  crmLeadStatusConverted: "Converted",
+  crmLeadStatusLost: "Lost",
+  crmLeadColName: "Name",
+  crmLeadColCompany: "Company",
+  crmLeadColContact: "Contact",
+  crmLeadColSource: "Source",
+  crmLeadColOwner: "Owner",
+  crmLeadColPartner: "Partner",
+  crmLeadColCreated: "Created",
+  crmLeadColLostReason: "Lost reason",
+  crmLeadSourceWalkIn: "Walk-in",
+  crmLeadSourceReferral: "Referral",
+  crmLeadSourceWebsite: "Website",
+  crmLeadSourceCampaign: "Campaign",
+  crmLeadSourceCall: "Call",
+  crmLeadSourceOther: "Other",
+  crmLeadCreateTitle: "Register a lead",
+  crmLeadEditTitle: "Edit the lead",
+  crmLeadName: "Name",
+  crmLeadNameAr: "Arabic name",
+  crmLeadPhone: "Phone",
+  crmLeadEmail: "Email",
+  crmLeadCompany: "Company",
+  crmLeadSource: "Source",
+  crmLeadOwner: "Owning sales rep",
+  crmLeadNote: "Note",
+  crmLeadConvert: "Convert",
+  crmLeadConvertTitle: "Convert the lead to a partner",
+  crmLeadConvertMode: "Conversion mode",
+  crmLeadConvertNewPartner: "Create a new partner",
+  crmLeadConvertMerge: "Link an existing partner",
+  crmLeadConvertPartner: "Target partner",
+  crmLeadConvertHint: "Conversion is final — the lead links to the partner forever and accepts no further edits.",
+  crmLeadLose: "Mark lost",
+  crmLeadLoseTitle: "Mark the lead lost",
+  crmLeadLoseReason: "Lost reason (1–200 characters)",
+  crmLeadCreatedToast: "Lead recorded.",
+  crmLeadSavedToast: "Lead changes saved.",
+  crmLeadConvertedToast: "Lead converted — partner {partner}.",
+  crmLeadLostToast: "Lead marked lost.",
+
+  // Tasks + activities screen (future work + the logged-past timeline)
+  crmTasksNew: "New task",
+  crmTasksEmpty: "No tasks yet.",
+  crmTasksAllStatuses: "All statuses",
+  crmTaskStatusOpen: "Open",
+  crmTaskStatusDone: "Done",
+  crmTaskStatusCancelled: "Cancelled",
+  crmTaskColTitle: "Task",
+  crmTaskColDue: "Due",
+  crmTaskColRemind: "Remind",
+  crmTaskColAssignee: "Assignee",
+  crmTaskColRelated: "Related to",
+  crmTaskCreateTitle: "New follow-up task",
+  crmTaskEditTitle: "Edit the task",
+  crmTaskTitleLabel: "Task title",
+  crmTaskAssignee: "Assignee",
+  crmTaskDueDate: "Due date",
+  crmTaskRemindAt: "Reminder date",
+  crmTaskRemindTime: "Reminder time",
+  crmTaskNote: "Note",
+  crmTaskRelatedType: "Related type",
+  crmTaskRelatedLead: "Lead",
+  crmTaskRelatedPartner: "Partner",
+  crmTaskRelatedContract: "Service contract",
+  crmTaskRelatedServiceOrder: "Service order",
+  crmTaskRelatedTarget: "Related record",
+  crmTaskCreatedToast: "Task created.",
+  crmTaskSavedToast: "Task changes saved.",
+  crmTaskComplete: "Complete",
+  crmTaskCompletedToast: "Task completed.",
+  crmTaskCancelledToast: "Task cancelled.",
+  crmActivitiesTitle: "Activity timeline",
+  crmActivitiesEmpty: "No activities logged for this relation.",
+  crmActivitiesHint: "Select a task to load the activities of its related record.",
+  crmActivityColOccurredAt: "Date",
+  crmActivityColKind: "Kind",
+  crmActivityColSummary: "Summary",
+  crmActivityColDuration: "Duration (min)",
+  crmActivityKindCall: "Call",
+  crmActivityKindMeeting: "Meeting",
+  crmActivityKindEmail: "Email",
+  crmActivityKindNote: "Note",
+  crmActivityLogTitle: "Log an activity",
+  crmActivityKindLabel: "Activity kind",
+  crmActivityOccurredAt: "Activity date",
+  crmActivityOccurredTime: "Activity time",
+  crmActivitySummary: "Summary",
+  crmActivityDuration: "Duration in minutes (optional)",
+  crmActivityLoggedToast: "Activity logged.",
+
+  // Service contracts screen (list + create/edit + schedule + preview + advances)
+  crmContractsNew: "New contract",
+  crmContractsEmpty: "No contracts yet.",
+  crmContractsAllStatuses: "All statuses",
+  crmContractStatusDraft: "Draft",
+  crmContractStatusActive: "Active",
+  crmContractStatusCancelled: "Cancelled",
+  crmContractStatusRenewed: "Renewed",
+  crmContractExpiredChip: "Expired",
+  crmContractColNo: "Contract no",
+  crmContractColPartner: "Partner",
+  crmContractColTitle: "Title",
+  crmContractColFeeModel: "Fee model",
+  crmContractColTerm: "Term",
+  crmContractColMonthly: "Monthly amount",
+  crmFeeModelRetainer: "Retainer",
+  crmFeeModelMilestones: "Milestones",
+  crmFeeModelHourly: "Hourly",
+  crmContractCreateTitle: "New service contract",
+  crmContractPartner: "Partner (customer)",
+  crmContractProject: "Project (optional)",
+  crmContractTitleLabel: "Contract title",
+  crmContractTitleAr: "Arabic title",
+  crmContractScope: "Scope of work",
+  crmContractFeeModel: "Fee model",
+  crmContractStartDate: "Start date",
+  crmContractEndDate: "End date",
+  crmContractMonthlyAmount: "Monthly amount (retainer)",
+  crmContractFeeItem: "Default fee item",
+  crmContractFeeItemHint: "Stamped into the billing-schedule rows at creation (a SERVICE item).",
+  crmContractNote: "Note",
+  crmContractMilestones: "Milestones",
+  crmContractMilestoneLabel: "Milestone label",
+  crmContractMilestoneDue: "Due date",
+  crmContractMilestoneAmount: "Amount",
+  crmContractAddMilestone: "Add milestone",
+  crmContractRemoveMilestone: "Remove",
+  crmContractEditTitle: "Edit the contract (draft)",
+  crmContractWorkspace: "Contract workspace",
+  crmContractActivatedAt: "Activated at",
+  crmContractRenewedTo: "Renewal contract",
+  crmContractCancelReasonLabel: "Cancellation reason",
+  crmContractActivate: "Activate",
+  crmContractActivateHint: "Activation reserves the CT- contract number and stamps the final billing schedule — the active contract accepts no edits afterwards.",
+  crmContractCancelAction: "Cancel contract",
+  crmContractCancelTitle: "Cancel the service contract",
+  crmContractRenew: "Renew",
+  crmContractRenewTitle: "Renew the contract",
+  crmContractRenewStart: "New term start (optional)",
+  crmContractRenewEnd: "New term end (optional)",
+  crmContractRenewHint: "Renewing creates a fresh DRAFT copy of this contract's lines and links it as the renewal.",
+  crmContractCreatedToast: "Contract created (DRAFT) — the schedule is stamped at activation.",
+  crmContractSavedToast: "Contract changes saved.",
+  crmContractActivatedToast: "Contract activated — number {no}.",
+  crmContractCancelledToast: "Contract cancelled.",
+  crmContractRenewedToast: "Renewal contract created — number {no}.",
+  crmScheduleTitle: "Billing schedule",
+  crmScheduleEmpty: "No schedule rows.",
+  crmScheduleColEntryType: "Type",
+  crmScheduleColPeriod: "Period",
+  crmScheduleColWindow: "Window",
+  crmScheduleColBillDate: "Bill date",
+  crmScheduleColAmount: "Amount",
+  crmScheduleColMilestone: "Milestone",
+  crmScheduleEntryRetainer: "Retainer period",
+  crmScheduleEntryMilestone: "Milestone",
+  crmScheduleEntryHourly: "Hourly period",
+  crmScheduleStatusPlanned: "Planned",
+  crmScheduleStatusInvoiced: "Invoiced",
+  crmScheduleStatusSkipped: "Skipped",
+  crmPreviewTitle: "Billing preview",
+  crmPreviewAsOf: "As of",
+  crmPreviewRun: "Show preview",
+  crmPreviewEmpty: "No entries due as of the selected date.",
+  crmPreviewLockedChip: "period locked",
+  crmPreviewNarrativeChip: "no narrative",
+  crmPreviewPullable: "Billable time entries",
+  crmPreviewNeedsNarrative: "Entries needing a narrative before billing",
+  crmAdvancesTitle: "Advances",
+  crmAdvancesEmpty: "No advances tagged to this contract.",
+  crmAdvancesTag: "Tag an advance",
+  crmAdvancesTagTitle: "Tag an advance to the contract",
+  crmAdvanceReceipt: "Receipt",
+  crmAdvanceNote: "Note",
+  crmAdvancePolicyHint: "Draws on the receipt's unallocated on-account credit; the tenant policy decides the deferral journal.",
+  crmAdvanceColReceipt: "Receipt",
+  crmAdvanceColAmount: "Amount",
+  crmAdvanceColStatus: "Status",
+  crmAdvanceColJournals: "Journals",
+  crmAdvanceStatusHeld: "Held",
+  crmAdvanceStatusReleased: "Released",
+  crmAdvanceTaggedToast: "Advance tagged to the contract.",
+
+  // Recurring billing screen (runs history + manual run + drafts review)
+  crmBillingRunsTitle: "Billing run history",
+  crmBillingRunsEmpty: "No recurring billing runs yet.",
+  crmBillingColAt: "At",
+  crmBillingColActor: "Run by",
+  crmBillingColAsOf: "As of",
+  crmBillingColScanned: "Contracts scanned",
+  crmBillingColDrafts: "Drafts",
+  crmBillingColLocked: "Locked",
+  crmBillingColDuplicates: "Duplicates",
+  crmBillingColNarrative: "No narrative",
+  crmBillingRunAction: "Run billing",
+  crmBillingRunTitle: "Run recurring billing",
+  crmBillingRunAsOf: "As of",
+  crmBillingPreviewAll: "Dry preview (all active contracts)",
+  crmBillingPreviewTitle: "Dry preview",
+  crmBillingPreviewEmpty: "No entries due as of the selected date.",
+  crmBillingPreviewContract: "Contract",
+  crmBillingRunToast: "Run complete — {drafts} draft invoices, {scanned} contracts scanned.",
+  crmBillingDraftsTitle: "Contract invoices (drafts & history)",
+  crmBillingDraftsEmpty: "No contract-generated invoices yet.",
+  crmBillingDraftsColContract: "Contract",
+  crmBillingDraftsColInvoice: "Invoice",
+  crmBillingDraftsColPeriod: "Period",
+  crmBillingDraftsColMilestone: "Milestone",
+  crmBillingDraftsColCreatedAt: "Created",
+  crmBillingDraftsLink: "Open the sales invoices screen",
+
+  // Time entries screen (timeslips + weekly review)
+  crmTimeNew: "Log time",
+  crmTimeEmpty: "No time entries yet.",
+  crmTimeColDate: "Date",
+  crmTimeColProject: "Project",
+  crmTimeColFeeItem: "Fee item",
+  crmTimeColHours: "Hours",
+  crmTimeColRate: "Rate/hour",
+  crmTimeColNarrative: "Narrative",
+  crmTimeColBillable: "Billable",
+  crmTimeColEarner: "Fee earner",
+  crmTimeCreateTitle: "Log time",
+  crmTimeEditTitle: "Edit the time entry",
+  crmTimeEntryDate: "Entry date",
+  crmTimeHours: "Hours",
+  crmTimeFeeItem: "Fee item",
+  crmTimeProject: "Project",
+  crmTimeCaseHint: "This tenant requires a project (case) on every time entry.",
+  crmTimeContract: "Contract (optional — resolves the rate from the price list)",
+  crmTimeFeeEarner: "Fee earner",
+  crmTimeRate: "Rate/hour (manual — optional)",
+  crmTimeRateHint: "The rate is snapshotted at recording and never recomputed; leave empty to resolve it from the contract partner's price list.",
+  crmTimeNarrative: "Narrative (required for hourly billing)",
+  crmTimeBillable: "Billable",
+  crmTimeYes: "Yes",
+  crmTimeNo: "No",
+  crmTimeCreatedToast: "Time recorded.",
+  crmTimeSavedToast: "Time entry saved.",
+  crmTimeVoid: "Void",
+  crmTimeVoidedToast: "Time entry voided.",
+  crmTimeStatusDraft: "Draft",
+  crmTimeStatusApproved: "Approved",
+  crmTimeStatusBilled: "Billed",
+  crmTimeStatusVoid: "Void",
+  crmTimeReviewTitle: "Approve a weekly timesheet",
+  crmTimeReviewWeek: "Week start (Monday)",
+  crmTimeReviewHint: "Approves every DRAFT time entry in the selected week (Monday → Sunday).",
+  crmTimeReviewToast: "Approved {count} time entries for the week of {week}.",
+
+  // Service orders screen (the job-card workspace pattern)
+  crmServiceOrdersNew: "New service order",
+  crmServiceOrdersEmpty: "No service orders yet.",
+  crmServiceOrdersAllStatuses: "All statuses",
+  crmServiceOrderStatusDraft: "Draft",
+  crmServiceOrderStatusInProgress: "In progress",
+  crmServiceOrderStatusCompleted: "Completed",
+  crmServiceOrderStatusInvoiced: "Invoiced",
+  crmServiceOrderStatusCancelled: "Cancelled",
+  crmServiceOrderColNo: "Order no",
+  crmServiceOrderColPartner: "Partner",
+  crmServiceOrderColContract: "Contract",
+  crmServiceOrderCreateTitle: "New service order",
+  crmServiceOrderPartner: "Partner (customer)",
+  crmServiceOrderContract: "Contract (optional)",
+  crmServiceOrderContractHint: "The contract link is provenance only — it never alters a journal.",
+  crmServiceOrderLines: "Order lines",
+  crmServiceOrderLineType: "Type",
+  crmServiceOrderLineService: "Service",
+  crmServiceOrderLineParts: "Parts",
+  crmServiceOrderItem: "Item",
+  crmServiceOrderDescription: "Description",
+  crmServiceOrderHours: "Estimated hours",
+  crmServiceOrderQty: "Qty",
+  crmServiceOrderUnitPrice: "Unit price",
+  crmServiceOrderAddLine: "Add line",
+  crmServiceOrderRemoveLine: "Remove",
+  crmServiceOrderWorkspace: "Service order workspace",
+  crmServiceOrderEditTitle: "Edit the service order (draft)",
+  crmServiceOrderApprove: "Approve",
+  crmServiceOrderApproveTitle: "Approve the service order",
+  crmServiceOrderIssueMode: "Parts issue mode",
+  crmServiceOrderIssueImmediate: "Issue immediately (COGS journal at approval)",
+  crmServiceOrderIssueReserve: "Reserve (consumed at invoicing)",
+  crmServiceOrderLogHours: "Log hours",
+  crmServiceOrderLogHoursTitle: "Log hours on a service line",
+  crmServiceOrderLine: "Line",
+  crmServiceOrderComplete: "Complete",
+  crmServiceOrderInvoiceAction: "Invoice",
+  crmServiceOrderCancelAction: "Cancel order",
+  crmServiceOrderCancelTitle: "Cancel the service order",
+  crmServiceOrderCancelReason: "Cancellation reason",
+  crmServiceOrderCreatedToast: "Service order created — number {no}.",
+  crmServiceOrderSavedToast: "Service order changes saved.",
+  crmServiceOrderApprovedToast: "Service order approved.",
+  crmServiceOrderHoursToast: "Hours logged on the line.",
+  crmServiceOrderCompletedToast: "Service order completed.",
+  crmServiceOrderInvoicedToast: "Service order invoiced — invoice {invoice}.",
+  crmServiceOrderCancelledToast: "Service order cancelled.",
+  crmServiceOrderColLineNo: "#",
+  crmServiceOrderColLineType: "Type",
+  crmServiceOrderColItem: "Item",
+  crmServiceOrderColHours: "Hours",
+  crmServiceOrderColQty: "Qty",
+  crmServiceOrderColPrice: "Price",
+  crmServiceOrderColLogged: "Logged",
+  crmServiceOrderColStatus: "Status",
+  crmServiceOrderLineStatusPending: "Pending",
+  crmServiceOrderLineStatusReserved: "Reserved",
+  crmServiceOrderLineStatusIssued: "Issued",
+  crmServiceOrderLineStatusInvoiced: "Invoiced",
+  crmServiceOrderLineStatusVoid: "Void",
+  crmServiceOrderIssueValue: "Issue value",
+
+  // Projects screen (accounting.projects — the cost-center mirror)
+  accountingProjectsNew: "New project",
+  accountingProjectsEmpty: "No projects yet.",
+  accountingProjectColParent: "Parent project",
+  accountingProjectCreateTitle: "New project",
+  accountingProjectCode: "Project code",
+  accountingProjectCodeHint: "Letters, digits and dashes only, 1–20 characters (e.g. CASE-01).",
+  accountingProjectNameAr: "Arabic name",
+  accountingProjectParent: "Parent project (optional)",
+  accountingProjectStatusOpen: "Open",
+  accountingProjectStatusClosed: "Closed",
+  accountingProjectEditTitle: "Edit the project",
+  accountingProjectClose: "Close",
+  accountingProjectReopen: "Reopen",
+  accountingProjectCloseTitle: "Close the project",
+  accountingProjectCloseHint: "A closed project rejects new journal-line stamps; posted history stays untouched.",
+  accountingProjectCreatedToast: "Project created.",
+  accountingProjectSavedToast: "Project changes saved.",
+  accountingProjectStatusToast: "Project status updated.",
+  accountingProjectErrCodeTaken: "That project code is already in use in this tenant.",
+
+  // Dashboard CRM card (the permission-gated summary section)
+  dashboardCrmTitle: "CRM at a glance",
+  dashboardCrmPipeline: "Pipeline: {newCount} new · {qualifiedCount} qualified",
+  dashboardCrmFollowUps: "Follow-ups due today: {dueToday} · overdue: {overdue}",
+  dashboardCrmExpiring: "Contracts expiring within 30 days: {count}",
+  dashboardCrmUpcoming: "Billing entries within 7 days: {count}",
+  dashboardCrmOpen: "Open the lead pipeline",
+
+  // CRM typed errors (crm-errors.ts codes → crmErr*)
+  crmErrLeadNotFound: "The lead does not exist in this tenant.",
+  crmErrLeadInputInvalid: "Invalid lead input — please check the fields.",
+  crmErrLeadConverted: "The lead is converted or closed — it accepts no further operations.",
+  crmErrLeadLostReason: "Marking a lead lost requires a reason (1–200 characters).",
+  crmErrLeadMergeTarget: "Invalid merge target — it must be an existing customer partner in this tenant.",
+  crmErrTaskNotFound: "The task does not exist in this tenant.",
+  crmErrTaskState: "The task's status does not allow this operation.",
+  crmErrTaskInput: "Invalid task input — check the title, the relation and the dates.",
+  crmErrActivityInput: "Invalid activity input — check the kind, the summary and the date.",
+  crmErrContractNotFound: "The service contract does not exist in this tenant.",
+  crmErrContractState: "The contract's status does not allow this operation (only drafts edit and activate).",
+  crmErrContractInput: "Invalid contract input — check the partner, the term, the fee model and the fee items.",
+  crmErrContractTerm: "Invalid contract term — the end must be on or after the start.",
+  crmErrScheduleNotFound: "The schedule entry does not exist in this tenant.",
+  crmErrAdvanceState: "The receipt cannot back this advance — check its status, partner, currency and that it is not already tagged.",
+  crmErrAdvanceInsufficient: "The receipt's unallocated on-account credit is smaller than the requested advance.",
+  crmErrTimeNotFound: "The time entry does not exist in this tenant.",
+  crmErrTimeState: "The time entry's status does not allow this operation.",
+  crmErrTimeInput: "Invalid time entry — check the hours, the fee item and the rate.",
+  crmErrTimeCaseRequired: "This tenant requires a projectId (case) on every time entry.",
+  crmErrTimesheetEmpty: "The selected week has no DRAFT time entries to approve.",
+  crmErrServiceOrderNotFound: "The service order does not exist in this tenant.",
+  crmErrServiceOrderState: "The service order's status does not allow this operation (an invoiced order is cancelled by credit note, never in place).",
+  crmErrServiceOrderInput: "Invalid service order input — check the partner, the contract and the lines.",
+  crmErrServiceOrderLine: "Invalid line — service lines need a SERVICE item with hours; parts lines need a STOCK item with a qty.",
+  crmErrServiceOrderPosting: "The service-order posting configuration is incomplete — contact the administrator.",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

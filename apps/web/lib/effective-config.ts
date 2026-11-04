@@ -68,6 +68,10 @@ const INDUSTRY_REPORT_TARGETS: ReadonlySet<string> = new Set([
   "manufacturing.production_cost",
   "manufacturing.batch_genealogy",
   "manufacturing.qc_inspection_log",
+  // PHASE-019 (T50): the two services reports — deep-link into the
+  // reports workspace's ?report= selection.
+  "services.contract_revenue_schedule",
+  "services.time_billing_summary",
 ]);
 
 /**
@@ -80,6 +84,9 @@ const INDUSTRY_REPORT_TARGETS: ReadonlySet<string> = new Set([
  * PHASE-018 (T41): the four manufacturing targets alias the new screens the
  * same way (production/traceability L9 groups render them when the
  * food_manufacturing template is applied).
+ * PHASE-019 (T50): the five crm/projects targets alias the new screens the
+ * same way (the professional_services template's groups render registry-
+ * driven when it is applied).
  */
 const TARGET_ROUTE_ALIASES: ReadonlyMap<string, string> = new Map([
   ["distribution.routes", "/distribution/routes"],
@@ -93,6 +100,12 @@ const TARGET_ROUTE_ALIASES: ReadonlyMap<string, string> = new Map([
   ["manufacturing.orders", "/manufacturing/orders"],
   ["manufacturing.qc", "/manufacturing/qc"],
   ["manufacturing.genealogy", "/manufacturing/genealogy"],
+  // PHASE-019 (T50): crm + projects manifest targets → the new screens.
+  ["crm.pipeline", "/crm/pipeline"],
+  ["crm.time", "/crm/time"],
+  ["crm.contracts", "/crm/contracts"],
+  ["crm.recurring_billing", "/crm/billing"],
+  ["accounting.projects", "/accounting/projects"],
 ]);
 
 /**

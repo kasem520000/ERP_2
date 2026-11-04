@@ -30,6 +30,11 @@ const PERIODS = {
   locked: { id: "p-locked", status: "LOCKED", startDate: "2026-03-01", endDate: "2026-03-31" },
 } as const;
 
+const PROJECTS = {
+  open: { id: "prj-open", status: "OPEN" as const },
+  closed: { id: "prj-closed", status: "CLOSED" as const },
+} as const;
+
 interface ModelOverrides {
   existingEntry?: { id: string; entryNo: string | null; status: "POSTED" | "REVERSED" };
   purposes?: Record<string, string>;
@@ -56,6 +61,12 @@ function model(overrides: ModelOverrides = {}): PostingReadModel {
     findAccount: async (id: string) => Object.values(ACCOUNTS).find((a) => a.id === id),
     findActivePurposeAccount: async (key: string) =>
       purposes[key] === undefined ? undefined : { accountId: purposes[key] },
+    findProject: async (id: string) =>
+      id === PROJECTS.open.id
+        ? { id: PROJECTS.open.id, status: PROJECTS.open.status }
+        : id === PROJECTS.closed.id
+          ? { id: PROJECTS.closed.id, status: PROJECTS.closed.status }
+          : undefined,
     findArApControlAccounts: async () => ({
       arControlAccountId: ACCOUNTS.arControl.id,
       apControlAccountId: ACCOUNTS.apControl.id,

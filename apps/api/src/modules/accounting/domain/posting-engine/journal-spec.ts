@@ -33,6 +33,9 @@ export interface JournalLineSpec {
   itemId?: string;
   costCenterId?: string;
   taxCodeId?: string;
+  /** PHASE-019 (§8): the projects dimension stamp — validated at the
+   * account-resolution stage (PROJECT_NOT_FOUND / PROJECT_CLOSED). */
+  projectId?: string;
   memo?: LocalizedText;
 }
 
@@ -83,6 +86,7 @@ export interface ResolvedLine {
   itemId?: string;
   costCenterId?: string;
   taxCodeId?: string;
+  projectId?: string;
   memo?: LocalizedText;
   /** True when the resolved account is the active AR/AP control mapping. */
   isArApControl: boolean;

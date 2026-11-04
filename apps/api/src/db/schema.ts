@@ -910,6 +910,27 @@ export const costCenters = pgTable(
   ],
 );
 
+/** Projects: the PHASE-019 analytical dimension (the cost_centers clone
+ * with status OPEN|CLOSED instead of is_active — CLOSED rejects new
+ * journal-line stamps, typed PROJECT_CLOSED at the engine). */
+export const projects = pgTable(
+  "projects",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    nameAr: text("name_ar"),
+    parentId: uuid("parent_id"),
+    status: text("status").notNull().default("OPEN"),
+  },
+  (table) => [
+    uniqueIndex("uq_projects_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_projects_tenant_code").on(table.tenantId, table.code),
+    index("ix_projects_tenant_parent").on(table.tenantId, table.parentId),
+  ],
+);
+
 /** Recurring journal definitions (generation creates DRAFTs only). */
 export const recurringJournals = pgTable(
   "recurring_journals",
@@ -1036,6 +1057,7 @@ export const manualJournalLines = pgTable(
     itemId: uuid("item_id"),
     costCenterId: uuid("cost_center_id"),
     taxCodeId: uuid("tax_code_id"),
+    projectId: uuid("project_id"),
     memo: text("memo"),
     memoAr: text("memo_ar"),
   },
@@ -1112,6 +1134,7 @@ export const journalLines = pgTable(
     itemId: uuid("item_id"),
     costCenterId: uuid("cost_center_id"),
     taxCodeId: uuid("tax_code_id"),
+    projectId: uuid("project_id"),
     memo: text("memo"),
     memoAr: text("memo_ar"),
   },
@@ -1119,6 +1142,7 @@ export const journalLines = pgTable(
     index("ix_journal_lines_tenant_entry").on(table.tenantId, table.journalEntryId),
     index("ix_journal_lines_tenant_account").on(table.tenantId, table.accountId),
     index("ix_journal_lines_tenant_partner").on(table.tenantId, table.partnerId),
+    index("ix_journal_lines_tenant_project").on(table.tenantId, table.projectId),
     uniqueIndex("uq_journal_lines_entry_line").on(table.journalEntryId, table.lineNo),
   ],
 );
@@ -3016,6 +3040,13 @@ export const salesInvoices = pgTable(
     vehicleId: uuid("vehicle_id"),
     posTableId: uuid("pos_table_id"),
     tenders: jsonb("tenders"),
+    // PHASE-019 (migration 0027): the service-billing provenance trio —
+    // contract (the recurring-billing link), service order (the work-order
+    // invoice), project (the analytical stamp carried onto every journal
+    // line of the post + COGS journals).
+    contractId: uuid("contract_id"),
+    serviceOrderId: uuid("service_order_id"),
+    projectId: uuid("project_id"),
     note: text("note"),
     noteAr: text("note_ar"),
     submittedAt: timestamp("submitted_at", { withTimezone: true, mode: "string" }),
@@ -3042,6 +3073,15 @@ export const salesInvoices = pgTable(
     index("ix_sales_invoices_tenant_status").on(table.tenantId, table.status, table.invoiceDate),
     index("ix_sales_invoices_tenant_order").on(table.tenantId, table.orderId),
     index("ix_sales_invoices_tenant_delivery").on(table.tenantId, table.deliveryId),
+    index("ix_sales_invoices_tenant_contract")
+      .on(table.tenantId, table.contractId)
+      .where(sql`${table.contractId} IS NOT NULL`),
+    index("ix_sales_invoices_tenant_service_order")
+      .on(table.tenantId, table.serviceOrderId)
+      .where(sql`${table.serviceOrderId} IS NOT NULL`),
+    index("ix_sales_invoices_tenant_project")
+      .on(table.tenantId, table.projectId)
+      .where(sql`${table.projectId} IS NOT NULL`),
   ],
 );
 
@@ -4299,5 +4339,334 @@ export const inspections = pgTable(
     index("ix_inspections_tenant_grn")
       .on(table.tenantId, table.grnId)
       .where(sql`${table.grnId} IS NOT NULL`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// PHASE-019 · CRM, Service Contracts & Projects (migration 0027_crm_projects.sql):
+// the crm cluster (leads, tasks, activities, contracts + billing schedule +
+// invoices guard + advances, service orders + lines, time entries). Cost math
+// per ADR-0009: hours/rates 19,6; money quanta 19,4. All draft/status-
+// lifecycled (SELECT/INSERT/UPDATE — no DELETE grants; tombstone + status
+// flips carry the lifecycle).
+
+/** Leads: the intake pipeline (NEW → QUALIFIED → CONVERTED/LOST); the
+ * converted lead links partner_id forever (provenance — no numbering series,
+ * no ledger effect). */
+export const leads = pgTable(
+  "leads",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    name: text("name").notNull(),
+    nameAr: text("name_ar"),
+    phone: text("phone"),
+    email: text("email"),
+    company: text("company"),
+    source: text("source").notNull().default("OTHER"),
+    status: text("status").notNull().default("NEW"),
+    lostReason: text("lost_reason"),
+    ownerUserId: uuid("owner_user_id"),
+    partnerId: uuid("partner_id"),
+    convertedAt: timestamp("converted_at", { withTimezone: true, mode: "string" }),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_leads_id_tenant").on(table.id, table.tenantId),
+    index("ix_leads_tenant_status").on(table.tenantId, table.status),
+    index("ix_leads_tenant_owner").on(table.tenantId, table.ownerUserId),
+  ],
+);
+
+/** CRM tasks: future work (OPEN/DONE/CANCELLED) + the reminder sweep
+ * substrate (remind_at/notified_at). */
+export const crmTasks = pgTable(
+  "crm_tasks",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    title: text("title").notNull(),
+    relatedType: text("related_type").notNull(),
+    relatedId: uuid("related_id").notNull(),
+    assigneeUserId: uuid("assignee_user_id"),
+    dueDate: date("due_date"),
+    remindAt: timestamp("remind_at", { withTimezone: true, mode: "string" }),
+    notifiedAt: timestamp("notified_at", { withTimezone: true, mode: "string" }),
+    status: text("status").notNull().default("OPEN"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_crm_tasks_id_tenant").on(table.id, table.tenantId),
+    index("ix_crm_tasks_tenant_status_due").on(table.tenantId, table.status, table.dueDate),
+    index("ix_crm_tasks_tenant_related").on(table.tenantId, table.relatedType, table.relatedId),
+    index("ix_crm_tasks_pending_reminders")
+      .on(table.tenantId, table.remindAt)
+      .where(sql`${table.remindAt} IS NOT NULL AND ${table.notifiedAt} IS NULL`),
+  ],
+);
+
+/** CRM activities: logged past interactions (the timeline per
+ * lead/partner/contract, ordered by occurred_at). */
+export const crmActivities = pgTable(
+  "crm_activities",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    kind: text("kind").notNull(),
+    relatedType: text("related_type").notNull(),
+    relatedId: uuid("related_id").notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true, mode: "string" }).notNull(),
+    summary: text("summary").notNull(),
+    durationMinutes: integer("duration_minutes"),
+    actorUserId: uuid("actor_user_id"),
+  },
+  (table) => [
+    uniqueIndex("uq_crm_activities_id_tenant").on(table.id, table.tenantId),
+    index("ix_crm_activities_tenant_related").on(
+      table.tenantId,
+      table.relatedType,
+      table.relatedId,
+    ),
+  ],
+);
+
+/** Service contracts: the CT- document (posts nothing itself). NO
+ * contract-level fee_item_id — the schedule rows are the fee-item home
+ * (§18 lesson 1). */
+export const serviceContracts = pgTable(
+  "service_contracts",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    contractNo: text("contract_no"),
+    partnerId: uuid("partner_id").notNull(),
+    projectId: uuid("project_id"),
+    title: text("title").notNull(),
+    titleAr: text("title_ar"),
+    scope: text("scope"),
+    feeModel: text("fee_model").notNull(),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    monthlyAmount: numeric("monthly_amount", { precision: 19, scale: 4 }),
+    currencyCode: varchar("currency_code", { length: 3 }).notNull(),
+    status: text("status").notNull().default("DRAFT"),
+    renewedToContractId: uuid("renewed_to_contract_id"),
+    cancelReason: text("cancel_reason"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+    activatedAt: timestamp("activated_at", { withTimezone: true, mode: "string" }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("uq_service_contracts_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_service_contracts_tenant_no")
+      .on(table.tenantId, table.contractNo)
+      .where(sql`${table.contractNo} IS NOT NULL`),
+    index("ix_service_contracts_tenant_status").on(table.tenantId, table.status),
+    index("ix_service_contracts_tenant_partner").on(table.tenantId, table.partnerId),
+  ],
+);
+
+/** Contract billing schedule: the expanded grid (re-runnable, additive) —
+ * RETAINER_PERIOD / MILESTONE / HOURLY_PERIOD rows; the fee-item home. */
+export const contractBillingSchedule = pgTable(
+  "contract_billing_schedule",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    contractId: uuid("contract_id").notNull(),
+    entryType: text("entry_type").notNull(),
+    periodKey: text("period_key"),
+    periodStart: date("period_start"),
+    periodEnd: date("period_end"),
+    billDate: date("bill_date").notNull(),
+    amount: numeric("amount", { precision: 19, scale: 4 }),
+    feeItemId: uuid("fee_item_id").notNull(),
+    milestoneLabel: text("milestone_label"),
+    milestoneLabelAr: text("milestone_label_ar"),
+    status: text("status").notNull().default("PLANNED"),
+    invoiceId: uuid("invoice_id"),
+  },
+  (table) => [
+    uniqueIndex("uq_contract_billing_schedule_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_contract_billing_schedule_tenant_entry_period")
+      .on(table.tenantId, table.contractId, table.entryType, table.periodKey)
+      .where(sql`${table.periodKey} IS NOT NULL`),
+    uniqueIndex("uq_contract_billing_schedule_tenant_milestone")
+      .on(table.tenantId, table.contractId, table.milestoneLabel)
+      .where(sql`${table.entryType} = 'MILESTONE'`),
+    index("ix_contract_billing_schedule_tenant_bill").on(
+      table.tenantId,
+      table.contractId,
+      table.billDate,
+    ),
+  ],
+);
+
+/** Contract invoices: the idempotency guard — the two partial uniques make
+ * concurrent double-fire a constraint violation ⇒ graceful skip. */
+export const contractInvoices = pgTable(
+  "contract_invoices",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    contractId: uuid("contract_id").notNull(),
+    invoiceId: uuid("invoice_id").notNull(),
+    periodKey: text("period_key"),
+    milestoneScheduleId: uuid("milestone_schedule_id"),
+    status: text("status").notNull().default("GENERATED"),
+  },
+  (table) => [
+    uniqueIndex("uq_contract_invoices_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_contract_invoices_tenant_period")
+      .on(table.tenantId, table.contractId, table.periodKey)
+      .where(sql`${table.periodKey} IS NOT NULL`),
+    uniqueIndex("uq_contract_invoices_tenant_milestone")
+      .on(table.tenantId, table.contractId, table.milestoneScheduleId)
+      .where(sql`${table.milestoneScheduleId} IS NOT NULL`),
+    index("ix_contract_invoices_tenant_contract").on(table.tenantId, table.contractId),
+    index("ix_contract_invoices_tenant_invoice").on(table.tenantId, table.invoiceId),
+  ],
+);
+
+/** Contract advances: on-account receipts tagged to a contract (HELD →
+ * RELEASED at the releasing invoice's post; the journal anchors are plain
+ * uuids — the production fg_journal_id precedent). */
+export const contractAdvances = pgTable(
+  "contract_advances",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    contractId: uuid("contract_id").notNull(),
+    receiptId: uuid("receipt_id").notNull(),
+    amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
+    status: text("status").notNull().default("HELD"),
+    deferJournalId: uuid("defer_journal_id"),
+    releasedJournalId: uuid("released_journal_id"),
+    releasedInvoiceId: uuid("released_invoice_id"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_contract_advances_id_tenant").on(table.id, table.tenantId),
+    index("ix_contract_advances_tenant_contract_status").on(
+      table.tenantId,
+      table.contractId,
+      table.status,
+    ),
+  ],
+);
+
+/** Service orders: the job-card generalization (SO- numbering reserved at
+ * creation; contract linkage does NOT alter any journal). */
+export const serviceOrders = pgTable(
+  "service_orders",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    branchId: uuid("branch_id").notNull(),
+    orderNo: text("order_no"),
+    partnerId: uuid("partner_id").notNull(),
+    contractId: uuid("contract_id"),
+    warehouseId: uuid("warehouse_id").notNull(),
+    status: text("status").notNull().default("DRAFT"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+    cancelReason: text("cancel_reason"),
+    approvedAt: timestamp("approved_at", { withTimezone: true, mode: "string" }),
+    completedAt: timestamp("completed_at", { withTimezone: true, mode: "string" }),
+    invoicedAt: timestamp("invoiced_at", { withTimezone: true, mode: "string" }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("uq_service_orders_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_service_orders_tenant_no")
+      .on(table.tenantId, table.orderNo)
+      .where(sql`${table.orderNo} IS NOT NULL`),
+    index("ix_service_orders_tenant_status").on(table.tenantId, table.status),
+    index("ix_service_orders_tenant_partner").on(table.tenantId, table.partnerId),
+  ],
+);
+
+/** Service-order lines: tombstone-based (no DELETE grant) — the
+ * job_card_lines shape (PENDING/RESERVED/ISSUED/INVOICED/VOID). */
+export const serviceOrderLines = pgTable(
+  "service_order_lines",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    orderId: uuid("order_id").notNull(),
+    lineNo: integer("line_no").notNull(),
+    lineType: text("line_type").notNull(),
+    itemId: uuid("item_id").notNull(),
+    description: text("description"),
+    descriptionAr: text("description_ar"),
+    estimatedHours: numeric("estimated_hours", { precision: 19, scale: 6 }),
+    unitPrice: numeric("unit_price", { precision: 19, scale: 6 }).notNull().default("0"),
+    qty: numeric("qty", { precision: 19, scale: 6 }).notNull(),
+    loggedHours: numeric("logged_hours", { precision: 19, scale: 6 }).notNull().default("0"),
+    status: text("status").notNull().default("PENDING"),
+    reservationId: uuid("reservation_id"),
+    issueUnitCost: numeric("issue_unit_cost", { precision: 19, scale: 6 }),
+    issueValue: numeric("issue_value", { precision: 19, scale: 4 }),
+    issueJournalId: uuid("issue_journal_id"),
+    invoiceLineId: uuid("invoice_line_id"),
+    note: text("note"),
+  },
+  (table) => [
+    uniqueIndex("uq_service_order_lines_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_service_order_lines_order_line").on(
+      table.tenantId,
+      table.orderId,
+      table.lineNo,
+    ),
+    index("ix_service_order_lines_tenant_reservation")
+      .on(table.tenantId, table.reservationId)
+      .where(sql`${table.reservationId} IS NOT NULL`),
+  ],
+);
+
+/** CRM time entries: timeslips (rates snapshotted at recording — never
+ * recomputed; billable feeds billing ONLY, no payroll). */
+export const crmTimeEntries = pgTable(
+  "crm_time_entries",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    entryDate: date("entry_date").notNull(),
+    hours: numeric("hours", { precision: 19, scale: 6 }).notNull(),
+    feeItemId: uuid("fee_item_id").notNull(),
+    projectId: uuid("project_id"),
+    contractId: uuid("contract_id"),
+    feeEarnerUserId: uuid("fee_earner_user_id"),
+    unitRate: numeric("unit_rate", { precision: 19, scale: 6 }).notNull(),
+    narrative: text("narrative"),
+    billable: boolean("billable").notNull().default(true),
+    status: text("status").notNull().default("DRAFT"),
+    billedInvoiceId: uuid("billed_invoice_id"),
+  },
+  (table) => [
+    uniqueIndex("uq_crm_time_entries_id_tenant").on(table.id, table.tenantId),
+    index("ix_crm_time_entries_tenant_project_date").on(
+      table.tenantId,
+      table.projectId,
+      table.entryDate,
+    ),
+    index("ix_crm_time_entries_tenant_status").on(table.tenantId, table.status),
+    index("ix_crm_time_entries_pullable")
+      .on(table.tenantId, table.entryDate)
+      .where(sql`${table.billedInvoiceId} IS NULL AND ${table.status} = 'APPROVED'`),
   ],
 );

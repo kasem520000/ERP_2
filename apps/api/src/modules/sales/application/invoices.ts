@@ -80,11 +80,47 @@ export interface InvoiceLineInput {
 
 @Injectable()
 export class SalesInvoiceService {
+  /**
+   * PHASE-019 (§11): the contract-billing port — wired by the CrmModule
+   * constructor (the JobCardsController port-wiring precedent; avoids
+   * circular module imports). `validateContract` replaces the raw
+   * existence read for contractId when set; `onContractInvoicePosted`
+   * fires the advance release after a successful post of a contract-linked
+   * invoice, inside the same posting UoW. Null by default (no crm wiring).
+   */
+  private contractBillingPort: {
+    validateContract(contractId: string): Promise<boolean>;
+    onContractInvoicePosted(
+      contractId: string,
+      invoiceId: string,
+      actorId: string | null,
+    ): Promise<void>;
+  } | null = null;
+
+  setContractBillingPort(port: {
+    validateContract(contractId: string): Promise<boolean>;
+    onContractInvoicePosted(
+      contractId: string,
+      invoiceId: string,
+      actorId: string | null,
+    ): Promise<void>;
+  } | null): void {
+    this.contractBillingPort = port;
+  }
+
   constructor(
     @Inject(AuditService) private readonly audit: AuditService,
-    private readonly posting: PostingService,
-    private readonly numbering: NumberingService,
-    private readonly resolver: TaxResolverService,
+    // NOTE: every param carries an explicit @Inject — the vitest/esbuild
+    // pipeline does not emit design:paramtypes (the JobCardService
+    // silent-undefined precedent, the ContractService note). PHASE-019 T48
+    // surfaced this: HTTP row 44 (the service-order invoice) was the first
+    // AppModule-constructed drive of invoices.create — the bare params
+    // resolved undefined (resolver.resolveOne TypeError). PostingService +
+    // NumberingService are exported by AccountingModule; TaxResolverService
+    // by TaxModule (both imported by SalesModule).
+    @Inject(PostingService) private readonly posting: PostingService,
+    @Inject(NumberingService) private readonly numbering: NumberingService,
+    @Inject(TaxResolverService) private readonly resolver: TaxResolverService,
   ) {}
 
   async list(filter: {
@@ -132,6 +168,15 @@ export class SalesInvoiceService {
      * below) + the vehicle the work was done on (provenance columns). */
     jobCardId?: string | null;
     vehicleId?: string | null;
+    /** PHASE-019 (0027): the service-billing provenance trio. projectId is
+     * existence+OPEN-validated below (accounting store is importable);
+     * contractId goes through the contract-billing port when wired (else
+     * the raw existence read); serviceOrderId is crm-side validated before
+     * the call and trusted at the boundary (documented §11) with a raw
+     * existence probe as the backstop. */
+    contractId?: string | null;
+    serviceOrderId?: string | null;
+    projectId?: string | null;
     note: string | null;
     noteAr: string | null;
     actorId: string | null;
@@ -193,6 +238,44 @@ export class SalesInvoiceService {
       if (card === undefined) {
         throw new InvoiceLineInvalidError(
           `job card ${input.jobCardId} does not exist in this tenant — the invoice cannot claim its provenance`,
+        );
+      }
+    }
+
+    // PHASE-019 (§11): the service-billing provenance trio — existence
+    // probes BEFORE the insert (the composite FKs guarantee shape; these
+    // give the typed errors). The project must additionally be OPEN (a
+    // CLOSED project rejects NEW stamps — the engine re-validates every
+    // stamped line at post).
+    if (input.projectId !== null && input.projectId !== undefined) {
+      const accountingStore = await import("../../accounting/infrastructure/accounting.store");
+      const project = await accountingStore.findProjectById(input.projectId);
+      if (project === undefined) {
+        throw new InvoiceLineInvalidError(
+          `project ${input.projectId} does not exist in this tenant — the invoice cannot stamp it`,
+        );
+      }
+      if (project.status !== "OPEN") {
+        throw new SalesDocumentStateError(
+          `project ${project.name} is ${project.status} and cannot receive new journal-line stamps`,
+        );
+      }
+    }
+    if (input.contractId !== null && input.contractId !== undefined) {
+      const ok = this.contractBillingPort !== null
+        ? await this.contractBillingPort.validateContract(input.contractId)
+        : await store.findContractExists(input.contractId);
+      if (!ok) {
+        throw new InvoiceLineInvalidError(
+          `service contract ${input.contractId} does not exist in this tenant — the invoice cannot claim its provenance`,
+        );
+      }
+    }
+    if (input.serviceOrderId !== null && input.serviceOrderId !== undefined) {
+      const ok = await store.findServiceOrderExists(input.serviceOrderId);
+      if (!ok) {
+        throw new InvoiceLineInvalidError(
+          `service order ${input.serviceOrderId} does not exist in this tenant — the invoice cannot claim its provenance`,
         );
       }
     }
@@ -384,6 +467,9 @@ export class SalesInvoiceService {
       cashAccountId: input.cashAccountId,
       jobCardId: input.jobCardId ?? null,
       vehicleId: input.vehicleId ?? null,
+      contractId: input.contractId ?? null,
+      serviceOrderId: input.serviceOrderId ?? null,
+      projectId: input.projectId ?? null,
       note: input.note,
       noteAr: input.noteAr,
       actorId: input.actorId,
@@ -638,6 +724,10 @@ export class SalesInvoiceService {
     }
 
     // (2) The COGS journal (sales_invoice:cogs) — G-03 at issue cost.
+    // PHASE-019 (§8/§11): every line of the COGS journal carries the
+    // invoice's project stamp (with the AR/cash journal below — project-
+    // filtered totals slice exactly).
+    const projectStamp = invoice.projectId ?? undefined;
     let cogsJournalId: string | null = null;
     let cogsTotal = new Decimal(0);
     if (plans.length > 0) {
@@ -663,6 +753,7 @@ export class SalesInvoiceService {
           accountId: cogsMapping.accountId,
           direction: "DEBIT",
           amount: cogsTotal.toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toFixed(4),
+          projectId: projectStamp,
           memo: {
             en: `Invoice ${invoice.invoiceNo ?? id} — COGS at issue cost`,
             ar: `فاتورة ${invoice.invoiceNo ?? id} — تكلفة المبيعات بسعر الإصدار`,
@@ -675,6 +766,7 @@ export class SalesInvoiceService {
           accountId,
           direction: "CREDIT",
           amount,
+          projectId: projectStamp,
           memo: {
             en: `Invoice ${invoice.invoiceNo ?? id} — stock issued`,
             ar: `فاتورة ${invoice.invoiceNo ?? id} — صرف مخزون`,
@@ -753,6 +845,11 @@ export class SalesInvoiceService {
     const vatLines: JournalLineSpec[] = [];
     for (const [, tax] of taxLinesByNo) {
       vatLines.push(...tax.vatLines);
+    }
+    // PHASE-019: the VAT legs carry the project stamp too (§11 row 1 —
+    // EVERY line of the post journal).
+    for (const vatLine of vatLines) {
+      vatLine.projectId = projectStamp;
     }
 
     // (4) The AR/cash journal (sales_invoice:post) — G-01/G-02.
@@ -843,6 +940,7 @@ export class SalesInvoiceService {
             accountId: account.accountId,
             direction: "DEBIT",
             amount: cashTotal.toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toFixed(4),
+            projectId: projectStamp,
             memo: {
               en: `POS cash tender ${invoice.invoiceNo ?? id}`,
               ar: `فاتورة نقاط بيع نقدية ${invoice.invoiceNo ?? id}`,
@@ -854,6 +952,7 @@ export class SalesInvoiceService {
             purpose: "CARD_RECEIVABLE",
             direction: "DEBIT",
             amount: cardTotal.toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toFixed(4),
+            projectId: projectStamp,
             memo: {
               en: `POS card tender ${invoice.invoiceNo ?? id}`,
               ar: `فاتورة نقاط بيع بالبطاقة ${invoice.invoiceNo ?? id}`,
@@ -865,6 +964,7 @@ export class SalesInvoiceService {
           accountId: account.accountId,
           direction: "DEBIT",
           amount: invoice.totalGross,
+          projectId: projectStamp,
           memo: {
             en: `Cash invoice ${invoice.invoiceNo ?? id}`,
             ar: `فاتورة نقدية ${invoice.invoiceNo ?? id}`,
@@ -877,6 +977,7 @@ export class SalesInvoiceService {
         direction: "DEBIT",
         amount: invoice.totalGross,
         partnerId: invoice.customerId,
+        projectId: projectStamp,
         memo: {
           en: `Sales invoice ${invoice.invoiceNo ?? id}`,
           ar: `فاتورة بيع ${invoice.invoiceNo ?? id}`,
@@ -888,6 +989,7 @@ export class SalesInvoiceService {
         accountId: revenueMapping.accountId,
         direction: "CREDIT",
         amount: salesRevenueTotal.toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toFixed(4),
+        projectId: projectStamp,
         memo: {
           en: `Sales revenue — invoice ${invoice.invoiceNo ?? id}`,
           ar: `إيرادات المبيعات — فاتورة ${invoice.invoiceNo ?? id}`,
@@ -902,6 +1004,7 @@ export class SalesInvoiceService {
         accountId: serviceMapping!.accountId,
         direction: "CREDIT",
         amount: serviceRevenueTotal.toDecimalPlaces(4, Decimal.ROUND_HALF_UP).toFixed(4),
+        projectId: projectStamp,
         memo: {
           en: `Service revenue (labor) — invoice ${invoice.invoiceNo ?? id}`,
           ar: `إيرادات الخدمات (أعمال) — فاتورة ${invoice.invoiceNo ?? id}`,
@@ -914,6 +1017,7 @@ export class SalesInvoiceService {
         accountId,
         direction: "CREDIT",
         amount,
+        projectId: projectStamp,
         memo: {
           en: `Service revenue — invoice ${invoice.invoiceNo ?? id}`,
           ar: `إيرادات خدمات — فاتورة ${invoice.invoiceNo ?? id}`,
@@ -1053,6 +1157,13 @@ export class SalesInvoiceService {
         kind: invoice.kind,
       },
     });
+    // PHASE-019 (§1 row 5/§11): the contract-billing port fires the advance
+    // release (J-REL) after a successful post of a contract-linked invoice —
+    // same UoW (this whole post runs inside the caller's transaction),
+    // optional-chained so unwired tenants post exactly as before.
+    if (invoice.contractId !== null && this.contractBillingPort !== null) {
+      await this.contractBillingPort.onContractInvoicePosted(invoice.contractId, id, actorId);
+    }
     return {
       invoice: await this.find(id),
       journalEntryId: result.journalEntryId,

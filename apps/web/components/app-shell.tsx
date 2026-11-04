@@ -111,6 +111,20 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   "manufacturing/orders": { group: "manufacturingNavSection", label: "mfgOrdersTitle" },
   "manufacturing/qc": { group: "manufacturingNavSection", label: "mfgQcTitle" },
   "manufacturing/genealogy": { group: "manufacturingNavSection", label: "mfgGenealogyTitle" },
+  // -- PHASE-019 (T50): the CRM screens + the projects dimension. The
+  // professional_services template's own L9 groups render registry-driven
+  // when it is applied; this fallback groups all seven crm routes under ONE
+  // shared crm section (crumbs only — the sidebar keeps its derived groups),
+  // the manufacturing decision-8 precedent. The projects row carries no
+  // group label (the registry has no accounting-section crumb key; the
+  // screen title alone is the honest leaf).
+  "crm/pipeline": { group: "crmNavSection", label: "crmPipelineTitle" },
+  "crm/tasks": { group: "crmNavSection", label: "crmTasksTitle" },
+  "crm/contracts": { group: "crmNavSection", label: "crmContractsTitle" },
+  "crm/billing": { group: "crmNavSection", label: "crmBillingTitle" },
+  "crm/time": { group: "crmNavSection", label: "crmTimeTitle" },
+  "crm/service-orders": { group: "crmNavSection", label: "crmServiceOrdersTitle" },
+  "accounting/projects": { label: "accountingProjectsTitle" },
 };
 
 /**

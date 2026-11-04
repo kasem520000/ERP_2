@@ -24,7 +24,10 @@ export type EmailTemplate =
   | "limit_warning"
   /** PHASE-014 §7/§8: subscription state changes (trial expiring, grace
    * entered, suspended, restored) to the owner. */
-  | "subscription_state";
+  | "subscription_state"
+  /** PHASE-019 §3 (crm): the daily task-reminder sweep's email leg — one
+   * mail per remindable task (dedupe key crm-task-reminder:<taskId>:<remindAt>). */
+  | "task_reminder";
 
 export interface EmailPayload {
   template: EmailTemplate;
@@ -140,6 +143,21 @@ const AR = {
       `— فريق المنصة`,
     ].join("\r\n"),
   }),
+  task_reminder: (v: Record<string, string>) => ({
+    subject: `تذكير مهمة: ${v.title} — ${v.tenantName}`,
+    body: [
+      `مرحبًا،`,
+      ``,
+      `لديكم مهمة مستحقة التنبيه:`,
+      `المهمة: ${v.title}`,
+      `تاريخ الاستحقاق: ${v.dueDate}`,
+      ``,
+      `يمكنكم مراجعة المهمة من:`,
+      v.tasksUrl,
+      ``,
+      `— فريق المنصة`,
+    ].join("\r\n"),
+  }),
 } as const;
 
 const EN = {
@@ -239,6 +257,21 @@ const EN = {
       ``,
       v.detail,
       v.action,
+      ``,
+      `— The platform team`,
+    ].join("\r\n"),
+  }),
+  task_reminder: (v: Record<string, string>) => ({
+    subject: `Task reminder: ${v.title} — ${v.tenantName}`,
+    body: [
+      `Hello,`,
+      ``,
+      `You have a task due for follow-up:`,
+      `Task: ${v.title}`,
+      `Due date: ${v.dueDate}`,
+      ``,
+      `Review it from:`,
+      v.tasksUrl,
       ``,
       `— The platform team`,
     ].join("\r\n"),

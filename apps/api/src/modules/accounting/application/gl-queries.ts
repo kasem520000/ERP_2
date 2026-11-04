@@ -17,17 +17,23 @@ const DEFAULT_LIMIT = 100;
 
 @Injectable()
 export class GlQueries {
-  /** Account balances over a window (trial-balance shape, base currency). */
-  async accountBalances(filter: { fromDate?: string; toDate?: string } = {}) {
+  /** Account balances over a window (trial-balance shape, base currency).
+   * PHASE-019 (§8): an optional projectId slices the window to one
+   * project's lines (project-filtered totals equal the unfiltered slice
+   * sums by construction). */
+  async accountBalances(filter: { fromDate?: string; toDate?: string; projectId?: string } = {}) {
     return journal.trialBalances(filter);
   }
 
-  /** Period movements of one account (the GL browser's line feed). */
+  /** Period movements of one account (the GL browser's line feed).
+   * PHASE-019 (§8): an optional projectId restricts the feed to that
+   * project's lines (the running balance accumulates over the slice). */
   async accountMovements(input: {
     accountId: string;
     fromDate?: string;
     toDate?: string;
     limit?: number;
+    projectId?: string;
   }) {
     const account = await store.findAccountById(input.accountId);
     if (account === undefined) throw new GlAccountNotFoundError(input.accountId);
@@ -36,6 +42,7 @@ export class GlQueries {
       fromDate: input.fromDate,
       toDate: input.toDate,
       limit: input.limit ?? DEFAULT_LIMIT,
+      projectId: input.projectId,
     });
     // Running balance (base) — chronological accumulation.
     let running = "0";
@@ -52,12 +59,15 @@ export class GlQueries {
     };
   }
 
-  /** The journal register data feed (filters mirror the GL report params). */
+  /** The journal register data feed (filters mirror the GL report params).
+   * PHASE-019 (§8): an optional projectId keeps only entries carrying
+   * that project's lines, with totals summed over those lines alone. */
   async journalRegister(filter: {
     fromDate?: string;
     toDate?: string;
     sourceType?: string;
     limit?: number;
+    projectId?: string;
   } = {}) {
     return journal.journalRegister({ ...filter, limit: filter.limit ?? DEFAULT_LIMIT });
   }

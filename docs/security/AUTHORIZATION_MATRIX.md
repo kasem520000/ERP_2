@@ -68,6 +68,7 @@ permissions cannot be granted to `viewer`-derived templates).
 | `accounting.fiscal_years.manage` | Create fiscal years/periods / إدارة السنوات المالية | accountant, owner | tenant | no |
 | `accounting.exchange_rates.manage` | Maintain exchange-rate tables / إدارة أسعار الصرف | accountant, owner | tenant | no (audited) |
 | `accounting.cost_centers.manage` | Maintain cost centers / إدارة مراكز التكلفة | accountant, owner | tenant | no |
+| `accounting.projects.manage` | Maintain the projects dimension (PHASE-019) / إدارة بُعد المشاريع | accountant, owner | tenant | no (mirrors cost_centers; a CLOSED project rejects new journal-line stamps at the engine) |
 | `accounting.opening_balances.create` | Draft opening balances / إعداد الأرصدة الافتتاحية | accountant, owner | tenant | no |
 | `accounting.opening_balances.post` | Post opening-balance entry / ترحيل الأرصدة الافتتاحية | owner | tenant | **yes** |
 | `accounting.year_end_close.execute` | Generate and post year-end closing entry / تنفيذ إقفال نهاية السنة | owner | tenant | **yes** |
@@ -188,6 +189,7 @@ permissions cannot be granted to `viewer`-derived templates).
 | `sync.settings.manage` | Sync policies per entity / إعدادات المزامنة | owner | tenant | no |
 | `crm.leads.manage` / `crm.tasks.manage` / `crm.activities.manage` | CRM basics (PHASE-019) / إدارة علاقات العملاء | sales, owner | branch | no |
 | `crm.contracts.manage` / `crm.service_orders.manage` | Service contracts & orders / العقود وأوامر الخدمة | owner | tenant | no |
+| `crm.contracts.bill` | Run recurring billing runs (PHASE-019) / تشغيل دورات الفوترة الدورية | owner, accountant | tenant | no (the run creates DRAFT/PENDING_APPROVAL invoices only — never auto-posts; posting is the ordinary approve+post chain, BR-034 SoD) |
 | `manufacturing.boms.manage` | BOM maintenance / إدارة قوائم المواد | owner | tenant | no |
 | `manufacturing.production_orders.view` / `.create` / `.approve` / `.post` | Production lifecycle (PHASE-018) / دورة أوامر الإنتاج | warehouse (create), owner | branch | `.approve`/`.post` **yes** |
 | `manufacturing.qc.manage` | QC inspections and dispositions / إدارة فحوص الجودة | warehouse, owner | tenant | no (releasing quarantine has no journal; the qc_scrap stock issue rides the post keys) |
@@ -230,6 +232,17 @@ sit on the pre-018 rows above (they predate the phase), while
 checker reads the union (0004 + 0024 + 0025 + 0026). The RISKY pair stays
 `.approve`/`.post` (release/start/cancel vs the posting surface); releasing a
 quarantined FG batch has no journal, and the qc_scrap stock issue rides the post keys.
+
+CRM note (PHASE-019): the `crm.*` family splits the same way — the five base keys
+(`crm.leads.manage`, `crm.tasks.manage`, `crm.activities.manage`,
+`crm.contracts.manage`, `crm.service_orders.manage`) sit on the `0004` base seed (the
+phase's §3 prerequisites, re-asserted idempotently by 0027), while `crm.contracts.bill`
+arrives with migration `0027_crm_projects.sql` together with
+`accounting.projects.manage` (§3.1 — mirrors cost_centers; the drift checker reads the
+union 0004 + 0024 + 0025 + 0026 + 0027). The billing key sits **only** on the
+crm/billing-runs routes; the run's POLICY_ACTOR drafts can never self-approve (BR-034),
+and a CLOSED project rejects new journal-line stamps at the engine (typed
+PROJECT_CLOSED) — the key never bypasses either.
 
 ### 3.9 `identity` & `tenancy` (tenant-admin plane)
 

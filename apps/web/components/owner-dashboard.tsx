@@ -29,6 +29,7 @@ import type { JSX } from "react";
 import { getDictionary, type Dictionary, type Locale } from "../i18n/dictionaries";
 import type {
   ApiErrorBody,
+  CrmDashboardSummary,
   ReportResultEnvelope,
   ReportRunOutcome,
   ReportRunStatus,
@@ -194,11 +195,14 @@ export function OwnerDashboard({
   locale,
   today,
   usage,
+  canCrm,
 }: {
   locale: Locale;
   /** Server-computed YYYY-MM-DD (pinned parameter for every binding). */
   today: string;
   usage: UsageSnapshotData | null;
+  /** PHASE-019 (T50): the session holds crm.leads.manage — gates the CRM card. */
+  canCrm: boolean;
 }): JSX.Element {
   const d = getDictionary(locale);
   const { readOnly } = useReadOnly();
@@ -208,6 +212,14 @@ export function OwnerDashboard({
   const [cash, setCash] = useState<WidgetState>(LOADING_STATE);
   const [arOverdue, setArOverdue] = useState<WidgetState>(LOADING_STATE);
   const [stock, setStock] = useState<WidgetState>(LOADING_STATE);
+
+  // PHASE-019 (T50): the permission-gated CRM summary card — operational
+  // counts (GET /crm/dashboard-summary), a card not a widget framework; a
+  // failed fetch renders the honest unavailable note, never a fake number.
+  const [crmSummary, setCrmSummary] = useState<{
+    status: "loading" | "ok" | "error";
+    data: CrmDashboardSummary | null;
+  }>({ status: "loading", data: null });
 
   const configs: readonly WidgetConfig[] = [
     {
@@ -295,6 +307,22 @@ export function OwnerDashboard({
     });
   }, []);
 
+  // PHASE-019 (T50): the CRM summary loads only when the session gate is on.
+  useEffect(() => {
+    if (!canCrm) {
+      return;
+    }
+    setCrmSummary({ status: "loading", data: null });
+    void (async () => {
+      const result = await bffFetch<CrmDashboardSummary>("crm/dashboard-summary");
+      setCrmSummary(
+        result.ok
+          ? { status: "ok", data: result.data }
+          : { status: "error", data: null },
+      );
+    })();
+  }, [canCrm]);
+
   const states: readonly WidgetState[] = [sales, cash, arOverdue, stock];
   const trialDays =
     subscription?.status === "TRIAL" && subscription.trialEndsAt !== null
@@ -369,6 +397,59 @@ export function OwnerDashboard({
           );
         })}
       </div>
+
+      {/* PHASE-019 (T50): the permission-gated CRM summary card — a card,
+          not a widget framework; the link opens the lead pipeline. */}
+      {canCrm && (
+        <section
+          aria-labelledby="dashboard-crm-heading"
+          className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-card p-4 shadow-e1"
+        >
+          <h2 id="dashboard-crm-heading" className="text-md font-semibold text-gray-900">
+            {d.dashboardCrmTitle}
+          </h2>
+          {crmSummary.status === "loading" ? (
+            <div aria-live="polite" className="flex flex-col gap-2">
+              <span className="sr-only">{d.loading}</span>
+              <span className="block h-4 w-3/4 animate-pulse rounded bg-gray-100" />
+              <span className="block h-4 w-1/2 animate-pulse rounded bg-gray-100" />
+            </div>
+          ) : crmSummary.status === "error" || crmSummary.data === null ? (
+            <span className="text-xs text-gray-500">{d.dashboardUsageUnavailable}</span>
+          ) : (
+            <ul className="flex flex-col gap-1 text-sm text-gray-700">
+              <li>
+                {formatMessage(d.dashboardCrmPipeline, {
+                  newCount: crmSummary.data.pipeline.NEW,
+                  qualifiedCount: crmSummary.data.pipeline.QUALIFIED,
+                })}
+              </li>
+              <li>
+                {formatMessage(d.dashboardCrmFollowUps, {
+                  dueToday: crmSummary.data.followUpsDueToday,
+                  overdue: crmSummary.data.followUpsOverdue,
+                })}
+              </li>
+              <li>
+                {formatMessage(d.dashboardCrmExpiring, {
+                  count: crmSummary.data.contractsExpiringIn30d,
+                })}
+              </li>
+              <li>
+                {formatMessage(d.dashboardCrmUpcoming, {
+                  count: crmSummary.data.upcomingBillingEntries,
+                })}
+              </li>
+            </ul>
+          )}
+          <Link
+            href={`/${locale}/crm/pipeline`}
+            className="inline-flex w-fit min-h-11 items-center rounded-md border border-default bg-surface-card px-3 text-sm font-medium text-gray-800 underline-offset-2 hover:border-strong hover:underline"
+          >
+            {d.dashboardCrmOpen}
+          </Link>
+        </section>
+      )}
 
       {usage === null && <p className="text-xs text-gray-500">{d.dashboardUsageUnavailable}</p>}
 

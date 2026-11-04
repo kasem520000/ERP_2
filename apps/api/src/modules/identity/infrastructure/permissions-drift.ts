@@ -109,13 +109,16 @@ export function runDriftCheck(matrixMarkdown: string, seedSql: string): DriftRes
  * drift. The seed side is the UNION of every permission-seeding migration
  * (0004 base set + later phase migrations that seed `permissions` rows —
  * PHASE-016 0024 added the pos.* family; PHASE-018 0026 added the
- * manufacturing.* family): a key seeded anywhere counts.
+ * manufacturing.* family; PHASE-019 0027 re-asserts the crm base set and
+ * adds crm.contracts.bill + accounting.projects.manage): a key seeded
+ * anywhere counts.
  */
 const PERMISSION_SEED_MIGRATIONS: readonly string[] = [
   "apps/api/migrations/0004_permissions_seed.sql",
   "apps/api/migrations/0024_pos_core.sql",
   "apps/api/migrations/0025_automotive_distribution.sql",
   "apps/api/migrations/0026_manufacturing.sql",
+  "apps/api/migrations/0027_crm_projects.sql",
 ];
 
 export async function main(): Promise<void> {

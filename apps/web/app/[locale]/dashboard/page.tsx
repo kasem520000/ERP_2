@@ -79,11 +79,16 @@ export default async function DashboardPage({
     content = <ErrorState title={d.errorsForbidden} />;
   } else {
     const today = new Date().toISOString().slice(0, 10);
+    // PHASE-019 (T50): the CRM summary card's gate — the session's own
+    // crm.leads.manage permission (the dashboard's existing gating pattern;
+    // the card fetch re-enforces server-side regardless).
+    const canCrm = session.data.permissions.includes("crm.leads.manage");
     content = (
       <OwnerDashboard
         locale={localeValue}
         today={today}
         usage={usage.ok ? usage.data : null}
+        canCrm={canCrm}
       />
     );
   }

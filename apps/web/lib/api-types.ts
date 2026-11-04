@@ -3352,3 +3352,300 @@ export interface GenealogyBatchSummary {
   salesCount: number;
   inspectionsCount: number;
 }
+
+// -- PHASE-019 (T50): crm + projects wire rows ------------------------------------
+// (mirrors the crm store Row interfaces + the accounting ProjectRow exactly —
+// camelCase, canonical decimal strings, "STATUS" | string unions; ADR-0009)
+
+/** GET /crm/leads rows (the NEW → QUALIFIED → CONVERTED/LOST pipeline). */
+export interface LeadRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  name: string;
+  nameAr: string | null;
+  phone: string | null;
+  email: string | null;
+  company: string | null;
+  source: string;
+  status: string;
+  lostReason: string | null;
+  ownerUserId: string | null;
+  partnerId: string | null;
+  convertedAt: string | null;
+  note: string | null;
+  noteAr: string | null;
+}
+
+/** GET /crm/tasks rows (future work — OPEN → DONE/CANCELLED). */
+export interface CrmTaskRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  title: string;
+  relatedType: string;
+  relatedId: string;
+  assigneeUserId: string | null;
+  dueDate: string | null;
+  remindAt: string | null;
+  notifiedAt: string | null;
+  status: string;
+  note: string | null;
+  noteAr: string | null;
+}
+
+/** GET /crm/activities rows (the logged-past timeline). */
+export interface CrmActivityRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  kind: string;
+  relatedType: string;
+  relatedId: string;
+  occurredAt: string;
+  summary: string;
+  durationMinutes: number | null;
+  actorUserId: string | null;
+}
+
+/** GET /crm/contracts rows (the inner service_contracts projection). */
+export interface ServiceContractRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  contractNo: string | null;
+  partnerId: string;
+  projectId: string | null;
+  title: string;
+  titleAr: string | null;
+  scope: string | null;
+  feeModel: string;
+  startDate: string;
+  endDate: string;
+  monthlyAmount: string | null;
+  currencyCode: string;
+  status: string;
+  renewedToContractId: string | null;
+  cancelReason: string | null;
+  note: string | null;
+  noteAr: string | null;
+  activatedAt: string | null;
+  cancelledAt: string | null;
+}
+
+/** The contracts read envelope: the row + the DERIVED expiry flag (§4). */
+export interface ServiceContractReadRow {
+  contract: ServiceContractRow;
+  isExpired: boolean;
+}
+
+/** GET /crm/contracts/:id/schedule rows (the §4 expanded grid). */
+export interface ScheduleEntryRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  contractId: string;
+  entryType: string;
+  periodKey: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  billDate: string;
+  amount: string | null;
+  feeItemId: string;
+  milestoneLabel: string | null;
+  milestoneLabelAr: string | null;
+  status: string;
+  invoiceId: string | null;
+}
+
+/** One would-be invoice line of a due schedule entry (the run's mirror). */
+export interface PreviewInvoiceLine {
+  feeItemId: string;
+  qty: string;
+  unitPrice: string | null;
+  description: string | null;
+}
+
+/** One due PLANNED entry of a billing preview (the T47 contract). */
+export interface BillingPreviewItemRow {
+  entry: ScheduleEntryRow;
+  wouldInvoice: readonly PreviewInvoiceLine[];
+  pullableTimeEntries: readonly TimeEntryRow[];
+  needsNarrative: readonly TimeEntryRow[];
+  periodStatus: "OPEN" | "SOFT_CLOSED" | "LOCKED" | "NONE";
+  periodLocked: boolean;
+}
+
+/** GET /crm/contracts/:id/billing-preview?asOf → data. */
+export interface BillingPreviewRow {
+  contractId: string;
+  asOf: string;
+  items: readonly BillingPreviewItemRow[];
+}
+
+/** GET /crm/contract-invoices rows (the idempotency guard listing). */
+export interface ContractInvoiceRow {
+  id: string;
+  createdAt: string;
+  contractId: string;
+  invoiceId: string;
+  periodKey: string | null;
+  milestoneScheduleId: string | null;
+  status: string;
+}
+
+/** GET /crm/contracts/:id/advances rows (on-account receipts tagged). */
+export interface ContractAdvanceRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  contractId: string;
+  receiptId: string;
+  amount: string;
+  status: string;
+  deferJournalId: string | null;
+  releasedJournalId: string | null;
+  releasedInvoiceId: string | null;
+  note: string | null;
+  noteAr: string | null;
+}
+
+/** GET /crm/time-entries rows (timeslips — rate snapshotted at recording). */
+export interface TimeEntryRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  entryDate: string;
+  hours: string;
+  feeItemId: string;
+  projectId: string | null;
+  contractId: string | null;
+  feeEarnerUserId: string | null;
+  unitRate: string;
+  narrative: string | null;
+  billable: boolean;
+  status: string;
+  billedInvoiceId: string | null;
+}
+
+/** POST /crm/time/timesheets/review → data (the batch DRAFT → APPROVED flip). */
+export interface TimesheetReviewResult {
+  weekStart: string;
+  weekEnd: string;
+  reviewed: number;
+}
+
+/** GET /crm/service-orders rows (the job-card generalization). */
+export interface ServiceOrderRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  branchId: string;
+  orderNo: string | null;
+  partnerId: string;
+  contractId: string | null;
+  warehouseId: string;
+  status: string;
+  note: string | null;
+  noteAr: string | null;
+  cancelReason: string | null;
+  approvedAt: string | null;
+  completedAt: string | null;
+  invoicedAt: string | null;
+  cancelledAt: string | null;
+}
+
+/** GET /crm/service-orders/:id → the order with its lines. */
+export interface ServiceOrderDetailRow extends ServiceOrderRow {
+  lines: readonly ServiceOrderLineRow[];
+}
+
+/** Service-order lines (SERVICE/PARTS; tombstone-based lifecycle). */
+export interface ServiceOrderLineRow {
+  id: string;
+  orderId: string;
+  lineNo: number;
+  lineType: string;
+  itemId: string;
+  description: string | null;
+  descriptionAr: string | null;
+  estimatedHours: string | null;
+  unitPrice: string;
+  qty: string;
+  loggedHours: string;
+  status: string;
+  reservationId: string | null;
+  issueUnitCost: string | null;
+  issueValue: string | null;
+  issueJournalId: string | null;
+  invoiceLineId: string | null;
+  note: string | null;
+  createdBy: string | null;
+}
+
+/** GET /accounting/projects rows (the cost-center clone, OPEN|CLOSED). */
+export interface ProjectRow {
+  id: string;
+  code: string;
+  name: string;
+  nameAr: string | null;
+  parentId: string | null;
+  status: string;
+}
+
+/** GET /crm/billing-runs rows (the crm.billing_run audit events, newest first). */
+export interface BillingRunSummaryRow {
+  id: string;
+  at: string;
+  actorId: string | null;
+  /** The audit after-state — the run result shape (defensively rendered). */
+  summary: unknown;
+}
+
+/** One generated draft of a billing run result. */
+export interface BillingRunDraftRow {
+  contractId: string;
+  invoiceId: string;
+  entryId: string;
+  periodKey: string | null;
+  milestoneScheduleId: string | null;
+  status: string;
+  periodStatus: string;
+}
+
+/** POST /crm/billing-runs → data (§5; idempotent by the guard rows). */
+export interface BillingRunResultRow {
+  asOf: string;
+  contractsScanned: number;
+  draftsCreated: readonly BillingRunDraftRow[];
+  skippedLocked: readonly {
+    contractId: string;
+    entryId: string;
+    periodKey: string | null;
+    billDate: string;
+    periodStatus: string;
+  }[];
+  skippedDuplicate: readonly { contractId: string; entryId: string; periodKey: string | null }[];
+  needsNarrative: readonly {
+    contractId: string;
+    entryId: string;
+    timeEntryId: string;
+    entryDate: string;
+    hours: string;
+  }[];
+}
+
+/** GET /crm/dashboard-summary → data (§13 operational counts). */
+export interface CrmDashboardSummary {
+  pipeline: { NEW: number; QUALIFIED: number; CONVERTED: number; LOST: number };
+  followUpsDueToday: number;
+  followUpsOverdue: number;
+  contractsExpiringIn30d: number;
+  upcomingBillingEntries: number;
+}

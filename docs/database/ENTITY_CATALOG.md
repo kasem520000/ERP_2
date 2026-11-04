@@ -47,14 +47,15 @@ Legend: **Phase** = first implementation phase · **OC** = offline-creatable
 | `countries` *(seed)* | ISO-3166 country records + display defaults (locale, currency, date format, timezone) | code, name, name_ar, default_locale, currency_code, date_format, time_zone | 002 (planned) → 004 (delivered) | no |
 | `exchange_rates` | Dated rates | tenant_id, currency_code, rate_date, rate, source | 007 | no |
 | `journal_entries` 🔒 | Posted entries | tenant_id, entry_no, entry_date, fiscal_period_id, currency, exchange_rate, status (POSTED/REVERSED), source_type, source_id, operation, reversal_of_id, reversed_by_id, description, posted_at/by | 007 | no |
-| `journal_lines` 🔒 | Entry lines | journal_entry_id, line_no, account_id, direction, amount, base_amount, partner_id, item_id, cost_center_id, tax_code_id, memo | 007 | no |
+| `journal_lines` 🔒 | Entry lines | journal_entry_id, line_no, account_id, direction, amount, base_amount, partner_id, item_id, cost_center_id, tax_code_id, project_id (019 stamp — CLOSED projects reject new stamps), memo | 007 (projects 019) | no |
 | `cost_centers` | Analytical dimension | tenant_id, code, name, name_ar, parent_id | 007 (basic) | no |
+| `projects` | The PHASE-019 analytical dimension (cost_centers clone; OPEN/CLOSED — a CLOSED project rejects NEW journal-line stamps, typed PROJECT_CLOSED at the engine; posted history stays) | tenant_id, code (tenant-unique `^[A-Za-z0-9_-]{1,20}$`), name, name_ar, parent_id (composite FK RESTRICT), status (OPEN/CLOSED) | 019 | no |
 | `recurring_journals` | Recurrence definitions | tenant_id, template jsonb, schedule, next_run_date, status | 007 | no |
 | `approval_policies` | Doc-type approval rules | tenant_id, doc_type, policy jsonb (thresholds, approvers) | 007 | no |
 | `numbering_sequences` | ADR-0006 per-(tenant, branch, type, period) sequences | tenant_id, doc_type, branch_id, period_key, next_value, format | 007 | no |
 | `number_assignments` | Numbering audit ledger (voided = reserved forever, INV-021) | tenant_id, doc_type, branch_id, period_key, number, value, document_id, voided_at | 007 | no |
 | `manual_journals` | Manual-journal DRAFT documents | tenant_id, status (DRAFT/PENDING_APPROVAL/APPROVED/POSTED/CANCELLED), entry_date, currency, exchange_rate, recurrence_id, posted_journal_id, approval_step | 007 | no |
-| `manual_journal_lines` | Draft lines (cascade with the draft) | manual_journal_id, line_no, account_id, direction, amount, dimensions | 007 | no |
+| `manual_journal_lines` | Draft lines (cascade with the draft) | manual_journal_id, line_no, account_id, direction, amount, dimensions incl. project_id (019 draft substrate) | 007 (projects 019) | no |
 | `journal_templates` | Line-structure templates (documents, not postings) | tenant_id, name, lines jsonb | 007 | no |
 | `partner_subledger_entries` 🔒 | AR/AP subledger rows (partners-owned; INV-009) | tenant_id, partner_id, journal_entry_id, journal_line_id, direction, amount, base_amount, source_type | 007 | no |
 | `reconciliation_runs` | Reconciliation check results (RC-01..03, PC-04) | tenant_id, kind (AR/AP/…), as_of, status (OK/BROKEN), control/subledger balances, diff jsonb | 007 | no |
@@ -189,6 +190,36 @@ writes).
 | `production_scraps` | Reason-coded pre-completion WIP scrap (DR PRODUCTION_SCRAP · CR WIP; NO stock move); value ≤ the running WIP balance is service-enforced | tenant_id, order_id (FK), reason_code (1..40), qty CHECK > 0, value CHECK > 0, journal_id?, scrapped_at, note/note_ar | 018 | no |
 | `inspections` | QC pass/fail + dispositions against production orders (FG batches) or goods receipts; PASS+ACCEPT releases a QUARANTINED batch to ACTIVE (no journal); FAIL+SCRAP routes to the qc_scrap stock issue | tenant_id, target_type (production_order/goods_receipt — CHECK target shape), order_id? (FK), grn_id? (FK composite → goods_receipts), fg_batch_id? (no FK), result (PASS/FAIL), sampled boolean DEFAULT false, sample_size?, disposition (ACCEPT/SCRAP/REWORK/RETURN_TO_SUPPLIER; required on FAIL — CHECK result='PASS' OR disposition NOT NULL), inspected_at, note/note_ar | 018 | no |
 
+## crm (PHASE-019)
+
+The `crm` module's tables (migration `0027_crm_projects.sql`; leads, tasks,
+activities, the service-contract family, service orders, time entries) plus
+the accounting-owned `projects` dimension (row above in §accounting). The
+contract itself posts NOTHING (CAPABILITY_MATRIX §2.8) — the schedule is the
+fee-item home (no contract-level fee_item_id, §18 lesson 1); contract
+invoices are DRAFT sales invoices through the ordinary chain (the billing
+run never auto-posts); service orders mirror job cards byte-close (contract
+linkage alters no journal); the advance reclass/release journals flow only
+through the centralized posting engine (ADR-0007) anchored at plain uuids;
+time feeds billing ONLY (no payroll). `stock_moves.source_type` widens with
+`service_order`; `sales_invoices` gains the contract/service-order/project
+provenance trio (composite FKs RESTRICT); every line of a contract invoice's
+post + COGS journals carries the project stamp.
+
+| Entity | Purpose | Key fields | Phase | OC |
+|--------|---------|-----------|-------|----|
+| `leads` | The intake pipeline — NEW → QUALIFIED → CONVERTED (partner linked forever, provenance) / LOST (reason required); no numbering series (leads are not legal documents); no ledger effect ever | tenant_id, name, name_ar?, phone?/email?/company?, source (WALK_IN/REFERRAL/WEBSITE/CAMPAIGN/CALL/OTHER), status (NEW/QUALIFIED/CONVERTED/LOST), lost_reason (CHECK: LOST ⇒ present, 1..200), owner_user_id?, partner_id? (composite FK, set at conversion), converted_at (CHECK: CONVERTED ⇒ partner_id + converted_at), note/note_ar | 019 | no |
+| `crm_tasks` | Future work (OPEN/DONE/CANCELLED) + the reminder-sweep substrate (the 05:30 cron scans remind_at ≤ now AND notified_at IS NULL, stamps notified_at) | tenant_id, title (1..200), related_type (LEAD/PARTNER/CONTRACT/SERVICE_ORDER) + related_id (polymorphic — no FK), assignee_user_id?, due_date?, remind_at?/notified_at?, status, note/note_ar | 019 | no |
+| `crm_activities` | Logged past interactions — the timeline per lead/partner/contract (ordered by occurred_at DESC) | tenant_id, kind (CALL/MEETING/EMAIL/NOTE), related_type + related_id (polymorphic), occurred_at, summary (1..2000), duration_minutes? (≥ 0), actor_user_id? | 019 | no |
+| `service_contracts` | The CT- document (posts nothing itself; the schedule rows are the fee-item home — NO contract-level fee_item_id, §18 lesson 1); DRAFT → ACTIVE (number + grid expansion at activation) → CANCELLED (reason) / RENEWED (renew creates a new contract copy + links renewed_to_contract_id); expiry is derived (isExpired in reads — no state-flip job) | tenant_id, contract_no (tenant-unique where set, partial uq, CT-{yyyy}-{seq:5} reserved+bound at activation), partner_id (composite FK), project_id? (composite FK RESTRICT), title (1..200)/title_ar?, scope?, fee_model (RETAINER/MILESTONES/HOURLY), start_date/end_date (CHECK end ≥ start), monthly_amount numeric(19,4)? (CHECK ≥ 0), currency_code (tenant base only v1), status (DRAFT/ACTIVE/CANCELLED/RENEWED), renewed_to_contract_id? (composite FK), cancel_reason?, note/note_ar, activated_at?/cancelled_at? | 019 | no |
+| `contract_billing_schedule` | The expanded grid (re-runnable, additive): RETAINER grid = calendar months clipped to the term, billDate = period start (in advance), full monthly amount per period (NO automatic proration); MILESTONE rows carry dated labels; HOURLY periods bill in arrears with amount NULL (computed at the run) | tenant_id, contract_id (composite FK), entry_type (RETAINER_PERIOD/MILESTONE/HOURLY_PERIOD), period_key? (YYYY-MM, CHECK shape), period_start?/period_end?, bill_date, amount numeric(19,4)?, fee_item_id (composite FK — the fee-item home), milestone_label/milestone_label_ar? (partial uq WHERE entry_type='MILESTONE'), status (PLANNED/INVOICED/SKIPPED), invoice_id? (composite FK — the INVOICED flip stamp) | 019 | no |
+| `contract_invoices` | The idempotency guard — the two partial uniques make concurrent double-fire a constraint violation ⇒ graceful skip (INV-013 discipline); the billing run is the only writer | tenant_id, contract_id (composite FK), invoice_id (composite FK RESTRICT → sales_invoices), period_key? (partial uq WHERE NOT NULL), milestone_schedule_id? (composite FK → contract_billing_schedule, partial uq WHERE NOT NULL), status (GENERATED) | 019 | no |
+| `contract_advances` | On-account receipts tagged to a contract — HELD → RELEASED at the releasing invoice's post (the release journal's anchor); with the defer policy ON, tagging posts the reclass (DR AR · CR DEFERRED_REVENUE), OFF = link-only | tenant_id, contract_id (composite FK), receipt_id (composite FK → receipts), amount numeric(19,4) CHECK > 0, status (HELD/RELEASED), defer_journal_id?/released_journal_id?/released_invoice_id? (plain uuids — the production fg_journal_id precedent), note/note_ar | 019 | no |
+| `service_orders` | The job-card generalization — create → approve (issue_immediate posts the parts COGS journal / reserve mode holds reservations) → logHours → complete → invoice (COMPLETED only, through SalesInvoiceService) → cancel (reason required; refuses when invoiced/issued); contract linkage does NOT alter any journal | tenant_id, branch_id (composite FK), order_no (tenant-unique where set, partial uq, SO-{yyyy}-{seq:5} reserved at creation), partner_id (composite FK), contract_id? (composite FK), warehouse_id (composite FK — parts), status (DRAFT/IN_PROGRESS/COMPLETED/INVOICED/CANCELLED), cancel_reason (CHECK: CANCELLED ⇒ cancelled_at + cancel_reason), note/note_ar, approved_at?/completed_at?/invoiced_at?/cancelled_at? | 019 | no |
+| `service_order_lines` | Tombstone-based lines (no DELETE grant — the job_card_lines shape); SERVICE lines require estimated_hours; PARTS lines carry qty | tenant_id, order_id (composite FK), line_no (uq per order), line_type (SERVICE/PARTS), item_id (composite FK), description/description_ar?, estimated_hours? (CHECK ≥ 0; SERVICE ⇒ present), unit_price numeric(19,6) DEFAULT 0, qty CHECK > 0, logged_hours DEFAULT 0, status (PENDING/RESERVED/ISSUED/INVOICED/VOID), reservation_id?/issue_unit_cost?/issue_value?/issue_journal_id?/invoice_line_id?, note | 019 | no |
+| `crm_time_entries` | Timeslips — unit_rate snapshotted at recording (never recomputed — determinism); narrative required on billing by policy; only APPROVED entries are pullable; time feeds billing ONLY (no payroll, no staff cost) | tenant_id, entry_date, hours numeric(19,6) CHECK > 0, fee_item_id (composite FK — SERVICE item), project_id? (composite FK RESTRICT; required-when-policy is service-enforced, typed TIME_ENTRY_CASE_REQUIRED), contract_id? (composite FK), fee_earner_user_id?, unit_rate numeric(19,6) CHECK ≥ 0, narrative?, billable DEFAULT true, status (DRAFT/APPROVED/BILLED/VOID), billed_invoice_id? (composite FK RESTRICT) | 019 | no |
+| `projects` *(accounting-owned, listed here for the phase cluster)* | See the §accounting row above — the PHASE-019 analytical dimension | — | 019 | no |
+
 ## treasury (PHASE-008)
 
 | Entity | Purpose | Key fields | Phase | OC |
@@ -226,8 +257,8 @@ writes).
 | `subscription_invoices` | Billing history rows — both payment paths (sandbox provider webhook + manual recording) write the SAME table identically (A-009); `paid_via` distinguishes the channel | tenant_id, subscription_id, number (BI-yyyy-nnnn), plan_key, period_start/end, amount 19,4, currency_code, status (OPEN/PAID/VOID/UNCOLLECTIBLE), source (checkout/manual/trial_credit), provider_ref, due_date, paid_at, paid_via (provider_webhook/manual_recorded), paid_reference, recorded_by, reason, placeholder_price | 014 | no |
 | `billing_events` | Append-only billing trail (grants + guard trigger — the audit_events pattern); the unique `idempotency_key` is the webhook replay/duplicate-delivery guard (INV-013 discipline) | tenant_id, type (trial.started/expired, checkout.created/completed/expired, payment.succeeded/failed, manual_payment.recorded, dunning.warned, grace.entered, suspension.executed, subscription.restored, plan.change.requested/changed, downgrade.blocked, limit.warning), payload jsonb, idempotency_key, actor_id, via_platform_admin, correlation_id | 014 | no |
 | `usage_counters` | The §6 usage read model (documents/month per YYYY-MM; structural 'CURRENT' stamps); maintained by the fail-safe ledger-event subscriber + the daily-pass reconcile from journal_entries (the durable truth) | tenant_id, counter_key (documents_per_month/users/branches/warehouses/pos_terminals/offline_devices/industry_addons), period, value | 014 | no |
-| `notifications` | The in-app inbox (PHASE-014 billing-critical subset: limits, subscription states, reconciliation/assertion failures, invoice.overdue; generalized in 015 — stock reorder digests (BR-019) and industry template upgrade offers); bilingual jsonb payloads; `dedupe_key` unique per tenant (once-per-event) | tenant_id, user_id (null = broadcast), category (limits/subscription/reconciliation/invoice_overdue/stock/templates), severity (info/warning/critical), title/body/action_label jsonb, action_url, dedupe_key, read_at | 014 (categories widened 015) | no |
-| `notification_prefs` | Per-user channel toggles (in-app / email) per category; absent rows = both channels on — preferences suppress, never fabricate | tenant_id, user_id, category (limits/subscription/reconciliation/invoice_overdue/stock/templates), in_app, email | 014 (domain widened 015) | no |
+| `notifications` | The in-app inbox (PHASE-014 billing-critical subset: limits, subscription states, reconciliation/assertion failures, invoice.overdue; generalized in 015 — stock reorder digests (BR-019) and industry template upgrade offers); bilingual jsonb payloads; `dedupe_key` unique per tenant (once-per-event) | tenant_id, user_id (null = broadcast), category (limits/subscription/reconciliation/invoice_overdue/stock/templates/crm — crm widened 019), severity (info/warning/critical), title/body/action_label jsonb, action_url, dedupe_key, read_at | 014 (categories widened 015) | no |
+| `notification_prefs` | Per-user channel toggles (in-app / email) per category; absent rows = both channels on — preferences suppress, never fabricate | tenant_id, user_id, category (limits/subscription/reconciliation/invoice_overdue/stock/templates/crm — crm widened 019), in_app, email | 014 (domain widened 015/019) | no |
 | `change_log` | Sync change feed — the POS feed group (items/barcodes/uoms/price_list_items/partners/tax_codes + terminal config) writes here inside the owning module's transaction; generalized entity coverage is 020 | tenant_id, entity_type, entity_id, op (UPSERT/DELETE), payload, changed_at, seq | 016 (POS subset) / 020 (generalized) | no |
 | `tombstones` | Soft-delete markers for sync | tenant_id, entity_type, entity_id, deleted_at | 020 | no |
 | `sync_cursors` | Per-device pull positions (server-side hint — opaque signed tokens to clients) | tenant_id, device_id, entity_type, last_seq, acknowledged_at | 016 (POS subset) / 020 (generalized) | no |
@@ -250,10 +281,9 @@ writes).
 > PHASE-026…029/034); their TABLES specs are completed in their phase. Money, quantity,
 > and rate types follow [ADR-0009](../architecture/ADR/ADR-0009-money-precision.md) and
 > [DATA_DICTIONARY.md](DATA_DICTIONARY.md) §6 (costs/proceeds 19,4; percentages 7,4);
-> append-only 🔒 tables follow INV-003 (no update/delete grants). The crm section, by
-> contrast, remains **phase-added** by PHASE-019 per the grow-per-phase rule — its
-> entities enter this catalog when that phase is specified, not before
-> (manufacturing arrived with PHASE-018 above).
+> append-only 🔒 tables follow INV-003 (no update/delete grants). The crm section
+> arrived with PHASE-019 above per the grow-per-phase rule
+> (manufacturing arrived with PHASE-018).
 
 ## fixed_assets (PHASE-026)
 
@@ -311,5 +341,6 @@ writes).
 ## Diagrams
 
 ER diagrams per domain cluster: [ERD/](ERD/) — tenancy-identity, accounting-core,
-trade-inventory, treasury-tax, automotive-distribution, manufacturing. Generated/refreshed per
+trade-inventory, treasury-tax, automotive-distribution, manufacturing, crm-projects.
+Generated/refreshed per
 phase (README sync rule).

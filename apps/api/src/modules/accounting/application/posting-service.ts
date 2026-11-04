@@ -98,6 +98,14 @@ export class PostingService {
         const mapping = await store.findActivePurpose(purposeKey);
         return mapping === undefined ? undefined : { accountId: mapping.accountId };
       },
+      findProject: async (projectId) => {
+        // PHASE-019 §8: the projects dimension stamp target — mirrors
+        // findActivePurposeAccount (the caller's open transaction).
+        const project = await store.findProjectById(projectId);
+        return project === undefined
+          ? undefined
+          : { id: project.id, status: project.status as "OPEN" | "CLOSED" };
+      },
       findArApControlAccounts: async () => {
         const [arRow, apRow] = await Promise.all([
           store.findActivePurpose("AR_CONTROL"),

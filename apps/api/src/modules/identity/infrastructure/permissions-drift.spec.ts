@@ -25,6 +25,7 @@ const SEED_PATHS = [
   join(process.cwd(), "migrations", "0024_pos_core.sql"), // PHASE-016 pos.* family
   join(process.cwd(), "migrations", "0025_automotive_distribution.sql"), // PHASE-017 automotive/distribution family
   join(process.cwd(), "migrations", "0026_manufacturing.sql"), // PHASE-018 manufacturing family
+  join(process.cwd(), "migrations", "0027_crm_projects.sql"), // PHASE-019 crm/projects family
 ] as const;
 
 const matrixMarkdown = readFileSync(MATRIX_PATH, "utf8");

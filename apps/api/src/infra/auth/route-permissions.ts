@@ -2395,6 +2395,238 @@ export const ROUTE_PERMISSIONS: readonly RoutePermissionRule[] = [
     permission: "manufacturing.qc.manage",
   },
 
+  // PHASE-019 (MASTER-PLAN §11; matrix §3.1/§3.8): the projects dimension
+  // (view rides the existing journal-entries view tier; manage mirrors the
+  // cost-center trio), the CRM intake (leads + tasks + activities), the
+  // service-contract workspace (schedule preview, advances, the billing
+  // runs with their own bill key, time entries + weekly review), and the
+  // service-order workspace (the job-card generalization).
+  {
+    method: "GET",
+    path: "/api/v1/accounting/projects",
+    permission: "accounting.journal_entries.view",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/accounting/projects",
+    permission: "accounting.projects.manage",
+  },
+  {
+    method: "PATCH",
+    path: "/api/v1/accounting/projects/:id",
+    permission: "accounting.projects.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/leads",
+    permission: "crm.leads.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/leads",
+    permission: "crm.leads.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/leads/:id",
+    permission: "crm.leads.manage",
+  },
+  {
+    method: "PUT",
+    path: "/api/v1/crm/leads/:id",
+    permission: "crm.leads.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/leads/:id/convert",
+    permission: "crm.leads.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/leads/:id/lose",
+    permission: "crm.leads.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/tasks",
+    permission: "crm.tasks.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/tasks",
+    permission: "crm.tasks.manage",
+  },
+  {
+    method: "PUT",
+    path: "/api/v1/crm/tasks/:id",
+    permission: "crm.tasks.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/tasks/:id/complete",
+    permission: "crm.tasks.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/tasks/:id/cancel",
+    permission: "crm.tasks.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/activities",
+    permission: "crm.activities.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/activities",
+    permission: "crm.activities.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/dashboard-summary",
+    permission: "crm.leads.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/contracts",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/contracts",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/contracts/:id",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "PUT",
+    path: "/api/v1/crm/contracts/:id",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/contracts/:id/activate",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/contracts/:id/cancel",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/contracts/:id/renew",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/contracts/:id/schedule",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/contracts/:id/billing-preview",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/contracts/:id/advances",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/contracts/:id/advances",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/contract-invoices",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/billing-runs",
+    permission: "crm.contracts.bill",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/billing-runs",
+    permission: "crm.contracts.bill",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/time-entries",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/time-entries",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "PUT",
+    path: "/api/v1/crm/time-entries/:id",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/time-entries/:id/void",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/time/timesheets/review",
+    permission: "crm.contracts.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/service-orders",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/service-orders",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/crm/service-orders/:id",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "PUT",
+    path: "/api/v1/crm/service-orders/:id",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/service-orders/:id/approve",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/service-orders/:id/log-hours",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/service-orders/:id/complete",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/service-orders/:id/invoice",
+    permission: "crm.service_orders.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/crm/service-orders/:id/cancel",
+    permission: "crm.service_orders.manage",
+  },
+
 ];
 
 /**

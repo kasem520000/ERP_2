@@ -40,6 +40,13 @@ export const MIGRATIONS: readonly string[] = [
   "0024_pos_core",
   "0025_automotive_distribution",
   "0026_manufacturing",
+  "0027_crm_projects",
+  // PHASE-019 T48 (the recorded deviation — agent-ctx/T48-7-service-orders.md):
+  // 0027 missed the stock_reservations.holder_type widening for
+  // SERVICE_ORDER holders (0025 gave JOB_CARD its counterpart in the same
+  // migration that created job_cards); this re-issues the CHECK with
+  // 'SERVICE_ORDER' added. Additive only — see 0028_crm_service_order_holder.sql.
+  "0028_crm_service_order_holder",
 ];
 
 /**

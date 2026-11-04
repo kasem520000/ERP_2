@@ -37,6 +37,7 @@ type JournalLineSpec = {
   amount: Money;                      // document currency, > 0
   partnerId?: UUID;                   // AR/AP subledger lines must carry partner
   itemId?: UUID; costCenterId?: UUID;
+  projectId?: UUID;                   // PHASE-019 projects dimension stamp — unknown → PROJECT_NOT_FOUND, non-OPEN → PROJECT_CLOSED (account-resolution stage)
   taxCodeId?: UUID;                   // tax-effect lines carry the tax code
   memo?: LocalizedText;
 };
@@ -113,6 +114,8 @@ history; net effect zero).
 | **Production order — completion** (manufacturing, PHASE-018; source `production_order:complete`) | DR finished goods inventory (the FG-warehouse account; FG receipt into a new batch, expiry = completedAt + `items.shelf_life_days` when the policy is on) · CR WIP (the consumed-materials value) · [CR applied production labor (`PRODUCTION_LABOR`, 5410) · CR applied production overhead (`PRODUCTION_OVERHEAD`, 5420) when the order's rates > 0 — absorbed in this single completion journal, no separate absorption entry]; FG unit cost = fgValue / actualQty (6dp); per-order WIP nets to **exactly zero** |
 | **Production order — scrap (pre-completion)** (manufacturing, PHASE-018; source `production_order:scrap`) | DR production scrap expense (`PRODUCTION_SCRAP`, 5120) · CR WIP — user-entered value ≤ the order's current WIP balance, reason code required by policy; **no stock move** (the goods already left stock at consumption) |
 | **QC-fail scrap of quarantined FG (post-completion)** (manufacturing, PHASE-018; source `production_order:qc_scrap`) | DR production scrap expense (`PRODUCTION_SCRAP`, reason `QC_FAILED`) · CR finished-goods inventory account — WIP is already zero at completion, so the credit is the FG warehouse account; the goods physically leave the FG warehouse (stock issue move of the whole remaining quarantined batch) |
+| **Contract advance — reclass at tagging** (crm, PHASE-019; source `contract_advance:defer`, policy `crm.defer_advance_recognition` ON) | DR AR control (partner, project-stamped) · CR deferred revenue (`DEFERRED_REVENUE`, 2130) for the tagged amount — moves the on-account credit into the liability; the AR line's subledger debit row nets the receipt's credit row (INV-009 holds); policy OFF = link-only (stays a plain on-account credit, BR-027 pure) |
+| **Contract advance — release at invoice posting** (crm, PHASE-019; source `contract_advance:release`, fired by the contract-billing port in the same posting UoW) | DR deferred revenue (`DEFERRED_REVENUE`) · CR AR control (partner, project-stamped) for the released amount — the AR credit line's subledger row is ALLOCATED to the contract invoice (the advance application); invoice open = gross − released; revenue is recognized ONLY by the invoice journal in the billed period (never a second time by the release) |
 | **FX revaluation run** (optional, dated) | DR/CR FX gain/loss vs revalued AR/AP/cash lines |
 | **Year-end close** (accounting) | DR revenue accounts · CR closing; DR closing · CR expense accounts; net → retained earnings |
 | **Asset capitalization** (fixed_assets, PHASE-026) | DR fixed-asset account (`FIXED_ASSET`, per category) · CR AP control or cash (G-21) |

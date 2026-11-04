@@ -154,6 +154,8 @@ export const ALL_KNOWN_PERMISSIONS: ReadonlySet<string> = new Set([
   "manufacturing.costing.read",
   "manufacturing.genealogy.read",
   "manufacturing.qc.manage",
+  // PHASE-019 (0027 seed): the CRM services report key
+  "crm.contracts.manage",
 ]);
 
 /** A full-grants RunContext (override permissions for the deny paths). */

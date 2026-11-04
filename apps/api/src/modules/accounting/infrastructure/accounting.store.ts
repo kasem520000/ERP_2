@@ -467,6 +467,66 @@ export async function updateCostCenter(
   return (rows.rows as unknown as CostCenterRow[])[0];
 }
 
+// -- projects (PHASE-019 §8) ----------------------------------------------------------
+// The cost_centers clone verbatim (status OPEN|CLOSED replaces is_active —
+// a CLOSED project rejects NEW journal-line stamps at the engine while
+// posted history stays; no DELETE — the lifecycle is flip-only).
+
+export interface ProjectRow {
+  id: string;
+  code: string;
+  name: string;
+  nameAr: string | null;
+  parentId: string | null;
+  status: string;
+}
+
+export async function listProjects(): Promise<ProjectRow[]> {
+  const rows = await tenantTx().execute(sql`
+    SELECT id, code, name, name_ar AS "nameAr", parent_id AS "parentId", status
+    FROM projects ORDER BY code
+  `);
+  return rows.rows as unknown as ProjectRow[];
+}
+
+export async function findProjectById(id: string): Promise<ProjectRow | undefined> {
+  const rows = await tenantTx().execute(sql`
+    SELECT id, code, name, name_ar AS "nameAr", parent_id AS "parentId", status
+    FROM projects WHERE id = ${id} LIMIT 1
+  `);
+  return (rows.rows as unknown as ProjectRow[])[0];
+}
+
+export async function insertProject(input: {
+  code: string;
+  name: string;
+  nameAr: string | null;
+  parentId: string | null;
+}): Promise<ProjectRow> {
+  const rows = await tenantTx().execute(sql`
+    INSERT INTO projects (id, tenant_id, code, name, name_ar, parent_id)
+    VALUES (${generateUuidV7()}, erp.current_tenant_id(), ${input.code}, ${input.name}, ${input.nameAr ?? null}, ${input.parentId ?? null})
+    RETURNING id, code, name, name_ar AS "nameAr", parent_id AS "parentId", status
+  `);
+  return (rows.rows as unknown as ProjectRow[])[0]!;
+}
+
+export async function updateProject(
+  id: string,
+  patch: { name?: string; nameAr?: string | null; status?: "OPEN" | "CLOSED" },
+): Promise<ProjectRow | undefined> {
+  const rows = await tenantTx().execute(sql`
+    UPDATE projects SET
+      name = COALESCE(${patch.name ?? null}, name),
+      name_ar = CASE WHEN ${patch.nameAr ?? null}::text IS NULL THEN name_ar ELSE ${patch.nameAr ?? null} END,
+      status = COALESCE(${patch.status ?? null}, status),
+      version = version + 1, updated_at = now()
+    WHERE id = ${id}
+    RETURNING id, code, name, name_ar AS "nameAr", parent_id AS "parentId", status
+  `);
+  return (rows.rows as unknown as ProjectRow[])[0];
+}
+
 // -- recurring journals (T10) ---------------------------------------------------------
 
 export interface RecurringJournalRow {

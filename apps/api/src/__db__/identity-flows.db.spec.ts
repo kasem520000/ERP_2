@@ -126,7 +126,7 @@ beforeAll(() => {
 });
 
 describe("seeds (acceptance 9)", () => {
-  it("permissions catalog = 246 keys matching AUTHORIZATION_MATRIX (drift green)", async () => {
+  it("permissions catalog = 243 keys matching AUTHORIZATION_MATRIX (drift green)", async () => {
     const su = await superuserClient();
     const result = await su.query<{ n: number }>("SELECT count(*)::int AS n FROM permissions");
     await su.end();
@@ -142,9 +142,13 @@ describe("seeds (acceptance 9)", () => {
     // + 8 PHASE-018 keys (0026 seed §3.8: manufacturing.boms.manage,
     // manufacturing.production_orders.{view,create,approve,post},
     // manufacturing.qc.manage, manufacturing.genealogy.read,
-    // manufacturing.costing.read).
-    // (233 after 0025 + 8 = 241; the drift CLI agrees: matrix 241 = seed 241.)
-    expect(result.rows[0]?.n).toBe(241);
+    // manufacturing.costing.read)
+    // + 2 PHASE-019 keys (0027 seed §3.8/§3.1: crm.contracts.bill,
+    // accounting.projects.manage — the 5 crm base keys re-assert the 0004
+    // seed and were already counted above).
+    // (233 after 0025 + 8 = 241; 241 + 2 = 243 after 0027; the drift CLI
+    // agrees: matrix 243 = seed 243.)
+    expect(result.rows[0]?.n).toBe(243);
   });
 
   it("nine system templates with template grants; owner carries identity keys", async () => {

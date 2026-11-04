@@ -26,6 +26,7 @@ import { PurchasingModule } from "./modules/purchasing/purchasing.module";
 import { SalesModule } from "./modules/sales/sales.module";
 import { DistributionModule } from "./modules/distribution/distribution.module";
 import { ManufacturingModule } from "./modules/manufacturing/manufacturing.module";
+import { CrmModule } from "./modules/crm/crm.module";
 import { CommissionsModule } from "./modules/sales/commissions.module";
 import { ReportingModule } from "./modules/reporting/reporting.module";
 import { PosModule } from "./modules/pos/pos.module";
@@ -61,6 +62,7 @@ import { UsageLimitGuard } from "./infra/auth/usage-limit.guard";
     SalesModule,
     DistributionModule,
     ManufacturingModule,
+    CrmModule,
     CommissionsModule,
     ReportingModule,
     PosModule,

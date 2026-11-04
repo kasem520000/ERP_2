@@ -223,6 +223,26 @@ export class ChecklistNotSatisfiedError extends DomainError {
   }
 }
 
+// -- projects (PHASE-019 §8, T44) -------------------------------------------------
+// The controller surface of the projects dimension: resource not-found on
+// PATCH (the module's 404 shape — A7 parity, no existence disclosure) and
+// the tenant-unique natural key on POST (the code-taken 409 family —
+// PartnerCodeTakenError/TierCodeDuplicateError pattern; the DB constraint
+// uq_projects_tenant_code stays the source of truth, surfaced typed).
+// The ENGINE's stamp validation (PROJECT_NOT_FOUND/PROJECT_CLOSED as
+// PostingError codes at post time) is a different, T42-shipped plane.
+
+export class ProjectNotFoundError extends DomainError {
+  constructor(id: string) {
+    super("PROJECT_NOT_FOUND", `project ${id} does not exist in this tenant`);
+  }
+}
+export class ProjectCodeTakenError extends DomainError {
+  constructor(code: string) {
+    super("PROJECT_CODE_TAKEN", `project code ${code} is already in use`);
+  }
+}
+
 export const ACCOUNTING_NOT_FOUND_ERRORS: readonly (new (...args: never[]) => DomainError)[] = [
   AccountNotFoundError,
   FiscalYearNotFoundError,
@@ -230,4 +250,5 @@ export const ACCOUNTING_NOT_FOUND_ERRORS: readonly (new (...args: never[]) => Do
   JournalDraftNotFoundError,
   RecurringJournalNotFoundError,
   GlAccountNotFoundError,
+  ProjectNotFoundError,
 ];

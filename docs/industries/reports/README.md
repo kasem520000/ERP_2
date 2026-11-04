@@ -13,14 +13,15 @@ and reconciles to the ledger wherever it touches financial figures.
 Report keys follow the `module.report_name` convention (module = providing module from
 [../../architecture/MODULE_BOUNDARIES.md](../../architecture/MODULE_BOUNDARIES.md)); the
 canonical report registry lives with the reporting module (PHASE-013 engine; industry
-entries register as their phases ship). **Registration status (2026-11-03):** the
+entries register as their phases ship). **Registration status (2026-11-04):** the
 PHASE-015 set (`inventory.expiry_list`, `grocery.expiry_writeoff`, `retail.imei_register`),
 the PHASE-016 POS set (`pos.sales_by_terminal`, `pos.sales_by_hour`,
 `treasury.shift_cash_reconciliation`), the PHASE-017 set (the seven automotive /
-distribution / commissions rows below), and the PHASE-018 set (the three manufacturing
-rows below) are **live in the code registry — 66 contracts
-total**; the restaurant analytics pair and the PHASE-019 rows remain catalogued
-only until their owning phases ship.
+distribution / commissions rows below), the PHASE-018 set (the three manufacturing
+rows below), and the PHASE-019 services set (`services.contract_revenue_schedule`,
+`services.time_billing_summary`) are **live in the code registry — 68 contracts
+total**; the restaurant analytics pair, the rental pair, and the logistics board
+remain catalogued only until their owning phases ship.
 
 ## Catalog
 

@@ -97,6 +97,8 @@ const KNOWN_PERMISSION_KEYS: ReadonlySet<string> = new Set([
   "manufacturing.costing.read",
   "manufacturing.genealogy.read",
   "manufacturing.qc.manage",
+  // PHASE-019 (0027 seed): the CRM services report key
+  "crm.contracts.manage",
 ]);
 
 @Module({

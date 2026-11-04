@@ -249,7 +249,7 @@ post + COGS journals carries the project stamp.
 | `vat_returns` | VAT return v1 (draft → ready → filed-by-human; INV-012 cross-check gates ready) | tenant_id, country_code, period_start/end, status, summary jsonb, cross_check jsonb, cross_check_ok, prepared_at/by, filed_at/by, filing_reference | 009 | no |
 | `e_invoicing_submissions` | Submission registry (schema only — adapters PHASE-023) | tenant_id, country_code, adapter_id, source_type, source_id, status (PENDING/GENERATED/SUBMITTED/ACCEPTED/REJECTED/FAILED), payload_digest, authority_reference | 023 (schema 009) | no |
 
-## reporting & platform jobs (PHASE-002/013; sync substrate 016/020)
+## reporting & platform jobs (PHASE-002/013; sync substrate 016/020; desktop device-local store 021)
 
 | Entity | Purpose | Key fields | Phase | OC |
 |--------|---------|-----------|-------|----|
@@ -264,6 +264,21 @@ post + COGS journals carries the project stamp.
 | `tombstones` | Soft-delete markers for sync (the GC ledger — feed entries are the transport; gc_after is the sweep boundary, app-provided with deleted_at; weekly GC job bounded at 5000/loop) | tenant_id, entity_type (shape-checked), entity_id, deleted_at, gc_after; UQ (tenant_id, entity_type, entity_id) | 020 — LIVE | no |
 | `sync_cursors` | Per-device pull positions (server-side hint — opaque signed tokens to clients; the daily cursor.compact pass audits lag and notifies owners of stalled cursors) | tenant_id, device_id, entity_type, last_seq, acknowledged_at | 016 (POS subset) / 020 (generalized — LIVE) | no |
 | `inbox_commands` | Processed sync commands (the push dedupe ledger — one row per EXECUTED command, never DEFERRED; redelivery replays the stored result; the 30-day retention sweep is the audited daily job) | tenant_id, device_id, command_id, idempotency_key, entity_type, intent, status (ACCEPTED/REJECTED), result jsonb, processed_at; UQ (tenant_id, device_id, command_id) | 020 — LIVE | no |
+
+> **Device-local store tables (PHASE-021 — LIVE, not server entities).** The desktop
+> client's SQLite store (`@erp/desktop`, migrations v4/v5 continuing the shared local
+> `schema_migrations` numbering on top of `sync-core` v1–3) carries **device-local
+> tables that have no server counterpart and intentionally do not appear as catalog
+> rows above**: the v4 read caches `sales_invoices` / `quotations` / `delivery_notes` /
+> `stock_counts` (pulled projections of the same-named server entities — server columns
+> win, plus the `local_status`/as-of overlays) and the write-set tables `draft_docs`
+> (the unified OFFLINE-DRAFT store: doc_type, local_id, payload, local_status
+> DRAFT_LOCAL\|PENDING_MERGE\|SYNC_FAILED\|MERGED\|CANCELLED_LOCAL, command_id,
+> rejection, updated_at) + `local_events` (the audit-logged rejection choices with
+> `trace_id` — kept forever, never pruned), plus the v5 `meta` seeds. The **server
+> catalog is unchanged** — these are device-local schemas specified in
+> [../offline/LOCAL_DATABASE.md](../offline/LOCAL_DATABASE.md) §1 and exercised by the
+> desktop chaos profile ([../testing/SYNC_TESTS.md](../testing/SYNC_TESTS.md) §7).
 
 ## industry configuration (PHASE-004/015)
 

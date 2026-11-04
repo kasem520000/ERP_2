@@ -44,10 +44,11 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   provider, costing default, ZATCA scope, Yemen scope, observability vendors, and the
   v2.0 expansion set: platform expansion, fixed assets, notes & installments,
   budgeting, payroll scope, consolidation), and this handoff set.
-- **Application code: PHASE-001 … PHASE-020 (all COMPLETE) — the MVP v1.0
+- **Application code: PHASE-001 … PHASE-021 (all COMPLETE) — the MVP v1.0
   release + the industry configuration engine + Point of Sale + the
   automotive/distribution templates + Manufacturing & Production + CRM/Service
-  Contracts & Projects + the Offline Synchronization Foundation.** The
+  Contracts & Projects + the Offline Synchronization Foundation + the Desktop
+  Application (Tauri shell).** The
   pnpm + Turborepo monorepo with all local gates green (re-verified 2026-11-03):
   - `apps/api` — NestJS with `GET /health/live` + `GET /health/ready` (DB +
     migration state + queue liveness); modules: `audit` (append-only, transactional
@@ -465,7 +466,20 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
     navigation-driven app shell; CSP middleware (per-request nonce, §8 header
     set, probe-tested against the built app); typed dictionaries at 2556 keys
     with triple parity enforcement (TS + runtime + CI script).
-  - `apps/desktop`, `apps/mobile` — declared README stubs only (PHASE-021/022).
+  - `apps/desktop` — **`@erp/desktop` (PHASE-021, the Tauri v2 shell runtime)**: ALL
+    application logic in TypeScript (`src/**` — the dual-profile SQLite store with
+    desktop migrations v4/v5 continuing the shared local `schema_migrations`
+    numbering + byte-exact 1 GB pruning + the §6.4 corruption drill,
+    enrollment/keychain/session/unlock with the D-04 7-day watermark, the sync host
+    + §8 triggers over UNMODIFIED sync-core + D-01 revocation purge, the real
+    minisign updater client + staged-rollout gates, the WebView2 probe, crash
+    telemetry, 80/58 mm bilingual ESC-POS + reprint-from-cache, the fail-closed
+    bridge contract incl. the DR-P21-09 `sync` member) + the thin Rust shell
+    (`src-tauri/**`, source-only — the Windows CI workflow compiles + signs it;
+    `pnpm check:desktop-shell` validates the structural invariants). 16 files /
+    274 tests green on real temp-dir SQLite + real Ed25519. Dev loop:
+    [../operations/DESKTOP_QUICKSTART.md](../operations/DESKTOP_QUICKSTART.md).
+  - `apps/mobile` — declared README stub only (PHASE-022).
   - `packages/ui` — **@erp/ui v1.0.0 (PHASE-005, ADR-0016)**: token layer
     byte-verbatim to DESIGN_TOKENS (contrast gate §16 in CI), Radix primitive
     wrappers (the only legal Radix site), catalog components (DataTable
@@ -568,8 +582,9 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   billing, onboarding & dashboards + PHASE-015 industry configuration
   framework & priority templates + PHASE-016 Point of Sale + PHASE-017 Automotive &
   Distribution Templates + PHASE-018 Manufacturing & Production + PHASE-019 CRM,
-  Service Contracts & Projects + PHASE-020 Offline Synchronization Foundation
-  (migrations 0001–0031; the centralized posting engine with the full
+  Service Contracts & Projects + PHASE-020 Offline Synchronization Foundation +
+  PHASE-021 Desktop Application
+  (migrations 0001–0032; the centralized posting engine with the full
   invariant suite is live and proven by its consumers — treasury posts every
   money movement through it, tax stamps every tax-carrying line with frozen
   rate snapshots BR-033, inventory posts every stock movement through it
@@ -722,6 +737,38 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   (BR-003 price gate missing on the POS autopost path, ITEM_INACTIVE vocabulary
   for soft-deleted master data, the 1 MB push byte cap). Byte-exact LRU budgets
   and the k6 sync-fleet run are honestly deferred to 021/025.
+  PHASE-021 (2026-11-04) ships the Windows-first desktop application as the Tauri v2
+  shell around the web ERP static export (ADR-0013): `apps/desktop` = the `@erp/desktop`
+  TypeScript runtime — the dual-profile SQLite store (DR-P21-02: cipher profile on the
+  Windows CI `--features sqlcipher` build, fail-closed `SqlCipherUnavailableError` on
+  the stock build, the recorded standard-profile fallback keeping every other
+  key-management invariant + the secret-scan) with desktop migrations v4/v5 continuing
+  the shared local `schema_migrations` numbering, byte-exact 1 GB `dbstat` pruning
+  (DR-P21-03 — the 020 deferral closed), and the proven §6.4 corruption drill; the
+  sync host over UNMODIFIED sync-core with the full §8 trigger table and the D-01
+  revocation purge; the real minisign/Ed25519 updater client with staged rollout
+  10%→50%→100% and the crash gates (≥ 99.5%/≥ 200 sessions, ≥ 99.7%/≥ 500, halt
+  < 98.5% + the `minVersion` force-update remedy — DR-P21-05) fed by the crash-free-
+  session telemetry; the WebView2 probe (DR-P21-04); bilingual ESC-POS print with
+  reprint-from-cache. The Rust shell ships as source (the k6 precedent) — the Windows
+  CI workflow compiles, EV-codesigns, minisign-signs (S-15), and SBOMs it, while
+  `pnpm check:desktop-shell` gates the structure. Server-side exactly two additions:
+  DR-P21-01 `POST /devices/:id/enroll` (the one-time credential exchange — migration
+  `0032_device_enrollment_one_time.sql`, schema_version 32) and DR-P21-08 the seven
+  desktop write intents inside the frozen v2 envelope (partner create, quotation /
+  delivery-note / cash-transfer / stock-transfer drafts, expense, stock-count lines —
+  handlers call the owning module services only; registry 6→13 intents; contract
+  `2026-11-04.1` unchanged). Web: the DR-P21-06 Offline Console
+  (`/{locale}/offline` + `/{locale}/unlock`) with the 9 OFFLINE-DRAFT flows,
+  ONLINE-ONLY disabling with localized reasons, as-of labels, the FULL rejection
+  action table with every choice audit-logged incl. the rejecting `traceId`, and
+  reprint — shipped in the DR-P21-07 exported shell subset (`build:desktop` →
+  `out-desktop`; depcruise `web-shell-no-server`); i18n 3044→3244. The updater
+  channel is hosted as the `deploy/updater/` static-JSON layout +
+  `scripts/updater-manifest.ts sign\|publish\|--self-test`. The E2E offline journey
+  found and fixed a real integration defect (DR-P21-3b-1 — the outbox `payload`
+  column must carry the full v2 envelope, or per-item results are unattributable and
+  the row freezes IN_FLIGHT) and is green AR + EN.
   Infra-bound evidence (hosted CI, compose boot, Testcontainers run, mailpit
   capture, Playwright journey) waived per owner directive 2026-10-28 with
   local-gate equivalence recorded.
@@ -751,6 +798,12 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   duplicates 2×/10×/cross-batch/35d-restored-outbox, device-security D-01/03/04 +
   tenant spoof, push-isolation Y-01..Y-04, pull/push/policies/devices/jobs;
   sync-core 36/36 cycle/retry/recovery/pruning/watermark + the 016 chaos slice) +
+  the PHASE-021 suites (`@erp/desktop` 16 files / 274 tests on real temp-dir SQLite +
+  real Ed25519; the sync dir widened to 14 files / 130 tests — the desktop chaos
+  profile 27 (the matrix C-01…C-16 on the real file store + 4 real-SIGKILL kill
+  windows + D-01/02/04/06 on file) + enroll 6 + desktop-intents 23; the web console
+  suites 73; the E2E offline journey 2/2 AR+EN — with the 020 chaos regression 19/19
+  bit-identical and sync-core untouched at 36/36) +
   visual
   harness 16 (AR+EN threshold-0 baselines ×95 incl. ShiftPanel ×4 ×2 directions,
   axe 0, geometry, coverage) +

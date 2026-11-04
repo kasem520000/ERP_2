@@ -20,10 +20,18 @@ import { RegistrationService } from "../../modules/tax/application/registration-
 import { SalesInvoiceService } from "../../modules/sales/application/invoices";
 import { CreditNoteService } from "../../modules/sales/application/credit-notes";
 import { PosSaleService } from "../../modules/sales/application/pos-channel/pos-sale-service";
+import { QuotationService } from "../../modules/sales/application/quotations";
+import { DeliveryNoteService } from "../../modules/sales/application/deliveries";
+import { PartnerService } from "../../modules/partners/application/partner-service";
 import { ShiftService } from "../../modules/treasury/application/shift-service";
 import { AccountService } from "../../modules/treasury/application/account-service";
+import { ExpenseService } from "../../modules/treasury/application/expense-service";
+import { PettyCashGuard } from "../../modules/treasury/application/petty-cash-service";
+import { TransferService as TreasuryTransferService } from "../../modules/treasury/application/transfer-service";
 import { WarehouseService } from "../../modules/inventory/application/warehouse-service";
 import { OpeningStockService } from "../../modules/inventory/application/opening-stock-service";
+import { TransferService as InventoryTransferService } from "../../modules/inventory/application/transfer-service";
+import { CountService } from "../../modules/inventory/application/count-service";
 import { PosShiftFlowService } from "../../modules/pos/application/shift-flow-service";
 import { PushService } from "../../modules/sync/application/push-service";
 
@@ -61,7 +69,29 @@ const registrations = new RegistrationService(audit);
 const treasuryAccounts = new AccountService(audit);
 const warehouses = new WarehouseService(audit);
 const openingStock = new OpeningStockService(audit, posting);
-const push = new PushService(posSales, shiftFlow, audit, invoices);
+// PHASE-021 · DR-P21-08: the seven desktop write intents' owning services
+// (the additive PushService constructor slots — same instances, same graph).
+const partners = new PartnerService(audit);
+const quotations = new QuotationService(audit, numbering);
+const deliveries = new DeliveryNoteService(audit, posting, numbering);
+const pettyCash = new PettyCashGuard(audit);
+const expenses = new ExpenseService(audit, posting, numbering, pettyCash, resolver);
+const treasuryTransfers = new TreasuryTransferService(audit, posting, numbering, pettyCash);
+const inventoryTransfers = new InventoryTransferService(audit, posting, numbering);
+const stockCounts = new CountService(audit, posting, numbering);
+const push = new PushService(
+  posSales,
+  shiftFlow,
+  audit,
+  invoices,
+  partners,
+  quotations,
+  deliveries,
+  expenses,
+  treasuryTransfers,
+  inventoryTransfers,
+  stockCounts,
+);
 
 /** Narrow an item to its REJECTED variant (typed access to reason/action). */
 function asRejected(item: { status: string }): Extract<PushItemResultV2, { status: "REJECTED" }> {

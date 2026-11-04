@@ -94,7 +94,24 @@ Alerts: `SyncPushFailSpike` (Sev-2), `SyncCursorStall` (Sev-3) — both live via
 | Duplicate effects suspected after sync | Check posting idempotency: `SELECT tenant_id, source_type, source_id, operation, count(*) FROM journal_entries GROUP BY 1,2,3,4 HAVING count(*)>1;` (must return 0) | If 0 → dedupe worked (client-side duplicates are display-only); if > 0 → **Sev-1** (RISK-011) — incident, freeze sync for that tenant | [../accounting/ACCOUNTING_INVARIANTS.md](../accounting/ACCOUNTING_INVARIANTS.md) INV-013 |
 | Offline POS receipts not reconciling | `offline_receipt_no` present on posted invoices for the terminal/shift window | Re-run the terminal reconciliation view; gaps mean unsynced local sales → device must sync before close of shift | [../accounting/DOCUMENT_LIFECYCLE.md](../accounting/DOCUMENT_LIFECYCLE.md) §4 |
 
-## 8. E-invoicing (PHASE-023)
+## 8. Desktop application (PHASE-021 — **LIVE 2026-11-04**)
+
+The Windows desktop client (Tauri shell, [ADR-0013](../architecture/ADR/ADR-0013-tauri-desktop.md)):
+signed auto-update channel, WebView2 runtime probe, local SQLite store, and the bridge
+sync driver. Dev loop: [DESKTOP_QUICKSTART.md](DESKTOP_QUICKSTART.md); installed-client
+requirements: [DESKTOP_SYSTEM_REQUIREMENTS.md](DESKTOP_SYSTEM_REQUIREMENTS.md).
+
+| Symptom | Diagnosis | Remediation | Runbook |
+|---------|-----------|-------------|---------|
+| Update refused: "manifest signature rejected" / "bundle signature verification failed" / "downgrade rejected" | The updater client's state machine reports `rejected` with the reason in the client log; compare the channel `latest.json` signature against the trusted pubkeys (S-15 — rotation mid-window? manifest signed by the retired key?) | These are **D-06 fail-closed by design — never bypass, never re-serve different bytes under a live version** (immutability rule). Republish a correctly signed manifest: `pnpm tsx scripts/updater-manifest.ts sign\|publish` (+ `--self-test`); during a rotation use the dual-trust window (both pubkeys in the client build) before retiring the old key | [DEPLOYMENT.md](DEPLOYMENT.md) §7 + [`deploy/updater/README.md`](../../deploy/updater/README.md) |
+| Devices stuck on the blocked-min-version (force-update) screen | `latest.json` carries `minVersion` above the installed version — either an intentional halt remedy (DR-P21-05) or a stale force-update left behind | Intentional: publish the fixed build ≥ `minVersion` at `stagePercent` 100 — the blocked screen drives the install through the same verified path, no bypass exists | [DEPLOYMENT.md](DEPLOYMENT.md) §7 |
+| Staged rollout not promoting (stuck at 10% or 50%) | Client-stability panels: trailing-24 h crash-free-session rate + session count vs the gates — ≥ 99.5% over ≥ 200 sessions to promote 10→50, ≥ 99.7% over ≥ 500 to promote 50→100; below 50 sessions the tiny-sample guard HOLDS | A crash spike below **98.5%** auto-halts: the rollout service publishes the `minVersion` force-update remedy — do not manually widen `stagePercent` while the rate is under a gate; fix the build instead | [MONITORING.md](MONITORING.md) §1 + [../planning/RELEASE_STRATEGY.md](../planning/RELEASE_STRATEGY.md) §Rollout |
+| App shows the system-requirements screen instead of the UI (WebView2 below minimum) | The startup probe banded the installed Evergreen runtime `< 109.0.1518.78` (DR-P21-04); versions in `(minimum, recommended 120.0.2210.61)` run with degraded-capability notices only | Install/upgrade the WebView2 Evergreen runtime ≥ minimum via the installer guidance in the screen — no crash, no broken UI is the expected behavior (PHASE-021 criterion 10); do not try to "skip" the probe | [DESKTOP_SYSTEM_REQUIREMENTS.md](DESKTOP_SYSTEM_REQUIREMENTS.md) §2 |
+| Local store corruption reported (`LocalStoreCorruptError` / integrity check ≠ ok) | The app runs the LOCAL_DATABASE §6.4 path: stage outbox/inbox survivors to a staging file → delete the DB → re-run migrations → re-import → cursors reset → **full pull**; the staging manifest is kept on disk | Verify the next full pull completes and the outbox drains; net acceptable loss = cached read models only. If staging was unwritable the app refuses LOUD and keeps the file — never a delete without staging; support then re-enrolls the device | [../offline/LOCAL_DATABASE.md](../offline/LOCAL_DATABASE.md) §6.4 |
+| Manual "Sync now" disabled with the unavailable reason (`SYNC_DRIVER_NOT_REGISTERED`) | The bridge `sync` member is absent — an older shell build without the sync-driver commands (DR-P21-09); the webview never runs the sync engine itself | Fail-closed by design: update the shell to a build carrying the sync driver — the controls stay disabled (honest unavailable state), never a simulated sync | [DESKTOP_QUICKSTART.md](DESKTOP_QUICKSTART.md) §2–3 |
+| Shell boot fails closed with `SqlCipherUnavailableError` (`SQLCIPHER_UNAVAILABLE`) | A store encryption key is configured but the running build is not the SQLCipher profile (DR-P21-02 dual-profile store: cipher = the Windows CI `--features sqlcipher` build; standard = the plain-SQLite fallback) | Install the cipher-profile release build (the production posture — at-rest encryption), or accept the explicit standard-profile fallback dialog: every other key-management invariant still holds (key only in the OS keychain, secret-scan green), but the standard-profile file is plaintext at rest — the D-02 binary-inspection caveat, run for real only on the Windows CI cipher profile | [../offline/LOCAL_DATABASE.md](../offline/LOCAL_DATABASE.md) §4 |
+
+## 9. E-invoicing (PHASE-023)
 
 Alerts: `EInvoiceRejectSpike`, `CertExpiry`. Full design:
 [../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md).
@@ -106,7 +123,7 @@ Alerts: `EInvoiceRejectSpike`, `CertExpiry`. Full design:
 | Sandbox passes, production fails (or vice versa) | Compare payload snapshots + endpoint versions; adapter version drift | Pin spec versions per adapter declaration; bump pack version + staged rollout of the adapter ([../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md) §7) | [../localization/TAX_ENGINE.md](../localization/TAX_ENGINE.md) §3 |
 | Submission queue backing up | `boss.job` counts for the adapter categories; authority latency on the funnel dashboard | Backoff storms happen after provider incidents — verify caps; if the authority is down, the registry honestly shows PENDING (never mark ACCEPTED without authority confirmation — directive §12) | [../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md) §2 |
 
-## 9. Printing & report rendering (Chromium in worker)
+## 10. Printing & report rendering (Chromium in worker)
 
 | Symptom | Diagnosis | Remediation | Runbook |
 |---------|-----------|-------------|---------|
@@ -114,7 +131,7 @@ Alerts: `EInvoiceRejectSpike`, `CertExpiry`. Full design:
 | Chromium pool exhaustion (OOM, crash loops) | Worker logs: render timeouts then OOM-kill loop; RISK-013 | Cap concurrent renders below memory budget; ensure render-timeout kills the page, not the pool; burst capacity = dedicated worker pool (scaling path), not a bigger shared worker | [../architecture/DEPLOYMENT_ARCHITECTURE.md](../architecture/DEPLOYMENT_ARCHITECTURE.md) §Scaling path |
 | Garbled Arabic in PDFs (missing glyphs) | Test render of the same template in staging | Template/font issue, not ops: route to the phase template fix; fonts ship with the image (never fetch at runtime) | [../architecture/ADR/ADR-0011-reporting-printing.md](../architecture/ADR/ADR-0011-reporting-printing.md) |
 
-## 10. Escalation matrix
+## 11. Escalation matrix
 
 | Severity | Examples | First responder | Escalate after | Escalation target |
 |----------|----------|-----------------|----------------|-------------------|

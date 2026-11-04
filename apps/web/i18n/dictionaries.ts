@@ -3232,6 +3232,237 @@ export interface Dictionary {
   syncReconciliationReassignNoTargets: string;
   syncReconciliationReassignAction: string;
   syncReconciliationReassignedToast: string;
+
+  // -- PHASE-021 (T2-b): the Offline Console (DR-P21-06 / MASTER-PLAN §6) —
+  // shell states, honest states, the CONFLICT_RESOLUTION §3 rejection UX,
+  // the 9 OFFLINE-DRAFT flows, cached reads, reprint, unlock (D-04), and
+  // the nav + dashboard affordances. Bilingual AR/EN with 100% parity.
+
+  // Console + shell states
+  offlineNavSection: string;
+  offlineConsoleTitle: string;
+  offlineConsoleIntro: string;
+  offlinePhaseBrowser: string;
+  offlinePhaseIdle: string;
+  offlinePhaseSyncing: string;
+  offlinePhaseReadOnly: string;
+  offlinePhaseRevoked: string;
+  offlinePhaseCorrupt: string;
+  offlineQueueLabel: string;
+  offlineAsOfLabel: string;
+  offlineAsOfNever: string;
+  offlineOnlineLabel: string;
+  offlineOfflineLabel: string;
+  offlineSyncNow: string;
+  offlinePushNow: string;
+  offlineSyncUnavailable: string;
+  offlineUpdatePrompt: string;
+  offlineUpdateAction: string;
+  offlineBannerReadOnly: string;
+  offlineBannerRevoked: string;
+  offlineBannerCorrupt: string;
+  offlineReadOnlyGate: string;
+
+  // Online-only reasons (capability gating — never a silent no-op)
+  offlineOnlineOnlyTitle: string;
+  offlineReasonBrowser: string;
+  offlineReasonNoStore: string;
+  offlineReasonNoSync: string;
+  offlineReasonNoPrint: string;
+
+  // Honest states (draft_docs local_status + outbox status)
+  offlineStateDraftLocal: string;
+  offlineStatePendingMerge: string;
+  offlineStateSyncFailed: string;
+  offlineStateMerged: string;
+  offlineStateCancelledLocal: string;
+  offlineStatusQueued: string;
+  offlineStatusInFlight: string;
+  offlineStatusAcked: string;
+  offlineStatusRejected: string;
+  offlineStatusCancelled: string;
+
+  // Outbox / rejection queue view
+  offlineOutboxTitle: string;
+  offlineOutboxIntro: string;
+  offlineOutboxEmpty: string;
+  offlineOutboxColCommand: string;
+  offlineOutboxColStatus: string;
+  offlineOutboxColCreated: string;
+  offlineOutboxOfficialNo: string;
+  offlineOutboxServerResponse: string;
+  offlineOutboxNoDraft: string;
+
+  // Rejection reasons + meanings (CONFLICT_RESOLUTION §3 — the full table)
+  offlineRejPeriodLocked: string;
+  offlineRejPriceChanged: string;
+  offlineRejInsufficientStock: string;
+  offlineRejCreditLimitExceeded: string;
+  offlineRejStaleVersion: string;
+  offlineRejItemInactive: string;
+  offlineRejPartnerInactive: string;
+  offlineRejValidationError: string;
+  offlineRejDeviceRevoked: string;
+  offlineRejTenantSuspended: string;
+  offlineRejMeaningPeriodLocked: string;
+  offlineRejMeaningPriceChanged: string;
+  offlineRejMeaningInsufficientStock: string;
+  offlineRejMeaningCreditLimitExceeded: string;
+  offlineRejMeaningStaleVersion: string;
+  offlineRejMeaningItemInactive: string;
+  offlineRejMeaningPartnerInactive: string;
+  offlineRejMeaningValidationError: string;
+  offlineRejMeaningDeviceRevoked: string;
+  offlineRejMeaningTenantSuspended: string;
+  offlineRejAdminNote: string;
+
+  // Rejection actions (every choice is audit-logged via local_events)
+  offlineActionEditResend: string;
+  offlineActionAcceptServerPrice: string;
+  offlineActionCancel: string;
+  offlineActionAcceptPartial: string;
+  offlineActionRequestApproval: string;
+  offlineActionReviewMerge: string;
+  offlineActionDiscard: string;
+  offlineActionSubstitute: string;
+  offlineChoiceRecorded: string;
+  offlineEffectAcceptPrice: string;
+  offlineEffectAcceptPartial: string;
+  offlineEffectApproval: string;
+  offlineEffectDiscard: string;
+  offlineActionUnavailable: string;
+  offlineDiffServerRow: string;
+  offlineDiffLocalRow: string;
+
+  // The 9 draft-flow tabs + shared capability notes
+  offlineTabInvoice: string;
+  offlineTabQuotation: string;
+  offlineTabDelivery: string;
+  offlineTabStockCount: string;
+  offlineTabPartnerContact: string;
+  offlineTabPartnerCreate: string;
+  offlineTabExpense: string;
+  offlineTabCashTransfer: string;
+  offlineTabStockTransfer: string;
+  offlineNoteDraft: string;
+  offlineNoteMerge: string;
+  offlineNoteCount: string;
+
+  // Form fields (shared across the 9 forms)
+  offlineFieldCustomer: string;
+  offlineFieldItem: string;
+  offlineFieldQty: string;
+  offlineFieldUnitPrice: string;
+  offlineFieldServerPriceHint: string;
+  offlineFieldDiscount: string;
+  offlineFieldTaxCode: string;
+  offlineFieldNote: string;
+  offlineFieldNoteAr: string;
+  offlineFieldDescription: string;
+  offlineFieldDescriptionAr: string;
+  offlineFieldAmount: string;
+  offlineFieldFee: string;
+  offlineFieldCurrency: string;
+  offlineFieldExchangeRate: string;
+  offlineFieldReference: string;
+  offlineFieldDate: string;
+  offlineFieldValidUntil: string;
+  offlineFieldValueDate: string;
+  offlineFieldWarehouseId: string;
+  offlineFieldFromWarehouse: string;
+  offlineFieldToWarehouse: string;
+  offlineFieldFromAccount: string;
+  offlineFieldToAccount: string;
+  offlineFieldCategoryId: string;
+  offlineFieldCashAccountId: string;
+  offlineFieldCountSession: string;
+  offlineFieldOrderId: string;
+  offlineFieldPartnerId: string;
+  offlineFieldKind: string;
+  offlineFieldCode: string;
+  offlineFieldName: string;
+  offlineFieldNameAr: string;
+  offlineFieldTaxNumber: string;
+  offlineFieldCreditLimit: string;
+  offlineFieldCreditTermsId: string;
+  offlineFieldPriceListId: string;
+  offlineFieldPhone: string;
+  offlineFieldPhone2: string;
+  offlineFieldEmail: string;
+  offlineFieldAddress1: string;
+  offlineFieldAddress2: string;
+  offlineFieldCity: string;
+  offlineFieldContactPerson: string;
+  offlineFieldPayee: string;
+  offlineFieldBatchRef: string;
+  offlineFieldBatchId: string;
+  offlineFieldSerialIds: string;
+  offlineFieldSerialIdsHint: string;
+  offlineFieldOptional: string;
+  offlineFieldNoCatalog: string;
+  offlineLinesTitle: string;
+  offlineLinesAdd: string;
+  offlineLinesRemove: string;
+
+  // Validation errors (per-field AR/EN, mapped from zod issues)
+  offlineErrRequired: string;
+  offlineErrUuid: string;
+  offlineErrMoney: string;
+  offlineErrQty: string;
+  offlineErrUnitPrice: string;
+  offlineErrCountedQty: string;
+  offlineErrDate: string;
+  offlineErrFx: string;
+  offlineErrCurrency: string;
+  offlineErrKind: string;
+  offlineErrMinLen: string;
+  offlineErrMaxLen: string;
+  offlineErrLinesMin: string;
+  offlineErrLinesMax: string;
+  offlineErrSameWarehouse: string;
+  offlineErrSameAccount: string;
+  offlineErrAmountPositive: string;
+  offlineErrFeeRange: string;
+  offlineErrContactOneField: string;
+
+  // Submit + queue feedback
+  offlineSubmitQueue: string;
+  offlineSubmitting: string;
+  offlineQueuedToast: string;
+
+  // Cached reads + reprint
+  offlineReadsTitle: string;
+  offlineReadsIntro: string;
+  offlineReadsSearchItems: string;
+  offlineReadsSearchPartners: string;
+  offlineReadsItemsEmpty: string;
+  offlineReadsPartnersEmpty: string;
+  offlineReadsInvoicesTitle: string;
+  offlineReadsInvoicesEmpty: string;
+  offlineReadsColDocNo: string;
+  offlineReadsColStatus: string;
+  offlineReadsColDate: string;
+  offlineReadsColTotal: string;
+  offlineReadsColActions: string;
+  offlineReadsReprint: string;
+  offlineReadsReprintNotPosted: string;
+  offlineReadsReprintSent: string;
+
+  // The unlock screen (D-04 — cached permission snapshot, 7-day watermark)
+  unlockTitle: string;
+  unlockIntro: string;
+  unlockModeFull: string;
+  unlockModeReadOnly: string;
+  unlockReasonExpired: string;
+  unlockReasonNone: string;
+  unlockSnapshotAt: string;
+  unlockPermissionsHeading: string;
+  unlockGoOffline: string;
+  unlockBrowserNote: string;
+  unlockRuleNote: string;
+
+  // Dashboard quick action (the entry affordance)
+  dashboardOfflineNote: string;
 }
 
 const ar: Dictionary = {
@@ -6480,6 +6711,243 @@ const ar: Dictionary = {
     "تعذّر جلب قائمة الأجهزة النشطة — أدخل معرّف الجهاز الهدف يدويًا.",
   syncReconciliationReassignAction: "نقل الملكية",
   syncReconciliationReassignedToast: "تم نقل ملكية {count} مسودة.",
+
+  // -- PHASE-021 (T2-b): قوائم وحدة العمل دون اتصال ------------------------------
+  // (DR-P21-06 / MASTER-PLAN §6 — الحالات الصادقة، جدول إجراءات الرفض
+  // CONFLICT_RESOLUTION §3، المسودات التسع، القراءات المخبأة، إعادة الطباعة،
+  // شاشة الفتح D-04، ومداخل التنقل/لوحة المعلومات)
+
+  // حالة الوحدة والغلاف
+  offlineNavSection: "العمل دون اتصال",
+  offlineConsoleTitle: "وحدة العمل دون اتصال",
+  offlineConsoleIntro:
+    "المسودات والقراءات المخبأة وقائمة المزامنة — تعمل دون اتصال داخل تطبيق سطح المكتب، وتُبتَث الخيارات النهائية عند المزامنة.",
+  offlinePhaseBrowser: "وضع المتصفح — عبر الإنترنت فقط",
+  offlinePhaseIdle: "خامل",
+  offlinePhaseSyncing: "جارٍ المزامنة…",
+  offlinePhaseReadOnly: "قراءة فقط",
+  offlinePhaseRevoked: "الجهاز ملغى",
+  offlinePhaseCorrupt: "المخزن المحلي معطّل",
+  offlineQueueLabel: "قائمة الانتظار",
+  offlineAsOfLabel: "آخر مزامنة {time}",
+  offlineAsOfNever: "لم تتم مزامنة بعد",
+  offlineOnlineLabel: "متصل",
+  offlineOfflineLabel: "غير متصل",
+  offlineSyncNow: "مزامنة الآن",
+  offlinePushNow: "إرسال الآن",
+  offlineSyncUnavailable: "غير متاح في هذا الإصدار من الغلاف — حدّث التطبيق",
+  offlineUpdatePrompt: "حدّث التطبيق لاستئناف المزامنة.",
+  offlineUpdateAction: "حدّث التطبيق الآن",
+  offlineBannerReadOnly:
+    "الوضع قراءة فقط — إصدار عقد المزامنة على الخادم أحدث مما يفهمه هذا التطبيق. القراءات متاحة، والكتابة المحلية موقوفة حتى التحديث (C-08).",
+  offlineBannerRevoked:
+    "تم إلغاء هذا الجهاز — لا يمكن إرسال أي أوامر، وبيانات المستأجر المحلية أُفرغت. أعِد التسجيل بمساعدة المسؤول.",
+  offlineBannerCorrupt:
+    "المخزن المحلي معطّل (فشل فحص السلامة) — الكتابة موقوفة حتى تشغيل مسار الإصلاح الموثّق.",
+  offlineReadOnlyGate: "رُفض التخزين المحلي — الغلاف في وضع قراءة فقط أو معطّل.",
+
+  // أسباب «عبر الإنترنت فقط» (بوابات القدرات — لا محاكاة أبدًا)
+  offlineOnlineOnlyTitle: "عبر الإنترنت فقط",
+  offlineReasonBrowser:
+    "تتطلب هذه الوظيفة تطبيق سطح المكتب — المتصفح لا يخزّن قائمة محلية ولا يزيّف عملًا دون اتصال.",
+  offlineReasonNoStore: "الغلاف حاضر لكن مخزن SQLite غير متاح في هذا الإصدار.",
+  offlineReasonNoSync: "محرك المزامنة غير متاح في هذا الإصدار من الغلاف (يُطلب التحديث).",
+  offlineReasonNoPrint: "الطباعة غير متاحة في هذا الإصدار من الغلاف.",
+
+  // الحالات الصادقة (draft_docs + قائمة الإرسال)
+  offlineStateDraftLocal: "مسودة محلية",
+  offlineStatePendingMerge: "بانتظار الدمج",
+  offlineStateSyncFailed: "فشلت المزامنة",
+  offlineStateMerged: "تمت المزامنة",
+  offlineStateCancelledLocal: "أُلغيت محليًا",
+  offlineStatusQueued: "في الانتظار",
+  offlineStatusInFlight: "قيد الإرسال",
+  offlineStatusAcked: "مقبول",
+  offlineStatusRejected: "مرفوض",
+  offlineStatusCancelled: "ملغى",
+
+  // عرض قائمة الإرسال والرفض
+  offlineOutboxTitle: "قائمة الإرسال والرفض",
+  offlineOutboxIntro:
+    "كل أمر محلي بحالته الصادقة — الأرقام الرسمية تظهر عند القبول فقط، وحمولات الرفض تُعرض كما وصلت من الخادم.",
+  offlineOutboxEmpty: "القائمة فارغة — لا أوامر معلّقة.",
+  offlineOutboxColCommand: "الأمر",
+  offlineOutboxColStatus: "الحالة",
+  offlineOutboxColCreated: "تاريخ الإنشاء",
+  offlineOutboxOfficialNo: "الرقم الرسمي: {no}",
+  offlineOutboxServerResponse: "استجابة الخادم",
+  offlineOutboxNoDraft: "لا توجد مسودة محلية مرتبطة بهذا الأمر — لا يمكن فتحه للتعديل هنا.",
+
+  // أسباب الرفض + دلالاتها (CONFLICT_RESOLUTION §3 — الجدول كاملًا)
+  offlineRejPeriodLocked: "فترة مقفلة",
+  offlineRejPriceChanged: "تغيّر السعر",
+  offlineRejInsufficientStock: "مخزون غير كافٍ",
+  offlineRejCreditLimitExceeded: "تجاوز حدّ الائتمان",
+  offlineRejStaleVersion: "نسخة قديمة",
+  offlineRejItemInactive: "صنف غير نشط",
+  offlineRejPartnerInactive: "شريك غير نشط",
+  offlineRejValidationError: "خطأ تحقق",
+  offlineRejDeviceRevoked: "إلغاء الجهاز",
+  offlineRejTenantSuspended: "إيقاف المستأجر",
+  offlineRejMeaningPeriodLocked: "تاريخ المستند يقع في فترة محاسبية مقفلة عند المزامنة.",
+  offlineRejMeaningPriceChanged: "سعر السطر يختلف عن السعر الحالي على الخادم بعد حدّ التسامح.",
+  offlineRejMeaningInsufficientStock: "الكمية المتاحة أقل من المطلوبة عند التنفيذ.",
+  offlineRejMeaningCreditLimitExceeded: "حدّ ائتمان الشريك متجاوزٌ شاملًا هذا المستند.",
+  offlineRejMeaningStaleVersion: "النسخة على الخادم تجاوزت baseVersion — راجع الفرق ثم سوّ الخيار يدويًا.",
+  offlineRejMeaningItemInactive: "أُوقف الصنف المرجعي أثناء العمل دون اتصال.",
+  offlineRejMeaningPartnerInactive: "أُوقف الشريك المرجعي أثناء العمل دون اتصال.",
+  offlineRejMeaningValidationError: "خلل بنيوي في الحمولة (سطر ناقص أو صيغة مبلغ غير صالحة).",
+  offlineRejMeaningDeviceRevoked: "فقد الجهاز حقوق المزامنة — حالة إدارية، لا إعادة إرسال.",
+  offlineRejMeaningTenantSuspended: "أُوقف حساب المستأجر — حالة إدارية، لا إعادة إرسال.",
+  offlineRejAdminNote: "حالة إدارية — لا إعادة إرسال؛ راجع المسؤول.",
+
+  // إجراءات الرفض (كل اختيار يُسجَّل في local_events للمراجعة)
+  offlineActionEditResend: "تعديل وإعادة الإرسال",
+  offlineActionAcceptServerPrice: "اعتماد سعر الخادم",
+  offlineActionCancel: "إلغاء",
+  offlineActionAcceptPartial: "قبول التنفيذ الجزئي",
+  offlineActionRequestApproval: "طلب موافقة عبر الإنترنت",
+  offlineActionReviewMerge: "مراجعة والدمج",
+  offlineActionDiscard: "تجاهل التعديل المحلي",
+  offlineActionSubstitute: "استبدال وإعادة الإرسال",
+  offlineChoiceRecorded: "سُجّل اختيارك — يُدقَّق مع أول اتصال مزامنة.",
+  offlineEffectAcceptPrice: "ستُعاد الإرسالة بسعر الخادم {price}.",
+  offlineEffectAcceptPartial: "ستُعاد الإرسالة بكمية {qty}.",
+  offlineEffectApproval: "اجمع دفعة مقدمة عبر سند قبض في التطبيق المتصل، ثم عدّل المستند وأعد إرساله.",
+  offlineEffectDiscard: "تجاهُل التعديل المحلي (مسجَّل للمراجعة).",
+  offlineActionUnavailable: "استجابة الخادم لا تحمل التفاصيل اللازمة — الإجراء غير متاح.",
+  offlineDiffServerRow: "الصف الحالي على الخادم",
+  offlineDiffLocalRow: "تعديلك المحلي",
+
+  // تبويبات المسودات التسع
+  offlineTabInvoice: "مسودة فاتورة بيع",
+  offlineTabQuotation: "مسودة عرض سعر",
+  offlineTabDelivery: "إشعار تسليم",
+  offlineTabStockCount: "جرد — إدخال الكميات",
+  offlineTabPartnerContact: "جهات اتصال شريك",
+  offlineTabPartnerCreate: "إنشاء شريك",
+  offlineTabExpense: "قيد مصروف",
+  offlineTabCashTransfer: "تحويل نقدي / إسقاط درج",
+  offlineTabStockTransfer: "مسودة تحويل مخزون",
+  offlineNoteDraft: "مسودة دون اتصال — تُنشأ محليًا، والإرسال والاعتماد عبر الإنترنت لاحقًا.",
+  offlineNoteMerge: "دمج على مستوى الحقول (غير المقيدة فقط) — يُدوَّن سجل مراجعة لكل حقل.",
+  offlineNoteCount: "الكميات المجرودة وقائع — الفروق وترحيلها تُحسب على الخادم وحده.",
+
+  // حقول النماذج
+  offlineFieldCustomer: "العميل",
+  offlineFieldItem: "الصنف",
+  offlineFieldQty: "الكمية",
+  offlineFieldUnitPrice: "سعر الوحدة",
+  offlineFieldServerPriceHint: "اتركه فارغًا ليحسم الخادم السعر عند الإرسال",
+  offlineFieldDiscount: "الخصم",
+  offlineFieldTaxCode: "الرمز الضريبي",
+  offlineFieldNote: "ملاحظة (إنجليزي)",
+  offlineFieldNoteAr: "ملاحظة (عربي)",
+  offlineFieldDescription: "الوصف (إنجليزي)",
+  offlineFieldDescriptionAr: "الوصف (عربي)",
+  offlineFieldAmount: "المبلغ",
+  offlineFieldFee: "العمولة",
+  offlineFieldCurrency: "رمز العملة (3 أحرف)",
+  offlineFieldExchangeRate: "سعر الصرف",
+  offlineFieldReference: "المرجع",
+  offlineFieldDate: "التاريخ",
+  offlineFieldValidUntil: "صالح حتى",
+  offlineFieldValueDate: "تاريخ القيمة",
+  offlineFieldWarehouseId: "معرّف المستودع (UUID)",
+  offlineFieldFromWarehouse: "من مستودع (UUID)",
+  offlineFieldToWarehouse: "إلى مستودع (UUID)",
+  offlineFieldFromAccount: "من حساب (UUID)",
+  offlineFieldToAccount: "إلى حساب (UUID)",
+  offlineFieldCategoryId: "معرّف فئة المصروف (UUID)",
+  offlineFieldCashAccountId: "الدفع من حساب (UUID)",
+  offlineFieldCountSession: "جلسة الجرد",
+  offlineFieldOrderId: "أمر بيع مرتبط (UUID)",
+  offlineFieldPartnerId: "الشريك",
+  offlineFieldKind: "النوع",
+  offlineFieldCode: "الرمز",
+  offlineFieldName: "الاسم (إنجليزي)",
+  offlineFieldNameAr: "الاسم (عربي)",
+  offlineFieldTaxNumber: "الرقم الضريبي",
+  offlineFieldCreditLimit: "حدّ الائتمان",
+  offlineFieldCreditTermsId: "شروط الائتمان (UUID)",
+  offlineFieldPriceListId: "قائمة الأسعار (UUID)",
+  offlineFieldPhone: "الهاتف",
+  offlineFieldPhone2: "هاتف ثانٍ",
+  offlineFieldEmail: "البريد الإلكتروني",
+  offlineFieldAddress1: "العنوان — سطر 1",
+  offlineFieldAddress2: "العنوان — سطر 2",
+  offlineFieldCity: "المدينة",
+  offlineFieldContactPerson: "جهة الاتصال",
+  offlineFieldPayee: "المستفيد",
+  offlineFieldBatchRef: "مرجع الدفعة (UUID)",
+  offlineFieldBatchId: "الدفعة (UUID)",
+  offlineFieldSerialIds: "المسلسلات (UUID)",
+  offlineFieldSerialIdsHint: "UUIDs مفصولة بفواصل",
+  offlineFieldOptional: "اختياري",
+  offlineFieldNoCatalog: "لا يخزَّن هذا الدليل محليًا بعد — أدخل المعرّف (UUID) مباشرة.",
+  offlineLinesTitle: "السطور",
+  offlineLinesAdd: "إضافة سطر",
+  offlineLinesRemove: "حذف السطر",
+
+  // أخطاء التحقق
+  offlineErrRequired: "هذا الحقل مطلوب.",
+  offlineErrUuid: "أدخل معرّفًا صالحًا (UUID).",
+  offlineErrMoney: "أدخل رقمًا عشريًا صالحًا بحد أقصى 4 منازل.",
+  offlineErrQty: "أدخل كمية عشرية صالحة بحد أقصى 6 منازل.",
+  offlineErrUnitPrice: "أدخل سعرًا غير سالب بحد أقصى 6 منازل.",
+  offlineErrCountedQty: "أدخل كمية معدودة غير سالبة بحد أقصى 6 منازل (الصفر جائز).",
+  offlineErrDate: "أدخل تاريخًا بصيغة YYYY-MM-DD.",
+  offlineErrFx: "أدخل سعر صرف صالحًا بحد أقصى 8 منازل.",
+  offlineErrCurrency: "ثلاثة أحرف إنجليزية (مثل SAR).",
+  offlineErrKind: "اختر نوعًا من القائمة.",
+  offlineErrMinLen: "القيمة أقصر من الحد الأدنى.",
+  offlineErrMaxLen: "القيمة أطول من الحد الأقصى.",
+  offlineErrLinesMin: "أضف سطرًا واحدًا على الأقل.",
+  offlineErrLinesMax: "تجاوزت الحد الأقصى لعدد السطور.",
+  offlineErrSameWarehouse: "يجب أن يختلف المستودعان.",
+  offlineErrSameAccount: "يجب أن يختلف الحسابان.",
+  offlineErrAmountPositive: "المبلغ يجب أن يكون أكبر من صفر.",
+  offlineErrFeeRange: "العمولة بين صفر (شاملًا) والمبلغ (غير شامل).",
+  offlineErrContactOneField: "أدخل حقل اتصال واحدًا على الأقل.",
+
+  // الإرسال والتغذية الراجعة
+  offlineSubmitQueue: "حفظ المسودة محليًا",
+  offlineSubmitting: "جارٍ الحفظ…",
+  offlineQueuedToast: "حُفظت المسودة محليًا وستُرسل مع أول دفعة مزامنة.",
+
+  // القراءات المخبأة وإعادة الطباعة
+  offlineReadsTitle: "القراءات المخبأة",
+  offlineReadsIntro: "قراءة من المخزن المحلي بعلامة «آخر مزامنة» — البيانات القديمة تُعلَّم ولا تُخمَّن.",
+  offlineReadsSearchItems: "ابحث في الأصناف",
+  offlineReadsSearchPartners: "ابحث في الشركاء",
+  offlineReadsItemsEmpty: "لا نتائج.",
+  offlineReadsPartnersEmpty: "لا نتائج.",
+  offlineReadsInvoicesTitle: "فواتير البيع",
+  offlineReadsInvoicesEmpty: "لا فواتير في المخبأ.",
+  offlineReadsColDocNo: "رقم المستند",
+  offlineReadsColStatus: "الحالة",
+  offlineReadsColDate: "التاريخ",
+  offlineReadsColTotal: "الإجمالي",
+  offlineReadsColActions: "إجراءات",
+  offlineReadsReprint: "إعادة طباعة",
+  offlineReadsReprintNotPosted: "غير مرحّلة — تُعاد طباعة المستندات المرحّلة فقط.",
+  offlineReadsReprintSent: "أُرسلت إعادة الطباعة إلى الطابعة.",
+
+  // شاشة الفتح (D-04)
+  unlockTitle: "فتح التطبيق",
+  unlockIntro: "يُفتح التطبيق على لقطة الأذونات المخبأة — يبقى الخادم المرجع النهائي في كل عملية.",
+  unlockModeFull: "وصول كامل وفق لقطة الأذونات المخبأة",
+  unlockModeReadOnly: "قراءة فقط — الاتصال بالإنترنت مطلوب",
+  unlockReasonExpired: "تجاوزت اللقطة مهلة الأيام السبعة (D-04).",
+  unlockReasonNone: "لا لقطة مخبأة — لم يسحب هذا الجهاز أذوناتًا بعد.",
+  unlockSnapshotAt: "اللقطة من {date}",
+  unlockPermissionsHeading: "مفاتيح الأذونات المخبأة",
+  unlockGoOffline: "افتح وحدة العمل دون اتصال",
+  unlockBrowserNote: "في المتصفح لا يوجد مخزن محلي — الوصول قراءة فقط ويتطلب الاتصال.",
+  unlockRuleNote: "خلال سبعة أيام من آخر مزامنة أذونات يمنح الفتح الوصول الكامل وفق المفاتيح المخبأة؛ وبعدها يتحول التطبيق إلى قراءة فقط حتى يعود الاتصال.",
+
+  // بطاقة لوحة المعلومات
+  dashboardOfflineNote: "مسودات وقراءات وقائمة مزامنة تعمل دون اتصال داخل تطبيق سطح المكتب.",
 };
 
 const en: Dictionary = {
@@ -9737,6 +10205,243 @@ const en: Dictionary = {
     "Could not load the active-device list — enter the target device id manually.",
   syncReconciliationReassignAction: "Reassign",
   syncReconciliationReassignedToast: "Reassigned ownership of {count} draft(s).",
+
+  // -- PHASE-021 (T2-b): the Offline Console dictionaries (EN) -------------------
+  // (DR-P21-06 / MASTER-PLAN §6 — honest states, the CONFLICT_RESOLUTION §3
+  // rejection action table, the 9 draft flows, cached reads, reprint, the
+  // D-04 unlock screen, and the nav/dashboard affordances)
+
+  // Console + shell states
+  offlineNavSection: "Offline",
+  offlineConsoleTitle: "Offline Console",
+  offlineConsoleIntro:
+    "Drafts, cached reads, and the sync queue — they run offline inside the desktop app; the server decides at sync time.",
+  offlinePhaseBrowser: "Browser mode — online only",
+  offlinePhaseIdle: "Idle",
+  offlinePhaseSyncing: "Syncing…",
+  offlinePhaseReadOnly: "Read-only",
+  offlinePhaseRevoked: "Device revoked",
+  offlinePhaseCorrupt: "Local store quarantined",
+  offlineQueueLabel: "Queue",
+  offlineAsOfLabel: "As of {time}",
+  offlineAsOfNever: "Never synced",
+  offlineOnlineLabel: "Online",
+  offlineOfflineLabel: "Offline",
+  offlineSyncNow: "Sync now",
+  offlinePushNow: "Push now",
+  offlineSyncUnavailable: "Unavailable in this shell build — update the app",
+  offlineUpdatePrompt: "Update the app to resume syncing.",
+  offlineUpdateAction: "Update the app now",
+  offlineBannerReadOnly:
+    "Read-only — the server's sync contract version is newer than this build understands. Reads stay available; local writes are refused until the update (C-08).",
+  offlineBannerRevoked:
+    "This device was revoked — no command can be sent, and the local tenant data was purged. Re-enroll with your administrator.",
+  offlineBannerCorrupt:
+    "The local store is quarantined (integrity check failed) — writes are refused until the documented recovery path runs.",
+  offlineReadOnlyGate: "Local capture refused — the shell is read-only or quarantined.",
+
+  // Online-only reasons (capability gating — never a silent no-op)
+  offlineOnlineOnlyTitle: "Online only",
+  offlineReasonBrowser:
+    "This flow requires the desktop app — the browser never queues anything or simulates offline work.",
+  offlineReasonNoStore: "The shell is present but the SQLite store is unavailable in this build.",
+  offlineReasonNoSync: "The sync driver is unavailable in this shell build (update required).",
+  offlineReasonNoPrint: "Printing is unavailable in this shell build.",
+
+  // Honest states (draft_docs + outbox)
+  offlineStateDraftLocal: "Local draft",
+  offlineStatePendingMerge: "Pending merge",
+  offlineStateSyncFailed: "Sync failed",
+  offlineStateMerged: "Synced",
+  offlineStateCancelledLocal: "Cancelled locally",
+  offlineStatusQueued: "Queued",
+  offlineStatusInFlight: "In flight",
+  offlineStatusAcked: "Accepted",
+  offlineStatusRejected: "Rejected",
+  offlineStatusCancelled: "Cancelled",
+
+  // Outbox / rejection queue view
+  offlineOutboxTitle: "Queue & rejections",
+  offlineOutboxIntro:
+    "Every local command with its honest status — official numbers appear on acceptance only, and rejection payloads render exactly as the server sent them.",
+  offlineOutboxEmpty: "The queue is empty — nothing pending.",
+  offlineOutboxColCommand: "Command",
+  offlineOutboxColStatus: "Status",
+  offlineOutboxColCreated: "Created",
+  offlineOutboxOfficialNo: "Official no.: {no}",
+  offlineOutboxServerResponse: "Server response",
+  offlineOutboxNoDraft: "No local draft row is linked to this command — it cannot be opened for editing here.",
+
+  // Rejection reasons + meanings (CONFLICT_RESOLUTION §3 — the full table)
+  offlineRejPeriodLocked: "Period locked",
+  offlineRejPriceChanged: "Price changed",
+  offlineRejInsufficientStock: "Insufficient stock",
+  offlineRejCreditLimitExceeded: "Credit limit exceeded",
+  offlineRejStaleVersion: "Stale version",
+  offlineRejItemInactive: "Item inactive",
+  offlineRejPartnerInactive: "Partner inactive",
+  offlineRejValidationError: "Validation error",
+  offlineRejDeviceRevoked: "Device revoked",
+  offlineRejTenantSuspended: "Tenant suspended",
+  offlineRejMeaningPeriodLocked: "The document date falls in a closed/locked period at sync time.",
+  offlineRejMeaningPriceChanged: "The line price differs from the current server price beyond the tolerance policy.",
+  offlineRejMeaningInsufficientStock: "Available quantity was below the requested one at execution.",
+  offlineRejMeaningCreditLimitExceeded: "The partner's credit limit is exceeded including this document.",
+  offlineRejMeaningStaleVersion: "The server row moved past baseVersion — review the diff and reconcile manually.",
+  offlineRejMeaningItemInactive: "The referenced item was deactivated while offline.",
+  offlineRejMeaningPartnerInactive: "The referenced partner was deactivated while offline.",
+  offlineRejMeaningValidationError: "A structural/contract failure (missing line data or a bad amount format).",
+  offlineRejMeaningDeviceRevoked: "The device lost sync rights — an administrative state, no resubmission.",
+  offlineRejMeaningTenantSuspended: "The tenant account was suspended — an administrative state, no resubmission.",
+  offlineRejAdminNote: "Administrative state — no resubmission; contact your administrator.",
+
+  // Rejection actions (every choice is audit-logged via local_events)
+  offlineActionEditResend: "Edit & resend",
+  offlineActionAcceptServerPrice: "Accept server price",
+  offlineActionCancel: "Cancel",
+  offlineActionAcceptPartial: "Accept partial",
+  offlineActionRequestApproval: "Request approval online",
+  offlineActionReviewMerge: "Review & merge",
+  offlineActionDiscard: "Discard local edit",
+  offlineActionSubstitute: "Substitute & resend",
+  offlineChoiceRecorded: "Your choice was recorded — it is audited on the next sync contact.",
+  offlineEffectAcceptPrice: "Will resend with the server's price {price}.",
+  offlineEffectAcceptPartial: "Will resend with qty {qty}.",
+  offlineEffectApproval: "Collect a prepayment via an online receipt, then edit the document and resend it.",
+  offlineEffectDiscard: "The local edit was discarded (audited).",
+  offlineActionUnavailable: "The server response lacks the needed details — this action is unavailable.",
+  offlineDiffServerRow: "Current server row",
+  offlineDiffLocalRow: "Your local edit",
+
+  // The 9 draft-flow tabs
+  offlineTabInvoice: "Sales invoice draft",
+  offlineTabQuotation: "Quotation draft",
+  offlineTabDelivery: "Delivery note",
+  offlineTabStockCount: "Stock count lines",
+  offlineTabPartnerContact: "Partner contact edit",
+  offlineTabPartnerCreate: "Partner create",
+  offlineTabExpense: "Expense entry",
+  offlineTabCashTransfer: "Cash transfer / drawer drop",
+  offlineTabStockTransfer: "Stock transfer draft",
+  offlineNoteDraft: "Offline draft — created locally; submit and approve online later.",
+  offlineNoteMerge: "Field-level merge (non-constrained fields only) — every merge writes an audit event.",
+  offlineNoteCount: "Counted quantities are facts — variance and adjustment are computed server-side only.",
+
+  // Form fields
+  offlineFieldCustomer: "Customer",
+  offlineFieldItem: "Item",
+  offlineFieldQty: "Qty",
+  offlineFieldUnitPrice: "Unit price",
+  offlineFieldServerPriceHint: "Leave empty and the server resolves the price at push",
+  offlineFieldDiscount: "Discount",
+  offlineFieldTaxCode: "Tax code",
+  offlineFieldNote: "Note (EN)",
+  offlineFieldNoteAr: "Note (AR)",
+  offlineFieldDescription: "Description (EN)",
+  offlineFieldDescriptionAr: "Description (AR)",
+  offlineFieldAmount: "Amount",
+  offlineFieldFee: "Fee",
+  offlineFieldCurrency: "Currency code (3 letters)",
+  offlineFieldExchangeRate: "Exchange rate",
+  offlineFieldReference: "Reference",
+  offlineFieldDate: "Date",
+  offlineFieldValidUntil: "Valid until",
+  offlineFieldValueDate: "Value date",
+  offlineFieldWarehouseId: "Warehouse id (UUID)",
+  offlineFieldFromWarehouse: "From warehouse (UUID)",
+  offlineFieldToWarehouse: "To warehouse (UUID)",
+  offlineFieldFromAccount: "From account (UUID)",
+  offlineFieldToAccount: "To account (UUID)",
+  offlineFieldCategoryId: "Expense category id (UUID)",
+  offlineFieldCashAccountId: "Paid from account (UUID)",
+  offlineFieldCountSession: "Count session",
+  offlineFieldOrderId: "Linked sales order (UUID)",
+  offlineFieldPartnerId: "Partner",
+  offlineFieldKind: "Kind",
+  offlineFieldCode: "Code",
+  offlineFieldName: "Name (EN)",
+  offlineFieldNameAr: "Name (AR)",
+  offlineFieldTaxNumber: "Tax number",
+  offlineFieldCreditLimit: "Credit limit",
+  offlineFieldCreditTermsId: "Credit terms (UUID)",
+  offlineFieldPriceListId: "Price list (UUID)",
+  offlineFieldPhone: "Phone",
+  offlineFieldPhone2: "Phone 2",
+  offlineFieldEmail: "Email",
+  offlineFieldAddress1: "Address — line 1",
+  offlineFieldAddress2: "Address — line 2",
+  offlineFieldCity: "City",
+  offlineFieldContactPerson: "Contact person",
+  offlineFieldPayee: "Payee",
+  offlineFieldBatchRef: "Batch ref (UUID)",
+  offlineFieldBatchId: "Batch (UUID)",
+  offlineFieldSerialIds: "Serials (UUID)",
+  offlineFieldSerialIdsHint: "comma-separated UUIDs",
+  offlineFieldOptional: "optional",
+  offlineFieldNoCatalog: "This directory is not cached locally yet — enter the UUID directly.",
+  offlineLinesTitle: "Lines",
+  offlineLinesAdd: "Add line",
+  offlineLinesRemove: "Remove line",
+
+  // Validation errors
+  offlineErrRequired: "This field is required.",
+  offlineErrUuid: "Enter a valid UUID.",
+  offlineErrMoney: "Enter a valid decimal with at most 4 dp.",
+  offlineErrQty: "Enter a valid decimal quantity with at most 6 dp.",
+  offlineErrUnitPrice: "Enter a non-negative price with at most 6 dp.",
+  offlineErrCountedQty: "Enter a non-negative counted qty with at most 6 dp (zero is legitimate).",
+  offlineErrDate: "Enter a date as YYYY-MM-DD.",
+  offlineErrFx: "Enter a valid exchange rate with at most 8 dp.",
+  offlineErrCurrency: "Three Latin letters (e.g. SAR).",
+  offlineErrKind: "Pick a kind from the list.",
+  offlineErrMinLen: "The value is shorter than the minimum.",
+  offlineErrMaxLen: "The value is longer than the maximum.",
+  offlineErrLinesMin: "Add at least one line.",
+  offlineErrLinesMax: "You exceeded the maximum line count.",
+  offlineErrSameWarehouse: "The two warehouses must differ.",
+  offlineErrSameAccount: "The two accounts must differ.",
+  offlineErrAmountPositive: "The amount must be greater than zero.",
+  offlineErrFeeRange: "The fee must be at least zero and strictly below the amount.",
+  offlineErrContactOneField: "Enter at least one contact field.",
+
+  // Submit + queue feedback
+  offlineSubmitQueue: "Save draft locally",
+  offlineSubmitting: "Saving…",
+  offlineQueuedToast: "The draft was saved locally and will ride the next push.",
+
+  // Cached reads + reprint
+  offlineReadsTitle: "Cached reads",
+  offlineReadsIntro: "Reads from the local store with an as-of label — stale data is labeled, never guessed.",
+  offlineReadsSearchItems: "Search items",
+  offlineReadsSearchPartners: "Search partners",
+  offlineReadsItemsEmpty: "No results.",
+  offlineReadsPartnersEmpty: "No results.",
+  offlineReadsInvoicesTitle: "Sales invoices",
+  offlineReadsInvoicesEmpty: "No invoices in the cache.",
+  offlineReadsColDocNo: "Doc no.",
+  offlineReadsColStatus: "Status",
+  offlineReadsColDate: "Date",
+  offlineReadsColTotal: "Total",
+  offlineReadsColActions: "Actions",
+  offlineReadsReprint: "Reprint",
+  offlineReadsReprintNotPosted: "Not posted — only POSTED documents can be reprinted.",
+  offlineReadsReprintSent: "The reprint was sent to the printer.",
+
+  // The unlock screen (D-04)
+  unlockTitle: "Unlock",
+  unlockIntro: "The app unlocks against the cached permission snapshot — the server stays the final authority on every push.",
+  unlockModeFull: "Full access per the cached permission snapshot",
+  unlockModeReadOnly: "Read-only — online required",
+  unlockReasonExpired: "The snapshot passed the 7-day watermark (D-04).",
+  unlockReasonNone: "No cached snapshot — this device has never pulled permissions.",
+  unlockSnapshotAt: "Snapshot from {date}",
+  unlockPermissionsHeading: "Cached permission keys",
+  unlockGoOffline: "Open the Offline Console",
+  unlockBrowserNote: "In a browser there is no local store — access is read-only and requires a connection.",
+  unlockRuleNote: "Within 7 days of the last permissions pull, unlock grants full access per the cached keys; beyond it the app degrades to read-only until it reconnects.",
+
+  // Dashboard quick action
+  dashboardOfflineNote: "Drafts, cached reads, and the sync queue — working without a connection inside the desktop app.",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

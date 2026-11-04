@@ -38,7 +38,7 @@ import {
 
 /**
  * The phase whose features have SHIPPED platform-wide. A capability whose
- * `available_from_phase` is ≤ this is live today; "PHASE-020"+ = gated.
+ * `available_from_phase` is ≤ this is live today; "PHASE-021"+ = gated.
  * Bump this constant with the roadmap (a phase-scoped constant, not a
  * config knob — it is a statement about the running build). PHASE-017
  * shipped `sales.job_cards` + the distribution set (migration 0025), so
@@ -54,9 +54,13 @@ import {
  * (migrations 0029–0031 — the offline.sync_protocol +
  * offline.device_management plan keys, granted to business too by 0029),
  * so the sync plane's device registry, feeds, and reconciliation resolve
- * LIVE for business + enterprise tenants.
+ * LIVE for business + enterprise tenants; PHASE-021 shipped the desktop
+ * application on top of it (migration 0032 — the one-time enrollment proof
+ * DR-P21-01; the Tauri shell + offline console + the seven DR-P21-08
+ * desktop write intents — no new plan keys or SETTINGS_REGISTRY keys, so
+ * no template classification moves with this bump).
  */
-export const CURRENT_SHIPPED_PHASE = "PHASE-020";
+export const CURRENT_SHIPPED_PHASE = "PHASE-021";
 
 /** "PHASE-0NN" → the numeric phase (for ordering). */
 export function phaseNumber(phase: string): number {

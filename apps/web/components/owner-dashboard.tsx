@@ -451,6 +451,25 @@ export function OwnerDashboard({
         </section>
       )}
 
+      {/* PHASE-021 (T2-b, DR-P21-06): the Offline Console quick action —
+          the dashboard entry affordance (always offered; in a browser the
+          console opens in its honest ONLINE-ONLY mode). */}
+      <section
+        aria-labelledby="dashboard-offline-heading"
+        className="flex flex-col gap-3 rounded-lg border border-subtle bg-surface-card p-4 shadow-e1"
+      >
+        <h2 id="dashboard-offline-heading" className="text-md font-semibold text-gray-900">
+          {d.offlineConsoleTitle}
+        </h2>
+        <p className="text-sm text-gray-600">{d.dashboardOfflineNote}</p>
+        <Link
+          href={`/${locale}/offline`}
+          className="inline-flex w-fit min-h-11 items-center rounded-md border border-default bg-surface-card px-3 text-sm font-medium text-gray-800 underline-offset-2 hover:border-strong hover:underline"
+        >
+          {d.unlockGoOffline}
+        </Link>
+      </section>
+
       {usage === null && <p className="text-xs text-gray-500">{d.dashboardUsageUnavailable}</p>}
 
       {usage !== null && (

@@ -4,6 +4,63 @@
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
 
+- 2026-11-04 — **PHASE-021 — Desktop Application (COMPLETE)**: the Windows-first desktop
+  client as the Tauri v2 shell around the web ERP static export (ADR-0013). `apps/desktop`
+  = `@erp/desktop`, ALL application logic in TypeScript over the UNMODIFIED
+  `packages/sync-core` (git diff empty; 36/36 re-verified): the **dual-profile SQLite
+  store** (DR-P21-02 — cipher profile on the Windows CI `--features sqlcipher` build
+  with `PRAGMA key` + `cipher_version` verified; fail-closed `SqlCipherUnavailableError`
+  on the stock build; the recorded standard-profile fallback keeps every other
+  key-management invariant + the secret-scan; the D-02 binary inspection is
+  Windows-CI-cipher-only), desktop migrations **v4/v5 continuing the shared
+  `schema_migrations` numbering** (read caches sales_invoices/quotations/delivery_notes/
+  stock_counts + the `draft_docs` write-set DRAFT_LOCAL/PENDING_MERGE/SYNC_FAILED/
+  MERGED/CANCELLED_LOCAL + `local_events` audit), **byte-exact 1 GB `dbstat` pruning**
+  (DR-P21-03), the proven **§6.4 corruption drill** (stage → reset → re-import → full
+  pull; never deletes the outbox without staging), enrollment/keychain/session/unlock
+  (the D-04 7-day watermark), the sync host with the full §8 trigger table + the C-08
+  read-only gate + the D-01 revocation purge (local_events payloads scrubbed, VACUUM
+  file-level completion), the **real minisign/Ed25519 updater** (downgrade rejection,
+  the dual-trust rotation window, `minVersion` force-update) + the **staged-rollout
+  gates** (DR-P21-05: ≥ 99.5%/≥ 200 sessions to promote 10→50, ≥ 99.7%/≥ 500 for
+  50→100, halt < 98.5% + the force-update remedy), the WebView2 probe (DR-P21-04:
+  minimum 109.0.1518.78 / recommended 120.0.2210.61), crash-free-session telemetry, and
+  bilingual 80/58 mm ESC-POS with reprint-from-cache (never re-numbers). Server-side
+  exactly two additions: migration `0032_device_enrollment_one_time.sql`
+  (schema_version 32 — `devices.device_key_hash` DROP NOT NULL) + **DR-P21-01**
+  `POST /devices/:id/enroll` (the one-time credential exchange; concurrent double-spend
+  closed by the conditional UPDATE; refresh's failure taxonomy) and **DR-P21-08** the
+  7 desktop write intents inside the frozen v2 envelope (partner:create,
+  quotation/delivery-note/cash-transfer/stock-transfer create_draft, expense:create,
+  stock_count:submit_lines — owning services only; registry 6→13 intents; contract
+  `2026-11-04.1` unchanged). Web: the **DR-P21-06 Offline Console**
+  (`/{locale}/offline` + `/{locale}/unlock`) — the 9 OFFLINE-DRAFT flows, ONLINE-ONLY
+  disabling with localized reasons (browser mode = the same components,
+  capability-gated), as-of labels, the FULL rejection action table with every choice
+  audit-logged incl. the rejecting `traceId`, sync-now, reprint; nav + dashboard
+  entries; i18n 3044→3244 (exact AR/EN parity). **DR-P21-07** the exported shell
+  subset (`build:desktop` → `out-desktop`; depcruise `web-shell-no-server` +
+  `desktop-no-api`/`desktop-no-web`; `pnpm check:desktop-shell`; the Windows CI
+  workflow compiles, EV-codesigns, minisign-signs (S-15), SBOMs, and publishes the
+  updater manifest — the Rust shell ships SOURCE-only, the k6 precedent). **DR-P21-09**
+  the bridge `sync` member (fail-closed SYNC_DRIVER_NOT_REGISTERED on older shells).
+  Updater hosting: the `deploy/updater/` static-JSON layout (immutable versioned dirs)
+  + `scripts/updater-manifest.ts sign|publish|--self-test`. **Tests: `@erp/desktop`
+  16 files / 274** (real temp-dir SQLite + real keypairs); the sync dir 14 files / 130
+  in 21 s — the desktop profile 27 (the chaos matrix C-01…C-16 on the REAL file store
+  incl. C-08 through real signed updates + 4 real-SIGKILL kill windows + D-01/02/04/06
+  on file) + enroll 6 + desktop-intents 23; the web console suites 73; the E2E offline
+  journey `pnpm test:e2e-desktop` **2/2 green AR+EN** (~25 s; it exposed the real
+  DR-P21-3b-1 enqueue defect — the outbox `payload` column must carry the full v2
+  envelope — fixed in-phase); the 020 chaos regression 19/19 bit-identical. Docs:
+  DESKTOP_QUICKSTART + DESKTOP_SYSTEM_REQUIREMENTS (new), DEVELOPMENT_SETUP §11,
+  DEPLOYMENT §7 updater runbook, TROUBLESHOOTING §8 desktop, MONITORING client-
+  stability note, FEATURE_CATALOG `offline.desktop_app` → shipped, IMPLEMENTATION_STATUS
+  PHASE-021 → COMPLETE. Honest deferrals: the Rust compile/EV-signing execution
+  (Windows CI code only), the cipher-profile D-02 inspection (Windows-CI-only),
+  per-page deep offline integration beyond the console (iterative polish), offline
+  UPDATE intents for the new draft types (create-only). Next eligible phase: PHASE-022.
+
 - 2026-11-04 — **PHASE-020 — Offline Synchronization Foundation (COMPLETE)**: the
   platform-wide `sync` module generalizing the PHASE-016 POS slice (which keeps
   working byte-identically — wire compat is §11 rule 3, proven by the chaos

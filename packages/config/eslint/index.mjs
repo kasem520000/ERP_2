@@ -89,6 +89,15 @@ export function createEslintConfig(options = {}) {
         "**/dist-storybook/**",
         "**/__image_snapshots__/**",
         "**/.playwright-artifacts/**",
+        // PHASE-021 (DR-P21-07) — the desktop static export (apps/web
+        // build:desktop → out-desktop, the Next.js `output:"export"` dist)
+        // and the export prebuild's crash-safe stash dir (.desktop-stash,
+        // apps/web/scripts/desktop-export-prebuild.mjs). Both are
+        // regenerable build artifacts, never sources: generated `_next`
+        // chunks otherwise drown the lint run in ~2–3k false errors
+        // (T-P21-2c D6 / T-P21-3a D6 — the durable W4 one-liner).
+        "**/out-desktop/**",
+        "**/.desktop-stash/**",
         // Deliberate boundary-violation fixture: excluded from the normal lint run,
         // linted with --no-ignore by scripts/ci/negative-boundary-test.sh (PHASE-001
         // negative meta-test: boundary lint MUST fail a violating import).

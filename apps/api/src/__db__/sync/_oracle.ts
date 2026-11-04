@@ -21,10 +21,18 @@ import { RegistrationService } from "../../modules/tax/application/registration-
 import { SalesInvoiceService } from "../../modules/sales/application/invoices";
 import { CreditNoteService } from "../../modules/sales/application/credit-notes";
 import { PosSaleService } from "../../modules/sales/application/pos-channel/pos-sale-service";
+import { QuotationService } from "../../modules/sales/application/quotations";
+import { DeliveryNoteService } from "../../modules/sales/application/deliveries";
+import { PartnerService } from "../../modules/partners/application/partner-service";
 import { ShiftService } from "../../modules/treasury/application/shift-service";
 import { AccountService } from "../../modules/treasury/application/account-service";
+import { ExpenseService } from "../../modules/treasury/application/expense-service";
+import { PettyCashGuard } from "../../modules/treasury/application/petty-cash-service";
+import { TransferService as TreasuryTransferService } from "../../modules/treasury/application/transfer-service";
 import { WarehouseService } from "../../modules/inventory/application/warehouse-service";
 import { OpeningStockService } from "../../modules/inventory/application/opening-stock-service";
+import { TransferService as InventoryTransferService } from "../../modules/inventory/application/transfer-service";
+import { CountService } from "../../modules/inventory/application/count-service";
 import { PosShiftFlowService } from "../../modules/pos/application/shift-flow-service";
 import { PushService } from "../../modules/sync/application/push-service";
 import { pull } from "../../modules/sync/application/pull-service";
@@ -378,7 +386,9 @@ export interface SyncServices {
 }
 
 /** Instantiate the services exactly as the module graph wires them (the
- * push.spec pattern — PushService's constructor wires the handler slots). */
+ * push.spec pattern — PushService's constructor wires the handler slots).
+ * PHASE-021 · DR-P21-08: the seven desktop write intents' owning services
+ * join the graph (the additive constructor slots). */
 export function makeSyncServices(): SyncServices {
   const audit = new AuditService(new DrizzleAuditStore());
   const posting = new PostingService(audit, new PartnerSubledgerService());
@@ -390,7 +400,27 @@ export function makeSyncServices(): SyncServices {
   const shiftFlow = new PosShiftFlowService(audit, new ShiftService(audit, posting));
   const periods = new PeriodService(audit);
   const reconciliation = new ReconciliationService(audit);
-  const push = new PushService(posSales, shiftFlow, audit, invoices);
+  const partners = new PartnerService(audit);
+  const quotations = new QuotationService(audit, numbering);
+  const deliveries = new DeliveryNoteService(audit, posting, numbering);
+  const pettyCash = new PettyCashGuard(audit);
+  const expenses = new ExpenseService(audit, posting, numbering, pettyCash, resolver);
+  const treasuryTransfers = new TreasuryTransferService(audit, posting, numbering, pettyCash);
+  const inventoryTransfers = new InventoryTransferService(audit, posting, numbering);
+  const stockCounts = new CountService(audit, posting, numbering);
+  const push = new PushService(
+    posSales,
+    shiftFlow,
+    audit,
+    invoices,
+    partners,
+    quotations,
+    deliveries,
+    expenses,
+    treasuryTransfers,
+    inventoryTransfers,
+    stockCounts,
+  );
   return { audit, invoices, posSales, periods, reconciliation, push };
 }
 

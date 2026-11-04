@@ -148,6 +148,29 @@ so a failure replays byte-identically. `packages/sync-core` carries the client-s
 the in-memory adapter (a documented transaction pass-through — real SQLite lands with
 PHASE-021; the D-04 caveat is recorded in the completion report) and the genuine
 service graph (real posting engine, real PG + RLS) — no domain mocks.
+
+**Status note (2026-11-04, PHASE-021 COMPLETE):** the **desktop profile is LIVE** — the
+full matrix now runs against the REAL file store: `apps/api/src/__db__/sync/desktop/`
+(3 spec files, 27 tests, one invocation incl. the PG global-setup — **13 s wall vs the
+≤ 10 min desktop budget**): `desktop-chaos.spec.ts` (**19 tests** — the FULL matrix
+C-01…C-16 + C-09b/C-11b + the D-06 attack postures; every device is the real
+`@erp/desktop` SQLite store on a temp-dir file, WAL + FK, migrations v1–3 + desktop
+v4/v5, `deviceClass="tauri-desktop"`; C-08 drives the gate→update→resume journey
+through REAL signed updates — in-test ed25519 minisign keypair, real bundle bytes, a
+real HTTP manifest server, the real `SyncDesktopHost`), `kill-matrix.spec.ts`
+(**4 tests** — C-04 crash windows through REAL child-process SIGKILLs at
+pre-commit / post-commit-pre-ack / mid-pull / boot-control: WAL recovers, outbox rows
+intact on disk, `IN_FLIGHT → QUEUED`, re-converges with `duplicate:true` replays and
+zero lost commands), and `d-filestore.spec.ts` (**4 tests** — D-01 file-level purge +
+binary grep, D-02(a) secret-scan of the file+WAL bytes, D-02(b) cipher-profile
+fail-closed with the recorded standard-profile caveat, D-04 watermark degrade→restore
+on the file store). The 020 `chaos-matrix.spec.ts` regression stays 19/19
+**bit-identical** (file untouched — the no-extraction decision); `packages/sync-core`
+stays untouched at 36/36. Whole `src/__db__/sync/` dir: **14 files / 130 tests in
+21 s** (≤ 15 min budget). The client-side runtime suite lives in `@erp/desktop`
+(16 files / 274 tests) and the offline journey E2E
+(`pnpm test:e2e-desktop`, `tests/e2e/desktop-offline.spec.ts`) is green AR + EN with a
+bridge double backed by the REAL desktop runtime.
 | PHASE-024/025 | Chaos suite is a hardening + GA gate input; findings feed the security review ([../security/SECURITY_TEST_PLAN.md](../security/SECURITY_TEST_PLAN.md) §10) | release gate |
 
 ## 8. Long-run and soak variants

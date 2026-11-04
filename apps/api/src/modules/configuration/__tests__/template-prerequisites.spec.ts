@@ -42,9 +42,9 @@ describe("phase gate helpers", () => {
     expect(() => phaseNumber("PHASE-16")).toThrow();
   });
 
-  it("CURRENT_SHIPPED_PHASE is PHASE-020 (the offline sync foundation shipped with it)", () => {
-    expect(CURRENT_SHIPPED_PHASE).toBe("PHASE-020");
-    expect(phaseNumber(CURRENT_SHIPPED_PHASE)).toBe(20);
+  it("CURRENT_SHIPPED_PHASE is PHASE-021 (the desktop application shipped with it)", () => {
+    expect(CURRENT_SHIPPED_PHASE).toBe("PHASE-021");
+    expect(phaseNumber(CURRENT_SHIPPED_PHASE)).toBe(21);
   });
 });
 
@@ -179,20 +179,20 @@ describe("capability classification (industries/README §4)", () => {
     // An OPTIONAL capability whose roadmap phase has not shipped labels
     // coming-soon instead — hidden vs phase_gated is exactly the §4 optional
     // split. No shipped manifest carries an OPTIONAL capability past
-    // PHASE-020 any more (the 0027/0029 grants put the crm + offline sets on
-    // business and the 020 bump lifted the last gate), so the later-phase
-    // example is a synthetic OPTIONAL PHASE-021 entry (the rental-logistics
+    // PHASE-021 any more (the 0027/0029 grants put the crm + offline sets on
+    // business and the 020/021 bumps lifted the last gates), so the later-phase
+    // example is a synthetic OPTIONAL PHASE-022 entry (the rental-logistics
     // intake horizon, §17 — crm.rental_contracts is not yet a catalog key).
     const autoWithLater = JSON.parse(JSON.stringify(AUTOMOTIVE_TEMPLATE_MANIFEST)) as typeof AUTOMOTIVE_TEMPLATE_MANIFEST;
     autoWithLater.capability_prerequisites.rental_logistics = {
       level: "OPTIONAL",
       feature_keys: ["crm.rental_contracts"],
-      available_from_phase: "PHASE-021",
+      available_from_phase: "PHASE-022",
     };
     const laterCheck = checkPrerequisites(autoWithLater, keys);
     expect(stateOf(laterCheck, "rental_logistics")).toMatchObject({
       status: "phase_gated",
-      phase: "PHASE-021",
+      phase: "PHASE-022",
     });
     // Retail's free_goods_promo (PHASE-017 keys) is now included on the
     // post-0025 business set — the gate lifted with the phase bump.
@@ -212,29 +212,29 @@ describe("capability classification (industries/README §4)", () => {
     });
   });
 
-  it("a REQUIRED capability beyond the shipped phase still phase-gates (the mechanism outlives the 020 bump)", () => {
-    // No shipped template carries a REQUIRED capability past PHASE-020 any
-    // more (the bump is the point of this task — the offline sync foundation
+  it("a REQUIRED capability beyond the shipped phase still phase-gates (the mechanism outlives the 021 bump)", () => {
+    // No shipped template carries a REQUIRED capability past PHASE-021 any
+    // more (the bump is the point of this task — the desktop application
     // resolves LIVE), so prove the §4 mechanism on a synthetic manifest: a
-    // REQUIRED PHASE-021 capability whose key is off-plan ⇒ phase_gated +
+    // REQUIRED PHASE-022 capability whose key is off-plan ⇒ phase_gated +
     // requiresAcknowledgement — the switch flow's acknowledgement contract
     // (TemplateSwitchAcknowledgementRequiredError) keys off exactly this
-    // flag. (A PHASE-020 synthetic no longer works: the phase shipped and
-    // the 0029 grants put the offline keys on the business plan, so such a
-    // capability classifies included, not gated. §18 lesson 5 moved the
-    // proof to accounting.fixed_assets@PHASE-021 — a real catalog key that
-    // no plan grants today.)
+    // flag. (A PHASE-021 synthetic no longer works: the phase shipped and
+    // no template requires a post-021 key, so such a capability classifies
+    // on its keys alone, not gated. §18 lesson 5 keeps the proof on
+    // accounting.fixed_assets@PHASE-022 — a real catalog key that no plan
+    // grants today.)
     const synthetic = JSON.parse(JSON.stringify(GROCERY_MANIFEST)) as typeof GROCERY_MANIFEST;
     synthetic.capability_prerequisites.fixed_assets = {
       level: "REQUIRED",
       feature_keys: ["accounting.fixed_assets"],
-      available_from_phase: "PHASE-021",
+      available_from_phase: "PHASE-022",
     };
     const check = checkPrerequisites(synthetic, business());
     expect(check.status).toBe("ok"); // phase-gated keys are satisfied-but-labeled
     expect(stateOf(check, "fixed_assets")).toMatchObject({
       status: "phase_gated",
-      phase: "PHASE-021",
+      phase: "PHASE-022",
       missingKeys: ["accounting.fixed_assets"],
     });
     expect(check.requiresAcknowledgement).toBe(true);

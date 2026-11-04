@@ -1,6 +1,6 @@
 # Local Database
 
-> **Status:** STABLE (reference store contract LIVE since 2026-11-04) · **Owner:** Offline & API Architecture · **Updated:** 2026-11-04
+> **Status:** STABLE (reference store + the real desktop SQLite store LIVE since 2026-11-04) · **Owner:** Offline & API Architecture · **Updated:** 2026-11-04
 
 Specification of the on-device SQLite store: what it mirrors, how it is versioned, how ids
 are generated, how it is protected, and how it recovers. Binding decisions:
@@ -16,9 +16,33 @@ never REAL/float affinity in SQLite).
 > (command_id pk, processed_at — the §4.4 client-side mirror) and `meta` (key/value —
 > cursor/watermark/contract-gate state), idempotent `CREATE IF NOT EXISTS` so a v1 store
 > and a fresh store converge). The engine (cycle, retry, recovery, pruning, watermark)
-> is validated against the in-memory adapter — a documented transaction pass-through;
-> the real SQLite (better-sqlite3 + SQLCipher) store ships with PHASE-021, which also
-> replaces the row-count LRU budget approximation (§5) with byte-exact budgets.
+> was validated against the in-memory adapter — a documented transaction pass-through;
+> the real SQLite store + byte-exact budgets landed with PHASE-021 (next note).
+
+> **Status note (2026-11-04, PHASE-021):** the REAL SQLite store landed — `@erp/desktop`
+> `createDesktopStore`/`openDesktopStore` (better-sqlite3, WAL + foreign keys asserted at
+> open) implements the `StorageAdapter` contract against a real DB file, with desktop
+> migrations **v4/v5 continuing the shared `schema_migrations` numbering** (v1–3 from
+> sync-core apply first; v4 adds the read caches `sales_invoices`/`quotations`/
+> `delivery_notes`/`stock_counts` + the `draft_docs` write-set + the `local_events` audit
+> table; v5 seeds `meta`) — server schema untouched (these are device-local tables; see
+> [ENTITY_CATALOG](../database/ENTITY_CATALOG.md) §reporting for the note). **Dual-profile
+> store (DR-P21-02):** the `cipher` profile (Windows CI `--features sqlcipher` build)
+> applies `PRAGMA key` + verifies `cipher_version` — true at-rest encryption; a key on
+> the stock build fails closed (`SqlCipherUnavailableError`) unless the explicit
+> `standard` fallback is chosen, which keeps every OTHER key-management invariant (the
+> key lives only in the OS keychain; secret-scan of the file + WAL bytes green) — the
+> D-02 binary inspection therefore runs for real **only on the Windows CI cipher
+> profile** (recorded caveat). **Byte-exact pruning (DR-P21-03)** replaced the 020
+> row-count approximation: `tableBytes` = `SELECT sum(pgsize) FROM dbstat` (verified
+> present on better-sqlite3 12.11.1; a documented row-approx fallback exists and says
+> so), and the post-cycle `pruneDesktopStore` pass holds the 1 GB budget LRU-first
+> (§5). The **§6.4 corruption path is proven by a real drill** — a corrupted page →
+> integrity verdict → stage survivors (outbox/inbox readable parts, manifest kept on
+> disk) → delete file+wal/shm → re-run migrations v1–5 → re-import → cursors reset —
+> and the store refuses LOUD when staging is unwritable (never deletes the outbox
+> without staging). Evidence: `apps/desktop/__tests__/store*.test.ts` + the chaos
+> desktop profile ([../testing/SYNC_TESTS.md](../testing/SYNC_TESTS.md) §7).
 
 The local database is a **documented mirrored subset** of the server schema, tailored per
 device class. It is NOT a replica: tables are scoped, some are read-only caches, and the
@@ -143,8 +167,9 @@ the OS keychain/keystore ([SECURITY_AND_DEVICE_MANAGEMENT.md](SECURITY_AND_DEVIC
    by an outbox command. Outbox/inbox/meta are never pruned by LRU.
    *(PHASE-020 implementation note: the shipped budgets are row-count approximations
    per device class — a documented `BYTES_PER_ROW_APPROX` constant, oldest-synced rows
-   first — because the byte-exact accounting needs the real SQLite store; byte-exact
-   budgets land with PHASE-021, decision-recorded in the 020 completion report.)*
+   first — because the byte-exact accounting needs the real SQLite store; the byte-exact
+   desktop budget landed with PHASE-021 — `dbstat` page bytes, DR-P21-03, see the §1
+   status note — decision-recorded in the 020 completion report.)*
 3. Prune evicting a row the user later needs = transparent re-pull (user-visible as a
    fetch, not an error). Backward cursor re-walk is allowed for re-hydration only, with
    server-side rate protection.

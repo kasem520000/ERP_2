@@ -244,6 +244,19 @@ crm/billing-runs routes; the run's POLICY_ACTOR drafts can never self-approve (B
 and a CLOSED project rejects new journal-line stamps at the engine (typed
 PROJECT_CLOSED) — the key never bypasses either.
 
+Sync credential-exchange note (PHASE-020 → PHASE-021, DR-P21-01): the device
+credential plane has two **PUBLIC** (pre-auth) routes that carry no permission key by
+design — the credential in the request body IS the authentication (the login pattern;
+route-permissions `PUBLIC_ROUTES`): `POST /api/v1/devices/:id/refresh` (the rotating
+refresh-token exchange, 020) and `POST /api/v1/devices/:id/enroll` (the one-time
+enrollment-secret bootstrap, 021 — the sha256 proof clears `devices.device_key_hash`
+on success and mints the first refresh token). Both derive their tenant scope from the
+device row (device → user → ACTIVE membership, definer projection), never from a
+session, and both fail with the same typed `DEVICE_REFRESH_INVALID` for wrong/expired
+credentials (no existence leak). Revoked devices get `DEVICE_REVOKED` — the
+`sync.devices.revoke` kill switch above stays authoritative; the exchanges can never
+mint around it.
+
 ### 3.9 `identity` & `tenancy` (tenant-admin plane)
 
 | Permission | Description EN / AR | Minimal roles | Scope | Risky |

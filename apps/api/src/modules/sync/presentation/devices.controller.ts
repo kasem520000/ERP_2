@@ -18,6 +18,7 @@ import {
   UnauthenticatedError,
 } from "../../identity/api/identity";
 import { DeviceNotFoundError, DeviceRegistryService } from "../application/device-registry-service";
+import { enrollDeviceWithSecret } from "../application/device-enrollment";
 import {
   DeviceRefreshInvalidError,
   DeviceRevokedError,
@@ -37,6 +38,16 @@ import {
  * session can exist before credentials rotate). The refresh route derives
  * its tenant scope the way login does: device → user → ACTIVE membership
  * (definer projection, pre-GUC) → withTenant(rotation).
+ *
+ * Row 8 — `POST /api/v1/devices/:id/enroll` — is the PHASE-021 enrollment
+ * bootstrap (DR-P21-01, MASTER-PLAN §1 item 2): the same PUBLIC
+ * credential-exchange pattern with the one-time enrollment secret in the
+ * body (register returns it ONCE; the enroll exchange verifies its sha256
+ * against devices.device_key_hash, clears the hash, and mints the FIRST
+ * refresh token — the wiring DR-P20-03 deferred to 021). The phase doc's
+ * "API changes: none" refers to the SYNC WIRE PROTOCOL (pull/push frozen
+ * by PHASE-020); this credential exchange is the recorded exception the
+ * PHASE-020 completion report promised — not a sync-protocol change.
  */
 
 const UUID = z.string().uuid();
@@ -61,6 +72,7 @@ const patchSchema = z.object({
 const attestSchema = z.object({ signature: z.string().min(8).max(2000) });
 const revokeSchema = z.object({ reason: z.string().min(1).max(500).optional() });
 const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200) });
+const enrollSchema = z.object({ enrollmentSecret: z.string().min(20).max(200) });
 
 /** Duplicated locally per the module convention (never import from a sibling
  * controller): the session identity or 401. */
@@ -249,5 +261,43 @@ export class DevicesController {
       }
       throw error;
     }
+  }
+
+  /**
+   * Row 8 — PUBLIC enrollment bootstrap (DR-P21-01, PHASE-021; the recorded
+   * exception to the phase's "API changes: none" — that freeze is the sync
+   * wire protocol, not the credential plane; the PHASE-020 completion
+   * report promised this wiring). Credential-in-body like refresh (the
+   * login pattern): the one-time enrollment secret register returned IS
+   * the credential. Tenant derivation identical to refresh: device → user
+   * → ACTIVE membership (definer projection, pre-GUC) → withTenant. No
+   * rollback-survival catch needed: the enroll path never revokes anything
+   * (no reuse kill switch), so a thrown error rolls back cleanly.
+   */
+  @Post(":id/enroll")
+  @HttpCode(HttpStatus.OK)
+  async enroll(@Param("id") id: string, @Body() body: unknown) {
+    const input = enrollSchema.parse(body);
+    const deviceId = UUID.parse(id);
+    const device = await findDeviceUser(deviceId);
+    if (device === undefined) {
+      throw new DeviceNotFoundError(deviceId);
+    }
+    const options = await membershipOptions(device.userId);
+    const active = options.find(
+      (option) =>
+        option.tenantId !== null &&
+        option.membershipStatus === "ACTIVE" &&
+        option.tenantStatus === "ACTIVE",
+    );
+    if (active === undefined) {
+      throw new DeviceRefreshInvalidError(
+        "the device user has no active membership — credential exchange unavailable",
+      );
+    }
+    const enrolled = await withTenant(active.tenantId, () =>
+      enrollDeviceWithSecret({ deviceId, enrollmentSecret: input.enrollmentSecret }),
+    );
+    return envelope(enrolled);
   }
 }

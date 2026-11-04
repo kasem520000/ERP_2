@@ -24,3 +24,6 @@ export {
   type BilingualText,
 } from "./templates";
 export { EMBEDDED_FONTS } from "./fonts";
+// PHASE-021: the webview reprint template's paper palette (the offline
+// console's cached-receipt reprint — apps/web components/offline).
+export { REPRINT_CSS, REPRINT_CSS_VERSION } from "./reprint-css";

@@ -1,9 +1,16 @@
 import { DomainError } from "@erp/domain-core";
 
 import type { AuditService } from "../../../audit/api/audit";
+import type { CountService } from "../../../inventory/application/count-service";
+import type { TransferService as InventoryTransferService } from "../../../inventory/application/transfer-service";
+import type { PartnerService } from "../../../partners/application/partner-service";
 import type { PosShiftFlowService } from "../../../pos/application/shift-flow-service";
+import type { DeliveryNoteService } from "../../../sales/application/deliveries";
 import type { SalesInvoiceService } from "../../../sales/application/invoices";
+import type { QuotationService } from "../../../sales/application/quotations";
 import type { PosSaleService } from "../../../sales/application/pos-channel/pos-sale-service";
+import type { ExpenseService } from "../../../treasury/application/expense-service";
+import type { TransferService as TreasuryTransferService } from "../../../treasury/application/transfer-service";
 
 /**
  * PHASE-020 · the handler CONTRACT (split from ./index by the dependency
@@ -81,6 +88,16 @@ export interface HandlerServices {
   readonly shiftFlow: PosShiftFlowService;
   readonly audit: AuditService;
   readonly invoices: SalesInvoiceService;
+  // PHASE-021 · DR-P21-08 (MASTER-PLAN §6 table): the owning services of
+  // the seven desktop write intents — additive slots, wired by the same
+  // PushService constructor call (DI container or spec).
+  readonly partners: PartnerService;
+  readonly quotations: QuotationService;
+  readonly deliveries: DeliveryNoteService;
+  readonly expenses: ExpenseService;
+  readonly treasuryTransfers: TreasuryTransferService;
+  readonly inventoryTransfers: InventoryTransferService;
+  readonly stockCounts: CountService;
 }
 
 let services: HandlerServices | undefined;

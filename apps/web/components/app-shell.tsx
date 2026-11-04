@@ -118,6 +118,9 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   "manufacturing/orders": { group: "manufacturingNavSection", label: "mfgOrdersTitle" },
   "manufacturing/qc": { group: "manufacturingNavSection", label: "mfgQcTitle" },
   "manufacturing/genealogy": { group: "manufacturingNavSection", label: "mfgGenealogyTitle" },
+  // -- PHASE-021 (T2-b): the Offline Console entry — always visible
+  // (DR-P21-06; browser opens the honest ONLINE-ONLY console).
+  offline: { group: "offlineNavSection", label: "offlineConsoleTitle" },
   // -- PHASE-019 (T50): the CRM screens + the projects dimension. The
   // professional_services template's own L9 groups render registry-driven
   // when it is applied; this fallback groups all seven crm routes under ONE
@@ -228,6 +231,41 @@ function withPosNavigation(
   return { ...navigation, groups: [...navigation.groups, posGroup] } as unknown as ResolvedNavigation;
 }
 
+/**
+ * PHASE-021 T2-b — the Offline Console nav group (DR-P21-06: "Entry: nav
+ * item + dashboard quick action"). The registry (`packages/contracts`
+ * NAV_ITEMS) stays frozen this phase, so the shell appends the group
+ * AFTER the POS group — the withPosNavigation precedent. ALWAYS VISIBLE
+ * (no permission gate): in a browser the console opens in its honest
+ * ONLINE-ONLY mode; in the shell it is the offline surface.
+ */
+function withOfflineNavigation(
+  navigation: ResolvedNavigation | undefined,
+  labels: { section: { ar: string; en: string }; console: { ar: string; en: string } },
+): ResolvedNavigation | undefined {
+  if (navigation === undefined) {
+    return undefined; // the core fetch already failed — today's degrade stands.
+  }
+  const offlineGroup = {
+    id: "offline",
+    label: labels.section,
+    icon: "cloud-off",
+    items: [
+      {
+        id: "offline.console",
+        parentGroup: "offline",
+        label: labels.console,
+        icon: "cloud-off",
+        route: "/offline",
+        branchScoped: false,
+        archetype: "settings",
+        order: 1,
+      },
+    ],
+  };
+  return { ...navigation, groups: [...navigation.groups, offlineGroup] } as unknown as ResolvedNavigation;
+}
+
 export async function AppShell({
   locale,
   pagePath,
@@ -265,23 +303,29 @@ export async function AppShell({
   // carry ar + en so a locale switch needs no refetch — the suffixes match).
   const arDictionary = getDictionary("ar");
   const enDictionary = getDictionary("en");
-  const navigation = withPosNavigation(
-    mergeNavigation(coreNavigation, effectiveResult, {
-      comingWithPhase: (phase) => ({
-        ar: formatMessage(arDictionary.industryNavComingPhase, { phase: phase.replace(/^PHASE-/, "") }),
-        en: formatMessage(enDictionary.industryNavComingPhase, { phase }),
+  const navigation = withOfflineNavigation(
+    withPosNavigation(
+      mergeNavigation(coreNavigation, effectiveResult, {
+        comingWithPhase: (phase) => ({
+          ar: formatMessage(arDictionary.industryNavComingPhase, { phase: phase.replace(/^PHASE-/, "") }),
+          en: formatMessage(enDictionary.industryNavComingPhase, { phase }),
+        }),
+        notInWebApp: {
+          ar: arDictionary.industryNavNotInWebApp,
+          en: enDictionary.industryNavNotInWebApp,
+        },
       }),
-      notInWebApp: {
-        ar: arDictionary.industryNavNotInWebApp,
-        en: enDictionary.industryNavNotInWebApp,
+      {
+        section: { ar: arDictionary.posNavSection, en: enDictionary.posNavSection },
+        counter: { ar: arDictionary.posNavCounter, en: enDictionary.posNavCounter },
+        floor: { ar: arDictionary.posNavFloor, en: enDictionary.posNavFloor },
+        reconciliation: { ar: arDictionary.posNavReconciliation, en: enDictionary.posNavReconciliation },
+        terminals: { ar: arDictionary.posNavTerminals, en: enDictionary.posNavTerminals },
       },
-    }),
+    ),
     {
-      section: { ar: arDictionary.posNavSection, en: enDictionary.posNavSection },
-      counter: { ar: arDictionary.posNavCounter, en: enDictionary.posNavCounter },
-      floor: { ar: arDictionary.posNavFloor, en: enDictionary.posNavFloor },
-      reconciliation: { ar: arDictionary.posNavReconciliation, en: enDictionary.posNavReconciliation },
-      terminals: { ar: arDictionary.posNavTerminals, en: enDictionary.posNavTerminals },
+      section: { ar: arDictionary.offlineNavSection, en: enDictionary.offlineNavSection },
+      console: { ar: arDictionary.offlineConsoleTitle, en: enDictionary.offlineConsoleTitle },
     },
   );
   const readOnly =

@@ -5,6 +5,8 @@ node_modules/
 dist/
 .next/
 out/
+# PHASE-021 DR-P21-07 — the desktop shell static export (pnpm --filter @erp/web build:desktop)
+apps/web/out-desktop/
 coverage/
 
 # tooling caches
@@ -26,3 +28,6 @@ agent-ctx/local/
 
 # tool-output artifacts (session-local)
 tool-results/
+# PHASE-021 desktop export prebuild stash (defense-in-depth — the prebuild's
+# finally-restore removes it; ignored so a crashed run never dirties status)
+.desktop-stash/

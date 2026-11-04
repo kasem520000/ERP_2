@@ -33,11 +33,30 @@ import {
   draftInvoiceCreateHandler,
   draftInvoiceUpdateHandler,
 } from "./draft-invoice";
+import { partnerCreateHandler } from "./desktop-partner";
+import {
+  deliveryNoteCreateDraftHandler,
+  quotationCreateDraftHandler,
+} from "./desktop-sales-drafts";
+import {
+  cashTransferCreateDraftHandler,
+  expenseCreateHandler,
+} from "./desktop-treasury-drafts";
+import {
+  stockCountSubmitLinesHandler,
+  stockTransferCreateDraftHandler,
+} from "./desktop-inventory-drafts";
 import type { SyncCommandHandler } from "./contract";
 
 /** key: `${entityType}:${intent}` — the ONLINE_ONLY entities never
  * register a handler (CONFLICT_RESOLUTION §2 last row: the push service
- * rejects them BEFORE handler lookup). */
+ * rejects them BEFORE handler lookup).
+ *
+ * PHASE-021 · DR-P21-08 (MASTER-PLAN §6 table): the seven desktop write
+ * intents land as ADDITIVE registry entries behind the frozen v2
+ * envelope. CREATE-draft only for the new types — no update intents
+ * exist for them (a non-owner device's update attempt is an
+ * unknown-intent rejection by construction). */
 export const HANDLER_REGISTRY: ReadonlyMap<string, SyncCommandHandler> = new Map<
   string,
   SyncCommandHandler
@@ -48,6 +67,14 @@ export const HANDLER_REGISTRY: ReadonlyMap<string, SyncCommandHandler> = new Map
   ["partner:contact_merge", partnerContactMergeHandler],
   ["sales_invoice:create_draft", draftInvoiceCreateHandler],
   ["sales_invoice:update_draft", draftInvoiceUpdateHandler],
+  // -- PHASE-021 · DR-P21-08: the desktop write intents --------------------
+  ["partner:create", partnerCreateHandler],
+  ["quotation:create_draft", quotationCreateDraftHandler],
+  ["delivery_note:create_draft", deliveryNoteCreateDraftHandler],
+  ["expense:create", expenseCreateHandler],
+  ["cash_transfer:create_draft", cashTransferCreateDraftHandler],
+  ["stock_transfer:create_draft", stockTransferCreateDraftHandler],
+  ["stock_count:submit_lines", stockCountSubmitLinesHandler],
 ]);
 
 /** Handler lookup by (entityType, intent). */

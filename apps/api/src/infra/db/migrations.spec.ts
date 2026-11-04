@@ -18,7 +18,9 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // grant's missing sequence half — agent-ctx/T-P20-2a-pull.md).
     // PHASE-020 T9: 0031_sync_draft_line_replace (the update_draft
     // aggregate-replacement DELETE grant — SYNC_PROTOCOL §6.2).
-    expect(files.at(-1)?.tag).toBe("0031_sync_draft_line_replace");
+    // PHASE-021 DR-P21-01: 0032_device_enrollment_one_time (the one-time
+    // enrollment proof — devices.device_key_hash relaxed to nullable).
+    expect(files.at(-1)?.tag).toBe("0032_device_enrollment_one_time");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

@@ -1,8 +1,11 @@
 import { Module, type OnModuleInit } from "@nestjs/common";
 
 import { AuditModule } from "../audit/audit.module";
+import { InventoryModule } from "../inventory/inventory.module";
+import { PartnersModule } from "../partners/partners.module";
 import { PosModule } from "../pos/pos.module";
 import { SalesModule } from "../sales/sales.module";
+import { TreasuryModule } from "../treasury/treasury.module";
 import { getBoss } from "../../infra/jobs/boss";
 import { DeviceRegistryService } from "./application/device-registry-service";
 import { PushService } from "./application/push-service";
@@ -52,7 +55,13 @@ import { SyncController } from "./presentation/sync.controller";
  * must not kill the HTTP plane, the next boot re-registers.
  */
 @Module({
-  imports: [AuditModule, PosModule, SalesModule],
+  // PHASE-021 · DR-P21-08: PartnersModule + TreasuryModule + InventoryModule
+  // join the imports — PushService's constructor now injects the owning
+  // services of the seven desktop write intents (PartnerService,
+  // QuotationService, DeliveryNoteService, ExpenseService, the treasury +
+  // inventory TransferServices, CountService). No owning module imports
+  // sync (no cycle; DEPENDENCY_RULES §2.1).
+  imports: [AuditModule, PosModule, SalesModule, PartnersModule, TreasuryModule, InventoryModule],
   controllers: [SyncController, DevicesController, SyncAdminController],
   providers: [PushService, DeviceRegistryService, ReconciliationService, SyncHealthService],
   exports: [PushService, DeviceRegistryService, ReconciliationService],

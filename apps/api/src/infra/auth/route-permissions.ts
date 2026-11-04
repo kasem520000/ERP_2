@@ -2755,6 +2755,12 @@ export const PUBLIC_ROUTES: readonly { method: string; path: string }[] = [
   // pattern: no session can exist before credentials rotate); rotation is
   // idempotent by token, so the Idempotency-Key exemption applies too.
   { method: "POST", path: "/api/v1/devices/:id/refresh" },
+  // PHASE-021 DR-P21-01 (MASTER-PLAN §1 item 2): the enrollment bootstrap
+  // exchange — the one-time enrollment secret register returned IS the
+  // credential (the same login pattern; the sha256 proof in the body clears
+  // devices.device_key_hash on success, so replay is impossible and the
+  // Idempotency-Key exemption applies like refresh).
+  { method: "POST", path: "/api/v1/devices/:id/enroll" },
 ];
 
 /** Routes whose POSTs require an Idempotency-Key header (IDEMPOTENCY §1). */

@@ -20,7 +20,7 @@ observability wired from PHASE-001/002 as a phase exit criterion.
 | Tenant isolation | PHASE-003 | **RLS denial counter — target 0**, policy-violation errors, cross-tenant 404-vs-403 audit | Any nonzero count is investigated immediately (RISK-010) |
 | Sync health | PHASE-020 (**LIVE 2026-11-04**) | Push success/p95 latency (7-day window), pull cursor lag by entity, conflicts by type, rejected pushes by reason code, `outbox.lag` gauge buckets (`never\|lt1h\|lt6h\|lt24h\|lt7d\|gt7d` devices), `device.revoked.pending_ops` (devices, pending commands, owned drafts), tombstone GC ledger size, the alert feed | `GET /api/v1/sync/admin/health` (60 s tenant cache) renders the `/[locale]/platform/sync-health` screen; feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync |
 | E-invoicing funnel | PHASE-023 | Submissions by state (pending→signed→submitted→accepted/rejected), latency, rejection reasons, certificate-expiry countdown, sandbox-vs-prod health | Feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing |
-| Client stability | PHASE-021/022 | Crash-free sessions (desktop/Android), update-channel distribution, min-version enforcement hits, update adoption | Staged-rollout gates (10%→50%→100%) read from this dashboard |
+| Client stability | PHASE-021 (**LIVE 2026-11-04** — desktop) / 022 (Android) | Crash-free sessions per device class (desktop live), update-channel distribution (`stagePercent` cohorts), min-version enforcement hits, update adoption | Staged-rollout gates (10%→50%→100%) read from this dashboard |
 | Business SLO | PHASE-014+ | Failed-login spike, tenant suspension events, signups/onboarding funnel, entitlement overrides | Suspensions are high-signal: they precede churn or abuse |
 
 Metric naming is vendor-agnostic (`erp_<module>_<name>_<unit>`); collection starts as a
@@ -34,6 +34,18 @@ owned drafts on the reconciliation queue — the same `reconciliation_dismissed`
 as the queue screen, so the gauge and the screen agree on "close the queue to zero").
 Both are computed by the tenant-scoped health aggregate
 (`GET /api/v1/sync/admin/health`, 60 s cache) behind `sync.settings.manage`.
+
+The client-stability telemetry shipped with PHASE-021 (2026-11-04): the desktop client's
+crash module (`apps/desktop/src/telemetry/crash.ts`) redacts every event before it leaves
+the device (token/key/`Authorization` values and file paths stripped; tenant tag kept;
+the no-secrets-in-logs posture is scan-tested) and maintains the `CrashFreeSessions`
+rolling counter — the **trailing-24 h crash-free-session rate** is the input the rollout
+gates read (`CRASH_FREE_GATES`: promote 10→50 at ≥ 99.5% over ≥ 200 sessions, 50→100 at
+≥ 99.7% over ≥ 500, **halt below 98.5%** with the `minVersion` force-update remedy —
+DR-P21-05; runbook: [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §desktop). With the desktop
+client live, the sync-health dashboard's device rows and the devices registry screen now
+carry real `tauri-desktop`-class devices alongside POS terminals (per-device sync state,
+outbox lag buckets, revocation queue) — the same aggregate, no separate pipeline.
 
 ## 2. Health endpoint contract (summary)
 
@@ -67,7 +79,7 @@ no alert exists without one.
 | `EInvoiceRejectSpike` | Rejection rate > 5% of submissions in 15 min | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket; page if tenant-wide outage |
 | `SyncPushFailSpike` | Push failure > 5% in 15 min (PHASE-020+; **live 2026-11-04** — the in-product health aggregate fires it at successRate < 90% with ≥ 20 commands over the 7-day window; the metrics pipeline refines to the 15-minute threshold) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
 | `SyncCursorStall` | Any entity cursor lag > threshold (e.g., 15 min of change_log ahead; **live 2026-11-04** — the in-product health aggregate + the daily `sync.cursor.compact` lag audit fire at > 7-day `now() − acknowledged_at`, with deduped owner notifications) | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
-| `ClientCrashRate` | Crash-free sessions below staged-rollout gate | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §escalation | Ticket; rollout halt is automatic per gates |
+| `ClientCrashRate` | Crash-free sessions below staged-rollout gate (PHASE-021+; **live 2026-11-04** — the trailing-24 h rate from the desktop telemetry feeds the gates) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §desktop | Ticket; rollout halt is automatic per gates |
 | `StorageGrowth` | DB storage > 80% of provisioned | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §database | Ticket; capacity review |
 | `ReplicationLag` | Replica lag > 30 s (when read replica exists) | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §database | Ticket |
 

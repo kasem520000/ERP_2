@@ -527,6 +527,30 @@ export const draftInvoiceUpdateSchema = z.object({
 
 export type DraftInvoiceUpdatePayload = z.infer<typeof draftInvoiceUpdateSchema>;
 
+// -- PHASE-021 · DR-P21-08 · the desktop write-intent payload schemas ------------
+//
+// ADDITIVE, VERSION-FROZEN (MASTER-PLAN §6 table): per-intent payload
+// schemas for the seven desktop write intents, riding the v2 command
+// envelope above unchanged. Each mirrors the OWNING module service's
+// create/draft input; CREATE-draft only (no offline update intents for
+// the new types — DR-P21-08).
+export {
+  cashTransferCreateDraftPayloadSchema,
+  deliveryNoteCreateDraftPayloadSchema,
+  expenseCreatePayloadSchema,
+  partnerCreatePayloadSchema,
+  quotationCreateDraftPayloadSchema,
+  stockCountSubmitLinesPayloadSchema,
+  stockTransferCreateDraftPayloadSchema,
+  type CashTransferCreateDraftPayload,
+  type DeliveryNoteCreateDraftPayload,
+  type ExpenseCreatePayload,
+  type PartnerCreatePayload,
+  type QuotationCreateDraftPayload,
+  type StockCountSubmitLinesPayload,
+  type StockTransferCreateDraftPayload,
+} from "./desktop-intents";
+
 // -- PHASE-020 · the machine capabilities fixture (MASTER-PLAN §15, T17) --------
 //
 // The capabilities manifest the `check:capabilities-matrix` gate

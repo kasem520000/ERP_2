@@ -45,7 +45,17 @@ module.exports = {
     {
       name: "api-never-imports-clients",
       severity: "error",
-      from: { path: "^apps/api" },
+      comment:
+        "§3 — production API code never imports client apps. PHASE-021 exception " +
+        "(MASTER-PLAN §9, the desktop chaos profile; recorded by T-P21-4a): the DB-suite " +
+        "harness apps/api/src/__db__/sync/desktop/** — which drives the REAL @erp/desktop " +
+        "runtime (ReferenceDevice over the real SQLite file store, SIGKILL children, " +
+        "D-01/D-02/D-04/D-06, C-08 signed updates) — may import apps/desktop through the " +
+        "sanctioned workspace devDependency (the T-P21-3-a brief's ONE ownership-boundary " +
+        "exception). That test directory only; every production API path keeps the blanket ban.",
+      // PHASE-021: the sanctioned desktop-chaos-profile harness dir (T-P21-3-a)
+      // is the only apps/api surface allowed to reach @erp/desktop.
+      from: { path: "^apps/api", pathNot: "^apps/api/src/__db__/sync/desktop/" },
       to: { path: "^apps/(web|desktop|mobile)" },
     },
     {
@@ -99,6 +109,48 @@ module.exports = {
       comment: "§3 — mobile: contracts + domain-core only; React Native never imports packages/ui.",
       from: { path: "^apps/mobile" },
       to: { path: "^packages/(ui|config)" },
+    },
+    // -- PHASE-021 desktop shell rules (MASTER-PLAN §8; DR-P21-07) ---------------
+    {
+      name: "desktop-no-api",
+      severity: "error",
+      comment:
+        "PHASE-021 §8 — apps/desktop/src (the @erp/desktop runtime) never reaches the API " +
+        "app directly: the bridge http seam (shell-side reqwest) and the BFF are the only " +
+        "client→server paths. Narrower than clients-never-import-api-internals (src only, " +
+        "so __tests__ fixtures keep their own conventions).",
+      from: { path: "^apps/desktop/src" },
+      to: { path: "^(apps/api|@erp/api)" },
+    },
+    {
+      name: "web-shell-no-server",
+      severity: "error",
+      comment:
+        "DR-P21-07 — the exported desktop shell subset (apps/web/app/[locale]/offline/**, " +
+        "apps/web/app/[locale]/unlock/**, apps/web/components/offline/**, " +
+        "apps/web/lib/shell/**) must stay free of server-only dependencies: no " +
+        "apps/web/lib/bff*, no apps/web/lib/server-api* (the two server-only helper " +
+        "modules in apps/web/lib — the only next/headers / node:crypto consumers), no " +
+        "next/headers, no server-only. The static export has no Next server to run them " +
+        "on; browser mode degrades to ONLINE-ONLY affordances instead.",
+      from: {
+        path:
+          "^apps/web/(app/\\[locale\\]/(offline|unlock)|components/offline|lib/shell)",
+      },
+      to: {
+        path:
+          "(^apps/web/lib/(bff|server-api))|(node_modules/(next/headers|server-only))|^(next/headers|server-only)$",
+      },
+    },
+    {
+      name: "desktop-no-web",
+      severity: "error",
+      comment:
+        "PHASE-021 §8 — apps/desktop/src never imports apps/web internals: the DesktopBridge " +
+        "contract types are duplicated client-side (apps/web/lib/shell re-declares them), " +
+        "so the desktop runtime stays buildable without the web app.",
+      from: { path: "^apps/desktop/src" },
+      to: { path: "^apps/web" },
     },
   ],
   options: {

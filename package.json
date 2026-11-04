@@ -18,6 +18,7 @@
     "boundary:negative-test": "bash scripts/ci/negative-boundary-test.sh",
     "gate:local": "bash scripts/ci/local-gate.sh",
     "check:rls": "tsx scripts/check-rls.ts",
+    "check:desktop-shell": "tsx scripts/check-desktop-shell.ts",
     "check:permissions-drift": "tsx scripts/check-permissions-drift.ts",
     "check:capabilities-matrix": "tsx scripts/check-capabilities-matrix.ts",
     "db:dev-credentials": "tsx scripts/db-dev-credentials.ts",
@@ -32,10 +33,14 @@
     "check:token-contrast": "tsx scripts/check-token-contrast.ts",
     "check:ui-catalog": "tsx scripts/check-ui-catalog-coverage.ts",
     "validate:manifests": "tsx scripts/validate-manifests.ts",
-    "test:visual-harness-run": "pnpm --filter @erp/ui test:harness"
+    "test:visual-harness-run": "pnpm --filter @erp/ui test:harness",
+    "test:e2e-desktop": "playwright test -c tests/e2e/playwright.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@erp/contracts": "workspace:*",
+    "@erp/desktop": "workspace:*",
+    "@erp/sync-core": "workspace:*",
     "@changesets/cli": "^3.0.3",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.64.1",

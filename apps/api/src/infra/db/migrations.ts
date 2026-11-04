@@ -64,6 +64,12 @@ export const MIGRATIONS: readonly string[] = [
   // append-only). DRAFT-only by handler discipline + OWNER_DEVICE_WINS
   // single-writer. See 0031_sync_draft_line_replace.sql.
   "0031_sync_draft_line_replace",
+  // PHASE-021 DR-P21-01 (MASTER-PLAN §1 item 2): devices.device_key_hash
+  // relaxed to nullable — the one-time enrollment proof's "consumed" state
+  // is NULL (POST /api/v1/devices/:id/enroll clears it on success).
+  // Backward compatible: every existing writer still provides a hash.
+  // See 0032_device_enrollment_one_time.sql.
+  "0032_device_enrollment_one_time",
 ];
 
 /**

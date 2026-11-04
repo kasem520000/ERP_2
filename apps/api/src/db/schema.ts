@@ -191,7 +191,10 @@ export const devices = pgTable(
     userId: uuid("user_id").notNull(),
     platform: text("platform").notNull(),
     name: text("name"),
-    deviceKeyHash: text("device_key_hash").notNull(),
+    // PHASE-021 DR-P21-01 (migration 0032): nullable — NULL is the one-time
+    // enrollment proof's "consumed" state (cleared by the enroll exchange);
+    // every registration still writes the sha256 hash.
+    deviceKeyHash: text("device_key_hash"),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true, mode: "string" }),
     revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "string" }),
     // PHASE-016 narrow pos-terminal slice (SYNC_PROTOCOL §11): capability

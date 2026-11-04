@@ -101,6 +101,10 @@ testing job behavior closer to production topology.
 | `pnpm migration-tests` | Testcontainers runner: fresh postgres:16 + migrations + DB suite + RLS/catalog checker (ci-db.yml) |
 | `pnpm check:rls` | RLS presence + ENTITY_CATALOG drift checker (fails the build on violations; `MIGRATE_DATABASE_URL` required) |
 | `pnpm --filter @erp/api dev:worker` | Second process of the same image with `WORKER_MODE=1` (consumes pg-boss queues) |
+| `pnpm --filter @erp/desktop test` | The desktop TS runtime suite (real SQLite files + real minisign crypto — see [DESKTOP_QUICKSTART.md](DESKTOP_QUICKSTART.md)) |
+| `pnpm --filter @erp/web build:desktop` | The Tauri shell static export → `apps/web/out-desktop` (transient, gitignored — remove before linting; §11) |
+| `pnpm check:desktop-shell` | Desktop shell structural gate: `tauri.conf.json` invariants + bridge↔Rust command parity + export completeness + secret scan |
+| `pnpm test:e2e-desktop` | The offline desktop journey E2E (AR + EN; real-runtime bridge double over a temp SQLite store) |
 | `pnpm docs:validate` | `scripts/validate-docs.py` — link checker + phase-heading + catalog drift hook |
 
 ## 5. Environment variables (`.env.example` pattern)
@@ -314,3 +318,28 @@ never hand-edited; changes ship with a changeset naming the cause). The
 AA variance under contention; 5-day SLA from 2026-10-29). The 10k-row 60fps
 gate isolates component overhead from the environment floor and enforces the
 absolute budget on capable hardware (floor < 15ms).
+
+## §11 PHASE-021 — Desktop application (Tauri shell) quickstart
+
+The desktop application is the workspace package **`@erp/desktop`** (`apps/desktop`):
+all application logic (SQLite store, enrollment/keychain auth, sync host, minisign
+updater, WebView2 probe, telemetry, ESC-POS print) is TypeScript on plain Node — the
+Rust shell (`apps/desktop/src-tauri/**`) is thin plugin glue shipped as source and
+compiled + signed only by the Windows CI workflow. The bootstrap is the **same
+monorepo one** (`pnpm install` — nothing desktop-specific: `better-sqlite3` installs
+with prebuilt binaries; the SQLCipher cipher profile is a Windows-CI custom build per
+the dual-profile store decision DR-P21-02):
+
+```bash
+pnpm --filter @erp/desktop test        # 16 files / 274 tests — real temp-dir SQLite
+pnpm --filter @erp/web dev             # the Offline Console at /{locale}/offline
+pnpm --filter @erp/web build:desktop   # the shell static export → out-desktop
+pnpm check:desktop-shell               # the shell structural gate (no cargo needed)
+pnpm test:e2e-desktop                  # the offline journey E2E, AR + EN
+```
+
+Full loop (web console route, the export-build lint landmine, the E2E harness, the
+updater `--self-test`, the command map):
+[DESKTOP_QUICKSTART.md](DESKTOP_QUICKSTART.md); installed-client requirements
+(Windows 10/11 64-bit, WebView2 Evergreen minimum 109.0.1518.78):
+[DESKTOP_SYSTEM_REQUIREMENTS.md](DESKTOP_SYSTEM_REQUIREMENTS.md).

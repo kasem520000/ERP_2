@@ -5,9 +5,16 @@ import { generateUuidV7 } from "@erp/domain-core";
 
 import { requireTenantContext } from "../../../infra/db/tenant-context";
 import { AuditService } from "../../audit/api/audit";
+import { CountService } from "../../inventory/application/count-service";
+import { TransferService as InventoryTransferService } from "../../inventory/application/transfer-service";
+import { PartnerService } from "../../partners/application/partner-service";
 import { PosSaleService } from "../../sales/application/pos-channel/pos-sale-service";
-import { PosShiftFlowService } from "../../pos/application/shift-flow-service";
+import { DeliveryNoteService } from "../../sales/application/deliveries";
 import { SalesInvoiceService } from "../../sales/application/invoices";
+import { QuotationService } from "../../sales/application/quotations";
+import { ExpenseService } from "../../treasury/application/expense-service";
+import { TransferService as TreasuryTransferService } from "../../treasury/application/transfer-service";
+import { PosShiftFlowService } from "../../pos/application/shift-flow-service";
 import {
   PosDeviceNotFoundError,
   PosDeviceNotTerminalError,
@@ -405,6 +412,17 @@ export class PushService {
     shiftFlow: PosShiftFlowService,
     audit: AuditService,
     invoices: SalesInvoiceService,
+    // PHASE-021 · DR-P21-08: the owning services of the seven desktop
+    // write intents (MASTER-PLAN §6 table) — additive constructor slots,
+    // same wiring as the 020 four (the Nest container's instances; specs
+    // pass spec-constructed ones — the leads.spec pattern).
+    partners: PartnerService,
+    quotations: QuotationService,
+    deliveries: DeliveryNoteService,
+    expenses: ExpenseService,
+    treasuryTransfers: TreasuryTransferService,
+    inventoryTransfers: InventoryTransferService,
+    stockCounts: CountService,
   ) {
     // The handlers call the DI'd owning-module services (single source of
     // instances; specs instantiate this class directly, which wires the
@@ -414,6 +432,13 @@ export class PushService {
       shiftFlow,
       audit,
       invoices,
+      partners,
+      quotations,
+      deliveries,
+      expenses,
+      treasuryTransfers,
+      inventoryTransfers,
+      stockCounts,
     });
   }
 

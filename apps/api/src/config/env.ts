@@ -41,6 +41,15 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().default("no-reply@erp.local"),
+  /**
+   * PHASE-022 DR-P22-07 (integrations §3.5): FCM v1 push credentials — a
+   * Google service-account JSON (project_id + client_email + private_key;
+   * the firebase.messaging OAuth2 scope is derived from it). Unset → the
+   * channel is disabled with an init log line (the DisabledSmtpTransport
+   * pattern); set-but-unparseable fails fast at module init (never silently
+   * coerced — the env contract's own rule).
+   */
+  FCM_CREDENTIALS: z.string().optional(),
   /** Public origin of the web/BFF surface (links inside emails). */
   WEB_BASE_URL: z.string().default("http://localhost:3000"),
   /**

@@ -105,6 +105,11 @@ export interface SyncDeviceRow {
   contractVersion: string | null;
   /** jsonb NOT NULL DEFAULT '{}' on the devices row (0029). */
   trustFlags: Record<string, unknown> | null;
+  /** PHASE-022 · DR-P22-05a (migration 0033): the personal-account device's
+   * linked partner — the server-side partner scope for the personal pull
+   * feeds (LOCAL_DATABASE §1.1 rule 2). NULL on every other class / on a
+   * personal device without linkage. */
+  linkedPartnerId: string | null;
 }
 
 /**
@@ -118,7 +123,8 @@ export async function loadDevice(deviceId: string): Promise<SyncDeviceRow | unde
   const rows = await tx.execute(sql`
     SELECT id, user_id AS "userId", device_class AS "deviceClass", platform,
            revoked_at AS "revokedAt", data_expires_at AS "dataExpiresAt",
-           contract_version AS "contractVersion", trust_flags AS "trustFlags"
+           contract_version AS "contractVersion", trust_flags AS "trustFlags",
+           linked_partner_id AS "linkedPartnerId"
     FROM devices WHERE id = ${deviceId} LIMIT 1
   `);
   return (rows.rows as unknown as SyncDeviceRow[])[0];

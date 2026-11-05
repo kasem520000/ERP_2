@@ -20,7 +20,13 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // aggregate-replacement DELETE grant — SYNC_PROTOCOL §6.2).
     // PHASE-021 DR-P21-01: 0032_device_enrollment_one_time (the one-time
     // enrollment proof — devices.device_key_hash relaxed to nullable).
-    expect(files.at(-1)?.tag).toBe("0032_device_enrollment_one_time");
+    // PHASE-022 DR-P22-05a: 0033_mobile_feeds (devices.linked_partner_id —
+    // the personal pull feeds' partner scope, the only schema object the
+    // 022 feed activation needs).
+    // PHASE-022 DR-P22-07a: 0034_device_push_tokens (the FCM skeleton's
+    // device-token opt-in store — the dedicated service-mediated table; the
+    // devices table has no natural JSON column for push tokens).
+    expect(files.at(-1)?.tag).toBe("0034_device_push_tokens");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

@@ -46,6 +46,10 @@ import {
   stockCountSubmitLinesHandler,
   stockTransferCreateDraftHandler,
 } from "./desktop-inventory-drafts";
+// PHASE-022 · DR-P22-06: the three field write intents' owning handlers.
+import { receiptFieldCollectionHandler } from "./field-receipt";
+import { vanConfirmLoadHandler, vanConfirmUnloadHandler } from "./van-confirm";
+import { creditNoteCreateDraftHandler } from "./credit-note-draft";
 import type { SyncCommandHandler } from "./contract";
 
 /** key: `${entityType}:${intent}` — the ONLINE_ONLY entities never
@@ -56,7 +60,13 @@ import type { SyncCommandHandler } from "./contract";
  * intents land as ADDITIVE registry entries behind the frozen v2
  * envelope. CREATE-draft only for the new types — no update intents
  * exist for them (a non-owner device's update attempt is an
- * unknown-intent rejection by construction). */
+ * unknown-intent rejection by construction).
+ *
+ * PHASE-022 · DR-P22-06 (MASTER-PLAN §6 + §1): the three field write
+ * intents join the same way (rows 9/12/27 android-field): the field
+ * collection receipt POSTS at sync (like pos_sale), the two van
+ * confirmations operate on the 017 van ledger against the van snapshot,
+ * and the credit note is an OD draft (no posting) — CREATE only. */
 export const HANDLER_REGISTRY: ReadonlyMap<string, SyncCommandHandler> = new Map<
   string,
   SyncCommandHandler
@@ -75,6 +85,11 @@ export const HANDLER_REGISTRY: ReadonlyMap<string, SyncCommandHandler> = new Map
   ["cash_transfer:create_draft", cashTransferCreateDraftHandler],
   ["stock_transfer:create_draft", stockTransferCreateDraftHandler],
   ["stock_count:submit_lines", stockCountSubmitLinesHandler],
+  // -- PHASE-022 · DR-P22-06: the field write intents (registry 13 → 16) --
+  ["receipt:create_field_collection", receiptFieldCollectionHandler],
+  ["van:confirm_load", vanConfirmLoadHandler],
+  ["van:confirm_unload", vanConfirmUnloadHandler],
+  ["credit_note:create_draft", creditNoteCreateDraftHandler],
 ]);
 
 /** Handler lookup by (entityType, intent). */

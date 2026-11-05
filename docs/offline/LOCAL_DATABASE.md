@@ -69,6 +69,16 @@ Rules:
 4. Money columns are `TEXT` holding canonical decimal strings (`"1234.5000"`); quantities
    `TEXT` 6-decimal strings; never SQLite `REAL` (ADR-0009 §4).
 
+> **Status (2026-11-05, PHASE-022 COMPLETE):** the two Android subsets above are LIVE
+> exactly as specified — `@erp/mobile` (`apps/mobile/src/store/migrations.ts`): the field
+> profile applies `sync-core` v1–3 then the mobile field DDL (v4+: `van_stocks`,
+> `routes`, `settlement_templates`, `statements` read cache); the personal profile
+> applies its own minimal DDL (cursors + meta + personal read models ONLY — no
+> outbox/inbox, per rule 2 of §1.2's machinery split, because sync-core's v1 bundles
+> outbox creation with cursors — DR-P22-08b). Server-side feed groups + the
+> partner-scope filter shipped in PHASE-022 (migration 0033); the expo chaos profile
+> proves both stores on real SQLite files.
+
 ### 1.2 Core local machinery (all write-capable devices)
 
 ```ts

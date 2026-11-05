@@ -217,6 +217,12 @@ export const devices = pgTable(
     lastPullAt: timestamp("last_pull_at", { withTimezone: true, mode: "string" }),
     lastPushAt: timestamp("last_push_at", { withTimezone: true, mode: "string" }),
     dataExpiresAt: timestamp("data_expires_at", { withTimezone: true, mode: "string" }),
+    // PHASE-022 · DR-P22-05a (migration 0033): the personal-account device's
+    // linked partner — the server-side partner scope for the personal pull
+    // feeds (statements / sales_invoices / receipts / notifications). Nullable
+    // plain uuid (devices is service-mediated, no cross-plane FK); NULL = no
+    // linkage → the personal pull serves an empty partner scope (fail closed).
+    linkedPartnerId: uuid("linked_partner_id"),
   },
   (table) => [index("ix_devices_device_class").on(table.deviceClass)],
 );
@@ -3803,6 +3809,44 @@ export const deviceRefreshTokens = pgTable(
   (table) => [
     uniqueIndex("uq_device_refresh_tokens_token_hash").on(table.tokenHash),
     index("ix_device_refresh_tokens_device").on(table.deviceId),
+  ],
+);
+
+/**
+ * PHASE-022 · DR-P22-07a: the FCM skeleton's device-token opt-in store
+ * (migration 0034_device_push_tokens.sql — the device_refresh_tokens
+ * pattern: identity-owned, service-mediated, NO RLS by PHASE-003 §4; the
+ * devices table has no natural JSON column for push tokens — capabilities
+ * jsonb is the feed-scoping slice, trust_flags jsonb the admin plane).
+ * One active row per device (uq device_id — the PUT upsert key); a token
+ * never belongs to two devices (uq token). opted_in defaults FALSE —
+ * tokens are per-device, opt-in explicit (integrations §3.5: tokens come
+ * from the device registry, opt-in per device); locale is the device's
+ * notification locale, resolved BEFORE the channel call; revocation
+ * clears the rows (the devices kill switch).
+ */
+export const devicePushTokens = pgTable(
+  "device_push_tokens",
+  {
+    id: uuid("id").primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    version: integer("version").notNull().default(1),
+    deviceId: uuid("device_id")
+      .notNull()
+      .references(() => devices.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    platform: text("platform"),
+    optedIn: boolean("opted_in").notNull().default(false),
+    locale: text("locale").notNull().default("ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_device_push_tokens_device").on(table.deviceId),
+    uniqueIndex("uq_device_push_tokens_token").on(table.token),
   ],
 );
 

@@ -128,7 +128,13 @@ export const erpUiPlugin = {
           filename.includes("packages/ui/print/") ||
           // harness fixtures (perf probes replicate grid geometry for
           // comparison — measurement rigs, not component styling)
-          filename.includes("packages/ui/tests/");
+          filename.includes("packages/ui/tests/") ||
+          // PHASE-022 (DR-P22-02): apps/mobile/src/theme/tokens is the MOBILE
+          // token layer — the RN mirror of the canonical export
+          // (packages/ui/src/tokens). Raw values are legal there and ONLY
+          // there (byte-parity-gated by scripts/check-mobile-tokens.ts); all
+          // other mobile modules read tokens, exactly like packages/ui.
+          filename.includes("apps/mobile/src/theme/tokens");
         const HEX = /#[0-9a-fA-F]{3,8}\b/;
         const PX = /(?<![\w-])(\d+(?:\.\d+)?)px(?![\w-])/;
         function check(node, value) {

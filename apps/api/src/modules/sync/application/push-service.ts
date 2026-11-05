@@ -9,11 +9,15 @@ import { CountService } from "../../inventory/application/count-service";
 import { TransferService as InventoryTransferService } from "../../inventory/application/transfer-service";
 import { PartnerService } from "../../partners/application/partner-service";
 import { PosSaleService } from "../../sales/application/pos-channel/pos-sale-service";
+import { CreditNoteService } from "../../sales/application/credit-notes";
 import { DeliveryNoteService } from "../../sales/application/deliveries";
 import { SalesInvoiceService } from "../../sales/application/invoices";
 import { QuotationService } from "../../sales/application/quotations";
+import { AllocationService } from "../../treasury/application/allocation-service";
+import { ReceiptService } from "../../treasury/application/receipt-service";
 import { ExpenseService } from "../../treasury/application/expense-service";
 import { TransferService as TreasuryTransferService } from "../../treasury/application/transfer-service";
+import { VanStockService } from "../../distribution/application/van-stock-service";
 import { PosShiftFlowService } from "../../pos/application/shift-flow-service";
 import {
   PosDeviceNotFoundError,
@@ -423,6 +427,14 @@ export class PushService {
     treasuryTransfers: TreasuryTransferService,
     inventoryTransfers: InventoryTransferService,
     stockCounts: CountService,
+    // PHASE-022 · DR-P22-06: the owning services of the three field write
+    // intents (MASTER-PLAN §6 + §1) — additive constructor slots, same
+    // wiring as the 021 seven (the Nest container's instances; specs pass
+    // spec-constructed ones — the leads.spec pattern).
+    receipts: ReceiptService,
+    allocations: AllocationService,
+    vanStock: VanStockService,
+    creditNotes: CreditNoteService,
   ) {
     // The handlers call the DI'd owning-module services (single source of
     // instances; specs instantiate this class directly, which wires the
@@ -439,6 +451,10 @@ export class PushService {
       treasuryTransfers,
       inventoryTransfers,
       stockCounts,
+      receipts,
+      allocations,
+      vanStock,
+      creditNotes,
     });
   }
 

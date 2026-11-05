@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { sql, type SQL } from "drizzle-orm";
 
 import { PERMISSIONS_ENTITY_TYPE } from "@erp/contracts";
 
@@ -8,6 +8,11 @@ import { isFeedEntity, syncFeed } from "./change-log-writer";
 import { decodeCursor, encodeCursor, SYNC_CONTRACT_VERSION } from "./cursor-tokens";
 import { deviceClassOf, isEntityPullableByDevice, loadDevice } from "./feed-groups";
 import { pullPermissionSnapshot } from "./permission-snapshot";
+import {
+  STATEMENTS_ENTITY_TYPE,
+  statementPartnerIds,
+  pullStatementsFeed,
+} from "./statement-feed";
 
 /**
  * PHASE-020 · the v2 pull service (T5; SYNC_PROTOCOL §2 + MASTER-PLAN §5):
@@ -90,6 +95,7 @@ export async function pull(input: {
   // revoked → typed rejection before anything is served (§1.5).
   let deviceClass: string | null = null;
   let userId: string | null = null;
+  let linkedPartnerId: string | null = null;
   if (input.deviceId !== undefined) {
     const device = await loadDevice(input.deviceId);
     if (device === undefined) {
@@ -100,6 +106,7 @@ export async function pull(input: {
     }
     deviceClass = deviceClassOf(device);
     userId = device.userId;
+    linkedPartnerId = device.linkedPartnerId;
   }
 
   // (2) The pull-scope gate: entity in the device class's feed group (or
@@ -132,6 +139,37 @@ export async function pull(input: {
       envelope.resync = true;
     }
     return envelope;
+  }
+
+  // (3b) PHASE-022 · DR-P22-05 — the statements feed: the per-partner
+  // synthetic feed (computed at pull time, content-diff catch-up). Field
+  // serves its route customers; personal serves the linked partner ONLY
+  // (LOCAL_DATABASE §1.1 rule 2 — the scope is server-side, whatever
+  // cursor is presented). The group gate above has already passed, so a
+  // device is present here.
+  if (entityType === STATEMENTS_ENTITY_TYPE) {
+    const partnerIds = await statementPartnerIds({
+      deviceClass: deviceClass ?? "pos-terminal",
+      linkedPartnerId,
+    });
+    const page = await pullStatementsFeed({
+      partnerIds,
+      cursor: input.cursor,
+      limit,
+    });
+    const statementsEnvelope: PullEnvelopeV2 = {
+      entityType,
+      cursor: page.nextCursorToken,
+      nextCursor: page.nextCursorToken,
+      hasMore: page.hasMore,
+      changes: page.changes,
+      serverTime,
+      contractVersion: SYNC_CONTRACT_VERSION,
+    };
+    if (page.resync === true) {
+      statementsEnvelope.resync = true;
+    }
+    return statementsEnvelope;
   }
 
   // (4) Catch the feed up to the sources (same transaction — a pull never
@@ -185,11 +223,19 @@ export async function pull(input: {
 
   // (7) Serve the batch strictly in seq order: count cap (limit+1 fetch
   // detects hasMore) AND the 2 MB byte cap (first item always rides).
+  // PHASE-022 · DR-P22-05: android-personal devices serve ONLY their
+  // partner/user scope — the filter rides the same query (LOCAL_DATABASE
+  // §1.1 rule 2, server-side; a tampered device gets nothing outside its
+  // scope whatever cursor it presents).
+  const scope = personalServeScope(entityType, deviceClass, {
+    linkedPartnerId,
+    userId,
+  });
   const rows = await tx.execute(sql`
     SELECT seq, entity_id AS "entityId", op, payload, changed_at AS "changedAt",
            payload->>'version' AS "version"
     FROM change_log
-    WHERE entity_type = ${entityType} AND seq > ${afterSeq}
+    WHERE entity_type = ${entityType} AND seq > ${afterSeq} ${scope ?? sql``}
     ORDER BY seq ASC
     LIMIT ${limit + 1}
   `);
@@ -239,4 +285,52 @@ export async function pull(input: {
     serverTime,
     contractVersion: SYNC_CONTRACT_VERSION,
   };
+}
+
+// -- PHASE-022 · DR-P22-05 · the personal serve scope -------------------------------
+
+/**
+ * The android-personal serve filter (LOCAL_DATABASE §1.1 rule 2): every
+ * row a personal device pulls must belong to the linked partner (the
+ * partner-keyed entities) or the device user (notifications) — the change
+ * ledger is tenant-wide (the transport), the SCOPE is per-device and
+ * server-side. Undefined for every other class (desktop/pos/field ride
+ * their groups unfiltered — the 020 behavior unchanged).
+ *
+ * Scope keys (the payload contract per entity, packages/contracts
+ * feed-projections): `sales_invoices` carries `customerId`, `receipts`
+ * carries `partnerId`, `notifications` carries `userId`. A personal device
+ * with no linked partner serves an EMPTY partner scope (fail closed —
+ * never an unscoped serve); an entity type without a known key also fails
+ * closed (`AND false`), so the personal group can never leak a future
+ * entity by omission. `statements` never rides this path (its dedicated
+ * feed scopes by partner set); the defensive entry keeps that explicit.
+ */
+function personalServeScope(
+  entityType: string,
+  deviceClass: string | null,
+  device: { linkedPartnerId: string | null; userId: string | null },
+): SQL | undefined {
+  if (deviceClass !== "android-personal") {
+    return undefined;
+  }
+  const partnerId = device.linkedPartnerId;
+  switch (entityType) {
+    case "sales_invoices":
+      return partnerId === null
+        ? sql`AND false`
+        : sql`AND payload->>'customerId' = ${partnerId}`;
+    case "receipts":
+      return partnerId === null
+        ? sql`AND false`
+        : sql`AND payload->>'partnerId' = ${partnerId}`;
+    case "notifications":
+      return device.userId === null
+        ? sql`AND false`
+        : sql`AND payload->>'userId' = ${device.userId}`;
+    // statements rides its dedicated partner-set feed; anything else in
+    // the personal group without a scope key fails closed.
+    default:
+      return sql`AND false`;
+  }
 }

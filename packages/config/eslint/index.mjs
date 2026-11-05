@@ -12,6 +12,10 @@
  *  - Money/Quantity/Rate never constructed from JS numbers (custom rule).
  *  - No physical-direction utilities in packages/ui (custom rule — RTL rule,
  *    docs/ui/RTL_DESIGN_RULES.md).
+ *  - PHASE-022 (DR-P22-03): physical-direction React Native style props are
+ *    banned in apps/mobile/src/** (no-restricted-syntax keys +
+ *    no-restricted-properties member usage) — the RN port of
+ *    erp-ui/no-physical-direction, scoped by path like the blocks below.
  *
  * The negative boundary meta-test (scripts/ci/negative-boundary-test.sh) proves
  * that violations fail lint: `apps/web/src/__boundary-violations__/` is ignored
@@ -24,6 +28,59 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 const MONEY_TYPES = ["Money", "Quantity", "Rate"];
+
+/** DEPENDENCY_RULES.md §4 — floating math for money is banned (shared by the
+ * base rules below and by the PHASE-022 apps/mobile/src override, which fully
+ * replaces the `no-restricted-properties` config for matching files and so
+ * must repeat these entries — flat-config rules merge by replacement). */
+const NO_FLOATING_MATH = [
+  {
+    object: "Math",
+    property: "round",
+    message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009 half-up).",
+  },
+  {
+    object: "Math",
+    property: "floor",
+    message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009).",
+  },
+  {
+    object: "Math",
+    property: "ceil",
+    message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009).",
+  },
+  {
+    object: "Math",
+    property: "trunc",
+    message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009).",
+  },
+];
+
+/** PHASE-022 (DR-P22-03, MASTER-PLAN §3) — the physical-direction React Native
+ * style props banned in apps/mobile/src/**: RTL layout must use logical props
+ * only (RTL_DESIGN_RULES §1 — the RN port of erp-ui/no-physical-direction,
+ * which governs the tailwind-class form in packages/ui + apps/web). */
+const RN_PHYSICAL_STYLE_PROPS = [
+  "marginLeft",
+  "marginRight",
+  "paddingLeft",
+  "paddingRight",
+  "borderLeftWidth",
+  "borderRightWidth",
+  "borderLeftColor",
+  "borderRightColor",
+  "borderLeftRadius",
+  "borderRightRadius",
+];
+
+const RN_PHYSICAL_PROP_RE_SOURCE = RN_PHYSICAL_STYLE_PROPS.join("|");
+
+/** One message for every entry (no-restricted-syntax has no placeholders). */
+const RN_LOGICAL_PROPS_MESSAGE =
+  "Physical-direction React Native style prop is banned in apps/mobile/src (DR-P22-03, RTL_DESIGN_RULES §1 — the RN port of erp/no-physical-direction). " +
+  "Use logical props: marginStart/marginEnd/paddingStart/paddingEnd/start/end/borderStartWidth/borderEndWidth/textAlign 'start'|'end'. " +
+  "Escape hatch: inline `// rtl-exempt: <reason>` comment on the same line, paired with `// eslint-disable-next-line no-restricted-syntax, no-restricted-properties` " +
+  "(core rules cannot read comments — the rtl-exempt comment is the justification record; both-direction render tests required).";
 
 /** Custom local plugin rules (kept inline so they version with the config). */
 const erpRules = {
@@ -153,29 +210,7 @@ export function createEslintConfig(options = {}) {
           { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
         ],
         // DEPENDENCY_RULES.md §4 — floating math for money is banned.
-        "no-restricted-properties": [
-          "error",
-          {
-            object: "Math",
-            property: "round",
-            message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009 half-up).",
-          },
-          {
-            object: "Math",
-            property: "floor",
-            message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009).",
-          },
-          {
-            object: "Math",
-            property: "ceil",
-            message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009).",
-          },
-          {
-            object: "Math",
-            property: "trunc",
-            message: "Floating-point rounding is forbidden: use @erp/domain-core decimal helpers (ADR-0009).",
-          },
-        ],
+        "no-restricted-properties": ["error", ...NO_FLOATING_MATH],
         "erp-rules/no-money-from-number": "error",
         ...extraRules,
         "boundaries/element-types": [
@@ -261,6 +296,59 @@ export function createEslintConfig(options = {}) {
       // to prove the runtime rejects them — production code stays lint-banned.
       files: ["**/*.{test,spec}.ts", "**/*.{test,spec}.tsx"],
       rules: { "erp-rules/no-money-from-number": "off" },
+    },
+    {
+      // PHASE-022 (DR-P22-03, MASTER-PLAN §3) — RN logical style props ONLY in
+      // apps/mobile/src: physical-direction keys/assignments + textAlign
+      // 'left'|'right' are lint errors. Selectors match TS object-literal
+      // Property nodes (identifier + quoted-literal keys) and textAlign
+      // literal values; no-restricted-properties covers member usage
+      // (styles.marginLeft = …). NOTE: this block re-declares
+      // no-restricted-properties entirely, so the Math float ban is repeated
+      // via NO_FLOATING_MATH — dropping it here would weaken every other
+      // money rule for mobile sources.
+      files: ["**/apps/mobile/src/**/*.{ts,tsx}"],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          {
+            selector: `Property[key.name=/^(${RN_PHYSICAL_PROP_RE_SOURCE})$/]`,
+            message: RN_LOGICAL_PROPS_MESSAGE,
+          },
+          {
+            selector: `Property[key.type='Literal'][key.value=/^(${RN_PHYSICAL_PROP_RE_SOURCE})$/]`,
+            message: RN_LOGICAL_PROPS_MESSAGE,
+          },
+          {
+            // left:/right: as style-object keys (absolute positioning): use
+            // start/end (RN logical positioning props).
+            selector: "Property[key.name=/^(left|right)$/]",
+            message: RN_LOGICAL_PROPS_MESSAGE,
+          },
+          {
+            selector: "Property[key.type='Literal'][key.value=/^(left|right)$/]",
+            message: RN_LOGICAL_PROPS_MESSAGE,
+          },
+          {
+            selector:
+              "Property[key.name='textAlign'][value.type='Literal'][value.value=/^(left|right)$/]",
+            message: RN_LOGICAL_PROPS_MESSAGE,
+          },
+          {
+            selector:
+              "Property[key.type='Literal'][key.value='textAlign'][value.type='Literal'][value.value=/^(left|right)$/]",
+            message: RN_LOGICAL_PROPS_MESSAGE,
+          },
+        ],
+        "no-restricted-properties": [
+          "error",
+          ...NO_FLOATING_MATH,
+          ...RN_PHYSICAL_STYLE_PROPS.map((prop) => ({
+            property: prop,
+            message: RN_LOGICAL_PROPS_MESSAGE,
+          })),
+        ],
+      },
     },
     {
       files: ["**/apps/web/**/*.{js,ts,tsx,mjs}", "**/packages/ui/**/*.{js,ts,tsx,mjs}"],

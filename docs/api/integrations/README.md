@@ -109,6 +109,13 @@ from the device registry (opt-in per device); SMS providers TBD per market. Deli
 best-effort with retry + per-tenant quota; template + locale (ar/en) resolved before the
 call. Phase-gated with the Android app (PHASE-022+).
 
+PHASE-022 status: the skeleton landed — `NotificationChannelPort`
+(`send(request): Promise<{ok, providerMessageId?, error?}>`, the SmtpTransport seam
+convention) + `FcmChannelAdapter` in `apps/api/src/modules/notifications/` (disabled
+unless `FCM_CREDENTIALS` is set — the DisabledSmtpTransport pattern), the device-token
+opt-in surface `PUT /api/v1/devices/:id/push-token` (default OFF), and the fake-FCM
+contract tests (locale resolution, opt-in, quota, retry, no financial payloads).
+
 ### 3.6 Bank statement formats — `StatementParserPort`
 
 `parse(file: StatementFileRef): ParsedStatement` — pure functions per format family

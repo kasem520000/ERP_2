@@ -1,6 +1,6 @@
 # Development Setup
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-05
 
 Local development environment runbook for the Universal Business ERP Platform. It takes a
 new engineer or AI agent from a clean clone to a running stack: database, object storage,
@@ -102,9 +102,12 @@ testing job behavior closer to production topology.
 | `pnpm check:rls` | RLS presence + ENTITY_CATALOG drift checker (fails the build on violations; `MIGRATE_DATABASE_URL` required) |
 | `pnpm --filter @erp/api dev:worker` | Second process of the same image with `WORKER_MODE=1` (consumes pg-boss queues) |
 | `pnpm --filter @erp/desktop test` | The desktop TS runtime suite (real SQLite files + real minisign crypto — see [DESKTOP_QUICKSTART.md](DESKTOP_QUICKSTART.md)) |
+| `pnpm --filter @erp/mobile test` | The mobile TS runtime suite — 27 files / 393 tests: logic suites + REAL RN screen renders (AR/EN, a11y, ≥ 44 px) through the vitest Flow bridge (see [MOBILE_QUICKSTART.md](MOBILE_QUICKSTART.md)) |
 | `pnpm --filter @erp/web build:desktop` | The Tauri shell static export → `apps/web/out-desktop` (transient, gitignored — remove before linting; §11) |
 | `pnpm check:desktop-shell` | Desktop shell structural gate: `tauri.conf.json` invariants + bridge↔Rust command parity + export completeness + secret scan |
+| `pnpm check:mobile-tokens` / `check:mobile-i18n` | Mobile parity gates: the RN design-token mirror 130/130 (+50/50 derivations) · the mobile dictionary ar=en=371 |
 | `pnpm test:e2e-desktop` | The offline desktop journey E2E (AR + EN; real-runtime bridge double over a temp SQLite store) |
+| `pnpm check:mobile-shell` | The mobile structural gate (7 sections: the `native/` toolchain + entry wiring, eas/app-config invariants, the 11-screen registry, screen imports, the workspace boundary, token/RTL spot-checks) — EAS CI compiles the real thing |
 | `pnpm docs:validate` | `scripts/validate-docs.py` — link checker + phase-heading + catalog drift hook |
 
 ## 5. Environment variables (`.env.example` pattern)
@@ -309,7 +312,8 @@ pnpm --filter @erp/ui test:visual -- --update-snapshots   # regenerate baselines
 pnpm test:web-security                   # builds apps/web + probes §8 headers on :3100
 pnpm check:token-contrast                # DESIGN_TOKENS §16 AA matrix
 pnpm check:ui-catalog                    # export ↔ catalog-row parity
-pnpm check:i18n-parity                   # ar/en key parity (320/320)
+pnpm check:i18n-parity                   # ar/en key parity (web 3244=3244; the mobile
+                                         #   twin gate check:mobile-i18n asserts 371=371)
 ```
 
 Notes: baselines live in `packages/ui/__image_snapshots__` (tool-generated,
@@ -343,3 +347,31 @@ updater `--self-test`, the command map):
 [DESKTOP_QUICKSTART.md](DESKTOP_QUICKSTART.md); installed-client requirements
 (Windows 10/11 64-bit, WebView2 Evergreen minimum 109.0.1518.78):
 [DESKTOP_SYSTEM_REQUIREMENTS.md](DESKTOP_SYSTEM_REQUIREMENTS.md).
+
+## §12 PHASE-022 — Android application (Expo/RN) quickstart
+
+The Android application is the workspace package **`@erp/mobile`** (`apps/mobile`):
+all application logic (golden constants, the two-layer design-token mirror, the i18n
+runtime, auth/session/device security, the field + personal SQLite stores, the sync
+host over UNMODIFIED `@erp/sync-core`, the field-sales flow state machines, the
+rejection UX, the release policy, the RN screens) is TypeScript on plain Node — the
+**`native/`** dir (`apps/mobile/native/**` + `app.config.ts` + `eas.json` +
+`metro.config.js`) is the thin Expo glue, shipped as source and compiled only by the
+EAS release workflow (**DR-P22-01**, the `src-tauri` precedent). The bootstrap is the
+**same monorepo one** (`pnpm install` — expo is never installed by it:
+`pnpm-workspace.yaml` excludes `apps/mobile/native`; react/react-native are pure JS,
+and the vitest Flow bridge strips react-native's Flow syntax so REAL screen renders
+work on Node):
+
+```bash
+pnpm --filter @erp/mobile test        # 27 files / 393 tests — logic + real AR/EN renders
+pnpm --filter @erp/mobile typecheck   # tsc --noEmit (strict; native/ excluded)
+pnpm check:mobile-tokens              # the RN token mirror: 130/130 + 50/50 derivations
+pnpm check:mobile-i18n                # the mobile dictionary: ar=en=371
+pnpm check:mobile-shell               # the structural shell gate (no Android SDK needed)
+```
+
+Android toolchain (SDK + EAS CLI) is needed ONLY for device builds — the release
+workflow installs `apps/mobile/native` standalone and runs `eas build`; the honest
+deferral doctrine (what the sandbox proves vs what EAS CI / the device farm proves) is
+part of the loop: [MOBILE_QUICKSTART.md](MOBILE_QUICKSTART.md).

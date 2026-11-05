@@ -70,6 +70,21 @@ export const MIGRATIONS: readonly string[] = [
   // Backward compatible: every existing writer still provides a hash.
   // See 0032_device_enrollment_one_time.sql.
   "0032_device_enrollment_one_time",
+  // PHASE-022 DR-P22-05a (MASTER-PLAN §1 item 5): devices.linked_partner_id —
+  // the personal-account device's linked partner, the server-side partner
+  // scope for the personal pull feeds (LOCAL_DATABASE §1.1 rule 2). Nullable
+  // plain uuid (devices stays service-mediated — no cross-plane FK); NULL =
+  // no linkage → the personal pull serves an empty partner scope (fail
+  // closed). No business-schema change. See 0033_mobile_feeds.sql.
+  "0033_mobile_feeds",
+  // PHASE-022 DR-P22-07a (MASTER-PLAN §1 item 7): the FCM skeleton's
+  // device-token opt-in store — the dedicated service-mediated table (the
+  // 0029 device_refresh_tokens pattern; devices has no natural JSON column
+  // for push tokens). opted_in defaults FALSE (explicit opt-in, default OFF);
+  // one active row per device (uq device_id), a token never belongs to two
+  // devices (uq token); revocation clears the rows. No business-schema change
+  // (the DR-P22-05a reading). See 0034_device_push_tokens.sql.
+  "0034_device_push_tokens",
 ];
 
 /**

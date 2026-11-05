@@ -31,7 +31,18 @@ import { REQUIRE_PERMISSIONS_KEY, type RequirePermissionMetadata } from "./requi
  * granted to every authenticated user for self-targeted routes only.
  */
 
-const SELF_SCOPE_KEYS = new Set(["identity.mfa.manage", "sync.devices.revoke"]);
+const SELF_SCOPE_KEYS = new Set([
+  "identity.mfa.manage",
+  "sync.devices.revoke",
+  // PHASE-022 · DR-P22-07: the device-token opt-in route's self scope — the
+  // device itself calls PUT /api/v1/devices/:id/push-token post-registration
+  // with its device credentials (the 15-min access token resolves the user;
+  // the controller enforces the ownership boundary: the device's own user,
+  // or an admin holding the key — the revoke route's self/admin split). The
+  // plain identity.devices.manage routes (list/get/patch) carry no self
+  // flag, so they stay admin-only.
+  "identity.devices.manage",
+]);
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {

@@ -225,6 +225,20 @@
       "when": 1793528830534,
       "tag": "0032_device_enrollment_one_time",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793614849000,
+      "tag": "0033_mobile_feeds",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793615000000,
+      "tag": "0034_device_push_tokens",
+      "breakpoints": true
     }
   ]
 }

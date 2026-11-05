@@ -266,16 +266,43 @@ const POS_FEED_GROUP = [
   "cashier_shifts",
 ] as const;
 
+/** PHASE-022 · DR-P22-05 — the field feed group (MASTER-PLAN §0 golden
+ * constants): the POS base + the field-sales read models — the van stock
+ * snapshot (`van_stocks`, the PHASE-017 mirror), route customers (`routes`,
+ * headers + their customer lists), the rep settlement template
+ * (`settlement_templates`, the PHASE-017 `rep_settlements` read model —
+ * the 022 mobile cache's name for it), and per-partner statements
+ * (`statements`, computed per pull over the AR subledger; the field serve
+ * is scoped to route customers, LOCAL_DATABASE §1.1). */
+const FIELD_FEED_GROUP = [
+  ...POS_FEED_GROUP,
+  "van_stocks",
+  "routes",
+  "settlement_templates",
+  "statements",
+] as const;
+
+/** PHASE-022 · DR-P22-05 — the personal feed group (MASTER-PLAN §0 golden
+ * constants): the personal read models, partner-scoped server-side (the
+ * linked partner ONLY — LOCAL_DATABASE §1.1 rule 2: a tampered device
+ * cannot pull other partners' rows; a device without linkage pulls an
+ * empty scope, fail closed). `statements` is per-partner (linked partner);
+ * `sales_invoices`/`receipts` carry the partner key in the payload;
+ * `notifications` is per device user. */
+const PERSONAL_FEED_GROUP = ["statements", "sales_invoices", "receipts", "notifications"] as const;
+
 /** Feed groups per device class (pull scope — server-enforced; a device
  * asking outside its group gets SYNC_ENTITY_NOT_PULLED, no existence
  * leak). desktop adds the sales-invoice read cache (DRAFT+POSTED
- * headers); field rides the POS group (van feeds are 022 — deferred);
- * personal is honestly empty until 022. */
+ * headers). PHASE-022 (DR-P22-05): field gains the field-sales read
+ * models (van_stocks/routes/settlement_templates + route-customer
+ * statements); personal — honestly empty through 021 — gains the
+ * partner-scoped personal read models. */
 export const FEED_GROUPS = {
   pos: POS_FEED_GROUP,
   desktop: [...POS_FEED_GROUP, "sales_invoices"],
-  field: POS_FEED_GROUP,
-  personal: [],
+  field: FIELD_FEED_GROUP,
+  personal: PERSONAL_FEED_GROUP,
 } as const;
 
 export type FeedGroupKey = keyof typeof FEED_GROUPS;
@@ -550,6 +577,41 @@ export {
   type StockCountSubmitLinesPayload,
   type StockTransferCreateDraftPayload,
 } from "./desktop-intents";
+
+// -- PHASE-022 · DR-P22-06 · the field write-intent payload schemas ------------
+//
+// ADDITIVE, VERSION-FROZEN (the DR-P21-08 rules, applied to the 022 field
+// intents): per-intent payload schemas riding the v2 command envelope above
+// unchanged. Each mirrors the OWNING module service's create/post input
+// (receipt treasury create+post chain, the PHASE-017 van transfer chain,
+// the sales credit-note draft); CREATE only (no offline update intents).
+export {
+  creditNoteCreateDraftPayloadSchema,
+  receiptCreateFieldCollectionPayloadSchema,
+  vanConfirmLoadPayloadSchema,
+  vanConfirmUnloadPayloadSchema,
+  type CreditNoteCreateDraftPayload,
+  type ReceiptCreateFieldCollectionPayload,
+  type VanConfirmLoadPayload,
+  type VanConfirmUnloadPayload,
+} from "./field-intents";
+
+// -- PHASE-022 · DR-P22-05 · the mobile feed LITE payload shapes -----------------
+//
+// Explicit column subsets for the 022 feed entities (LOCAL_DATABASE §1.1
+// rule 3: defined here so the server feed writers and the device-side
+// consumers share ONE shape; money/quantities as TEXT canonical decimal
+// strings — ADR-0009).
+export type {
+  NotificationLite,
+  ReceiptLite,
+  RouteCustomerLite,
+  RouteLite,
+  SettlementTemplateLite,
+  StatementEntryLite,
+  StatementLite,
+  VanStockLite,
+} from "./feed-projections";
 
 // -- PHASE-020 · the machine capabilities fixture (MASTER-PLAN §15, T17) --------
 //

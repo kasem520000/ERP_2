@@ -149,6 +149,21 @@ the in-memory adapter (a documented transaction pass-through — real SQLite lan
 PHASE-021; the D-04 caveat is recorded in the completion report) and the genuine
 service graph (real posting engine, real PG + RLS) — no domain mocks.
 
+**Status note (2026-11-05, PHASE-022 COMPLETE):** the Expo/SQLite device profile is live
+in `apps/api/src/__db__/sync/expo/` — 4 files / 27 tests green on embedded PG16: the FULL
+matrix C-01…C-16 (+C-11b) re-driven on the real mobile store
+(`expo-chaos.spec.ts`, 19 tests / 11.3 s) with battery/connectivity fault profiles
+(airplane windows, Doze-deferred backgrounds, connectivity flaps; deterministic seeds),
+the device-security drills `d-expo-store.spec.ts` (D-01 revocation purge incl. the
+personal read models, D-02 structure-level store inspection, D-04 watermark, the 128 MB
+byte-exact prune under fault), and the real-SIGKILL `kill-matrix.spec.ts` (boot /
+pre-commit / post-commit-pre-ack / mid-pull → WAL recovery, IN_FLIGHT→QUEUED,
+convergence, duplicate:true replays). Whole expo dir ≈ 14.6 s (≤ 10 min budget); the
+on-device C-06/C-07/C-13 leg (device farm / emulator matrix) is wired as the documented
+`device-farm` job in `.github/workflows/mobile-release.yml` — the honest deferral list
+in [reports/PHASE-022-COMPLETION.md](../implementation/phases/reports/PHASE-022-COMPLETION.md)
+records what the sandbox cannot prove.
+
 **Status note (2026-11-04, PHASE-021 COMPLETE):** the **desktop profile is LIVE** — the
 full matrix now runs against the REAL file store: `apps/api/src/__db__/sync/desktop/`
 (3 spec files, 27 tests, one invocation incl. the PG global-setup — **13 s wall vs the

@@ -29,6 +29,25 @@ import { requireTenantContext } from "../../../infra/db/tenant-context";
  * tombstone: their deactivation is ordinary data (status INACTIVE /
  * ARCHIVED rides the UPSERT payload).
  *
+ * PHASE-022 · DR-P22-05 — the mobile feed entities (MASTER-PLAN §0 golden
+ * constants + §6): routes / settlement_templates (the rep_settlements
+ * read model) / receipts / notifications join the generic catch-up as
+ * ordinary table-backed projections — every one of them has `updated_at` +
+ * `version` and NO delete lifecycle (deactivation/cancellation rides
+ * status), so they never tombstone (the 020 no-soft-delete rule).
+ * `van_stocks` is the one 022 source with a hard-delete lifecycle: the
+ * PHASE-017 mirror is rebuilt by delete+insert inside the owning
+ * transaction (refreshVanStockMirror), so its row ids churn on every
+ * refresh. It rides a DEDICATED catch-up (syncVanStockFeed) that (a)
+ * re-emits the touched warehouse slice as ordinary UPSERTs and (b)
+ * diffs the last-fed state against the current mirror to emit DELETE
+ * entries (+ tombstones) for keys that vanished since the previous
+ * catch-up — a device's van stock cache converges exactly.
+ * `statements` is NOT table-backed (the PHASE-12/13 per-partner statement
+ * read model, computed at pull time) and is routed by the pull service
+ * to the dedicated statement feed (./statement-feed); its case below is
+ * defensive only.
+ *
  * The watermark per entity type lives ON the change_log tail (the max
  * source changedAt already fed) — restart-safe and idempotent: re-feeding
  * a source row appends another UPSERT (seq order preserved; clients apply
@@ -207,6 +226,100 @@ async function projectSource(
       `);
       return (rows.rows as unknown as Record<string, unknown>[]).map(mapRow);
     }
+    // PHASE-022 (field group): the van-stock mirror projection — but the
+    // 017 mirror has a hard-delete lifecycle (delete+insert rebuild), so
+    // this entity never rides the generic catch-up; the pull service
+    // routes it to syncVanStockFeed (below). Defensive only — an empty
+    // projection keeps the feed honest if the routing ever regresses.
+    case "van_stocks":
+      return [];
+    // PHASE-022 (field group): route headers + their ordered customer
+    // lists (route_customers) — the route-customers read model rides the
+    // route row (0025 columns; no delete lifecycle, INACTIVE rides status).
+    case "routes": {
+      const rows = await tx.execute(sql`
+        SELECT r.id, r.updated_at AS "changedAt", r.version, r.code, r.name,
+               r.name_ar AS "nameAr", r.sales_rep_id AS "salesRepId",
+               r.van_warehouse_id AS "vanWarehouseId", r.day_pattern AS "dayPattern",
+               r.status,
+               COALESCE((
+                 SELECT json_agg(json_build_object(
+                           'partnerId', rc.customer_id, 'visitOrder', rc.visit_order,
+                           'isPinned', rc.is_pinned)
+                         ORDER BY rc.visit_order, rc.customer_id)
+                 FROM route_customers rc
+                 WHERE rc.route_id = r.id AND rc.tenant_id = r.tenant_id
+               ), '[]'::json) AS customers
+        FROM routes r
+        WHERE ((${sinceFallback}::boolean AND r.updated_at IS NOT NULL)
+            OR r.updated_at ${sinceClause})
+        ORDER BY r.updated_at NULLS FIRST, r.id LIMIT ${limit}
+      `);
+      return (rows.rows as unknown as Record<string, unknown>[]).map(mapRow);
+    }
+    // PHASE-022 (field group): the rep settlement day template — the
+    // PHASE-017 rep_settlements header (settlement_no is NULL until
+    // numbering assigns it at posting; CANCELLED rides status — ordinary
+    // data, the 020 no-soft-delete rule). Money as TEXT decimal strings
+    // (ADR-0009).
+    case "settlement_templates": {
+      const rows = await tx.execute(sql`
+        SELECT s.id, s.updated_at AS "changedAt", s.version,
+               s.settlement_no AS "settlementNo", s.sales_rep_id AS "salesRepId",
+               s.van_warehouse_id AS "vanWarehouseId", s.shift_id AS "shiftId",
+               s.settlement_date::text AS "settlementDate", s.status,
+               s.opening_cash::text AS "openingCash", s.cash_sales::text AS "cashSales",
+               s.collections::text AS "collections", s.cash_refunds::text AS "cashRefunds",
+               s.rep_expenses::text AS "repExpenses", s.expected_cash::text AS "expectedCash",
+               s.counted_cash::text AS "countedCash", s.variance::text AS "variance",
+               s.variance_direction AS "varianceDirection",
+               s.deposit_amount::text AS "depositAmount"
+        FROM rep_settlements s
+        WHERE ((${sinceFallback}::boolean AND s.updated_at IS NOT NULL)
+            OR s.updated_at ${sinceClause})
+        ORDER BY s.updated_at NULLS FIRST, s.id LIMIT ${limit}
+      `);
+      return (rows.rows as unknown as Record<string, unknown>[]).map(mapRow);
+    }
+    // PHASE-022 (personal group): the treasury receipt header (0012; no
+    // delete lifecycle, CANCELLED rides status — ordinary data). partnerId
+    // is the partner-scope key the personal serve filter reads
+    // (LOCAL_DATABASE §1.1 rule 2). receipt_no is NULL until posting.
+    case "receipts": {
+      const rows = await tx.execute(sql`
+        SELECT r.id, r.updated_at AS "changedAt", r.version, r.receipt_no AS "receiptNo",
+               r.status, r.partner_id AS "partnerId", r.method, r.currency_code AS "currencyCode",
+               r.amount::text AS "amount", r.value_date::text AS "valueDate",
+               r.reference, r.posted_at AS "postedAt"
+        FROM receipts r
+        WHERE ((${sinceFallback}::boolean AND r.updated_at IS NOT NULL)
+            OR r.updated_at ${sinceClause})
+        ORDER BY r.updated_at NULLS FIRST, r.id LIMIT ${limit}
+      `);
+      return (rows.rows as unknown as Record<string, unknown>[]).map(mapRow);
+    }
+    // PHASE-022 (personal group): the per-user notification cache (0021;
+    // never deleted — read_at flips, categories append). userId is the
+    // per-user scope key the personal serve filter reads (a NULL-user row
+    // is a broadcast that no personal feed ever serves).
+    case "notifications": {
+      const rows = await tx.execute(sql`
+        SELECT n.id, n.updated_at AS "changedAt", n.version, n.user_id AS "userId",
+               n.category, n.severity, n.title, n.body,
+               n.action_label AS "actionLabel", n.action_url AS "actionUrl",
+               n.read_at AS "readAt"
+        FROM notifications n
+        WHERE ((${sinceFallback}::boolean AND n.updated_at IS NOT NULL)
+            OR n.updated_at ${sinceClause})
+        ORDER BY n.updated_at NULLS FIRST, n.id LIMIT ${limit}
+      `);
+      return (rows.rows as unknown as Record<string, unknown>[]).map(mapRow);
+    }
+    // PHASE-022: the per-partner statement snapshots — NOT table-backed
+    // (computed at pull time by ./statement-feed, routed by the pull
+    // service before the generic catch-up). Defensive only.
+    case "statements":
+      return [];
   }
 }
 
@@ -246,6 +359,13 @@ async function upsertTombstone(entityType: string, entityId: string, deletedAt: 
 /** Feed the change log from the sources (catch-up), return the new
  * watermark for the entity type. Chunked per SYNC_PROTOCOL §2.5. */
 export async function syncFeed(entityType: FeedEntity, chunk = 500): Promise<string | null> {
+  // PHASE-022 · DR-P22-05: the van-stock mirror's hard-delete rebuild
+  // (delete+insert per refresh) needs the vanished-key DELETE diff — the
+  // generic watermark projection cannot express it. Every other entity
+  // rides the generic catch-up below.
+  if (entityType === "van_stocks") {
+    return syncVanStockFeed();
+  }
   const tx = requireTenantContext().tx!;
   const watermarkRow = await tx.execute(sql`
     SELECT max((payload->>'changedAt')) AS wm FROM change_log WHERE entity_type = ${entityType}
@@ -272,6 +392,136 @@ export async function syncFeed(entityType: FeedEntity, chunk = 500): Promise<str
     return syncFeed(entityType, chunk);
   }
   return projected.length > 0 ? projected[projected.length - 1]!.changedAt : watermark;
+}
+
+// -- PHASE-022 · DR-P22-05 · the van-stock feed (dedicated catch-up) ---------------
+//
+// The PHASE-017 mirror is rebuilt by delete+insert inside the owning
+// transaction (distribution.store.refreshVanStockMirror): every refresh
+// drops the previous rows and inserts fresh ones (new uuids, updated_at =
+// now), scoped to the touched warehouses. Two consequences the generic
+// watermark projection cannot express:
+//
+//  (1) UPSERT side — ordinary: rows with updated_at > watermark are the
+//      freshly (re-)inserted slice; clients apply last-writer-wins by id.
+//      After any van movement the whole touched slice re-feeds (bounded
+//      by the mirror's size; idempotent re-feeding, §2.5 chunking).
+//  (2) DELETE side — the mirror row a device previously fetched can
+//      VANISH (the key's net qty hit 0, or the warehouse emptied), and a
+//      hard delete leaves no tombstone substrate. This catch-up diffs the
+//      LAST-FED state (the latest change_log entry per entity id for the
+//      'van_stocks' slice) against the CURRENT mirror: an id whose last
+//      fed op is UPSERT but which is absent from the mirror now is fed as
+//      op:'DELETE' (+ a tombstones row, the 0029 GC ledger). The diff is
+//      idempotent — once the DELETE is appended, the id's last-fed op
+//      becomes DELETE and the next catch-up emits nothing for it, so a
+//      quiet tenant's feed stays quiet.
+
+/** The per-entity-type watermark over the change_log tail (shared shape). */
+async function feedWatermark(entityType: "van_stocks"): Promise<string | null> {
+  const tx = requireTenantContext().tx!;
+  const rows = await tx.execute(sql`
+    SELECT max((payload->>'changedAt')) AS wm FROM change_log WHERE entity_type = ${entityType}
+  `);
+  const tail = (rows.rows as unknown as { wm: string | null }[])[0];
+  return tail !== undefined && tail.wm !== null && tail.wm !== undefined ? tail.wm : null;
+}
+
+/** Append one feed entry (+ its tombstone on DELETE) — the shared insert. */
+async function appendFeedEntry(
+  entityType: "van_stocks",
+  change: ProjectedChange,
+): Promise<void> {
+  const tx = requireTenantContext().tx!;
+  await tx.execute(sql`
+    INSERT INTO change_log (tenant_id, entity_type, entity_id, op, payload)
+    VALUES (erp.current_tenant_id(), ${entityType}, ${change.id}, ${change.op},
+            ${change.payload === null ? sql`NULL` : sql`${JSON.stringify(change.payload)}::jsonb`})
+  `);
+  if (change.op === "DELETE") {
+    await upsertTombstone(entityType, change.id, change.changedAt);
+  }
+}
+
+/** The current mirror state (all rows — the diff baseline + the LITE
+ * projection source; 0025 columns, money/qty as TEXT decimal strings). */
+async function currentVanStocks(): Promise<
+  { id: string; row: Record<string, unknown>; changedAt: string }[]
+> {
+  const tx = requireTenantContext().tx!;
+  const rows = await tx.execute(sql`
+    SELECT v.id, v.updated_at AS "changedAt", v.version,
+           v.warehouse_id AS "warehouseId", v.item_id AS "itemId", v.batch_id AS "batchId",
+           v.qty::text AS "qty", v.value::text AS "value",
+           v.refreshed_at AS "refreshedAt"
+    FROM van_stocks v
+    ORDER BY v.updated_at NULLS FIRST, v.id
+  `);
+  return (rows.rows as unknown as Record<string, unknown>[]).map((row) => ({
+    id: String(row.id),
+    row,
+    changedAt: row.changedAt instanceof Date ? row.changedAt.toISOString() : String(row.changedAt),
+  }));
+}
+
+/** The last-fed op per entity id over the van_stocks slice. */
+async function lastFedVanStockOps(): Promise<Map<string, "UPSERT" | "DELETE">> {
+  const tx = requireTenantContext().tx!;
+  const rows = await tx.execute(sql`
+    SELECT DISTINCT ON (entity_id) entity_id AS "entityId", op
+    FROM change_log
+    WHERE entity_type = 'van_stocks'
+    ORDER BY entity_id, seq DESC
+  `);
+  const ops = new Map<string, "UPSERT" | "DELETE">();
+  for (const row of rows.rows as unknown as { entityId: string; op: "UPSERT" | "DELETE" }[]) {
+    ops.set(row.entityId, row.op);
+  }
+  return ops;
+}
+
+/** The van-stock catch-up: watermark projection + the vanished-key diff. */
+async function syncVanStockFeed(): Promise<string | null> {
+  const watermark = await feedWatermark("van_stocks");
+  const current = await currentVanStocks();
+
+  // (1) Ordinary UPSERTs: rows (re-)inserted since the watermark. The
+  // comparison mirrors the generic writer's `updated_at > since` clause in
+  // TS so the DELETE baseline (the same rows) is read once, whole.
+  let lastChangedAt = watermark;
+  for (const entry of current) {
+    const isNew =
+      watermark === null ? entry.changedAt !== "" : entry.changedAt > watermark;
+    if (!isNew) {
+      continue;
+    }
+    await appendFeedEntry("van_stocks", {
+      changedAt: entry.changedAt,
+      id: entry.id,
+      op: "UPSERT",
+      payload: entry.row,
+    });
+    lastChangedAt = entry.changedAt;
+  }
+
+  // (2) The vanished-key diff: ids fed as UPSERT that are gone from the
+  // mirror now — op:'DELETE' + a tombstones row (bounded by the vanished
+  // set; idempotent: their last-fed op flips to DELETE, so a quiet
+  // tenant's feed stays quiet).
+  const lastFed = await lastFedVanStockOps();
+  const currentIds = new Set(current.map((entry) => entry.id));
+  const vanishedAt = new Date().toISOString();
+  for (const [entityId, op] of lastFed) {
+    if (op === "UPSERT" && !currentIds.has(entityId)) {
+      await appendFeedEntry("van_stocks", {
+        changedAt: vanishedAt,
+        id: entityId,
+        op: "DELETE",
+        payload: null,
+      });
+    }
+  }
+  return lastChangedAt;
 }
 
 /** One in-transaction feed entry (the pushed-command writer, below). */

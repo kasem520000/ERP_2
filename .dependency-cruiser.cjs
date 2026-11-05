@@ -52,10 +52,22 @@ module.exports = {
         "runtime (ReferenceDevice over the real SQLite file store, SIGKILL children, " +
         "D-01/D-02/D-04/D-06, C-08 signed updates) — may import apps/desktop through the " +
         "sanctioned workspace devDependency (the T-P21-3-a brief's ONE ownership-boundary " +
-        "exception). That test directory only; every production API path keeps the blanket ban.",
+        "exception). PHASE-022 exception (MASTER-PLAN §9, the expo chaos profile; " +
+        "T-P22-3a): apps/api/src/__db__/sync/expo/** joins it — the same harness shape " +
+        "driving the REAL @erp/mobile runtime (mobile store on a temp SQLite file via " +
+        "the node driver, C-01…C-16 + D-01/D-02/D-04 + fault profiles). Test " +
+        "directories only; every production API path keeps the blanket ban.",
       // PHASE-021: the sanctioned desktop-chaos-profile harness dir (T-P21-3-a)
       // is the only apps/api surface allowed to reach @erp/desktop.
-      from: { path: "^apps/api", pathNot: "^apps/api/src/__db__/sync/desktop/" },
+      // PHASE-022: the expo chaos profile harness dir (T-P22-3-a) may reach
+      // @erp/mobile the same way.
+      from: {
+        path: "^apps/api",
+        pathNot: [
+          "^apps/api/src/__db__/sync/desktop/",
+          "^apps/api/src/__db__/sync/expo/",
+        ],
+      },
       to: { path: "^apps/(web|desktop|mobile)" },
     },
     {

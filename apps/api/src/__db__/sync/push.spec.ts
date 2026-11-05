@@ -25,9 +25,13 @@ import { DeliveryNoteService } from "../../modules/sales/application/deliveries"
 import { PartnerService } from "../../modules/partners/application/partner-service";
 import { ShiftService } from "../../modules/treasury/application/shift-service";
 import { AccountService } from "../../modules/treasury/application/account-service";
+import { AllocationService } from "../../modules/treasury/application/allocation-service";
+import { ReceiptService } from "../../modules/treasury/application/receipt-service";
+import { SettlementCore } from "../../modules/treasury/application/fx-settlement";
 import { ExpenseService } from "../../modules/treasury/application/expense-service";
 import { PettyCashGuard } from "../../modules/treasury/application/petty-cash-service";
 import { TransferService as TreasuryTransferService } from "../../modules/treasury/application/transfer-service";
+import { VanStockService } from "../../modules/distribution/application/van-stock-service";
 import { WarehouseService } from "../../modules/inventory/application/warehouse-service";
 import { OpeningStockService } from "../../modules/inventory/application/opening-stock-service";
 import { TransferService as InventoryTransferService } from "../../modules/inventory/application/transfer-service";
@@ -79,6 +83,12 @@ const expenses = new ExpenseService(audit, posting, numbering, pettyCash, resolv
 const treasuryTransfers = new TreasuryTransferService(audit, posting, numbering, pettyCash);
 const inventoryTransfers = new InventoryTransferService(audit, posting, numbering);
 const stockCounts = new CountService(audit, posting, numbering);
+// PHASE-022 · DR-P22-06: the three field write intents' owning services
+// (the additive PushService constructor slots — same instances, same graph).
+const settlement = new SettlementCore(audit, posting, numbering);
+const receipts = new ReceiptService(audit, settlement);
+const allocations = new AllocationService(audit);
+const vanStock = new VanStockService(audit, inventoryTransfers);
 const push = new PushService(
   posSales,
   shiftFlow,
@@ -91,6 +101,10 @@ const push = new PushService(
   treasuryTransfers,
   inventoryTransfers,
   stockCounts,
+  receipts,
+  allocations,
+  vanStock,
+  creditNotes,
 );
 
 /** Narrow an item to its REJECTED variant (typed access to reason/action). */

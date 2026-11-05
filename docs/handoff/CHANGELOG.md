@@ -1,8 +1,88 @@
 # Changelog
 
-> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-04
+> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-05
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
+
+- 2026-11-05 — **PHASE-022 — Android Application (COMPLETE)**: the Expo/React Native
+  client (ADR-0014) ships as **ONE app, TWO capability experiences** — `android-field`
+  (van sales, collections, van load/unload, returns, counts, route visits) +
+  `android-personal` (the read-only partner companion) — with scoping at device
+  registration, never by build variant. `apps/mobile` = `@erp/mobile`, ALL application
+  logic in TypeScript over the UNMODIFIED `packages/sync-core` (36/36 byte-identical):
+  **DR-P22-01** the TS workspace package (contracts/domain-core/sync-core +
+  react/react-native only — never packages/ui, depcruise-enforced) + the `native/`
+  Expo glue dir excluded from the pnpm workspace (the src-tauri precedent — the root
+  install never installs expo; the EAS release workflow compiles it;
+  `check:mobile-shell` gates the structure; `"main": "./native/App.tsx"` with the
+  library surface intact); **DR-P22-02** the two-layer design-token mirror behind the
+  root `check:mobile-tokens` gate (130/130 + 50/50 derivations) + the RN primitives
+  with the binding status-badge/finance-sign maps; **DR-P22-03** the RTL
+  logical-props-only ESLint ban (the RN port of `erp/no-physical-direction`,
+  negative-proven; bidi U+2068/U+2069 isolation); **DR-P22-04** the AR-first typed
+  dictionary behind `check:mobile-i18n` (ar=en=371; latn + tabular-nums identifiers,
+  arab display tenant-configurable; the web gate untouched at 3244=3244); **DR-P22-08**
+  the mobile store (field migrations v4+ with TEXT money/qty, the 128 MB byte-exact
+  LRU prune — the DR-P21-03 port, the proven §6.4 corruption drill) + the thin sync
+  host with the §8 trigger set (2-min dirty foreground, 5 s connectivity debounce,
+  after-write fast push, ≤ 15 min background), the 8 MB pull / 2 MB push / 256 KB
+  personal budget guards, the C-08 contract gate → read-only + force-update prompt,
+  and the D-01 revocation purge, + **DR-P22-08b** the personal profile = cursors +
+  meta + read models ONLY — no outbox/inbox, push structurally unreachable (three
+  layers); **DR-P22-09** device security (the SecureStore vault `erp.<deviceId>.*`,
+  memory-only 15-min access tokens with silent refresh, rotation reuse = theft → wipe
+  + re-login — non-credential failures never wipe, biometric-optional unlock + PIN
+  never a brick, best-effort trust signals → trustFlags → degrade-to-online-only
+  until admin ack (D-07), FLAG_SECURE on the 8 financial screens, the D-04 7-day
+  watermark); **DR-P22-11** the 11-screen registry — real renders AR/EN with a11y +
+  ≥ 44 px targets through the vitest Flow bridge (the 1-a deferral solved), honest
+  states (PENDING_SYNC → POSTED/REJECTED(editable), as-of labels, ONLINE-ONLY
+  disabled-with-reason never queued), LOCAL-VALID† advisory pre-validation, the FULL
+  CONFLICT_RESOLUTION §3 rejection table (all 10 codes + traceId audit; resend = NEW
+  commandId + fresh idempotencyKey); **DR-P22-10** release engineering (eas.json +
+  native/package.json + `mobile-release.yml`: gates → shell → tokens/i18n → native
+  install → S-15/FCM warn-and-continue provisioning → EAS build → SBOM → apk/aab →
+  the staged-rollout config + the `minVersion` release manifest + the device-farm
+  job; the ReleasePolicy/rollout client modules — calver compare, the force-update
+  decision, promote 10→50 ≥ 99.5%/≥ 200 and 50→100 ≥ 99.7%/≥ 500, halt < 98.5% at
+  ANY sample size with the minVersion remedy; the structural CI test). Server-side
+  (the reuse-first additions): **DR-P22-05** the feed activation — FEED_GROUPS.field =
+  POS + van_stocks + routes + settlement_templates + statements; personal =
+  statements + sales_invoices + receipts + notifications (partner-scoped
+  server-side, tampered-pull-proof) — with **DR-P22-05a** migration
+  `0033_mobile_feeds.sql` (`devices.linked_partner_id` only; "no DB changes" read as
+  *no business-schema changes*) + the 3-b registration writer (the link validated
+  against the registering identity's partner authorization); **DR-P22-06** the
+  write-intent registry 13→**17** (`receipt:create_field_collection`,
+  `van:confirm_load`, `van:confirm_unload`, `credit_note:create_draft` — owning
+  services only, typed rejections with machine-readable details, duplicate:true
+  replays); **DR-P22-07** the FCM skeleton (NotificationChannelPort + the
+  disabled-by-default FcmChannelAdapter, locale resolved pre-call, opt-in default
+  OFF, per-tenant quota, NO financial payloads — three enforcement layers) +
+  **DR-P22-07a** migration `0034_device_push_tokens.sql` + the
+  `PUT /devices/:id/push-token` surface (revocation clears tokens). The expo chaos
+  profile (`apps/api/src/__db__/sync/expo/`): the FULL C-01…C-16 (+C-11b) matrix on
+  the REAL mobile store + battery/connectivity fault profiles + the 4-window
+  real-SIGKILL kill-matrix + D-01/D-02/D-04 incl. the personal class (TENANT_EXPO
+  dedicated). **Tests: `@erp/mobile` 27 files / 393 (NEW)**; the full DB suite
+  **128 files / 1898** (021: 1829 → +69); the sync dir 21 files / 191 (expo profile
+  27 + pull-fields/pull-personal 10 + field-intents 18 + register-partner-link 6) +
+  fcm-channel 8; sync-core 36/36 untouched; desktop 274/274 + the 020/021 chaos
+  regressions byte-identical; mobile tokens 130/130+50/50; capabilities-matrix agree
+  (the 18 android cells implemented with real gates; 42 implemented rows, 0
+  deferred); permissions-drift 243=243; depcruise 0 violations (1269 modules). Docs:
+  MOBILE_QUICKSTART (new), DEVELOPMENT_SETUP §12, DEPLOYMENT §7 the Play Store
+  staged-rollout + minimum-version runbook, TROUBLESHOOTING §9 android, MONITORING
+  the client-stability rows, FEATURE_CATALOG `offline.android_app` +
+  `offline.mobile_accounts` → shipped, OFFLINE_CAPABILITIES_MATRIX the android ✓
+  marks live, IMPLEMENTATION_STATUS PHASE-022 → COMPLETE, the acceptance-criteria
+  row with all 11 criteria, the completion report. Honest deferrals (the k6
+  precedent): the on-device C-06/C-07/C-13 + D-02 cipher legs (the wired device-farm
+  CI job), Play Store signing/EAS compile (CI only), the pixel snapshot gallery
+  (tree-level parity proven), T-03 scan-to-cart on reference hardware, the
+  force-update screen navigation glue (policy + tests complete; the App.tsx TODO
+  asserted structurally). Next eligible phase: PHASE-023 — External Integrations &
+  E-Invoicing (identify only).
 
 - 2026-11-04 — **PHASE-021 — Desktop Application (COMPLETE)**: the Windows-first desktop
   client as the Tauri v2 shell around the web ERP static export (ADR-0013). `apps/desktop`

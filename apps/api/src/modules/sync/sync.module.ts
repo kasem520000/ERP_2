@@ -1,6 +1,7 @@
 import { Module, type OnModuleInit } from "@nestjs/common";
 
 import { AuditModule } from "../audit/audit.module";
+import { DistributionModule } from "../distribution/distribution.module";
 import { InventoryModule } from "../inventory/inventory.module";
 import { PartnersModule } from "../partners/partners.module";
 import { PosModule } from "../pos/pos.module";
@@ -61,7 +62,20 @@ import { SyncController } from "./presentation/sync.controller";
   // QuotationService, DeliveryNoteService, ExpenseService, the treasury +
   // inventory TransferServices, CountService). No owning module imports
   // sync (no cycle; DEPENDENCY_RULES §2.1).
-  imports: [AuditModule, PosModule, SalesModule, PartnersModule, TreasuryModule, InventoryModule],
+  //
+  // PHASE-022 · DR-P22-06: DistributionModule joins the imports — the
+  // `van:confirm_load`/`van:confirm_unload` intents execute through the
+  // 017 VanStockService (distribution owns the van semantics around the
+  // ordinary inventory TransferService; same additive-import rule).
+  imports: [
+    AuditModule,
+    PosModule,
+    SalesModule,
+    PartnersModule,
+    TreasuryModule,
+    InventoryModule,
+    DistributionModule,
+  ],
   controllers: [SyncController, DevicesController, SyncAdminController],
   providers: [PushService, DeviceRegistryService, ReconciliationService, SyncHealthService],
   exports: [PushService, DeviceRegistryService, ReconciliationService],

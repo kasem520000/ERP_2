@@ -1,6 +1,6 @@
 # Troubleshooting
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-04
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-05
 
 Symptom → diagnosis → remediation tables for production and staging. Every entry links
 the authoritative runbook or spec section; alerts that route here are defined in
@@ -111,7 +111,23 @@ requirements: [DESKTOP_SYSTEM_REQUIREMENTS.md](DESKTOP_SYSTEM_REQUIREMENTS.md).
 | Manual "Sync now" disabled with the unavailable reason (`SYNC_DRIVER_NOT_REGISTERED`) | The bridge `sync` member is absent — an older shell build without the sync-driver commands (DR-P21-09); the webview never runs the sync engine itself | Fail-closed by design: update the shell to a build carrying the sync driver — the controls stay disabled (honest unavailable state), never a simulated sync | [DESKTOP_QUICKSTART.md](DESKTOP_QUICKSTART.md) §2–3 |
 | Shell boot fails closed with `SqlCipherUnavailableError` (`SQLCIPHER_UNAVAILABLE`) | A store encryption key is configured but the running build is not the SQLCipher profile (DR-P21-02 dual-profile store: cipher = the Windows CI `--features sqlcipher` build; standard = the plain-SQLite fallback) | Install the cipher-profile release build (the production posture — at-rest encryption), or accept the explicit standard-profile fallback dialog: every other key-management invariant still holds (key only in the OS keychain, secret-scan green), but the standard-profile file is plaintext at rest — the D-02 binary-inspection caveat, run for real only on the Windows CI cipher profile | [../offline/LOCAL_DATABASE.md](../offline/LOCAL_DATABASE.md) §4 |
 
-## 9. E-invoicing (PHASE-023)
+## 9. Android application (PHASE-022 — **LIVE 2026-11-05**)
+
+The Expo/React Native client ([ADR-0014](../architecture/ADR/ADR-0014-android-expo.md)):
+ONE app, TWO capability experiences (`android-field` / `android-personal`), local SQLite
+store, background sync, biometric unlock, Play Store staged rollout. Dev loop:
+[MOBILE_QUICKSTART.md](MOBILE_QUICKSTART.md); the release channel + the S-15 signing
+family: [DEPLOYMENT.md](DEPLOYMENT.md) §7.
+
+| Symptom | Diagnosis | Remediation | Runbook |
+|---------|-----------|-------------|---------|
+| Background sync barely runs / data stale until the app is opened (Doze, OEM task killers) | This is **Android background-execution reality, not a defect**: the OS-scheduled background fetch is best-effort at ≥ 15-min intervals and Doze/OEM killers may defer it indefinitely (common on regional OEMs — the PHASE-022 risk note); check `devices.last_pull_at` in the registry — if it advances whenever the app is foregrounded, the scheduler is behaving | The **foreground cycle is the reliability path by design** (2-min while dirty + connectivity-regained 5 s debounce + after-write fast push); the user-facing "Sync now" always exists; user help documents the Doze reality honestly. Never promise real-time background sync on Android | [../offline/SYNC_PROTOCOL.md](../offline/SYNC_PROTOCOL.md) §8 + [MOBILE_QUICKSTART.md](MOBILE_QUICKSTART.md) §6 |
+| Data arrives in chunks / a pull "stops partway" (budget behavior) | The byte-budget guards are doing their job: pull ≤ 8 MB / push ≤ 2 MB per cycle (cellular defaults), personal-account background pull ≤ 256 KB — an over-budget cycle splits across cycles; a server-side `DEFERRED` with `retryAfterMs` is the per-device rate limit backing off (never executed, never inbox-recorded) | No action: the next cycle resumes from the cursor; verify convergence via `devices.last_pull_at` + the sync-health dashboard. If a cursor truly stalls (> 7 days), it is the §sync `SyncCursorStall` path | [../offline/SYNC_PROTOCOL.md](../offline/SYNC_PROTOCOL.md) §2–3 |
+| App blocked on the force-update screen (below `minVersion`) | The release manifest's `minVersion` is above the installed version — either an intentional halt remedy (crash-free rate < 98.5% at any sample size published `minVersion` = last-known-good) or a routine minimum bump | Intentional by design: publish the fixed build ≥ `minVersion` — the blocked screen drives the Play Store update; **no bypass exists**. Do not lower `minVersion` to "unblock" devices while the crash cause is unfixed | [DEPLOYMENT.md](DEPLOYMENT.md) §7 |
+| Device suddenly signed out with local data purged (revocation UX) | The admin console revoked the device (or a refresh-token reuse tripwire fired — possible theft, §sync): pushes were answered `DEVICE_REVOKED`, and the next contact purged the business tables + outbox + cursors (personal read models included) and required re-login — this is the D-01 lost-device playbook working | Expected behavior: re-enroll the device only after the owner confirms possession (a reuse tripwire = the security-incident ladder); the device's un-acked ops/owned DRAFTs sit on the reconciliation queue — work it to zero (reassign or finish online), never silently dropped | [../offline/SECURITY_AND_DEVICE_MANAGEMENT.md](../offline/SECURITY_AND_DEVICE_MANAGEMENT.md) §4 + §sync above |
+| Writes disabled with the "requires connectivity" banner (trust-flagged device) | `devices.trust_flags` recorded a best-effort root/tamper signal (D-07): the app degrades to online-only for writes — reads keep working; the banner is the honest state, never a brick | An admin acks the flag after review (the `adminAckedAt` PATCH — the ack covers one episode); offline writes return when the device is acked AND the permission snapshot is inside the 7-day watermark. Rooted-device detection is explicitly NOT a security boundary — server-final enforcement; a false positive only degrades UX | [../offline/SECURITY_AND_DEVICE_MANAGEMENT.md](../offline/SECURITY_AND_DEVICE_MANAGEMENT.md) §5 |
+
+## 10. E-invoicing (PHASE-023)
 
 Alerts: `EInvoiceRejectSpike`, `CertExpiry`. Full design:
 [../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md).
@@ -123,7 +139,7 @@ Alerts: `EInvoiceRejectSpike`, `CertExpiry`. Full design:
 | Sandbox passes, production fails (or vice versa) | Compare payload snapshots + endpoint versions; adapter version drift | Pin spec versions per adapter declaration; bump pack version + staged rollout of the adapter ([../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md) §7) | [../localization/TAX_ENGINE.md](../localization/TAX_ENGINE.md) §3 |
 | Submission queue backing up | `boss.job` counts for the adapter categories; authority latency on the funnel dashboard | Backoff storms happen after provider incidents — verify caps; if the authority is down, the registry honestly shows PENDING (never mark ACCEPTED without authority confirmation — directive §12) | [../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md) §2 |
 
-## 10. Printing & report rendering (Chromium in worker)
+## 11. Printing & report rendering (Chromium in worker)
 
 | Symptom | Diagnosis | Remediation | Runbook |
 |---------|-----------|-------------|---------|
@@ -131,7 +147,7 @@ Alerts: `EInvoiceRejectSpike`, `CertExpiry`. Full design:
 | Chromium pool exhaustion (OOM, crash loops) | Worker logs: render timeouts then OOM-kill loop; RISK-013 | Cap concurrent renders below memory budget; ensure render-timeout kills the page, not the pool; burst capacity = dedicated worker pool (scaling path), not a bigger shared worker | [../architecture/DEPLOYMENT_ARCHITECTURE.md](../architecture/DEPLOYMENT_ARCHITECTURE.md) §Scaling path |
 | Garbled Arabic in PDFs (missing glyphs) | Test render of the same template in staging | Template/font issue, not ops: route to the phase template fix; fonts ship with the image (never fetch at runtime) | [../architecture/ADR/ADR-0011-reporting-printing.md](../architecture/ADR/ADR-0011-reporting-printing.md) |
 
-## 11. Escalation matrix
+## 12. Escalation matrix
 
 | Severity | Examples | First responder | Escalate after | Escalation target |
 |----------|----------|-----------------|----------------|-------------------|

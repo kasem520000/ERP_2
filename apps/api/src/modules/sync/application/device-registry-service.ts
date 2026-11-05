@@ -6,6 +6,7 @@ import { DomainError, generateUuidV7 } from "@erp/domain-core";
 
 import { requireTenantContext } from "../../../infra/db/tenant-context";
 import { AuditService } from "../../audit/api/audit";
+import { effectivePermissions } from "../../identity/api/identity";
 
 /**
  * PHASE-020 · device registry service (T3; MASTER-PLAN §9;
@@ -58,6 +59,24 @@ export class DeviceAttestationFailedError extends DomainError {
   }
 }
 
+/**
+ * PHASE-022 T-P22-3-b · DR-P22-05a (2-b's Deviation 2 closed): the
+ * personal-class partner link is refused — wrong device class, an
+ * unknown/cross-tenant/non-customer/inactive partner, or a registering
+ * identity that neither is a CONTACT of that partner nor holds the
+ * devices admin plane. ONE typed shape for every refusal (no existence
+ * or cross-tenant probing: the partner row is read under the ambient
+ * tenant RLS, so a foreign id is indistinguishable from an unknown one).
+ */
+export class DevicePartnerLinkError extends DomainError {
+  constructor(reason: string) {
+    super(
+      "DEVICE_PARTNER_LINK_FORBIDDEN",
+      `linked partner refused: ${reason}`,
+    );
+  }
+}
+
 // -- platform mapping (devices.platform stays the 003 column; device_class is
 // the 020 discriminator — MASTER-PLAN §3) --------------------------------------
 
@@ -94,6 +113,16 @@ export class DeviceRegistryService {
    * in device-tokens.ts). Attestation nonce is issued only when a public key
    * is presented; platform attestation (best-effort, SECURITY §2.2) is
    * recorded in trust_flags as provided/absent.
+   *
+   * PHASE-022 T-P22-3-b · DR-P22-05a: `linkedPartnerId` — the personal-account
+   * scope (devices.linked_partner_id, migration 0033; the pull service's
+   * personal feeds key on it). Authorized server-side IN THIS TRANSACTION:
+   * accepted for deviceClass "android-personal" ONLY, and the registering
+   * identity must be linked to the partner — a partner_contacts row whose
+   * email matches the identity's email (the customer-portal link) — or hold
+   * the devices admin plane (`identity.devices.manage`). The partner must be
+   * an ACTIVE CUSTOMER of the registering tenant (RLS-scoped read: a
+   * cross-tenant id finds no row). The payload id is never trusted blind.
    */
   async register(input: {
     actorId: string;
@@ -107,6 +136,12 @@ export class DeviceRegistryService {
     deviceKeyPublic?: string;
     capabilities?: string[];
     platformAttestation?: string;
+    linkedPartnerId?: string;
+    /** The registering identity's email (the partner-contact link key;
+     * absent only on legacy internal calls that never carry a link — a
+     * missing email can never prove a contact link, so the admin plane
+     * remains the only authorization path). */
+    actorEmail?: string;
   }): Promise<{
     device: RegisteredDevice;
     attestationNonce: string | null;
@@ -118,6 +153,60 @@ export class DeviceRegistryService {
       (DEVICE_PLATFORMS as readonly string[]).includes(input.platform)
         ? input.platform
         : PLATFORM_BY_CLASS[input.deviceClass]!;
+
+    // DR-P22-05a — the partner link: class gate + server-side authorization
+    // (same unit of work as the INSERT; a refusal rolls back nothing because
+    // nothing was written yet).
+    let linkedPartnerId: string | null = null;
+    let linkedPartnerAuthorizedBy: "contact" | "admin" | null = null;
+    if (input.linkedPartnerId !== undefined) {
+      if (input.deviceClass !== "android-personal") {
+        throw new DevicePartnerLinkError(
+          "only android-personal devices may carry a linked partner",
+        );
+      }
+      // RLS-scoped (partners + partner_contacts are tenant tables; the
+      // ambient withTenant GUC applies): a foreign/unknown partner id is
+      // simply absent — the SAME typed refusal, no cross-tenant probing.
+      // A missing actorEmail degrades to the empty string — it can never
+      // match a contact row, so only the admin plane could authorize.
+      const actorEmail = input.actorEmail ?? "";
+      const found = await tx.execute(sql`
+        SELECT p.id, p.kind, p.status,
+          EXISTS (
+            SELECT 1 FROM partner_contacts pc
+             WHERE pc.partner_id = p.id
+               AND pc.tenant_id = p.tenant_id
+               AND lower(pc.email) = lower(${actorEmail})
+               AND ${actorEmail} <> ''
+          ) AS "isContact"
+        FROM partners p
+        WHERE p.id = ${input.linkedPartnerId}
+        LIMIT 1
+      `);
+      const partner = found.rows[0] as
+        | { id: string; kind: string; status: string; isContact: boolean }
+        | undefined;
+      if (
+        partner === undefined ||
+        partner.kind !== "CUSTOMER" ||
+        partner.status !== "ACTIVE"
+      ) {
+        throw new DevicePartnerLinkError(
+          "the partner is not an active customer of this tenant",
+        );
+      }
+      const admin = (
+        await effectivePermissions(input.actorId, input.tenantId)
+      ).has("identity.devices.manage");
+      if (!partner.isContact && !admin) {
+        throw new DevicePartnerLinkError(
+          "the registering identity is neither a contact of the partner nor a devices admin",
+        );
+      }
+      linkedPartnerId = partner.id;
+      linkedPartnerAuthorizedBy = partner.isContact ? "contact" : "admin";
+    }
 
     const deviceId = generateUuidV7();
     // Enrollment proof: raw secret returned once, sha256 at rest (uq index).
@@ -134,12 +223,12 @@ export class DeviceRegistryService {
       INSERT INTO devices (
         id, user_id, platform, name, device_key_hash, capabilities, device_class,
         contract_version, attestation_public_key, attestation_nonce, trust_flags,
-        last_seen_at
+        last_seen_at, linked_partner_id
       ) VALUES (
         ${deviceId}, ${input.actorId}, ${platform}, ${input.deviceName}, ${keyHash},
         ${JSON.stringify(capabilitiesJson)}::jsonb, ${input.deviceClass},
         ${input.contractVersion ?? null}, ${input.deviceKeyPublic ?? null}, ${nonce},
-        ${JSON.stringify(trustFlags)}::jsonb, now()
+        ${JSON.stringify(trustFlags)}::jsonb, now(), ${linkedPartnerId}
       )
       RETURNING id, user_id AS "userId", platform, name,
         device_class AS "deviceClass", contract_version AS "contractVersion",
@@ -171,6 +260,10 @@ export class DeviceRegistryService {
         attestationNonce: nonce,
         attestation: input.deviceKeyPublic !== undefined ? "challenge-issued" : "none",
         platformAttestation: trustFlags.platformAttestation,
+        // DR-P22-05a: the authorized partner link rides the audit trail
+        // (the authorization BASIS is recorded — contact vs admin plane).
+        linkedPartnerId,
+        linkedPartnerAuthorizedBy,
         // Key fingerprint only — never the key material (SECURITY §8).
         keyFingerprint:
           input.deviceKeyPublic !== undefined
@@ -249,10 +342,12 @@ export class DeviceRegistryService {
 
   /**
    * Revoke a device (SECURITY §4 — the kill switch): devices.revoked_at +
-   * the whole refresh chain (device_refresh_tokens.revoked_at). Idempotent —
-   * an already-revoked device is a no-op that returns the existing timestamp
-   * (no second audit row). In-flight grace = the ≤15-min access-token
-   * lifetime; no new tokens are minted afterwards (device-tokens enforces).
+   * the whole refresh chain (device_refresh_tokens.revoked_at) + the push
+   * tokens (device_push_tokens — PHASE-022 DR-P22-07a, cleared in the same
+   * UoW). Idempotent — an already-revoked device is a no-op that returns
+   * the existing timestamp (no second audit row). In-flight grace = the
+   * ≤15-min access-token lifetime; no new tokens are minted afterwards
+   * (device-tokens enforces).
    */
   async revoke(input: {
     deviceId: string;
@@ -286,13 +381,25 @@ export class DeviceRegistryService {
       WHERE device_id = ${input.deviceId} AND revoked_at IS NULL
     `);
 
+    // PHASE-022 · DR-P22-07a: revocation clears the push tokens (the kill
+    // switch is final — a cleared token is gone; the FK CASCADE only covers
+    // device-row deletes, which never happen). Same UoW, same audit row.
+    const clearedTokens = await tx.execute(sql`
+      DELETE FROM device_push_tokens WHERE device_id = ${input.deviceId}
+    `);
+
     await this.audit.record({
       action: "device.revoked",
       entityType: "device",
       entityId: input.deviceId,
       actorId: input.actorId,
       deviceId: input.deviceId,
-      after: { reason: input.reason ?? null, admin: input.admin, revokedAt },
+      after: {
+        reason: input.reason ?? null,
+        admin: input.admin,
+        revokedAt,
+        pushTokensCleared: clearedTokens.rowCount ?? 0,
+      },
     });
     return { revokedAt };
   }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Req } from "@nestjs/common";
+import { Body, Controller, Get, Inject, HttpCode, HttpStatus, Param, Patch, Post, Put, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { z } from "zod";
 import { sql } from "drizzle-orm";
@@ -19,6 +19,10 @@ import {
 } from "../../identity/api/identity";
 import { DeviceNotFoundError, DeviceRegistryService } from "../application/device-registry-service";
 import { enrollDeviceWithSecret } from "../application/device-enrollment";
+import {
+  DevicePushTokenRevokedError,
+  upsertPushToken,
+} from "../application/device-push-tokens";
 import {
   DeviceRefreshInvalidError,
   DeviceRevokedError,
@@ -62,6 +66,17 @@ const registerSchema = z.object({
   deviceKeyPublic: z.string().min(16).max(400).optional(),
   capabilities: z.array(z.string().min(1).max(40)).max(20).optional(),
   platformAttestation: z.string().min(4).max(2000).optional(),
+  /**
+   * PHASE-022 T-P22-3-b (2-b's Deviation 2 closed — MASTER-PLAN §1 item 5 /
+   * DR-P22-05a): the personal-account partner link. Accepted for
+   * deviceClass "android-personal" ONLY (the registry service gates the
+   * class + authorizes the link server-side — the registering identity
+   * must be a CONTACT of that partner or hold the devices admin plane;
+   * the payload id is NEVER trusted blind). Tenant-scoped by RLS: a
+   * cross-tenant partner id finds no row and is refused with the same
+   * typed error.
+   */
+  linkedPartnerId: UUID.optional(),
 });
 
 const patchSchema = z.object({
@@ -73,6 +88,18 @@ const attestSchema = z.object({ signature: z.string().min(8).max(2000) });
 const revokeSchema = z.object({ reason: z.string().min(1).max(500).optional() });
 const refreshSchema = z.object({ refreshToken: z.string().min(20).max(200) });
 const enrollSchema = z.object({ enrollmentSecret: z.string().min(20).max(200) });
+
+/**
+ * PHASE-022 · DR-P22-07: the device-token opt-in body. optIn defaults FALSE
+ * (tokens are per-device, opt-in explicit — integrations §3.5); locale
+ * defaults 'ar' (the device's notification locale, resolved BEFORE the FCM
+ * call). Token shape is bounded by length only — never a guessed format.
+ */
+const pushTokenSchema = z.object({
+  token: z.string().min(20).max(512),
+  locale: z.enum(["ar", "en"]).default("ar"),
+  optIn: z.boolean().default(false),
+});
 
 /** Duplicated locally per the module convention (never import from a sibling
  * controller): the session identity or 401. */
@@ -104,7 +131,13 @@ async function findDeviceUser(deviceId: string): Promise<{ userId: string } | un
 
 @Controller("api/v1/devices")
 export class DevicesController {
-  constructor(private readonly registry: DeviceRegistryService) {}
+  // PHASE-022 · DR-P22-07 (repair): the EXPLICIT token injection (the
+  // users/sessions/mfa controller convention). The bare-type constructor
+  // param relied on tsc's emitDecoratorMetadata — present in the production
+  // build, but the vitest/esbuild transform drops design:paramtypes, so the
+  // first HTTP-level devices spec (fcm-channel.spec) exposed the controller
+  // booting with an undefined registry under tests.
+  constructor(@Inject(DeviceRegistryService) private readonly registry: DeviceRegistryService) {}
 
   /** Row 1 — register a device; the enrollment secret is returned ONCE. */
   @Post()
@@ -126,6 +159,10 @@ export class DevicesController {
       deviceKeyPublic: input.deviceKeyPublic,
       capabilities: input.capabilities,
       platformAttestation: input.platformAttestation,
+      // DR-P22-05a: the personal-class partner link (authorized inside the
+      // service against the REGISTERING identity — never the payload id alone).
+      linkedPartnerId: input.linkedPartnerId,
+      actorEmail: identity.user.email,
     });
     return envelope({
       deviceId: result.device.id,
@@ -214,6 +251,45 @@ export class DevicesController {
         actorId: identity.userId,
         reason: input.reason,
         admin,
+      }),
+    );
+  }
+
+  /**
+   * Row 9 — PHASE-022 · DR-P22-07: the device-token opt-in surface (default
+   * OFF). Permission-gated like device patch (identity.devices.manage) with
+   * the revoke pattern's self scope: the device ITSELF calls this
+   * post-registration with its device credentials — the 15-min access
+   * token resolves the session (the sync data plane's ADR-0015 §3 path),
+   * and the handler enforces the ownership boundary (the device's own
+   * user, or an admin holding the manage key — exactly the revoke route's
+   * self/admin split). optIn defaults false; a token never belongs to two
+   * devices (uq token — typed conflict); revocation clears the rows.
+   */
+  @Put(":id/push-token")
+  @RequirePermissions("identity.devices.manage", { self: true })
+  async pushToken(@Req() request: Request, @Param("id") id: string, @Body() body: unknown) {
+    const identity = requireIdentity(request);
+    const tenantId = requireActiveTenant(identity);
+    const input = pushTokenSchema.parse(body);
+    const deviceId = UUID.parse(id);
+    const detail = await this.registry.get({ deviceId });
+    if (detail.device.revokedAt !== null) {
+      // The kill switch is final — a revoked device never changes its token.
+      throw new DevicePushTokenRevokedError(deviceId);
+    }
+    const self = detail.device.userId === identity.userId;
+    const admin = (await effectivePermissions(identity.userId, tenantId)).has("identity.devices.manage");
+    if (!self && !admin) {
+      throw new ForbiddenError("identity.devices.manage");
+    }
+    return envelope(
+      await upsertPushToken({
+        deviceId,
+        token: input.token,
+        locale: input.locale,
+        optIn: input.optIn,
+        actorId: identity.userId,
       }),
     );
   }

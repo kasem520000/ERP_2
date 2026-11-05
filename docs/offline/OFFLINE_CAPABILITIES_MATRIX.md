@@ -1,6 +1,6 @@
 # Offline Capabilities Matrix
 
-> **Status:** STABLE · **Owner:** Offline & API Architecture · **Updated:** 2026-11-04
+> **Status:** STABLE · **Owner:** Offline & API Architecture · **Updated:** 2026-11-05
 
 The authoritative operation × device-class matrix required by directive §12 and
 [ADR-0012](../architecture/ADR/ADR-0012-offline-sync.md). UI gating, sync scope, and test
@@ -42,6 +42,18 @@ fail closed).
   machine-checked claims + the per-row proving gates live in `SYNC_CAPABILITY_FIXTURE`
   (`@erp/contracts`; `pnpm check:capabilities-matrix` cross-checks this table against it row
   by row). A ✓ never appears in a cell whose class is not live for that device class.
+- **PHASE-022 android columns (LIVE 2026-11-05)**: the machine fixture claims the
+  022-activated android cells as implemented with real gates — android-field rows #4, #5,
+  #6, #7, #9, #11, #12, #13, #14, #21, #23, #25, #27, #33, #35 and android-personal rows
+  #13, #14, #29 (DR-P22-05/06; rows #21/#25 included because their Phase column reads
+  "PHASE-021 / 022" — 021 is the desktop ✓ portion, 022 the field portion). The
+  device-column ✓ marks are live end-to-end: the server substrate (FEED_GROUPS activation
+  + migration 0033 + the partner-scope serve filters — `sync/pull-fields.spec` /
+  `sync/pull-personal.spec`), the three new field intents (`sync/field-intents.spec`), the
+  on-device flows/screens (the `@erp/mobile` suites), and the expo chaos re-proof
+  (`sync/expo/expo-chaos.spec`) all shipped with PHASE-022 — the completion report quotes
+  the row-by-row cross-check. `check:capabilities-matrix` stays green (42 implemented
+  rows, 0 deferred).
 
 ## 2. Matrix
 
@@ -50,38 +62,38 @@ fail closed).
 | 1 | POS sale (cash/card at counter) | **OFFLINE-COMPLETE** | — | — | — | SD | `PENDING_SYNC → POSTED` (official no. replaces `OFF-…`) or `PENDING_SYNC → REJECTED(editable)` | PHASE-016 ✓ |
 | 2 | POS return/refund against receipt | **OFFLINE-COMPLETE** (credit note draft locally, cash refunded from drawer) | — | — | — | SD | `PENDING_SYNC → POSTED` (credit note + cash out) or `→ REJECTED(editable)` | PHASE-016 ✓ |
 | 3 | Cashier shift open/close (float, count) | **OFFLINE-COMPLETE** (events queued) | — | — | — | SD | `PENDING_SYNC → POSTED` (shift record + variance) | PHASE-016 ✓ |
-| 4 | Items / barcodes / prices lookup | **READ-CACHED** | READ-CACHED ✓ | READ-CACHED | — | SAS | cache as-of cursor; no local writes | PHASE-016 ✓ |
-| 5 | Price list view | **READ-CACHED** | READ-CACHED ✓ | READ-CACHED | — | SAS | as #4 | PHASE-016 ✓ |
-| 6 | Sales invoice draft (back office) | — | **OFFLINE-DRAFT** ✓ | **LOCAL-VALID**† | — | OD (draft), SD at submit | `DRAFT_LOCAL → DRAFT`; on submit online: server lifecycle | PHASE-021 / 022 |
-| 7 | Quotation draft | — | **OFFLINE-DRAFT** ✓ | **LOCAL-VALID**† | — | OD | `DRAFT_LOCAL → DRAFT` | PHASE-021 / 022 |
+| 4 | Items / barcodes / prices lookup | **READ-CACHED** | READ-CACHED ✓ | READ-CACHED ✓ | — | SAS | cache as-of cursor; no local writes | PHASE-016 ✓ |
+| 5 | Price list view | **READ-CACHED** | READ-CACHED ✓ | READ-CACHED ✓ | — | SAS | as #4 | PHASE-016 ✓ |
+| 6 | Sales invoice draft (back office) | — | **OFFLINE-DRAFT** ✓ | **LOCAL-VALID**† ✓ | — | OD (draft), SD at submit | `DRAFT_LOCAL → DRAFT`; on submit online: server lifecycle | PHASE-021 / 022 |
+| 7 | Quotation draft | — | **OFFLINE-DRAFT** ✓ | **LOCAL-VALID**† ✓ | — | OD | `DRAFT_LOCAL → DRAFT` | PHASE-021 / 022 |
 | 8 | Receipt — POS cash collection | **OFFLINE-COMPLETE** | — | — | — | SD | `PENDING_SYNC → POSTED` | PHASE-016 ✓ |
-| 9 | Receipt — field collection (van route) | — | — | **OFFLINE-COMPLETE** | — | SD (credit-limit/period checked server-side) | `PENDING_SYNC → POSTED` or `→ REJECTED(editable)` | PHASE-022 |
+| 9 | Receipt — field collection (van route) | — | — | **OFFLINE-COMPLETE** ✓ | — | SD (credit-limit/period checked server-side) | `PENDING_SYNC → POSTED` or `→ REJECTED(editable)` | PHASE-022 |
 | 10 | Delivery note | — | **OFFLINE-DRAFT** ✓ | — | — | SD at submit (stock issue) | `DRAFT_LOCAL → DRAFT` | PHASE-021 |
-| 11 | Stock count entry (lines as counted) | **OFFLINE-DRAFT** (POS-lite) | **OFFLINE-DRAFT** ✓ | **OFFLINE-DRAFT** | — | SD (aggregate; variance posted server-side only) | `DRAFT_LOCAL → DRAFT → COUNTED` (rest online) | PHASE-021 / 022 |
-| 12 | Van load / unload confirmation | — | — | **OFFLINE-COMPLETE** (against van snapshot) | — | SD | `PENDING_SYNC → POSTED` (van ledger) or `→ REJECTED(editable)` | PHASE-022 |
-| 13 | Customer statement view | — | **READ-CACHED** | **READ-CACHED** | **READ-CACHED** | RO | as-of-cursor label; stale is labeled, never guessed | PHASE-022 |
-| 14 | Invoice view (issued, own documents) | — | **READ-CACHED** | **READ-CACHED** | **READ-CACHED** (authorized rows only) | RO | as #13 | PHASE-022 |
+| 11 | Stock count entry (lines as counted) | **OFFLINE-DRAFT** (POS-lite) | **OFFLINE-DRAFT** ✓ | **OFFLINE-DRAFT** ✓ | — | SD (aggregate; variance posted server-side only) | `DRAFT_LOCAL → DRAFT → COUNTED` (rest online) | PHASE-021 / 022 |
+| 12 | Van load / unload confirmation | — | — | **OFFLINE-COMPLETE** (against van snapshot) ✓ | — | SD | `PENDING_SYNC → POSTED` (van ledger) or `→ REJECTED(editable)` | PHASE-022 |
+| 13 | Customer statement view | — | **READ-CACHED** | **READ-CACHED** ✓ | **READ-CACHED** ✓ | RO | as-of-cursor label; stale is labeled, never guessed | PHASE-022 |
+| 14 | Invoice view (issued, own documents) | — | **READ-CACHED** | **READ-CACHED** ✓ | **READ-CACHED** (authorized rows only) ✓ | RO | as #13 | PHASE-022 |
 | 15 | Journal entry (manual) | — | **ONLINE-ONLY** | — | — | n/a | n/a — engine-only writer ([../accounting/POSTING_ENGINE.md](../accounting/POSTING_ENGINE.md) §7) | PHASE-007 |
 | 16 | Approval (any document) | — | **ONLINE-ONLY** | **ONLINE-ONLY** | — | n/a | n/a | PHASE-007 |
 | 17 | Posting (finalization) | — | **ONLINE-ONLY** | — | — | n/a | n/a — official numbers + ledger server-side only | PHASE-007 |
 | 18 | Period close / open / lock | — | **ONLINE-ONLY** | — | — | n/a | n/a | PHASE-007 |
 | 19 | Tax submission (e-invoice clearance/reporting, VAT return) | — | **ONLINE-ONLY** | — | — | n/a | n/a — authority acceptance never inferred locally ([../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md)) | PHASE-023 |
 | 20 | Admin actions (users, roles, plans, entitlements) | — | **ONLINE-ONLY** | — | — | n/a | n/a | PHASE-004 |
-| 21 | Partner edit — contact fields (phone, email, address) | — | **OFFLINE-DRAFT** ✓ | **OFFLINE-DRAFT** | — | FM (field merge, audited) | `PENDING_MERGE → MERGED` (or `→ REJECTED(editable)` for constrained fields) | PHASE-021 / 022 |
+| 21 | Partner edit — contact fields (phone, email, address) | — | **OFFLINE-DRAFT** ✓ | **OFFLINE-DRAFT** ✓ | — | FM (field merge, audited) | `PENDING_MERGE → MERGED` (or `→ REJECTED(editable)` for constrained fields) | PHASE-021 / 022 |
 | 22 | Partner edit — constrained fields (credit limit, terms, status) | — | **ONLINE-ONLY** | enforced server-side by the partners service (PHASE-006: every constrained-field write is an authenticated tenant-scoped route; no offline path exists) | — | SD | n/a | PHASE-006 |
-| 23 | Partner create (new walk-in / route customer) | **OFFLINE-DRAFT** | **OFFLINE-DRAFT** ✓ | **LOCAL-VALID**† | — | SD (code/duplicate checks server-side) | `DRAFT_LOCAL → DRAFT` | PHASE-016 ✓ / 021 / 022 |
+| 23 | Partner create (new walk-in / route customer) | **OFFLINE-DRAFT** | **OFFLINE-DRAFT** ✓ | **LOCAL-VALID**† ✓ | — | SD (code/duplicate checks server-side) | `DRAFT_LOCAL → DRAFT` | PHASE-016 ✓ / 021 / 022 |
 | 24 | Item edit / create | — | **ONLINE-ONLY** | enforced server-side by the items service (PHASE-006: create/update/archive are permission-gated online routes; integrity is server-owned) | — | SD | n/a — master data integrity is server-owned | PHASE-006 |
-| 25 | Expense entry (field/back office) | — | **OFFLINE-DRAFT** ✓ | **OFFLINE-DRAFT** | — | SD | `DRAFT_LOCAL → DRAFT` | PHASE-021 / 022 |
+| 25 | Expense entry (field/back office) | — | **OFFLINE-DRAFT** ✓ | **OFFLINE-DRAFT** ✓ | — | SD | `DRAFT_LOCAL → DRAFT` | PHASE-021 / 022 |
 | 26 | Stock transfer draft | — | **OFFLINE-DRAFT** ✓ | — | — | SD | `DRAFT_LOCAL → DRAFT` (IN_TRANSIT/POSTED online) | PHASE-021 |
-| 27 | Credit note (van return from customer) | — | — | **OFFLINE-DRAFT** | — | SD | `DRAFT_LOCAL → DRAFT`; posting online | PHASE-022 |
+| 27 | Credit note (van return from customer) | — | — | **OFFLINE-DRAFT** ✓ | — | SD | `DRAFT_LOCAL → DRAFT`; posting online | PHASE-022 |
 | 28 | Personal-account online payment | — | — | — | **ONLINE-ONLY** (deferred, OQ-007) | n/a | n/a | post-MVP decision |
-| 29 | Notifications / message read state | — | — | — | **READ-CACHED** | RO | cursor-labeled | PHASE-022 |
+| 29 | Notifications / message read state | — | — | — | **READ-CACHED** ✓ | RO | cursor-labeled | PHASE-022 |
 | 30 | Reports / financial statements | — | **ONLINE-ONLY** (report engine) | **ONLINE-ONLY** | — | n/a | n/a — GL-accuracy reads must be live ([../reporting/REPORT_CONTRACT.md](../reporting/REPORT_CONTRACT.md)) | PHASE-013 |
 | 31 | POS on-account (credit) sale to known customer | **LOCAL-VALID**† (cached credit check; hard server decision) | — | — | — | SD | `PENDING_SYNC → POSTED` or `→ REJECTED(editable)` (`CREDIT_LIMIT_EXCEEDED`) | PHASE-016 ✓ |
 | 32 | Reprint of an already-POSTED receipt/invoice | **OFFLINE-COMPLETE** (from local cache of synced docs) | **OFFLINE-COMPLETE** (cache) ✓ | — | — | RO | no state change; print templates local | PHASE-016 ✓ / 021 |
-| 33 | Master-data search (items, partners) | **READ-CACHED** | **READ-CACHED** ✓ | **READ-CACHED** | — | SAS | cache as-of cursor | PHASE-016 ✓ / 021 / 022 |
+| 33 | Master-data search (items, partners) | **READ-CACHED** | **READ-CACHED** ✓ | **READ-CACHED** ✓ | — | SAS | cache as-of cursor | PHASE-016 ✓ / 021 / 022 |
 | 34 | Cash transfer / drawer drop | — | **OFFLINE-DRAFT** ✓ | — | — | SD | `DRAFT_LOCAL → DRAFT` | PHASE-021 |
-| 35 | Serial/IMEI or batch capture on sale line (where tracked) | **LOCAL-VALID**† (uniqueness checked against snapshot; server re-checks) | — | **LOCAL-VALID**† | — | SD | `PENDING_SYNC → POSTED` or `→ REJECTED(editable)` (`VALIDATION_ERROR` on serial reuse) | PHASE-016 ✓ / 022 |
+| 35 | Serial/IMEI or batch capture on sale line (where tracked) | **LOCAL-VALID**† (uniqueness checked against snapshot; server re-checks) | — | **LOCAL-VALID**† ✓ | — | SD | `PENDING_SYNC → POSTED` or `→ REJECTED(editable)` (`VALIDATION_ERROR` on serial reuse) | PHASE-016 ✓ / 022 |
 | 36 | Tenant settings / numbering policy / CoA changes | — | **ONLINE-ONLY** | — | — | n/a | n/a — configuration correctness requires the live server | PHASE-004 / 007 |
 | 37 | Budget & variance view | — | **READ-CACHED** | — | — | SAS | cache as-of cursor; no local writes | PHASE-028 |
 | 38 | Budget create / approve / activate | — | **ONLINE-ONLY** | — | — | n/a | n/a — versioning + SoD decisions are server-side | PHASE-028 |
@@ -135,6 +147,20 @@ sync is final and may still reject.
   rejection from ANY device, proven by `sync/desktop-intents.spec` #7). Offline update/merge
   semantics for the new types require their own decision records (PHASE-021 MASTER-PLAN
   §6/§13).
+- **PHASE-022 android-column activation (DR-P22-05/06)**: the android cells marked ✓ went
+  live with the Expo client — the reused intents ride the 020/021 registry unchanged
+  (sales-invoice draft #6, quotation #7, partner create #23, partner-contact merge #21,
+  count lines #11, expense #25 — the payloads proven client-side against the 2-c zod
+  schemas), and the THREE new field intents land create/post-only: `receipt:
+  create_field_collection` (#9 OFFLINE-COMPLETE — posts at sync, rep-attributed via
+  `created_by`, INV-013-idempotent), `van:confirm_load`/`van:confirm_unload` (#12
+  OFFLINE-COMPLETE against the cached van snapshot — over-unload → `INSUFFICIENT_STOCK`
+  with `availableQty`, double-load → `STALE_VERSION`), and `credit_note:create_draft` (#27
+  OFFLINE-DRAFT at the W-3 original cost). The personal cells (#13/#14/#29) are pull-only
+  partner-scoped read models — the class has NO write path (the personal store creates no
+  outbox at all, DR-P22-08b); the field companion's #14 rides the statements feed (the
+  field group carries no `sales_invoices` entity). Approvals stay ONLINE-ONLY (#16) —
+  disabled-with-reason offline, never queued; payments remain deferred (#28, OQ-007).
 - **#11**: counted quantities are facts; variance calculation and adjustment posting are
   server-only ([../accounting/DOCUMENT_LIFECYCLE.md](../accounting/DOCUMENT_LIFECYCLE.md) §3
   "Stock count").

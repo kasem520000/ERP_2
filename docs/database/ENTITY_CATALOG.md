@@ -1,6 +1,6 @@
 # Entity Catalog
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-04
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05
 
 All planned entities grouped by owning module, with the phase that introduces them and
 key relationships. This is the catalog-level map; column-level specifications for core
@@ -26,6 +26,7 @@ Legend: **Phase** = first implementation phase · **OC** = offline-creatable
 | `sessions` | Web sessions | user_id, token_hash, tenant_id (active), expires_at, revoked_at, ip, device_id | 003 | no |
 | `devices` | Registered native clients | user_id, device_key_hash, platform (DESKTOP/ANDROID/pos-terminal), capabilities jsonb, tenant_id, terminal_id, name, last_seen_at, revoked_at + the 020 registry widening: device_class CHECK (pos-terminal/tauri-desktop/android-field/android-personal), contract_version, attestation_public_key/attestation_nonce/attested_at, trust_flags jsonb, last_pull_at/last_push_at, data_expires_at | 003 (schema) / 016 (pos-terminal slice) / 020 (generalized — LIVE) | no |
 | `device_refresh_tokens` | Device credential rotation chain (identity-owned, service-mediated — the sessions pattern: hash-at-rest, no RLS); used_at is the reuse-detection tripwire, predecessor_id links rotations | device_id (CASCADE), token_hash (unique), predecessor_id, issued_at, expires_at, used_at, revoked_at | 020 | no |
+| `device_push_tokens` | FCM device-token opt-in store (identity-owned, service-mediated — the device_refresh_tokens pattern; no RLS); one active row per device (uq device_id), a token never belongs to two devices (uq token), opted_in defaults FALSE (explicit opt-in — integrations §3.5), locale is the device's notification locale resolved before the FCM call; revocation clears the rows | device_id (CASCADE, unique), token (unique, 20–512 chars — shape never guessed), platform, opted_in, locale (ar/en), created_at, updated_at, version | 022 | no |
 | `mfa_factors` | TOTP enrollment | user_id, secret_enc, enrolled_at, last_used_at, recovery_codes_hash | 003 | no |
 | `invitations` | Membership invitations | email, tenant_id, role_id, token_hash, expires_at, accepted_at | 003 | no |
 | `plans` | Subscription plans (seeded + admin) | key, name, price, limits jsonb, feature_keys[] | 004 | no |

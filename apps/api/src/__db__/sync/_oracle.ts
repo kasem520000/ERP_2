@@ -26,9 +26,13 @@ import { DeliveryNoteService } from "../../modules/sales/application/deliveries"
 import { PartnerService } from "../../modules/partners/application/partner-service";
 import { ShiftService } from "../../modules/treasury/application/shift-service";
 import { AccountService } from "../../modules/treasury/application/account-service";
+import { AllocationService } from "../../modules/treasury/application/allocation-service";
+import { ReceiptService } from "../../modules/treasury/application/receipt-service";
+import { SettlementCore } from "../../modules/treasury/application/fx-settlement";
 import { ExpenseService } from "../../modules/treasury/application/expense-service";
 import { PettyCashGuard } from "../../modules/treasury/application/petty-cash-service";
 import { TransferService as TreasuryTransferService } from "../../modules/treasury/application/transfer-service";
+import { VanStockService } from "../../modules/distribution/application/van-stock-service";
 import { WarehouseService } from "../../modules/inventory/application/warehouse-service";
 import { OpeningStockService } from "../../modules/inventory/application/opening-stock-service";
 import { TransferService as InventoryTransferService } from "../../modules/inventory/application/transfer-service";
@@ -388,7 +392,10 @@ export interface SyncServices {
 /** Instantiate the services exactly as the module graph wires them (the
  * push.spec pattern — PushService's constructor wires the handler slots).
  * PHASE-021 · DR-P21-08: the seven desktop write intents' owning services
- * join the graph (the additive constructor slots). */
+ * join the graph (the additive constructor slots).
+ * PHASE-022 · DR-P22-06: the three field write intents' owning services
+ * join the same way (receipts + allocations, the van stock service, the
+ * credit-note service). */
 export function makeSyncServices(): SyncServices {
   const audit = new AuditService(new DrizzleAuditStore());
   const posting = new PostingService(audit, new PartnerSubledgerService());
@@ -408,6 +415,11 @@ export function makeSyncServices(): SyncServices {
   const treasuryTransfers = new TreasuryTransferService(audit, posting, numbering, pettyCash);
   const inventoryTransfers = new InventoryTransferService(audit, posting, numbering);
   const stockCounts = new CountService(audit, posting, numbering);
+  // PHASE-022 · DR-P22-06: the three field write intents' owning services.
+  const settlement = new SettlementCore(audit, posting, numbering);
+  const receipts = new ReceiptService(audit, settlement);
+  const allocations = new AllocationService(audit);
+  const vanStock = new VanStockService(audit, inventoryTransfers);
   const push = new PushService(
     posSales,
     shiftFlow,
@@ -420,27 +432,47 @@ export function makeSyncServices(): SyncServices {
     treasuryTransfers,
     inventoryTransfers,
     stockCounts,
+    receipts,
+    allocations,
+    vanStock,
+    creditNotes,
   );
   return { audit, invoices, posSales, periods, reconciliation, push };
 }
 
 /** Enroll a device row directly (the devices.spec fixture shape: devices is
- * service-mediated — no tenant_id; the tenant context rides withTenant). */
+ * service-mediated — no tenant_id; the tenant context rides withTenant).
+ * PHASE-022 · DR-P22-05a: `linkedPartnerId` seeds the personal-account
+ * linkage (migration 0033 — the registration surface that writes it in
+ * production is task 2-b's; the specs seed the column directly, the
+ * desktop-intents precedent). */
 export async function enrollDevice(
   tenant: string,
   userId: string,
-  options?: { deviceClass?: string; revoked?: boolean; contractVersion?: string },
+  options?: {
+    deviceClass?: string;
+    revoked?: boolean;
+    contractVersion?: string;
+    linkedPartnerId?: string;
+  },
 ): Promise<string> {
   const deviceId = generateUuidV7();
+  const platform =
+    options?.deviceClass === "tauri-desktop"
+      ? "DESKTOP"
+      : options?.deviceClass === "android-field" || options?.deviceClass === "android-personal"
+        ? "ANDROID"
+        : "pos-terminal";
   await withTenant(tenant, async () => {
     const tx = requireTenantContext().tx!;
     await tx.execute(sql`
       INSERT INTO devices (id, user_id, platform, name, device_key_hash, device_class,
-                           contract_version, revoked_at)
-      VALUES (${deviceId}::uuid, ${userId}::uuid, ${options?.deviceClass === "tauri-desktop" ? "DESKTOP" : "pos-terminal"},
+                           contract_version, revoked_at, linked_partner_id)
+      VALUES (${deviceId}::uuid, ${userId}::uuid, ${platform},
               ${`chaos-device-${deviceId.slice(0, 8)}`}, ${`key-${deviceId}`},
               ${options?.deviceClass ?? null}, ${options?.contractVersion ?? null},
-              ${options?.revoked === true ? sql`now()` : sql`NULL`})
+              ${options?.revoked === true ? sql`now()` : sql`NULL`},
+              ${options?.linkedPartnerId ?? null})
       ON CONFLICT (id) DO NOTHING
     `);
   });

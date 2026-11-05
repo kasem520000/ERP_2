@@ -6,11 +6,15 @@ import type { TransferService as InventoryTransferService } from "../../../inven
 import type { PartnerService } from "../../../partners/application/partner-service";
 import type { PosShiftFlowService } from "../../../pos/application/shift-flow-service";
 import type { DeliveryNoteService } from "../../../sales/application/deliveries";
+import type { CreditNoteService } from "../../../sales/application/credit-notes";
 import type { SalesInvoiceService } from "../../../sales/application/invoices";
 import type { QuotationService } from "../../../sales/application/quotations";
 import type { PosSaleService } from "../../../sales/application/pos-channel/pos-sale-service";
+import type { AllocationService } from "../../../treasury/application/allocation-service";
+import type { ReceiptService } from "../../../treasury/application/receipt-service";
 import type { ExpenseService } from "../../../treasury/application/expense-service";
 import type { TransferService as TreasuryTransferService } from "../../../treasury/application/transfer-service";
+import type { VanStockService } from "../../../distribution/application/van-stock-service";
 
 /**
  * PHASE-020 · the handler CONTRACT (split from ./index by the dependency
@@ -98,6 +102,17 @@ export interface HandlerServices {
   readonly treasuryTransfers: TreasuryTransferService;
   readonly inventoryTransfers: InventoryTransferService;
   readonly stockCounts: CountService;
+  // PHASE-022 · DR-P22-06 (MASTER-PLAN §6 + §1): the owning services of the
+  // three field write intents — additive slots, wired by the same
+  // PushService constructor call (DI container or spec).
+  /** `receipt:create_field_collection` — the treasury create→post chain. */
+  readonly receipts: ReceiptService;
+  /** The receipt's optional open-item allocations (INV-016/BR-027). */
+  readonly allocations: AllocationService;
+  /** `van:confirm_load`/`van:confirm_unload` — the 017 van transfer chain. */
+  readonly vanStock: VanStockService;
+  /** `credit_note:create_draft` — the sales credit-note DRAFT path. */
+  readonly creditNotes: CreditNoteService;
 }
 
 let services: HandlerServices | undefined;

@@ -1,6 +1,6 @@
 # Current State
 
-> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-04
+> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-05
 
 What actually exists in this repository right now. Paired with
 [../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) (phase
@@ -44,11 +44,11 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   provider, costing default, ZATCA scope, Yemen scope, observability vendors, and the
   v2.0 expansion set: platform expansion, fixed assets, notes & installments,
   budgeting, payroll scope, consolidation), and this handoff set.
-- **Application code: PHASE-001 … PHASE-021 (all COMPLETE) — the MVP v1.0
+- **Application code: PHASE-001 … PHASE-022 (all COMPLETE) — the MVP v1.0
   release + the industry configuration engine + Point of Sale + the
   automotive/distribution templates + Manufacturing & Production + CRM/Service
   Contracts & Projects + the Offline Synchronization Foundation + the Desktop
-  Application (Tauri shell).** The
+  Application (Tauri shell) + the Android Application (Expo/RN).** The
   pnpm + Turborepo monorepo with all local gates green (re-verified 2026-11-03):
   - `apps/api` — NestJS with `GET /health/live` + `GET /health/ready` (DB +
     migration state + queue liveness); modules: `audit` (append-only, transactional
@@ -479,7 +479,25 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
     `pnpm check:desktop-shell` validates the structural invariants). 16 files /
     274 tests green on real temp-dir SQLite + real Ed25519. Dev loop:
     [../operations/DESKTOP_QUICKSTART.md](../operations/DESKTOP_QUICKSTART.md).
-  - `apps/mobile` — declared README stub only (PHASE-022).
+  - `apps/mobile` — **`@erp/mobile` (PHASE-022, the Expo/RN Android runtime)**: ALL
+    application logic in TypeScript (`src/**` — the golden-constants leaf, the two-layer
+    design-token mirror behind `check:mobile-tokens` 130/130+50/50, the AR-first i18n
+    runtime behind `check:mobile-i18n` ar=en=371 with the logical-props-only RTL
+    discipline (the DR-P22-03 ESLint ban), auth/session/unlock/trust/watermark
+    (DR-P22-09: the SecureStore vault, memory-only access tokens, rotation-reuse wipe,
+    biometric-optional + PIN, FLAG_SECURE, the 7-day watermark), the dual-profile SQLite
+    store (field migrations v4+ + the 128 MB byte-exact LRU prune + the proven §6.4
+    corruption drill; **DR-P22-08b** personal = cursors+meta+read models only, no
+    outbox/inbox), the sync host + triggers + revocation over UNMODIFIED sync-core with
+    the 8 MB/2 MB/256 KB budget guards and the ≤ 15-min background schedule, the
+    field-sales flow state machines with LOCAL-VALID† pre-validation, the companion +
+    personal view models, the FULL CONFLICT_RESOLUTION §3 rejection UX, the FCM client
+    wiring, the release policy + rollout gates) + the RN screens (11 registered,
+    tree-rendered AR/EN with a11y + ≥ 44 px targets through the vitest Flow bridge) +
+    the thin Expo glue (`native/**` + eas.json + app.config.ts + metro.config.js,
+    source-only — the EAS CI workflow compiles it; `pnpm check:mobile-shell` gates the
+    structure). 27 files / 393 tests green on Node. Dev loop:
+    [../operations/MOBILE_QUICKSTART.md](../operations/MOBILE_QUICKSTART.md).
   - `packages/ui` — **@erp/ui v1.0.0 (PHASE-005, ADR-0016)**: token layer
     byte-verbatim to DESIGN_TOKENS (contrast gate §16 in CI), Radix primitive
     wrappers (the only legal Radix site), catalog components (DataTable
@@ -583,8 +601,8 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   framework & priority templates + PHASE-016 Point of Sale + PHASE-017 Automotive &
   Distribution Templates + PHASE-018 Manufacturing & Production + PHASE-019 CRM,
   Service Contracts & Projects + PHASE-020 Offline Synchronization Foundation +
-  PHASE-021 Desktop Application
-  (migrations 0001–0032; the centralized posting engine with the full
+  PHASE-021 Desktop Application + PHASE-022 Android Application
+  (migrations 0001–0034; the centralized posting engine with the full
   invariant suite is live and proven by its consumers — treasury posts every
   money movement through it, tax stamps every tax-carrying line with frozen
   rate snapshots BR-033, inventory posts every stock movement through it
@@ -769,6 +787,44 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   found and fixed a real integration defect (DR-P21-3b-1 — the outbox `payload`
   column must carry the full v2 envelope, or per-item results are unattributable and
   the row freezes IN_FLIGHT) and is green AR + EN.
+  PHASE-022 (2026-11-05) ships the Android application as `@erp/mobile` (ADR-0014 —
+  ONE app, TWO capability experiences: `android-field` + `android-personal`, scoping
+  at device registration, never by build variant): the TS workspace package holds ALL
+  application logic (DR-P22-01 — the `native/` Expo glue dir is excluded from the
+  pnpm workspace, source-only until the EAS release workflow compiles it;
+  `check:mobile-shell` gates the structure) — the two-layer token mirror +
+  `check:mobile-tokens` (DR-P22-02), the logical-props-only RTL ban (DR-P22-03, the
+  RN port of `erp/no-physical-direction`), the AR-first typed dictionary +
+  `check:mobile-i18n` ar=en=371 (DR-P22-04), the mobile store (field migrations v4+,
+  the 128 MB byte-exact prune, the §6.4 corruption drill; DR-P22-08b personal =
+  cursors+meta+read models only — no outbox/inbox, push structurally unreachable),
+  the sync host over UNMODIFIED sync-core with the §8 triggers + the 8 MB/2 MB/256 KB
+  budgets + the C-08 gate + the D-01 purge (DR-P22-08), device security
+  (DR-P22-09 — the SecureStore vault, memory-only tokens, biometric-optional unlock,
+  best-effort trust signals that degrade never brick, FLAG_SECURE, the 7-day
+  watermark), the 11-screen registry with honest states + the FULL rejection table
+  (DR-P22-11), and the release policy + rollout gates (DR-P22-10 — calver
+  `minVersion` force-update; promote 10→50 ≥ 99.5%/≥ 200, 50→100 ≥ 99.7%/≥ 500,
+  halt < 98.5% at any sample size). Server-side: DR-P22-05 the field + personal feed
+  activation (partner-scoped personal feeds, tampered-pull-proof) with DR-P22-05a
+  migration `0033_mobile_feeds.sql` (`devices.linked_partner_id`) + the 3-b
+  registration writer; DR-P22-06 the write-intent registry 13→17
+  (`receipt:create_field_collection`, `van:confirm_load`/`van:confirm_unload`,
+  `credit_note:create_draft` — owning services only, typed rejections with
+  machine-readable details, duplicate:true replays); DR-P22-07 the FCM skeleton
+  (NotificationChannelPort + the disabled-by-default adapter, opt-in default OFF, no
+  financial payloads — three enforcement layers) with DR-P22-07a migration
+  `0034_device_push_tokens.sql` + the `PUT /devices/:id/push-token` surface. The
+  expo chaos profile (`apps/api/src/__db__/sync/expo/`) drives the REAL mobile store
+  through the FULL C-01…C-16 (+C-11b) matrix + battery/connectivity fault profiles +
+  the 4-window real-SIGKILL kill-matrix + D-01/D-02/D-04 (the personal class
+  included) on the dedicated TENANT_EXPO; the capabilities-matrix android columns
+  are implemented with real gates (18 cells; 42 implemented rows, 0 deferred).
+  Honest deferrals (the k6 precedent): the on-device C-06/C-07/C-13 + D-02 cipher
+  legs (the wired device-farm CI job), Play Store signing/EAS compile (CI only),
+  the pixel snapshot gallery (tree-level parity proven), T-03 scan-to-cart on
+  reference hardware, and the force-update screen navigation glue (policy + tests
+  complete; the App.tsx TODO asserted structurally).
   Infra-bound evidence (hosted CI, compose boot, Testcontainers run, mailpit
   capture, Playwright journey) waived per owner directive 2026-10-28 with
   local-gate equivalence recorded.
@@ -804,6 +860,17 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   windows + D-01/02/04/06 on file) + enroll 6 + desktop-intents 23; the web console
   suites 73; the E2E offline journey 2/2 AR+EN — with the 020 chaos regression 19/19
   bit-identical and sync-core untouched at 36/36) +
+  the PHASE-022 suites (`@erp/mobile` 27 files / 393 tests NEW — logic + REAL RN
+  renders AR/EN through the vitest Flow bridge; the sync dir widened again to
+  21 files / 191 tests in `src/__db__/sync/` — the expo chaos profile 27 (the matrix
+  C-01…C-16 + C-11b on the REAL mobile store + battery/connectivity fault profiles +
+  4 real-SIGKILL windows + D-01/02/04 incl. the personal class) + pull-fields /
+  pull-personal 10 + field-intents 18 + register-partner-link 6, plus fcm-channel 8
+  in `src/__db__/notifications/`, the full DB suite 128 files / 1898 tests; the
+  mobile gates `check:mobile-tokens`
+  130/130+50/50 + `check:mobile-i18n` 371 + `check:mobile-shell`; web i18n 3244=3244
+  untouched; desktop 274/274 + the 020/021 chaos regressions byte-identical +
+  sync-core 36/36 untouched) +
   visual
   harness 16 (AR+EN threshold-0 baselines ×95 incl. ShiftPanel ×4 ×2 directions,
   axe 0, geometry, coverage) +

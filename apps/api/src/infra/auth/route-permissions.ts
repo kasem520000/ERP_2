@@ -2667,6 +2667,18 @@ export const ROUTE_PERMISSIONS: readonly RoutePermissionRule[] = [
     permission: "sync.devices.revoke",
     self: true,
   },
+  // PHASE-022 · DR-P22-07 (integrations §3.5): the device-token opt-in
+  // surface. Gated like device patch (identity.devices.manage) with the
+  // revoke pattern's self scope — the device itself calls it
+  // post-registration with its device credentials (the access-token
+  // session resolves the user; the handler enforces the ownership
+  // boundary: the device's own user, or an admin holding the key).
+  {
+    method: "PUT",
+    path: "/api/v1/devices/:id/push-token",
+    permission: "identity.devices.manage",
+    self: true,
+  },
   {
     method: "GET",
     path: "/api/v1/sync/admin/health",

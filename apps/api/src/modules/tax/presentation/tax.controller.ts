@@ -13,6 +13,10 @@ import { VatReturnService } from "../application/vat-return-service";
 import { PackService } from "../application/pack-service";
 import { EInvoicingService } from "../application/einvoicing-service";
 import { TaxReconciliationService } from "../application/tax-reconciliation-service";
+import { SubmissionRegistryService } from "../submissions/registry-service";
+import * as certs from "../certs/certificate-service";
+import * as rollout from "../rollout/adapter-settings";
+import { FilesService } from "../../files/application/files.service";
 import { requireTenantContext } from "../../../infra/db/tenant-context";
 import { findTenantCountry } from "../infrastructure/tax.store";
 
@@ -105,6 +109,22 @@ const einvoicingSubmitSchema = z.object({
   document: z.record(z.string(), z.unknown()),
 });
 
+const certEnrollSchema = z.object({
+  countryCode: COUNTRY,
+  adapterId: z.string().min(2).max(40),
+  label: z.string().min(1).max(120),
+  keyVersion: z.string().min(1).max(40),
+  pem: z.string().min(64).max(100_000),
+  notBefore: z.string().min(10).max(40),
+  notAfter: z.string().min(10).max(40),
+  rotatedFromId: UUID.nullish(),
+});
+
+const adapterSettingSchema = z.object({
+  countryCode: COUNTRY,
+  enabled: z.boolean(),
+});
+
 @Controller("api/v1/tax")
 export class TaxController {
   constructor(
@@ -115,6 +135,8 @@ export class TaxController {
     @Inject(PackService) private readonly packs: PackService,
     @Inject(EInvoicingService) private readonly einvoicing: EInvoicingService,
     @Inject(TaxReconciliationService) private readonly reconciliation: TaxReconciliationService,
+    @Inject(SubmissionRegistryService) private readonly submissionRegistry: SubmissionRegistryService,
+    @Inject(FilesService) private readonly files: FilesService,
   ) {}
 
   // -- reference data (read-only packs + treatments) ------------------------------
@@ -374,6 +396,103 @@ export class TaxController {
           sourceId: input.sourceId,
           document: input.document,
         },
+        actorId: identity.userId,
+      }),
+    );
+  }
+
+  // -- PHASE-023: the operational registry surface (T1/T5/T10/T13) ------------------
+
+  /** Registry queries feed from the operational store (funnel/dashboard). */
+  @Get("einvoicing/registry/submissions")
+  @RequirePermissions("tax.einvoicing.manage")
+  async registrySubmissions(
+    @Query("country") country?: string,
+    @Query("adapter") adapter?: string,
+    @Query("status") status?: string,
+    @Query("sourceType") sourceType?: string,
+    @Query("sourceId") sourceId?: string,
+  ): Promise<unknown> {
+    return envelope(
+      await this.submissionRegistry.listSubmissions({
+        countryCode: country,
+        adapterId: adapter,
+        status,
+        sourceType,
+        sourceId,
+      }),
+    );
+  }
+
+  /** The per-tenant funnel aggregate (MONITORING §1 — the tenant surface). */
+  @Get("einvoicing/funnel")
+  @RequirePermissions("tax.einvoicing.manage")
+  async funnel(): Promise<unknown> {
+    return envelope(await this.submissionRegistry.funnel());
+  }
+
+  /** Resubmission after REJECTED/FAILED (TROUBLESHOOTING §10 — new row, history intact). */
+  @Post("einvoicing/submissions/:id/resubmit")
+  @RequirePermissions("tax.einvoicing.manage")
+  async resubmit(@Req() request: Request, @Param("id") id: string): Promise<unknown> {
+    const identity = requireIdentity(request);
+    return envelope(
+      await this.submissionRegistry.resubmit({ submissionId: id, actorId: identity.userId }),
+    );
+  }
+
+  /** Certificate metadata + countdowns (NO key material — SECRETS §6.2). */
+  @Get("einvoicing/certificates")
+  @RequirePermissions("tax.einvoicing.manage")
+  async listCertificates(): Promise<unknown> {
+    return envelope({
+      certificates: await certs.listCertificates(),
+      signingVolume: await certs.signingVolume(),
+    });
+  }
+
+  /** Enrollment trigger (admin workflow — the blob ships out-of-band; sealed at rest). */
+  @Post("einvoicing/certificates/enroll")
+  @RequirePermissions("tax.einvoicing.manage")
+  async enrollCertificate(@Req() request: Request, @Body() body: unknown): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = certEnrollSchema.parse(body);
+    return envelope(
+      await certs.enrollCertificate(this.files, {
+        countryCode: input.countryCode.toUpperCase(),
+        adapterId: input.adapterId,
+        label: input.label,
+        keyVersion: input.keyVersion,
+        pem: input.pem,
+        notBefore: input.notBefore,
+        notAfter: input.notAfter,
+        actorId: identity.userId,
+        rotatedFromId: input.rotatedFromId ?? null,
+      }),
+    );
+  }
+
+  /** The tenant's adapter rollout flags (T13 — default OFF; enablement gated). */
+  @Get("einvoicing/settings")
+  @RequirePermissions("tax.einvoicing.manage")
+  async adapterSettings(): Promise<unknown> {
+    return envelope(await rollout.listAdapterSettings());
+  }
+
+  @Post("einvoicing/settings/:adapterId")
+  @RequirePermissions("tax.einvoicing.manage")
+  async setAdapterSetting(
+    @Req() request: Request,
+    @Param("adapterId") adapterId: string,
+    @Body() body: unknown,
+  ): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = adapterSettingSchema.parse(body);
+    return envelope(
+      await rollout.setAdapterEnabled({
+        adapterId,
+        countryCode: input.countryCode.toUpperCase(),
+        enabled: input.enabled,
         actorId: identity.userId,
       }),
     );

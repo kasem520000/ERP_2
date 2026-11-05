@@ -26,6 +26,8 @@ const SEED_PATHS = [
   join(process.cwd(), "migrations", "0025_automotive_distribution.sql"), // PHASE-017 automotive/distribution family
   join(process.cwd(), "migrations", "0026_manufacturing.sql"), // PHASE-018 manufacturing family
   join(process.cwd(), "migrations", "0027_crm_projects.sql"), // PHASE-019 crm/projects family
+  join(process.cwd(), "migrations", "0029_sync_foundation.sql"), // PHASE-020 sync-plane re-assertions
+  join(process.cwd(), "migrations", "0035_external_integrations.sql"), // PHASE-023 commerce channel gate
 ] as const;
 
 const matrixMarkdown = readFileSync(MATRIX_PATH, "utf8");
@@ -64,7 +66,7 @@ describe("permissions drift checker (PHASE-003 T2)", () => {
   it("current docs ↔ seed is drift-free (matrix §9.1 CI contract)", () => {
     // The seed side is the UNION of permission-seeding migrations (the
     // checker's main() does the same — 0004 base + 0024 pos.* + 0025
-    // automotive/distribution).
+    // automotive/distribution + 0029 sync re-assertions + 0035 commerce).
     const seedSql = SEED_PATHS.map((path) => readFileSync(path, "utf8")).join("\n");
     const result = diffDrift(parseMatrixKeys(matrixMarkdown), parseSeedKeys(seedSql));
     expect(result.missingInSeed).toEqual([]);

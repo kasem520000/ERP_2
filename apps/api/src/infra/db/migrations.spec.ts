@@ -26,7 +26,10 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // PHASE-022 DR-P22-07a: 0034_device_push_tokens (the FCM skeleton's
     // device-token opt-in store — the dedicated service-mediated table; the
     // devices table has no natural JSON column for push tokens).
-    expect(files.at(-1)?.tag).toBe("0034_device_push_tokens");
+    // PHASE-023: 0035_external_integrations (e-invoicing submissions/certs/
+    // suppression + commerce channels + payouts/refunds/settlements + the
+    // parked-lines/pending-formats treasury registry — T1/T3/T5/T6/T8).
+    expect(files.at(-1)?.tag).toBe("0035_external_integrations");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

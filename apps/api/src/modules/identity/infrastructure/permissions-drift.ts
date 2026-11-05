@@ -123,6 +123,9 @@ const PERMISSION_SEED_MIGRATIONS: readonly string[] = [
   // sync.settings.manage, identity.devices.manage — seeded at 0004 base,
   // going live with the device registry).
   "apps/api/migrations/0029_sync_foundation.sql",
+  // PHASE-023 T8: 0035 seeds sales.commerce.manage (the commerce-channel
+  // import gate — operator-plane, granted to platform ops roles only).
+  "apps/api/migrations/0035_external_integrations.sql",
 ];
 
 export async function main(): Promise<void> {

@@ -1,6 +1,6 @@
 # Relationships — Catalogue Rules
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05
 
 How entities relate: the tenant-scoped FK pattern, cascade policy, reversal/provenance
 linking, the ledger source chain, subledger linkage rules, read-model relations, and the
@@ -41,7 +41,7 @@ a migration-review checklist item and a PHASE-002 CI check. Global reference tab
 | `reversal_of_id` / `reversed_by_id` | `journal_entries` (bidirectional pair) | A posted entry is negated only by a mirroring counter-entry; **at most one** reversal per entry (INV-014); the pair links both directions; both stay visible (net zero). |
 | `ref_invoice_id` | `credit_notes` (and debit notes ↔ supplier invoices) | Correction documents must reference their original; standalone corrections require an explicit policy flag + audit. |
 | `reversed_by_doc_id` | Financial documents (e.g., invoices) | Set when a reversal document is posted; the original keeps its number and status `REVERSED` ([DOCUMENT_LIFECYCLE.md](../accounting/DOCUMENT_LIFECYCLE.md) §2). |
-| `source_type` + `source_id` | `journal_entries` (→ the posting chain), `stock_moves` (→ originating document), `cash_movements` (→ originating document), `e_invoicing_submissions` (→ document via `doc_type`/`doc_id`) | **Generic provenance**: a polymorphic reference always paired with the operation discriminator on the ledger (`journal_entries.operation` makes `(tenant_id, source_type, source_id, operation)` the idempotency key — INV-013). Consumers never `JOIN` across a polymorphic ref in SQL for business logic — they resolve through owning-module services; the pairs exist for audit, tracing, and idempotency. |
+| `source_type` + `source_id` | `journal_entries` (→ the posting chain), `stock_moves` (→ originating document), `cash_movements` (→ originating document), `e_invoicing_submissions` (→ document via `source_type`/`source_id`) | **Generic provenance**: a polymorphic reference always paired with the operation discriminator on the ledger (`journal_entries.operation` makes `(tenant_id, source_type, source_id, operation)` the idempotency key — INV-013). Consumers never `JOIN` across a polymorphic ref in SQL for business logic — they resolve through owning-module services; the pairs exist for audit, tracing, and idempotency. |
 
 ## 4. The source chain (ledger provenance)
 
@@ -125,7 +125,15 @@ Cardinality: `1:N` one-to-many, `N:M` via join table, `self` self-referencing.
 | receipts/payments → documents (allocations) | N:M | allocations (INV-016 cap) | 012/011 |
 | cash_accounts → accounts (CoA link); cash_movements → cash_accounts | N:1 / 1:N | `cash_accounts.account_id`, `cash_movements.cash_account_id` | 008 |
 | tenants → tax_registrations → jurisdictions; tenants → tax_codes | 1:N chains | direct FKs | 009 |
-| documents → e_invoicing_submissions | 1:N (per adapter) | `doc_type`/`doc_id` + `adapter_id` | 023 |
+| documents → e_invoicing_submissions | 1:N (per adapter) | `source_type`/`source_id` + `adapter_id`; partial unique `uq_einvoicing_submissions_live` over the live states — ONE LIVE row per document × adapter (registry idempotency, no double clearance); REJECTED/FAILED history rows chain via `retry_of_submission_id` (append-only) | 009/023 |
+| e_invoicing_submissions → file_objects (sealed artifacts) | N:1 ×2 | `payload_file_id`/`response_file_id` (owner types `EINVOICE_PAYLOAD`/`EINVOICE_RESPONSE`; soft links — no FK) | 023 |
+| tenants → e_invoicing_certificates → e_invoicing_certificate_usage | 1:N chains | composite tenant FK (RESTRICT); usage `submission_id` optional soft link back to the registry row | 023 |
+| e_invoicing_certificates → e_invoicing_certificates (rotation chain) | self | `rotated_from_id` composite tenant FK (SET NULL) | 023 |
+| tenants → e_invoicing_adapter_settings (one per adapter) | 1:N | `uq (tenant_id, adapter_id)` — the rollout flag, default OFF | 023 |
+| bank_statements → bank_statement_parked_lines | 1:N | `statement_id` + `line_index` (uq slot; soft link — no FK: parked rows precede their mapped line) | 023 |
+| bank_statement_parked_lines → bank_statement_lines (resolution) | N:1 optional | `resolved_line_id` (soft link — no FK; set when the mapped line is written) | 023 |
+| commerce_channel_imports → commerce_channel_orders (batch staging) | 1:N | `commerce_channel_orders.import_batch_id` (soft link — no FK; row identity is the natural key tenant+channel+channel_order_id) | 023 |
+| subscription_invoices ↔ billing_payouts (reconciliation window) | derived | no FK — the reconciliation job compares settled platform payments inside the payout window against the provider-reported batch (RECONCILED or DRIFT with detail, never auto-corrected) | 023 |
 | file_objects → owner (attachment) | N:1 | `owner_type`/`owner_id` (scoped by tenant prefix in storage keys) | 002/006 |
 | devices → sync_cursors / inbox_commands; tenants → change_log / tombstones | 1:N | sync protocol relations (ADR-0012) | 020 |
 | tenants → report_runs → file_objects (output) | 1:N / N:1 | `report_runs.output_file` | 013 |

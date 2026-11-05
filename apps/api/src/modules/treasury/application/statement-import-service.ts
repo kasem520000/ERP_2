@@ -10,11 +10,12 @@ import {
   StatementTooLargeError,
 } from "../domain/treasury-errors";
 import {
-  BANK_ADAPTERS,
-  resolveAdapter,
+  BANK_ADAPTERS as BANK_ADAPTERS_V2,
+  resolveAdapter as resolveAdapterV2,
   type ColumnMapping,
   type ParsedStatement,
-} from "../infrastructure/bank-adapters";
+} from "../parsers/format-adapters";
+import { recordParkedRows } from "../parsers/parked-lines";
 import { requireActiveAccount } from "./document-support";
 
 /**
@@ -35,7 +36,7 @@ export class StatementImportService {
 
   /** The adapter registry listing (the UI wizard's adapter picker). */
   listAdapters() {
-    return BANK_ADAPTERS.map((adapter) => ({
+    return BANK_ADAPTERS_V2.map((adapter) => ({
       id: adapter.id,
       label: adapter.label,
       extensions: adapter.extensions,
@@ -91,7 +92,7 @@ export class StatementImportService {
       return { statement: existing, idempotentReplay: true };
     }
 
-    const adapter = resolveAdapter(input.fileName, input.adapterId);
+    const adapter = resolveAdapterV2(input.fileName, input.adapterId);
     let parsed: ParsedStatement;
     try {
       parsed = await adapter.parse({ fileName: input.fileName, content, mapping: input.mapping });
@@ -99,7 +100,16 @@ export class StatementImportService {
       const message = error instanceof Error ? error.message : "unknown parse failure";
       throw new StatementFormatInvalidError(`${adapter.id}: ${message}`);
     }
+    // PHASE-023 T7: parking-aware family adapters return parked rows — the
+    // unparseable lines park for manual mapping (NEVER guessed amounts); a
+    // statement with ONLY parked rows still rejects (no data to reconcile).
+    const parked = (parsed as { parked?: readonly { lineIndex: number; rawLine: string; rawCells: readonly string[]; reason: string }[] }).parked ?? [];
     if (parsed.lines.length === 0) {
+      if (parked.length > 0) {
+        throw new StatementFormatInvalidError(
+          `the statement has no parseable rows (${parked.length} rows parked as unparseable — fix the mapping or use a different format)`,
+        );
+      }
       throw new StatementFormatInvalidError("the statement has no data rows");
     }
     if (parsed.lines.length > IMPORT_ROW_CAP) {
@@ -131,6 +141,12 @@ export class StatementImportService {
         description: line.description,
       });
     }
+    // PHASE-023 T7: persist the parked rows (idempotent per statement slot).
+    const parkedCount = await recordParkedRows({
+      statementId: statement.id,
+      rows: parked,
+      actorId: input.actorId,
+    });
     await this.audit.record({
       action: "treasury.bank_statement_imported",
       entityType: "bank_statement",
@@ -140,6 +156,7 @@ export class StatementImportService {
         fileName: input.fileName,
         adapter: adapter.id,
         lines: parsed.lines.length,
+        parked: parkedCount,
         period: `${periodStart}..${periodEnd}`,
         account: account.name,
       },

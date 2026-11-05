@@ -253,6 +253,21 @@ export const TENANT_TABLES_REGISTRY: readonly RegisteredTenantTable[] = [
   // a user-plane one).
   { table: "tombstones", deleteGranted: true },
   { table: "inbox_commands", deleteGranted: true },
+
+  // PHASE-023 external-integrations cluster (migration
+  // 0035_external_integrations.sql): the certificate S-10 registry + its
+  // usage audit (DELETE = the offboarding purge only — the tombstones
+  // job-owned pattern), the per-tenant adapter rollout flags, the parked
+  // bank-statement lines, the commerce staging tables, and the billing
+  // payout batches. e_invoicing_submissions itself is registered with the
+  // PHASE-009 cluster above.
+  { table: "e_invoicing_certificates", deleteGranted: true },
+  { table: "e_invoicing_certificate_usage", deleteGranted: true },
+  { table: "e_invoicing_adapter_settings" },
+  { table: "bank_statement_parked_lines" },
+  { table: "commerce_channel_orders" },
+  { table: "commerce_channel_imports", deleteGranted: true },
+  { table: "billing_payouts" },
 ];
 
 export const TENANT_TABLE_NAMES: readonly string[] = TENANT_TABLES_REGISTRY.map(

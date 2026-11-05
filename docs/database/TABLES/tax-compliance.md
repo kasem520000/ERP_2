@@ -1,6 +1,6 @@
 # Table Specifications — Tax & Compliance
 
-> **Status:** STABLE · **Owner:** Database & Tax Architecture · **Updated:** 2026-10-30 · **Delivered:** PHASE-009 (migration `0013_tax.sql`)
+> **Status:** STABLE · **Owner:** Database & Tax Architecture · **Updated:** 2026-11-05 · **Delivered:** PHASE-009 (migration `0013_tax.sql`) · operational registry + certificates + rollout PHASE-023 (migration `0035_external_integrations.sql`)
 
 Column-level specifications for the tax/compliance tables **as delivered by
 PHASE-009** (the jurisdiction-pack engine, the tenant codes/registrations,
@@ -176,21 +176,126 @@ Indexes: `ix_tax_summaries_period (tenant_id, country_code, document_date, direc
 | filed_at / filed_by | filing… | YES | ck: `(status = 'FILED') = (filed_at IS NOT NULL AND filed_by IS NOT NULL)` | The human filing (audited; the platform reports) |
 | filing_reference / filing_note | text | YES | ref length 1–80 | Filing metadata for audit |
 
-## `e_invoicing_submissions` (tenant — schema PHASE-009, populated PHASE-023)
+## `e_invoicing_submissions` (tenant — schema PHASE-009, OPERATIONAL PHASE-023)
+
+The PHASE-009 schema-only registry became OPERATIONAL with migration
+`0035_external_integrations.sql` (E_INVOICING §2/§6): **one LIVE row per document ×
+adapter** (registry idempotency — the no-double-clearance guarantee), the full
+lifecycle ladder with `SIGNED`/`REPORTED` joining the enum, exponential-capped
+retries with dead-letter alerting, and sealed payload/response artifacts. **Registry
+status is the SOLE source of authority truth (directive §12)** — a document's
+official validity never depends on local state. `REJECTED`/`FAILED` rows are
+immutable history: resubmission appends a NEW row chained via
+`retry_of_submission_id` (never an edit — TROUBLESHOOTING §10).
 
 | Column | Type | Null | Constraints | Description |
 |--------|------|------|-------------|-------------|
-| `id`, `tenant_id` **+standard** | — | — | `UNIQUE (id, tenant_id)`; `uq (tenant_id, source_type, source_id)` | One registry row per source document |
+| `id`, `tenant_id` **+standard** | — | — | `UNIQUE (id, tenant_id)`; partial unique `uq_einvoicing_submissions_live (tenant_id, source_type, source_id, adapter_id) WHERE status IN ('PENDING','GENERATED','SIGNED','SUBMITTED','ACCEPTED','REPORTED')` | One LIVE registry row per document × adapter (0035 expand-contract: replaces 009's `uq_e_invoicing_submissions_source` — no legacy rows existed to backfill, the schema was test-only) |
 | country_code | char(2) | NO | fk → `jurisdictions` | |
-| adapter_id | text | NO | — | e.g. `zatca`, `eta_eg`, `fake` (test-only) |
+| adapter_id | text | NO | — | e.g. `zatca`, `fake-zatca`/`fake-eta` (test-only harnesses) |
 | source_type / source_id | text / uuid | NO | shape as summaries | The submitting document |
-| status | text | NO | `PENDING` | ck: `PENDING \| GENERATED \| SUBMITTED \| ACCEPTED \| REJECTED \| FAILED` (E_INVOICING §2 lifecycle — the port's states) |
+| status | text | NO | `PENDING` | ck: `PENDING \| GENERATED \| SIGNED \| SUBMITTED \| ACCEPTED \| REJECTED \| REPORTED \| FAILED` (E_INVOICING §2 lifecycle — SIGNED only where the regime signs; unsigned regimes hop GENERATED → SUBMITTED; REJECTED is terminal for the row — reason codes surface for user action) |
+| attempts | integer | NO | `0` | Retry counter (exponential backoff capped at 30 min; dead-letter at `RETRY_MAX_ATTEMPTS`) |
+| next_attempt_at | timestamptz | YES | — | The retry sweep's due-time (live-retry states only) |
+| authority_refs | jsonb | NO | `[]` | Authority-issued references (ICV/UUID-class ids stored as compliance payload fields — ADR-0006: never replacing platform identity) |
+| payload_file_id / response_file_id | uuid | YES | → `file_objects` (`EINVOICE_PAYLOAD`/`EINVOICE_RESPONSE` owner types) | The SEALED artifacts (AES-256-GCM envelope via `EINVOICING_SECRET_KEY`/`EINVOICING_SECRET_KEY_ID`, tenant-scoped signed URLs on read; production fails closed without the key) |
 | payload_digest | text | YES | — | Stable digest for idempotent rebuilds |
-| authority_reference | text | YES | — | Authority id when accepted |
-| submitted_at / responded_at | timestamptz | YES | — | Lifecycle timestamps |
+| authority_reference | text | YES | — | Primary authority id when accepted |
+| submitted_at / reported_at / responded_at | timestamptz | YES | — | Lifecycle timestamps (`reported_at` = the reporting-mode acknowledgement) |
+| last_error_code | text | YES | — | Typed last failure (feeds the DLQ alert) |
 | error_detail | jsonb | YES | — | Typed rejection payload |
+| retry_of_submission_id | uuid | YES | indexed (`ix_einvoicing_submissions_retry_of`); soft chain link — no FK | The row this resubmission supersedes (append-only history) |
 
-Index: `ix_e_invoicing_tenant_status (tenant_id, country_code, status)`.
+Indexes: `ix_e_invoicing_tenant_status (tenant_id, country_code, status)` (009);
+`uq_einvoicing_submissions_live` (0035, partial unique — above);
+`ix_einvoicing_submissions_retry (status, next_attempt_at) WHERE status IN
+('PENDING','GENERATED','SIGNED','SUBMITTED')` (0035 — the pg-boss retry sweep's
+due-row scan); `ix_einvoicing_submissions_retry_of (tenant_id,
+retry_of_submission_id)` (0035 — the chain walk).
+
+Grants keep the 009 shape (SELECT/INSERT/UPDATE for `erp_app` — the registry owns
+its rows; DELETE never: history is append-only).
+
+## `e_invoicing_certificates` (tenant — PHASE-023, S-10 HIGHEST)
+
+The e-invoicing certificate registry (SECRETS_MANAGEMENT §6): metadata +
+lifecycle ONLY — the encrypted blob lives in the files store under
+`einvoicing/{jurisdiction}/{tenant}/…` paths, and **no column here carries key
+material by design**; the API surface never returns key bytes (signing-job-only
+access — the §6 handling tests assert the read refusal). Enrollment/rotation are
+approval-separated audited admin workflows; the expiry sweep alerts at 30/14/7
+days with each fired threshold recorded on `expires_alerted_at` (fires exactly
+once); offboarding purges the secret paths (DATA_PROTECTION §4 step 6 — the only
+DELETE caller; revocation is a status).
+
+| Column | Type | Null | Constraints | Description |
+|--------|------|------|-------------|-------------|
+| `id`, `tenant_id` **+standard** | — | — | `UNIQUE (id, tenant_id)` | composite-FK anchor for usage rows |
+| country_code | char(2) | NO | fk → `jurisdictions` (RESTRICT) | |
+| adapter_id | text | NO | — | The adapter the certificate serves |
+| label | text | NO | ck length 1–120 | Human label |
+| key_version | text | NO | — | Key-material version tag |
+| secret_path | text | NO | `uq_e_invoicing_certificates_path`; ck shape `LIKE 'einvoicing/%'` | The secret-store PATH (the blob is external — S-10) |
+| fingerprint | text | NO | — | Public-key fingerprint |
+| not_before / not_after | timestamptz | NO / NO | ck `not_after > not_before` | Validity window (drives the expiry ladder) |
+| status | text | NO | `ACTIVE` | ck: `ACTIVE \| EXPIRING_SOON \| EXPIRED \| REVOKED` | Lifecycle (expiry sweep flips it; REVOKED keeps history) |
+| enrolled_by / enrolled_at | uuid / timestamptz | YES / NO | — | Approval-separated enrollment audit (`now()` default) |
+| rotated_from_id | uuid | YES | composite self-FK → `e_invoicing_certificates` (SET NULL) | The rotation chain |
+| sign_count | bigint | NO | `0` | Signing-volume counter (usage rows are the detail) |
+| last_used_at | timestamptz | YES | — | |
+| expires_alerted_at | jsonb | NO | `{}` | Which 30/14/7 thresholds already fired (once each) |
+
+Index: `ix_einvoicing_certs_tenant (tenant_id, adapter_id, status)` — the expiry
+sweep + tenant status queries. Grants: SELECT/INSERT/UPDATE/DELETE for `erp_app`
+(DELETE exists solely for the offboarding purge — usage rows go first, the FK).
+
+## `e_invoicing_certificate_usage` (tenant — PHASE-023, append-only 🔒)
+
+One audited row per SIGN/DECRYPT operation (tenant, certificate, submission, key
+version) — the signing-volume dashboard substrate. **INSERT + SELECT only** (no
+UPDATE/DELETE grants — the audit trail cannot be rewritten); retention sweeps
+bound growth. No `updated_at`/`version` — rows are immutable by shape.
+
+| Column | Type | Null | Constraints | Description |
+|--------|------|------|-------------|-------------|
+| `id`, `tenant_id`, `created_at` | — | — | `UNIQUE (id, tenant_id)` | no `updated_at`/`version` — append-only |
+| certificate_id | uuid | NO | composite FK → `e_invoicing_certificates` (RESTRICT) | The certificate used |
+| submission_id | uuid | YES | soft link — no FK | The registry row the operation served (when applicable) |
+| operation | text | NO | ck: `SIGN \| DECRYPT` | What the key material did |
+| key_version | text | NO | — | The key version tag at use time |
+| used_at | timestamptz | NO | `now()` | |
+
+Index: `ix_einvoicing_cert_usage_cert (tenant_id, certificate_id, used_at)`.
+
+## `e_invoicing_adapter_settings` (tenant — PHASE-023)
+
+The per-tenant adapter rollout flag (T13, DEPLOYMENT §7): **default OFF for every
+adapter in every jurisdiction**; enabling is a gated, audited action that requires
+a provisioned ACTIVE certificate for the tenant's jurisdiction
+(service-enforced — the gate test asserts the refusal); disabling is always
+allowed (rollback = flag off). **Never the global `feature_flags` table** —
+platform L8 vs tenant configuration; RLS-scoped.
+
+| Column | Type | Null | Constraints | Description |
+|--------|------|------|-------------|-------------|
+| `id`, `tenant_id` **+standard** | — | — | `UNIQUE (id, tenant_id)`; `uq_einvoicing_adapter_settings (tenant_id, adapter_id)` | One rollout flag per adapter per tenant |
+| country_code | char(2) | NO | fk → `jurisdictions` (RESTRICT) | The jurisdiction the enablement targets |
+| enabled | boolean | NO | `false` | ck: `enabled = false OR (enabled_by IS NOT NULL AND enabled_at IS NOT NULL)` — an enabled adapter always carries its audited enabler |
+| config | jsonb | NO | `{}` | Adapter-specific tenant configuration (policy blob, not a data channel) |
+| enabled_by / enabled_at | uuid / timestamptz | YES / YES | — | The audited enablement |
+
+Grants: SELECT/INSERT/UPDATE for `erp_app` (the toggle surface).
+
+## Widening of existing tables (migration 0035)
+
+- `file_objects.owner_type` — widened additively with `EINVOICE_PAYLOAD`,
+  `EINVOICE_RESPONSE`, `EINVOICING_CERT` (the sealed submission artifacts + the
+  certificate blob; the 0006/0012 widening pattern).
+- `notifications.category` + `notification_prefs.category` — widened with
+  `einvoicing` (the `einvoice.submission.failed` dead-letter inbox alert + the
+  CertExpiry 30/14/7 escalation ladder; the 0023/0027 widening shape).
+- `billing_events.type` — widened with `payment.refunded` (the refund flow's
+  auditable trail — see [tenancy-identity.md](tenancy-identity.md) §billing_payouts).
 
 ## Widening of existing tables (this migration)
 

@@ -15,6 +15,7 @@ import { TransferService } from "../application/transfer-service";
 import { ExpenseService } from "../application/expense-service";
 import { ShiftService } from "../application/shift-service";
 import { StatementImportService } from "../application/statement-import-service";
+import * as parked from "../parsers/parked-lines";
 import { BankRecService } from "../application/bank-rec-service";
 import { TreasuryReconciliationService } from "../application/treasury-reconciliation-service";
 
@@ -109,6 +110,15 @@ const transferSchema = z.object({
 });
 
 const reasonSchema = z.object({ reason: z.string().min(3).max(2000) });
+
+const parkedResolveSchema = z.object({
+  lineDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "ISO date"),
+  amount: z.string().regex(/^-?\d+(\.\d{1,8})?$/, "decimal string"),
+  reference: z.string().min(1).max(120).nullish(),
+  description: z.string().min(1).max(500).nullish(),
+});
+
+const parkedDiscardSchema = z.object({ note: z.string().min(3).max(500) });
 const reverseSchema = z.object({ entryDate: DATE, reason: z.string().min(3).max(2000) });
 
 const shiftOpenSchema = z.object({
@@ -828,6 +838,46 @@ export class TreasuryController {
   @RequirePermissions("treasury.bank_reconciliation.manage")
   async statementLines(@Param("id") id: string): Promise<unknown> {
     return envelope(await this.statements.lines(id));
+  }
+
+  // -- PHASE-023 T7: parked lines (manual mapping — never guessed amounts) --------------------
+
+  @Get("bank-statements/parked-lines")
+  @RequirePermissions("treasury.bank_reconciliation.manage")
+  async parkedLines(
+    @Query("statementId") statementId?: string,
+    @Query("status") status?: string,
+  ): Promise<unknown> {
+    return envelope(await parked.listParkedLines({ statementId, status }));
+  }
+
+  @Post("bank-statements/parked-lines/:id/resolve")
+  @RequirePermissions("treasury.bank_reconciliation.manage")
+  @HttpCode(HttpStatus.OK)
+  async resolveParkedLine(@Req() request: Request, @Param("id") id: string, @Body() body: unknown): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = parkedResolveSchema.parse(body);
+    return envelope(
+      await parked.resolveParkedLine({
+        parkedLineId: id,
+        lineDate: input.lineDate,
+        amount: input.amount,
+        reference: input.reference ?? null,
+        description: input.description ?? null,
+        actorId: identity.userId,
+      }),
+    );
+  }
+
+  @Post("bank-statements/parked-lines/:id/discard")
+  @RequirePermissions("treasury.bank_reconciliation.manage")
+  @HttpCode(HttpStatus.OK)
+  async discardParkedLine(@Req() request: Request, @Param("id") id: string, @Body() body: unknown): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = parkedDiscardSchema.parse(body);
+    return envelope(
+      await parked.discardParkedLine({ parkedLineId: id, note: input.note, actorId: identity.userId }),
+    );
   }
 
   @Post("bank-statements/:id/auto-match")

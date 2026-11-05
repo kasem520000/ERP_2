@@ -1098,6 +1098,47 @@ export interface Dictionary {
   taxRegistrationsDeregistered: string;
   taxRegistrationsCreateTitle: string;
   taxRegistrationsSavedToast: string;
+  // PHASE-023: e-invoicing status surface + funnel (settings/tax/einvoicing + platform/einvoicing-funnel)
+  einvoicingTitle: string;
+  einvoicingSubtitle: string;
+  einvoicingRegistryTitle: string;
+  einvoicingStatus: string;
+  einvoicingDocument: string;
+  einvoicingAdapter: string;
+  einvoicingAttempts: string;
+  einvoicingAuthorityRef: string;
+  einvoicingLastError: string;
+  einvoicingSubmittedAt: string;
+  einvoicingEmpty: string;
+  einvoicingAdaptersTitle: string;
+  einvoicingAdaptersUnverifiedNote: string;
+  einvoicingRegimeVerified: string;
+  einvoicingRegimeUnverified: string;
+  einvoicingCertsTitle: string;
+  einvoicingCertLabel: string;
+  einvoicingCertFingerprint: string;
+  einvoicingCertValidUntil: string;
+  einvoicingCertStatus: string;
+  einvoicingCertSignCount: string;
+  einvoicingCertsEmpty: string;
+  einvoicingResubmit: string;
+  einvoicingResubmitDone: string;
+  einvoicingStatusPending: string;
+  einvoicingStatusGenerated: string;
+  einvoicingStatusSigned: string;
+  einvoicingStatusSubmitted: string;
+  einvoicingStatusAccepted: string;
+  einvoicingStatusRejected: string;
+  einvoicingStatusReported: string;
+  einvoicingStatusFailed: string;
+  einvoicingFunnelTitle: string;
+  einvoicingFunnelSubtitle: string;
+  einvoicingFunnelByState: string;
+  einvoicingFunnelLatency: string;
+  einvoicingFunnelRejectionReasons: string;
+  einvoicingFunnelDeadLetter: string;
+  einvoicingFunnelRejectRate: string;
+  einvoicingFunnelNoData: string;
   // jurisdiction packs (registry + version viewer + staged apply)
   taxPacksTitle: string;
   taxPacksEmpty: string;
@@ -4539,6 +4580,46 @@ const ar: Dictionary = {
   taxRegistrationsDeregistered: "مُلغى التسجيل",
   taxRegistrationsCreateTitle: "تحديث حالة التسجيل",
   taxRegistrationsSavedToast: "تم حفظ حالة التسجيل الضريبي.",
+  einvoicingTitle: "الفوترة الإلكترونية",
+  einvoicingSubtitle: "حالة تسليمات السجل — المصدر الوحيد لحقيقة الجهات الضريبية",
+  einvoicingRegistryTitle: "سجل التسليمات",
+  einvoicingStatus: "الحالة",
+  einvoicingDocument: "المستند",
+  einvoicingAdapter: "المحوّل",
+  einvoicingAttempts: "المحاولات",
+  einvoicingAuthorityRef: "مرجع الجهة",
+  einvoicingLastError: "آخر خطأ",
+  einvoicingSubmittedAt: "وقت الإرسال",
+  einvoicingEmpty: "لا توجد تسليمات بعد — المحوّلات معطلة افتراضيًا حتى تهيئة الشهادات.",
+  einvoicingAdaptersTitle: "المحوّلات",
+  einvoicingAdaptersUnverifiedNote: "المحوّل غير مُتحقَّق منه: يرفض أي إرسال فعلي حتى اجتياز بوابة التحقق (لا ادعاء امتثال بلا دليل).",
+  einvoicingRegimeVerified: "نظام مُتحقَّق منه",
+  einvoicingRegimeUnverified: "غير مُتحقَّق منه",
+  einvoicingCertsTitle: "الشهادات",
+  einvoicingCertLabel: "التسمية",
+  einvoicingCertFingerprint: "البصمة",
+  einvoicingCertValidUntil: "صالحة حتى",
+  einvoicingCertStatus: "الحالة",
+  einvoicingCertSignCount: "عدد التوقيعات",
+  einvoicingCertsEmpty: "لا شهادات مسجلة.",
+  einvoicingResubmit: "إعادة الإرسال",
+  einvoicingResubmitDone: "أُنشئ تسليم جديد — السجل السابق محفوظ في التاريخ.",
+  einvoicingStatusPending: "بالانتظار",
+  einvoicingStatusGenerated: "مُولَّد",
+  einvoicingStatusSigned: "موقَّع",
+  einvoicingStatusSubmitted: "مُرسَل",
+  einvoicingStatusAccepted: "مقبول",
+  einvoicingStatusRejected: "مرفوض",
+  einvoicingStatusReported: "مُبلَّغ",
+  einvoicingStatusFailed: "فاشل",
+  einvoicingFunnelTitle: "قمع الفوترة الإلكترونية",
+  einvoicingFunnelSubtitle: "لوحة مراقبة العمليات — التسليمات والزمن وأسباب الرفض",
+  einvoicingFunnelByState: "التسليمات حسب الحالة",
+  einvoicingFunnelLatency: "زمن الاستجابة",
+  einvoicingFunnelRejectionReasons: "أسباب الرفض",
+  einvoicingFunnelDeadLetter: "رسائل ميتة",
+  einvoicingFunnelRejectRate: "نسبة الرفض (15 دقيقة)",
+  einvoicingFunnelNoData: "لا بيانات بعد.",
   taxPacksTitle: "حزم الولايات القضائية",
   taxPacksEmpty: "لا توجد حزم مزروعة.",
   taxPacksCountry: "الدولة",
@@ -8026,6 +8107,46 @@ const en: Dictionary = {
   taxRegistrationsDeregistered: "Deregistered",
   taxRegistrationsCreateTitle: "Update registration status",
   taxRegistrationsSavedToast: "Tax registration saved.",
+  einvoicingTitle: "E-invoicing",
+  einvoicingSubtitle: "Submission registry status — the sole source of authority truth",
+  einvoicingRegistryTitle: "Submission log",
+  einvoicingStatus: "Status",
+  einvoicingDocument: "Document",
+  einvoicingAdapter: "Adapter",
+  einvoicingAttempts: "Attempts",
+  einvoicingAuthorityRef: "Authority reference",
+  einvoicingLastError: "Last error",
+  einvoicingSubmittedAt: "Submitted at",
+  einvoicingEmpty: "No submissions yet — adapters are OFF by default until certificates are provisioned.",
+  einvoicingAdaptersTitle: "Adapters",
+  einvoicingAdaptersUnverifiedNote: "UNVERIFIED adapter: refuses real submissions until the verification gate passes (no compliance claim without evidence).",
+  einvoicingRegimeVerified: "Regime verified",
+  einvoicingRegimeUnverified: "Unverified",
+  einvoicingCertsTitle: "Certificates",
+  einvoicingCertLabel: "Label",
+  einvoicingCertFingerprint: "Fingerprint",
+  einvoicingCertValidUntil: "Valid until",
+  einvoicingCertStatus: "Status",
+  einvoicingCertSignCount: "Signature count",
+  einvoicingCertsEmpty: "No certificates enrolled.",
+  einvoicingResubmit: "Resubmit",
+  einvoicingResubmitDone: "New submission created — the previous row stays in history.",
+  einvoicingStatusPending: "Pending",
+  einvoicingStatusGenerated: "Generated",
+  einvoicingStatusSigned: "Signed",
+  einvoicingStatusSubmitted: "Submitted",
+  einvoicingStatusAccepted: "Accepted",
+  einvoicingStatusRejected: "Rejected",
+  einvoicingStatusReported: "Reported",
+  einvoicingStatusFailed: "Failed",
+  einvoicingFunnelTitle: "E-invoicing funnel",
+  einvoicingFunnelSubtitle: "Operations monitoring — submissions, latency, rejection reasons",
+  einvoicingFunnelByState: "Submissions by state",
+  einvoicingFunnelLatency: "Latency",
+  einvoicingFunnelRejectionReasons: "Rejection reasons",
+  einvoicingFunnelDeadLetter: "Dead letters",
+  einvoicingFunnelRejectRate: "Rejection rate (15 min)",
+  einvoicingFunnelNoData: "No data yet.",
   taxPacksTitle: "Jurisdiction packs",
   taxPacksEmpty: "No seeded packs.",
   taxPacksCountry: "Country",

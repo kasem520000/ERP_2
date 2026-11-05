@@ -1150,6 +1150,79 @@ export const ROUTE_PERMISSIONS: readonly RoutePermissionRule[] = [
     path: "/api/v1/tax/einvoicing/submissions",
     permission: "tax.einvoicing.manage",
   },
+  // -- PHASE-023: operational registry + certificates + rollout (T1/T5/T13) --
+  {
+    method: "GET",
+    path: "/api/v1/tax/einvoicing/registry/submissions",
+    permission: "tax.einvoicing.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/tax/einvoicing/funnel",
+    permission: "tax.einvoicing.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/tax/einvoicing/submissions/:id/resubmit",
+    permission: "tax.einvoicing.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/tax/einvoicing/certificates",
+    permission: "tax.einvoicing.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/tax/einvoicing/certificates/enroll",
+    permission: "tax.einvoicing.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/tax/einvoicing/settings",
+    permission: "tax.einvoicing.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/tax/einvoicing/settings/:adapterId",
+    permission: "tax.einvoicing.manage",
+  },
+  // -- PHASE-023 T8: commerce channels (sales.commerce.manage) ----------------
+  {
+    method: "GET",
+    path: "/api/v1/sales/commerce/channels",
+    permission: "sales.commerce.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/sales/commerce/import",
+    permission: "sales.commerce.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/sales/commerce/orders",
+    permission: "sales.commerce.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/sales/commerce/orders/:id/resolve",
+    permission: "sales.commerce.manage",
+  },
+  // -- PHASE-023 T6: billing refund + payouts (platform plane) ----------------
+  {
+    method: "POST",
+    path: "/api/v1/platform/billing/refund",
+    permission: "platform.subscriptions.manage",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/platform/billing/payouts",
+    permission: "platform.subscriptions.manage",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/platform/billing/payouts/sync",
+    permission: "platform.subscriptions.manage",
+  },
   // -- PHASE-010: inventory (matrix §3.5) ----------------------------------
   {
     method: "GET",

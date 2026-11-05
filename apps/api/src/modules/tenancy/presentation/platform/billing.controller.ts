@@ -20,6 +20,12 @@ import { PlatformScope } from "../../../../infra/auth/platform-scope.decorator";
 import { ambientAnyTx, withTenantOnTx } from "../../../../infra/db/tenant-context";
 import { UnauthenticatedError } from "../../../identity/api/identity";
 import { SubscriptionService } from "../../application/billing/subscription-service";
+import {
+  listPayouts,
+  reconcilePayouts,
+  refundSettledPayment,
+  syncPayouts,
+} from "../../application/billing/refund-payout-service";
 import * as billingStore from "../../infrastructure/billing.store";
 
 /**
@@ -45,6 +51,18 @@ const manualPaymentSchema = z.object({
 });
 
 const reasonSchema = z.object({ reason: z.string().min(3).max(500) });
+
+const refundSchema = z.object({
+  tenantId: z.string().uuid(),
+  invoiceNumber: z.string().min(1).max(80),
+  amount: z.string().regex(/^\d+(\.\d{1,4})?$/, "positive decimal"),
+});
+
+const payoutSyncSchema = z.object({
+  tenantId: z.string().uuid(),
+  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
 
 function requireIdentity(request: Request): SessionContext {
   const identity = identityOf(request);
@@ -181,5 +199,55 @@ export class PlatformBillingController {
       actorId: identity.userId,
     });
     return envelope(outcome);
+  }
+
+  // -- PHASE-023 T6: refund + payout reconciliation (sandbox depth; DR-002 OPEN) --
+
+  @Post("billing/refund")
+  @RequirePermissions("platform.subscriptions.manage")
+  @HttpCode(HttpStatus.OK)
+  async refund(@Req() request: Request, @Body() body: unknown): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = refundSchema.parse(body);
+    const tx = ambientAnyTx();
+    const outcome = await withTenantOnTx(input.tenantId, tx!, async () =>
+      refundSettledPayment({
+        provider: this.subscriptions.provider,
+        invoiceNumber: input.invoiceNumber,
+        amount: input.amount,
+        actorId: identity.userId,
+      }),
+    );
+    return envelope(outcome);
+  }
+
+  @Post("billing/payouts/sync")
+  @RequirePermissions("platform.subscriptions.manage")
+  @HttpCode(HttpStatus.OK)
+  async syncPayoutBatches(@Req() request: Request, @Body() body: unknown): Promise<unknown> {
+    requireIdentity(request);
+    const input = payoutSyncSchema.parse(body);
+    const tx = ambientAnyTx();
+    const outcome = await withTenantOnTx(input.tenantId, tx!, async () => {
+      const synced = await syncPayouts({
+        provider: this.subscriptions.provider,
+        periodStart: input.periodStart,
+        periodEnd: input.periodEnd,
+      });
+      await reconcilePayouts();
+      return synced;
+    });
+    return envelope(outcome);
+  }
+
+  @Get("billing/payouts")
+  @RequirePermissions("platform.subscriptions.manage")
+  async payouts(@Query("tenantId") tenantId?: string): Promise<unknown> {
+    if (tenantId === undefined || tenantId === "") {
+      return envelope({ payouts: [] });
+    }
+    const tx = ambientAnyTx();
+    const payouts = await withTenantOnTx(tenantId, tx!, async () => listPayouts());
+    return envelope({ payouts });
   }
 }

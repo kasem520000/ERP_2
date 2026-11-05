@@ -1,6 +1,6 @@
 # Compliance Matrix
 
-> **Status:** STABLE · **Owner:** Tax & Compliance Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Tax & Compliance Architecture · **Updated:** 2026-11-05
 
 The **compliance feature registry** (directive §6): one file per jurisdiction recording
 every regulatory fact the Platform relies on, its official source, and its verification
@@ -77,7 +77,7 @@ Every fact table in the country files uses exactly these columns:
 | **Who verifies** | A named compliance owner (role, recorded per fact) with product-owner sign-off for anything affecting invoice legality; two-person rule for e-invoicing adapter gates (RISK-005) |
 | **Against what** | Official government sources **only** — the directory in [../official-sources/README.md](../official-sources/README.md); third-party blogs, consultancies, and news articles are never acceptable as evidence (they may only *point* to the official source) |
 | **When** | Pack facts: during [PHASE-009](../../implementation/phases/PHASE-009.md) before a pack may ship as `VERIFIED`. E-invoicing specs: during [PHASE-023](../../implementation/phases/PHASE-023.md) before any adapter code is written. Continuously thereafter: official-source monitoring (RISK-006) with a documented review cadence per country, recorded in the verification log |
-| **How recorded** | Three places, always together: (1) the country file's fact table flips to verified with source URL + date; (2) the seed row gets `verified_at` + `source_ref` ([../../database/SEEDS/README.md](../../database/SEEDS/README.md) rule 2); (3) a row in the verification log ([../official-sources/README.md](../official-sources/README.md) §log) |
+| **How recorded** | Three places, always together: (1) the country file's fact table flips to verified with source URL + date; (2) the seed row gets `verified_at` + `source_ref` ([../../database/SEEDS/README.md](../../database/SEEDS/README.md) rule 2); (3) a row in the verification log ([../official-sources/README.md](../official-sources/README.md) §log) — e-invoicing adapter gate items ([E_INVOICING_ARCHITECTURE.md](../E_INVOICING_ARCHITECTURE.md) §3) are recorded in the dedicated gate log ([verification-log.md](verification-log.md)) |
 
 **Hard rules:**
 

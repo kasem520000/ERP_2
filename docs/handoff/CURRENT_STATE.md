@@ -17,8 +17,8 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   status, release strategy, risk register), database (conventions, entity catalog, data
   dictionary, relationships, constraints/indexes, tenant isolation, migration strategy,
   backup/recovery, ERDs, table specs, seeds), product (personas, journeys, workflows,
-  BR-001…056 business rules, industry/feature catalogs — 22 modules, 166 feature keys
-  (128 v1.1 + 38 v2.0) — subscriptions & entitlements,
+  BR-001…056 business rules, industry/feature catalogs — 22 modules, 169 feature keys
+  (131 v1.1 + 38 v2.0) — subscriptions & entitlements,
   configuration engine), accounting (principles, bilingual CoA, posting engine,
   document lifecycle, journal rules with golden postings G-01…G-32, AR/AP, inventory
   accounting, period closing,
@@ -44,11 +44,12 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   provider, costing default, ZATCA scope, Yemen scope, observability vendors, and the
   v2.0 expansion set: platform expansion, fixed assets, notes & installments,
   budgeting, payroll scope, consolidation), and this handoff set.
-- **Application code: PHASE-001 … PHASE-022 (all COMPLETE) — the MVP v1.0
+- **Application code: PHASE-001 … PHASE-023 (all COMPLETE) — the MVP v1.0
   release + the industry configuration engine + Point of Sale + the
   automotive/distribution templates + Manufacturing & Production + CRM/Service
   Contracts & Projects + the Offline Synchronization Foundation + the Desktop
-  Application (Tauri shell) + the Android Application (Expo/RN).** The
+  Application (Tauri shell) + the Android Application (Expo/RN) + the External
+  Integrations & E-Invoicing substrate.** The
   pnpm + Turborepo monorepo with all local gates green (re-verified 2026-11-03):
   - `apps/api` — NestJS with `GET /health/live` + `GET /health/ready` (DB +
     migration state + queue liveness); modules: `audit` (append-only, transactional
@@ -381,7 +382,47 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
     `manufacturing.*` feature keys). The 3 PHASE-018 industry reports registered over
     the PHASE-013 contract (registry 63 → 66, `manufacturing.production_cost` with
     the tolerance-0 materials↔GL tie, `manufacturing.batch_genealogy`,
-    `manufacturing.qc_inspection_log`).
+    `manufacturing.qc_inspection_log`). From PHASE-023 — the **external-integration
+    substrate** (migration `0035_external_integrations.sql`, schema_version 35; the
+    9-table cluster — the OPERATIONAL `e_invoicing_submissions` expansion,
+    certificates, certificate usage, adapter settings, parked lines, the format
+    registry, commerce orders/imports, billing payouts; all RLS'd +
+    registry-isolated): `tax/submissions` — the adapter-neutral state machine
+    (illegal transitions rejected in code; ONE LIVE row per document × adapter — the
+    no-double-clearance partial unique), the registry service, the
+    NON_AUTHORITATIVE compliance-archive payload builder (jurisdiction-pack labels +
+    the INV-012 summary — zero wire-format knowledge), the pg-boss
+    `einvoicing.sign|submit|poll|reconcile` jobs (expo-capped retries + the
+    `einvoice.submission.failed` dead-letter alert; degrade-the-feature-never-the-
+    platform), and funnel monitoring + `EInvoiceRejectSpike` (>5%/15 min, Sev-2);
+    `tax/certs` — the S-10 path-only certificate registry with approval-separated
+    audited enroll/rotate, signing-job-only key access (no API surface reads key
+    material — asserted), the per-operation usage audit, the `CertExpiry` 30/14/7
+    ladder (each threshold exactly once via `expires_alerted_at`), and the
+    offboarding purge; `tax/adapters/zatca` — the UNVERIFIED refuse-to-submit stub
+    (the verification gate is honestly NOT_VERIFIED — no external access, nothing
+    fabricated; every refusal names the unmet GATE-1..GATE-4 items; DR-001 OPEN,
+    option C recommended); `tax/rollout` — the per-tenant adapter flags default OFF
+    with the enablement gate = a provisioned ACTIVE certificate + the jurisdiction
+    pack (never the platform feature_flags table); `treasury/parsers` — the
+    csv-debit-credit + csv-with-balances format families with parking (raw cells
+    verbatim, amounts NEVER guessed, balance drift advisory-only) + the seeded
+    `bank_statement_formats` registry + the parked-lines list/resolve/discard
+    endpoints; `sales/adapters/commerce` — the CommerceChannelPort +
+    FakeCommerceChannel + the import service (natural-key upsert per tenant+channel+
+    channel order id, Idempotency-Key batches that replay the recorded outcome,
+    financial drift ⇒ CONFLICT for explicit human resolution — never LWW;
+    ShippingPort reserved with a fake) behind the NEW `sales.commerce.manage`
+    (matrix 243→244, drift-green); `tenancy/application/billing`
+    refund-payout-service — `refund()` on the sandbox provider port
+    (`payment.refunded` events; the invoice stays PAID, history append-only) +
+    `refundSettledPayment` + `syncPayouts`/`reconcilePayouts`/`listPayouts` + the
+    `runPayoutReconciliation` job (provider-reported gross/fee/net vs settled
+    payments in the window — RECONCILED or DRIFT with detail, never auto-corrected;
+    DR-002 OPEN — no production cutover claim); and `tests/authorities` — the
+    fake-zatca + fake-eta harnesses (in-process authority simulators driving the
+    REAL registry + jobs through the submit/accept/reject/timeout/retry/DLQ
+    scenario matrix; port-shaped only, zero wire-format knowledge).
   - `apps/web` — Next.js BFF (PHASE-003 substrate, contracts frozen) with all
     18 screens migrated onto @erp/ui (PHASE-005) + the PHASE-006 master-data
     screens + the PHASE-007 accounting group (8 screens: CoA editor + purpose
@@ -601,8 +642,10 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   framework & priority templates + PHASE-016 Point of Sale + PHASE-017 Automotive &
   Distribution Templates + PHASE-018 Manufacturing & Production + PHASE-019 CRM,
   Service Contracts & Projects + PHASE-020 Offline Synchronization Foundation +
-  PHASE-021 Desktop Application + PHASE-022 Android Application
-  (migrations 0001–0034; the centralized posting engine with the full
+  PHASE-021 Desktop Application + PHASE-022 Android Application + PHASE-023
+  External Integrations & E-Invoicing (the operational substrate — registry,
+  certificates, rollout, monitoring; the ZATCA adapter honestly UNVERIFIED)
+  (migrations 0001–0035; the centralized posting engine with the full
   invariant suite is live and proven by its consumers — treasury posts every
   money movement through it, tax stamps every tax-carrying line with frozen
   rate snapshots BR-033, inventory posts every stock movement through it
@@ -825,6 +868,34 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   the pixel snapshot gallery (tree-level parity proven), T-03 scan-to-cart on
   reference hardware, and the force-update screen navigation glue (policy + tests
   complete; the App.tsx TODO asserted structurally).
+  PHASE-023 (2026-11-05) ships the external-integration substrate under the
+  no-fabrication discipline: migration `0035_external_integrations.sql`
+  (schema_version 35) makes the e-invoicing submission registry OPERATIONAL — one
+  LIVE row per document × adapter (the partial unique over the live states;
+  PENDING → GENERATED → SIGNED → SUBMITTED → ACCEPTED/REJECTED → REPORTED with
+  exponential-capped retries, dead-letter alerting, and sealed payload/response
+  artifacts via `EINVOICING_SECRET_KEY` with the `IDENTITY_SECRET_KEY` fallback —
+  production fails closed), adds the S-10 certificate registry + the append-only
+  usage audit (signing-job-only key access; CertExpiry 30/14/7; the offboarding
+  purge), the per-tenant adapter rollout flags (default OFF; the enablement gate =
+  an ACTIVE certificate + the jurisdiction pack), bank-statement parking + the
+  seeded format-family registry (amounts never guessed), commerce-channel staging
+  (natural-key upsert + Idempotency-Key batches; financial drift ⇒ CONFLICT for
+  explicit human resolution, never LWW), and billing payout reconciliation
+  (provider-reported gross/fee/net vs settled payments — RECONCILED or DRIFT with
+  detail, never auto-corrected) with the refund flow (`payment.refunded`; the
+  invoice stays PAID). The ZATCA adapter is the UNVERIFIED refuse-to-submit stub —
+  the verification gate is honestly NOT_VERIFIED (no external access; nothing
+  fabricated; every refusal names the unmet GATE-1..GATE-4 items; DR-001 OPEN with
+  option C recommended); Egypt ETA is NOT_STARTED (the DR-003 DEFERRED draft + the
+  fake-eta evaluation harness); the payment production cutover is INCOMPLETE with
+  DR-002 OPEN (the sandbox is hardened). The `tests/authorities` harnesses
+  (fake-zatca + fake-eta) drive the REAL registry + jobs through the
+  submit/accept/reject/timeout/retry/DLQ scenario matrix; the chaos slice C-01…C-04
+  runs with the submission jobs in the loop; `sales.commerce.manage` joins the
+  permission catalog (243→244, permissions-drift 244=244); web adds
+  `/settings/tax/einvoicing` + `/platform/einvoicing-funnel` + the parked-lines
+  mapping + checkout result states, i18n AR/EN parity maintained.
   Infra-bound evidence (hosted CI, compose boot, Testcontainers run, mailpit
   capture, Playwright journey) waived per owner directive 2026-10-28 with
   local-gate equivalence recorded.

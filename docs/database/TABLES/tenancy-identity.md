@@ -1,6 +1,6 @@
 # TABLES — Tenancy & Identity Cluster
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-10-27 · **Phases:** 002–004 (subscriptions 014, devices-sync 020)
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05 · **Phases:** 002–004 (subscriptions 014, devices-sync 020, billing payouts 023)
 
 Column-level specification for the tenancy & identity cluster, consistent with
 [ENTITY_CATALOG.md](../ENTITY_CATALOG.md), [DATABASE_CONVENTIONS.md](../DATABASE_CONVENTIONS.md),
@@ -214,6 +214,38 @@ updates, audited).
 | `status` | text | no | `ACTIVE` | ck: `ACTIVE \| PAST_DUE \| CANCELLED` | PAST_DUE drives dunning + soft entitlement expiry |
 | `period_start` / `period_end` | date | no / no | — | `CHECK (period_start <= period_end)` | Billed period |
 | `provider_ref` | text | yes | — | — | Payment-provider subscription id ([product/DR-002](../../decisions/product/DR-002-payment-provider-selection.md)); NULL = manual invoicing |
+
+## `billing_payouts` — provider payout batches (PHASE-023, migration `0035_external_integrations.sql`)
+
+The PHASE-014 billing substrate's payout leg (T6 payment hardening; the
+subscription_invoices/billing_events siblings live in
+[ENTITY_CATALOG.md](../ENTITY_CATALOG.md) §reporting & platform jobs — catalog rows
+since 014). The row records what the provider **REPORTED** (gross/fee/net per
+batch); the refund-payout-service's reconciliation compares against settled
+platform payments in the window and reports `RECONCILED` or `DRIFT` with the
+reported-vs-computed detail — **drift is NEVER auto-corrected**. Sandbox depth
+until [product/DR-002](../../decisions/product/DR-002-payment-provider-selection.md)
+decides the provider (production cutover INCOMPLETE with that pointer); refunds
+write the `payment.refunded` billing event (the 0035 widen) — the invoice row
+stays PAID, history is append-only.
+
+| Column | Type | Null | Default | Constraints | Description |
+|--------|------|------|---------|-------------|-------------|
+| `id`, `tenant_id` (+standard) | — | — | — | `UNIQUE (id, tenant_id)` | — |
+| `provider_id` / `provider_ref` | text | no / no | — | `uq_billing_payouts_ref (provider_id, provider_ref)` | Provider identity + its batch reference (idempotent sync) |
+| `period_start` / `period_end` | date | no / no | — | `CHECK (period_end >= period_start)` | The reconciliation window |
+| `gross_amount` / `fee_amount` / `net_amount` | numeric(18,4) | no | — | `CHECK (net_amount = gross_amount - fee_amount)` | The provider-reported arithmetic, held at rest |
+| `currency_code` | char(3) | no | — | — | Settlement currency |
+| `status` | text | no | `PENDING` | ck: `PENDING \| RECONCILED \| DRIFT` | The reconciliation outcome |
+| `settled_payment_count` | integer | yes | — | — | Platform-computed settlements in the window |
+| `reconciled_at` | timestamptz | yes | — | — | Set when RECONCILED |
+| `drift_detail` | jsonb | yes | — | — | The reported-vs-computed detail (never auto-corrected) |
+| `raw` | jsonb | yes | — | — | The provider row verbatim |
+
+Index: `ix_billing_payouts_tenant (tenant_id, status, period_end)` — the
+reconciliation job's PENDING scan + the finance list. Grants:
+SELECT/INSERT/UPDATE for `erp_app` (reconciliation marks); RLS macro + isolation
+registry.
 
 ## `entitlements` — materialized feature grants (PHASE-004)
 

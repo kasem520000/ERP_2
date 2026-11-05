@@ -1,6 +1,6 @@
 # Saudi Arabia (SA) — Compliance File
 
-> **Status:** STABLE (baseline research snapshot) · **Owner:** Tax & Compliance Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE (baseline research snapshot) · **Owner:** Tax & Compliance Architecture · **Updated:** 2026-11-05
 
 Jurisdiction compliance record for the Saudi pack (`sa`). **Every regulatory value below
 is research-date baseline knowledge carrying `REQUIRES_VERIFICATION`** — the pack cannot
@@ -122,7 +122,7 @@ identifier on an unverified pattern.
 | feature | status | phase |
 |---------|--------|-------|
 | Jurisdiction pack `sa` (rates, formats, invoice baseline) | **SEEDED (PHASE-009 2026-10-30)** — rate row 15% from 2020-07-01 with `verified_at NULL` (REQUIRES_VERIFICATION); the pre-2020-07 prior rate is deliberately NOT asserted (§2) so no seed row exists — documents before the window fail closed (NO_RATE_FOR_DATE) | [PHASE-009](../../implementation/phases/PHASE-009.md) |
-| ZATCA e-invoicing adapter | **NOT_IMPLEMENTED** — the port + fake adapter + submission registry schema shipped; real adapter gated on verified official specs (RISK-005 refusal asserted) | [PHASE-023](../../implementation/phases/PHASE-023.md) |
+| ZATCA e-invoicing adapter | **SHIPPED AS UNVERIFIED REFUSING STUB (PHASE-023 2026-11-05)** — the operational submission registry (1:N per adapter, retry chains via retry_of_submission_id, sealed payload/response artifacts), the S-10 certificate store, per-tenant rollout flags default OFF, and the fake-authority test harness are real and exercised in tests; every regulated adapter action (generate for clearance, sign, submit, report) refuses with the explicit UNVERIFIED error naming the unmet gate items — all four gate items NOT_VERIFIED in the verification log ([verification-log.md](verification-log.md)); the real adapter stays gated on [DR-001](../../decisions/compliance/DR-001-zatca-scope-and-timing.md) + the verification gate ([E_INVOICING_ARCHITECTURE.md](../E_INVOICING_ARCHITECTURE.md) §3) | [PHASE-023](../../implementation/phases/PHASE-023.md) |
 | VAT return report for SA | **SHIPPED (PHASE-009 v1)** — aggregation + INV-012 side-by-side cross-check + ready-gating + CSV/XLSX export + mark-filed (humans file) | PHASE-009 |
 | Per-pack fixture suite | **GREEN (PHASE-009)** — `pack-sa.spec.ts`: standard/zero/exempt/mixed/credit-note/boundary(fail-closed before window)/unregistered + rounding 2-dp + determinism + return-prepare | PHASE-009 |
 | Scenarios deferred | simplified-vs-standard invoice field sets + print outputs → PHASE-012/013; e-invoicing payload goldens → PHASE-023 (gated on verified specs) | 012/013/023 |

@@ -68,6 +68,10 @@ const NO_UPDATE_GRANT = new Set([
   // PHASE-014 (migration 0021): the append-only billing trail (grants +
   // guard trigger — the audit_events pattern).
   "billing_events",
+  // PHASE-023 (migration 0035): the certificate usage audit is
+  // INSERT + SELECT only (grants) — every decrypt/sign is append-only
+  // history; retention is the DELETE-granted sweep.
+  "e_invoicing_certificate_usage",
 ]);
 
 /** Fixture rows seeded per tenant (A2's total-count expectation). The
@@ -1719,6 +1723,81 @@ async function seedFixtures(superuser: {
     [TENANT_A, TENANT_B],
   );
 
+  // PHASE-023 fixtures (migration 0035): the external-integrations cluster —
+  // one row per registered table per tenant, FK-consistent (usage → the
+  // tenant's own certificate; parked line → the tenant's own statement),
+  // idempotent. secret_path is globally UNIQUE → tenant-templated; the
+  // payout provider_ref likewise (po_iso_a/b).
+  await superuser.query(
+    `INSERT INTO e_invoicing_certificates (id, tenant_id, country_code, adapter_id, label,
+        key_version, secret_path, fingerprint, not_before, not_after, status)
+     VALUES
+       ('a2a2a2a2-0000-4000-8000-000000000001', $1, 'SA', 'fake', 'Iso fixture',
+        'k1', 'einvoicing/SA/iso-a', 'fp-iso-a', '2026-01-01', '2027-01-01', 'ACTIVE'),
+       ('a2a2a2a2-0000-4000-8000-000000000002', $2, 'SA', 'fake', 'Iso fixture',
+        'k1', 'einvoicing/SA/iso-b', 'fp-iso-b', '2026-01-01', '2027-01-01', 'ACTIVE')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO e_invoicing_certificate_usage (id, tenant_id, certificate_id, operation, key_version)
+     VALUES
+       ('a3a3a3a3-0000-4000-8000-000000000001', $1, 'a2a2a2a2-0000-4000-8000-000000000001',
+        'SIGN', 'k1'),
+       ('a3a3a3a3-0000-4000-8000-000000000002', $2, 'a2a2a2a2-0000-4000-8000-000000000002',
+        'SIGN', 'k1')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO e_invoicing_adapter_settings (id, tenant_id, adapter_id, country_code, enabled)
+     VALUES
+       ('a4a4a4a4-0000-4000-8000-000000000001', $1, 'fake', 'SA', false),
+       ('a4a4a4a4-0000-4000-8000-000000000002', $2, 'fake', 'SA', false)
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO bank_statement_parked_lines (id, tenant_id, statement_id, line_index,
+        raw_cells, raw_line, parked_reason, status)
+     VALUES
+       ('a5a5a5a5-0000-4000-8000-000000000001', $1, 'dadadada-0000-4000-8000-000000000001',
+        1, '["a","b"]'::jsonb, 'unparseable row', 'iso fixture', 'PARKED'),
+       ('a5a5a5a5-0000-4000-8000-000000000002', $2, 'dadadada-0000-4000-8000-000000000002',
+        1, '["a","b"]'::jsonb, 'unparseable row', 'iso fixture', 'PARKED')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO commerce_channel_orders (id, tenant_id, channel_adapter_id, channel_order_id,
+        payload, status)
+     VALUES
+       ('a6a6a6a6-0000-4000-8000-000000000001', $1, 'fake-shop', 'iso-a', '{}'::jsonb, 'IMPORTED'),
+       ('a6a6a6a6-0000-4000-8000-000000000002', $2, 'fake-shop', 'iso-b', '{}'::jsonb, 'IMPORTED')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO commerce_channel_imports (id, tenant_id, channel_adapter_id, batch_key, status)
+     VALUES
+       ('a7a7a7a7-0000-4000-8000-000000000001', $1, 'fake-shop', 'iso-batch', 'COMPLETED'),
+       ('a7a7a7a7-0000-4000-8000-000000000002', $2, 'fake-shop', 'iso-batch', 'COMPLETED')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO billing_payouts (id, tenant_id, provider_id, provider_ref, period_start,
+        period_end, gross_amount, fee_amount, net_amount, currency_code, status,
+        settled_payment_count)
+     VALUES
+       ('a8a8a8a8-0000-4000-8000-000000000001', $1, 'sandbox', 'po_iso_a', '2027-01-01',
+        '2027-01-31', 100, 1, 99, 'SAR', 'PENDING', 0),
+       ('a8a8a8a8-0000-4000-8000-000000000002', $2, 'sandbox', 'po_iso_b', '2027-01-01',
+        '2027-01-31', 100, 1, 99, 'SAR', 'PENDING', 0)
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+
   // -- seedFixtures end --
 
 }
@@ -2059,6 +2138,37 @@ const OWN_ROW: Record<string, [string, string]> = {
   crm_time_entries: [
     "a0a0a0a0-0000-4000-8000-000000000001",
     "a0a0a0a0-0000-4000-8000-000000000002",
+  ],
+  // PHASE-023 external-integrations cluster (migration 0035): the S-10
+  // certificates + usage audit + rollout flags + parked bank lines +
+  // commerce staging + payout batches.
+  e_invoicing_certificates: [
+    "a2a2a2a2-0000-4000-8000-000000000001",
+    "a2a2a2a2-0000-4000-8000-000000000002",
+  ],
+  e_invoicing_certificate_usage: [
+    "a3a3a3a3-0000-4000-8000-000000000001",
+    "a3a3a3a3-0000-4000-8000-000000000002",
+  ],
+  e_invoicing_adapter_settings: [
+    "a4a4a4a4-0000-4000-8000-000000000001",
+    "a4a4a4a4-0000-4000-8000-000000000002",
+  ],
+  bank_statement_parked_lines: [
+    "a5a5a5a5-0000-4000-8000-000000000001",
+    "a5a5a5a5-0000-4000-8000-000000000002",
+  ],
+  commerce_channel_orders: [
+    "a6a6a6a6-0000-4000-8000-000000000001",
+    "a6a6a6a6-0000-4000-8000-000000000002",
+  ],
+  commerce_channel_imports: [
+    "a7a7a7a7-0000-4000-8000-000000000001",
+    "a7a7a7a7-0000-4000-8000-000000000002",
+  ],
+  billing_payouts: [
+    "a8a8a8a8-0000-4000-8000-000000000001",
+    "a8a8a8a8-0000-4000-8000-000000000002",
   ],
 };
 
@@ -2548,6 +2658,36 @@ const MISMATCHED_INSERT: Record<string, string> = {
      VALUES ('a1a1a1a1-3000-4000-8000-000000000003', $1, '2027-02-03', 1,
        'babababa-0000-4000-8000-000000000002', 'a1a1a1a1-0000-4000-8000-000000000002',
        '94949494-0000-4000-8000-000000000002', 250, 'Attack entry', true, 'DRAFT')`,
+  // PHASE-023 external-integrations cluster (migration 0035) — FK targets
+  // are the FOREIGN tenant's own rows (the certificate, the statement) so
+  // the RLS WITH CHECK stays the isolated rejection; unique shapes
+  // (secret_path, provider_ref, natural keys) use fresh attack values.
+  e_invoicing_certificates: `INSERT INTO e_invoicing_certificates (id, tenant_id, country_code,
+        adapter_id, label, key_version, secret_path, fingerprint, not_before, not_after, status)
+     VALUES ('a2a2a2a2-3000-4000-8000-000000000003', $1, 'SA', 'fake', 'Attack insert',
+       'k1', 'einvoicing/SA/iso-attack', 'fp-atk', '2026-01-01', '2027-01-01', 'ACTIVE')`,
+  e_invoicing_certificate_usage: `INSERT INTO e_invoicing_certificate_usage (id, tenant_id,
+        certificate_id, operation, key_version)
+     VALUES ('a3a3a3a3-3000-4000-8000-000000000003', $1,
+       'a2a2a2a2-0000-4000-8000-000000000002', 'SIGN', 'k1')`,
+  e_invoicing_adapter_settings: `INSERT INTO e_invoicing_adapter_settings (id, tenant_id,
+        adapter_id, country_code, enabled)
+     VALUES ('a4a4a4a4-3000-4000-8000-000000000003', $1, 'fake-attack', 'SA', false)`,
+  bank_statement_parked_lines: `INSERT INTO bank_statement_parked_lines (id, tenant_id, statement_id,
+        line_index, raw_cells, raw_line, parked_reason, status)
+     VALUES ('a5a5a5a5-3000-4000-8000-000000000003', $1, 'dadadada-0000-4000-8000-000000000002',
+       9, '["x"]'::jsonb, 'attack row', 'attack insert', 'PARKED')`,
+  commerce_channel_orders: `INSERT INTO commerce_channel_orders (id, tenant_id, channel_adapter_id,
+        channel_order_id, payload, status)
+     VALUES ('a6a6a6a6-3000-4000-8000-000000000003', $1, 'fake-shop', 'attack-1',
+       '{}'::jsonb, 'IMPORTED')`,
+  commerce_channel_imports: `INSERT INTO commerce_channel_imports (id, tenant_id, channel_adapter_id,
+        batch_key, status)
+     VALUES ('a7a7a7a7-3000-4000-8000-000000000003', $1, 'fake-shop', 'attack-batch', 'COMPLETED')`,
+  billing_payouts: `INSERT INTO billing_payouts (id, tenant_id, provider_id, provider_ref,
+        period_start, period_end, gross_amount, fee_amount, net_amount, currency_code, status)
+     VALUES ('a8a8a8a8-3000-4000-8000-000000000003', $1, 'sandbox', 'po_iso_attack', '2027-01-01',
+       '2027-01-31', 100, 1, 99, 'SAR', 'PENDING')`,
 };
 
 beforeAll(async () => {
@@ -2709,7 +2849,9 @@ describe("generated attack suite A1–A10 — as erp_app", () => {
                                 ? "payload"
                                 : table === "inbox_commands"
                                   ? "result"
-                                  : "updated_at";
+                                  : table === "e_invoicing_certificate_usage"
+                                    ? "key_version"
+                                    : "updated_at";
         await expect(
           app.query(`UPDATE ${table} SET ${column} = ${column} WHERE ${idColumn} = $1`, [
             foreignRow,

@@ -85,6 +85,16 @@ export const MIGRATIONS: readonly string[] = [
   // devices (uq token); revocation clears the rows. No business-schema change
   // (the DR-P22-05a reading). See 0034_device_push_tokens.sql.
   "0034_device_push_tokens",
+  // PHASE-023 (external integrations): the operational e-invoicing registry
+  // expansion (submissions × adapter 1:N, attempts/backoff, sealed
+  // payload/response artifacts, retry sweep), the S-10 certificate store +
+  // append-only usage audit (secret-store PATH only — key material lives in
+  // the files module), per-tenant adapter rollout flags (default OFF), the
+  // bank-statement parked lines + seeded format registry, the commerce
+  // channel staging tables (natural-key upsert, server-decision conflicts),
+  // and the billing payout batches (T6 reconciliation substrate). See
+  // 0035_external_integrations.sql.
+  "0035_external_integrations",
 ];
 
 /**

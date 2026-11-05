@@ -58,6 +58,15 @@ const envSchema = z.object({
    * (same envelope as IDENTITY_SECRET_KEY); production sets it out-of-band.
    */
   BILLING_WEBHOOK_SECRET: z.string().optional(),
+  /**
+   * PHASE-023 e-invoicing sealed-artifact key (submission payloads +
+   * authority responses at rest, E_INVOICING §6): AES-256-GCM envelope,
+   * 32 bytes base64. Falls back to IDENTITY_SECRET_KEY (one platform key
+   * envelope is acceptable — the artifact class is tenant-scoped the same
+   * way); unset in dev/test → derived local key; production fails closed.
+   */
+  EINVOICING_SECRET_KEY: z.string().optional(),
+  EINVOICING_SECRET_KEY_ID: z.string().max(8).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

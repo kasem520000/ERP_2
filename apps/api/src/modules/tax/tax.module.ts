@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, type OnModuleInit } from "@nestjs/common";
 
 import { AccountingModule } from "../accounting/accounting.module";
 import { AuditModule } from "../audit/audit.module";
@@ -10,6 +10,8 @@ import { VatReturnService } from "./application/vat-return-service";
 import { PackService } from "./application/pack-service";
 import { EInvoicingService } from "./application/einvoicing-service";
 import { TaxReconciliationService } from "./application/tax-reconciliation-service";
+import { SubmissionRegistryService } from "./submissions/registry-service";
+import { registerSubmissionJobs } from "./submissions/jobs";
 import { TaxController } from "./presentation/tax.controller";
 
 /**
@@ -20,12 +22,21 @@ import { TaxController } from "./presentation/tax.controller";
  * NOT_REGISTERED / NO_VAT modes, the VAT return v1 with the INV-012
  * cross-check, and the EInvoicingAdapter port + fake adapter.
  *
+ * PHASE-023 additions: the OPERATIONAL submission registry (state machine
+ * + encrypted artifacts + pg-boss pipeline + monitoring —
+ * submissions/registry-service), the certificate S-10 registry
+ * (certs/certificate-service), the per-tenant rollout flags
+ * (rollout/adapter-settings, default OFF), and the ZATCA UNVERIFIED
+ * refusing stub (adapters/zatca — the RISK-005 discipline: no adapter
+ * ships against unverified official specs; DR-001 OPEN).
+ *
  * Dependencies (DEPENDENCY_RULES §2; the phase §4): accounting (posting
  * engine, purposes — tax posts only via the engine, ADR-0007) + audit +
- * files (VAT return CSV/XLSX export). Consumed BY treasury (the G-11
- * expense leg), then sales/purchasing from their phases via the published
- * resolver + snapshot/summary contracts. Pack tables are seed-only: the
- * module NEVER writes jurisdictions/jurisdiction_tax_rates.
+ * files (encrypted submission artifacts + VAT return exports). Consumed BY
+ * treasury (the G-11 expense leg), then sales/purchasing from their
+ * phases via the published resolver + snapshot/summary contracts. Pack
+ * tables are seed-only: the module NEVER writes
+ * jurisdictions/jurisdiction_tax_rates.
  */
 @Module({
   imports: [AccountingModule, AuditModule, FilesModule],
@@ -38,6 +49,7 @@ import { TaxController } from "./presentation/tax.controller";
     PackService,
     EInvoicingService,
     TaxReconciliationService,
+    SubmissionRegistryService,
   ],
   exports: [
     TaxResolverService,
@@ -47,6 +59,18 @@ import { TaxController } from "./presentation/tax.controller";
     PackService,
     EInvoicingService,
     TaxReconciliationService,
+    SubmissionRegistryService,
   ],
 })
-export class TaxModule {}
+export class TaxModule implements OnModuleInit {
+  async onModuleInit(): Promise<void> {
+    // PHASE-023 T2/T13: the submission pipeline + monitoring jobs register
+    // on module boot (the ZATCA stub is registered by the registry service
+    // itself — T4). Registration failure degrades the async pipeline,
+    // never module boot (the API surface stays up — circuit-breaker
+    // discipline); the queue schedules are idempotent replaces.
+    await registerSubmissionJobs().catch((error) => {
+      void error;
+    });
+  }
+}

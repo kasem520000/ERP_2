@@ -143,6 +143,19 @@ creation blocked).
 > client-app keys (`offline.desktop_app` 021, `offline.android_app` /
 > `offline.mobile_accounts` 022) stay phase-gated until their apps ship.
 
+> **Feature wiring (PHASE-023, migration `0035_external_integrations.sql`).** The two
+> tenant-plane integration keys join **business + enterprise**: migration 0035 grants
+> `treasury.bank_statement_parking` (the parked-lines manual-mapping aid + the two new
+> format families) and `sales.commerce_channels` (the channel staging import behind
+> `sales.commerce.manage` — permission catalog 243→244) to both plans (starter does
+> NOT get them; the idempotent array_cat guard). `platform.payouts` (refund + payout
+> reconciliation) is the operator console — the `platform.subscriptions` pattern,
+> never plan-gated. Both tenant keys resolve **live** at CURRENT_SHIPPED_PHASE 23
+> (2026-11-05): the parking surface, the parsers, and the commerce staging import are
+> shipped — see the PHASE-023 completion report. The ZATCA/ETA adapter features stay
+> honestly UNVERIFIED/deferred (DR-001 OPEN option C; DR-003 draft) — no entitlement
+> can light up an unverified integration (the no-fabrication gate).
+
 ### 3.1 Financial Depth Pack (Blueprint v2.0 — PLACEHOLDER pricing ⚠)
 
 The Blueprint v2.0 financial-depth modules ship as a single add-on pack — **Financial

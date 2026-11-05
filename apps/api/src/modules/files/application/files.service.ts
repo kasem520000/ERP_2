@@ -157,6 +157,35 @@ export class FilesService {
     await this.store.putObject(key, body, contentType);
     return { key };
   }
+
+  /**
+   * Write a SERVER-SIDE sealed artifact under the tenant prefix
+   * (PHASE-023 e-invoicing payloads/responses/certificates — E_INVOICING
+   * §6): `application/octet-stream` ciphertext, folder-scoped
+   * (`einvoice_payload|einvoice_response|einvoicing_cert`). This path is
+   * NEVER reachable from tenant uploads — the upload allow-list is not
+   * widened; only server code holding the sealed bytes calls this (the
+   * PHASE-006 export-write precedent).
+   */
+  async writeArtifact(
+    tenantId: string,
+    folder: string,
+    filename: string,
+    body: Buffer,
+  ): Promise<string> {
+    const safeName = sanitizeFilename(filename);
+    if (safeName === undefined) {
+      throw new UploadRejectedError("filename must be 1..200 chars of [A-Za-z0-9._-]", {
+        filename,
+      });
+    }
+    if (!/^[a-z0-9_]{4,40}$/.test(folder)) {
+      throw new UploadRejectedError("artifact folder must be 4..40 chars of [a-z0-9_]", { folder });
+    }
+    const key = `${tenantId}/${folder}/${generateUuidV7()}/${safeName}`;
+    await this.store.putObject(key, body, "application/octet-stream");
+    return key;
+  }
 }
 
 /** Path-traversal-proof basename pass; undefined when the name is unusable. */

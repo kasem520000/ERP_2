@@ -1,8 +1,9 @@
 # TABLES — Sales & Receivables Cluster (PHASE-012; POS core 016)
 
 > **Status:** DELIVERED (PHASE-012, migrations 0018/0019; POS core added by PHASE-016,
-> migration 0024) · **Owner:** Database Architecture ·
-> **Updated:** 2026-11-02 · Column-level specs for the PHASE-012 cluster, authored in-phase per
+> migration 0024; commerce channel staging added by PHASE-023, migration
+> `0035_external_integrations.sql`) · **Owner:** Database Architecture ·
+> **Updated:** 2026-11-05 · Column-level specs for the PHASE-012 cluster, authored in-phase per
 > the file header rule, plus the PHASE-016 POS core that lands in this cluster (terminal
 > registry, floor service, the sales-invoice POS channel, and the narrow sync slice).
 > ADR-0009 precision discipline throughout: quantities and unit
@@ -157,6 +158,36 @@ CoA template gains the additive `CARD_RECEIVABLE` marker (1151 — fail-closed
 `PURPOSE_NOT_MAPPED` until the tenant maps it; [DR-016-02](../../decisions/DR-016-02-card-receivable-mapping.md)).
 Grants: SELECT/INSERT/UPDATE on the six new tables for `erp_app`, SELECT for
 `erp_readonly`/`erp_definer`; RLS macro on every tenant-owned table.
+
+## Commerce channel staging — imported channel orders (PHASE-023, migration `0035_external_integrations.sql`)
+
+The `sales/adapters/commerce` substrate (T8): channel orders pulled through the
+`CommerceChannelPort` (the fake adapter ships first — no real channel is claimed)
+staged for the **server-decision conflict policy** behind the new permission
+`sales.commerce.manage` (catalog 243→244, drift-green). Both tables are RLS'd +
+registry-isolated; grants: SELECT/INSERT/UPDATE on orders (no DELETE — import
+history is bookkeeping), full CRUD on imports.
+
+**`commerce_channel_orders`** — staged orders, upsert by natural key
+`uq_commerce_channel_orders_natural (tenant_id, channel_adapter_id,
+channel_order_id)`: a re-import whose FINANCIAL fields differ flags `CONFLICT`
+with the previous payload preserved in `conflict_detail` (jsonb); resolution is
+an explicit human decision (`KEEP_EXISTING` / `TAKE_INCOMING` — ADR-0012, never
+last-write-wins; an unresolved conflict swallows further re-imports as conflict
+signals). Columns: `channel_adapter_id` (ck length 2–40), `channel_order_id` (ck
+length 1–120), `payload` jsonb (the pulled order verbatim), `status` CHECK
+`('IMPORTED','CONFLICT','RESOLVED')` DEFAULT `'IMPORTED'`, `conflict_detail`
+jsonb, `import_batch_id` uuid (soft link to the batch — no FK), `resolved_by`/
+`resolved_at`/`resolution` (the resolution audit). Index:
+`ix_commerce_orders_tenant_status (tenant_id, channel_adapter_id, status)`.
+
+**`commerce_channel_imports`** — batch bookkeeping: `uq_commerce_imports_batch
+(tenant_id, channel_adapter_id, batch_key)` is the **Idempotency-Key per batch**
+(a duplicate batch replays the RECORDED outcome without re-pulling — the webhook
+ingest discipline); `cursor_before`/`cursor_after` jsonb (the channel cursor
+moves only on a completed pull), counters `pulled_count`/`imported_count`/
+`skipped_count`/`conflict_count` (what the UI surfaces), `status` CHECK
+`('COMPLETED','FAILED')` DEFAULT `'COMPLETED'`, `error` text.
 
 ## Reused substrates (no new columns)
 

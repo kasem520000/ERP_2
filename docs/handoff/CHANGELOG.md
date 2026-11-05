@@ -4,6 +4,69 @@
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
 
+- 2026-11-05 — **PHASE-023 — External Integrations & E-Invoicing (COMPLETE)**: the
+  external-integration substrate ships with the no-fabrication discipline made
+  executable — the registry/monitoring/certificate/rollout machinery ANY authority
+  or provider integration needs, with zero unverified wire-format knowledge.
+  Migration `0035_external_integrations.sql` (schema_version 35; drizzle journal
+  idx 34, the 0-based convention): the `e_invoicing_submissions` OPERATIONAL expansion (ONE LIVE row per
+  document × adapter — the 009 UNIQUE became the PARTIAL unique
+  `uq_einvoicing_submissions_live` over the live states; `SIGNED`/`REPORTED` join
+  the ladder; `attempts` + `next_attempt_at` + the `ix_einvoicing_submissions_retry`
+  sweep; retry chains via `retry_of_submission_id`; sealed payload/response
+  artifacts — AES-256-GCM via `EINVOICING_SECRET_KEY`/`EINVOICING_SECRET_KEY_ID`
+  with the `IDENTITY_SECRET_KEY` fallback, production fails closed), the S-10
+  `e_invoicing_certificates` registry (secret-store PATH only — uq +
+  `einvoicing/%` shape; `rotated_from` chain; the 30/14/7 expiry ladder recorded on
+  `expires_alerted_at`), the append-only `e_invoicing_certificate_usage` audit,
+  `e_invoicing_adapter_settings` (per-tenant rollout flags default OFF; enabled ⇒
+  enabled_by+enabled_at CHECK; never the platform feature_flags table),
+  `bank_statement_parked_lines` + the seeded `bank_statement_formats` registry,
+  `commerce_channel_orders`/`commerce_channel_imports` (natural-key staging +
+  Idempotency-Key batches), and `billing_payouts` (CHECK net = gross − fee) — all
+  RLS'd + isolation-registered. Modules: `tax/submissions` (the adapter-neutral
+  state machine — illegal transitions rejected in code; the registry service; the
+  NON_AUTHORITATIVE compliance-archive payload builder over jurisdiction-pack
+  labels + the INV-012 summary; pg-boss `einvoicing.sign|submit|poll|reconcile`
+  jobs — idempotent, expo-capped retries, dead-letter at the cap with the
+  `einvoice.submission.failed` inbox alert, degrade-the-feature-never-the-platform;
+  funnel monitoring + `EInvoiceRejectSpike` >5%/15-min Sev-2), `tax/certs`
+  (approval-separated audited enroll/rotate; signing-job-only key access — no API
+  surface reads key material; the offboarding purge), `tax/adapters/zatca` (**the
+  UNVERIFIED refuse-to-submit stub** — the verification gate is honestly
+  NOT_VERIFIED (no external access; nothing fabricated): every refusal names the
+  unmet GATE-1..GATE-4 items; DR-001 OPEN, option C recommended), `tax/rollout`
+  (default OFF; the enablement gate = a provisioned ACTIVE certificate + the
+  jurisdiction pack), `treasury/parsers` (the csv-debit-credit + csv-with-balances
+  format families with parking — raw cells verbatim, amounts NEVER guessed, balance
+  drift advisory-only) + the parked-lines list/resolve/discard endpoints,
+  `sales/adapters/commerce` (CommerceChannelPort + FakeCommerceChannel + the import
+  service; ShippingPort reserved with a fake; financial drift ⇒ CONFLICT for
+  explicit human resolution — never LWW), and
+  `tenancy/application/billing/refund-payout-service` (`refund()` on the sandbox
+  provider port + `refundSettledPayment` + `syncPayouts`/`reconcilePayouts`/
+  `listPayouts` + the `runPayoutReconciliation` job; `payment.refunded` billing
+  events — the invoice stays PAID, history append-only; DRIFT reported, never
+  auto-corrected). API: the tax registry/funnel/resubmit/certificates/settings
+  surface + treasury parked lines + sales commerce
+  (channels/import/orders/resolve) behind the NEW `sales.commerce.manage`
+  (permission catalog 243→244, permissions-drift 244=244) + platform billing
+  refund/payouts/sync. Web: `/settings/tax/einvoicing` (per-state registry,
+  adapters + verification honesty, cert countdowns), `/platform/einvoicing-funnel`,
+  the parked-lines mapping on the treasury statement screens, and checkout result
+  states; i18n AR/EN parity maintained. Tests: `tests/authorities` (fake-zatca +
+  fake-eta — in-process authority simulators driving the REAL registry + jobs
+  through the submit/accept/reject/timeout/retry/DLQ scenario matrix; port-shaped
+  only, zero wire-format knowledge) + the new db suites tax/submissions-registry,
+  tax/certificates, tax/fake-authority, treasury/parsers, sales/commerce,
+  billing/payout-reconciliation, and sync/chaos-submissions (C-01…C-04 with the
+  submission jobs in the loop). Honest deferrals: the ZATCA real adapter (the
+  verification gate NOT_VERIFIED + DR-001 OPEN — option C), Egypt ETA (NOT_STARTED;
+  the DR-003 DEFERRED draft), the payment production cutover (DR-002 OPEN — the
+  sandbox is hardened, no production claim), live-provider contract tests
+  (staging-credentials-gated by design). Next eligible phase: PHASE-024 — Security
+  Hardening & Compliance Review (identify only).
+
 - 2026-11-05 — **PHASE-022 — Android Application (COMPLETE)**: the Expo/React Native
   client (ADR-0014) ships as **ONE app, TWO capability experiences** — `android-field`
   (van sales, collections, van load/unload, returns, counts, route visits) +

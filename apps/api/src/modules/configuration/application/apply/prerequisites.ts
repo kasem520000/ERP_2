@@ -58,9 +58,17 @@ import {
  * application on top of it (migration 0032 — the one-time enrollment proof
  * DR-P21-01; the Tauri shell + offline console + the seven DR-P21-08
  * desktop write intents — no new plan keys or SETTINGS_REGISTRY keys, so
- * no template classification moves with this bump).
+ * no template classification moves with this bump); PHASE-022 shipped the
+ * Android application on top of the same foundation (the @erp/mobile
+ * package + feeds/intents — again no new plan keys, no classification
+ * moves); PHASE-023 shipped the external-integration substrate (migration
+ * 0035 — treasury.bank_statement_parking + sales.commerce_channels join
+ * business + enterprise, platform.payouts is operator-only so no plan
+ * carries it; no SETTINGS_REGISTRY/template classification changes — the
+ * ZATCA adapter is the UNVERIFIED refusing stub and rollout flags default
+ * OFF, so no e-invoicing capability resolves LIVE from this bump).
  */
-export const CURRENT_SHIPPED_PHASE = "PHASE-021";
+export const CURRENT_SHIPPED_PHASE = "PHASE-023";
 
 /** "PHASE-0NN" → the numeric phase (for ordering). */
 export function phaseNumber(phase: string): number {

@@ -1,6 +1,6 @@
 # Data Dictionary — Shared Column Semantics
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05
 
 The semantic dictionary for **recurring columns and value sets** across all tables. It
 sits between [DATABASE_CONVENTIONS.md](DATABASE_CONVENTIONS.md) (mechanical rules:
@@ -156,6 +156,13 @@ are pre-registered at blueprint level per [../EXPANSION_REGISTER.md](../EXPANSIO
 | `vat_applicability` | VAT_IN_FORCE, VAT_PLANNED, VAT_PLANNED_EINVOICING, NO_VAT | jurisdictions | 009 |
 | `tax_registration_status` | REGISTERED, NOT_REGISTERED, DEREGISTERED | tax_registrations | 009 |
 | `einvoice_submission_status` | PENDING, GENERATED, SIGNED, SUBMITTED, ACCEPTED, REJECTED, REPORTED, FAILED | e_invoicing_submissions | 023 (schema 009) |
+| `einvoicing_certificate_status` | ACTIVE, EXPIRING_SOON, EXPIRED, REVOKED | e_invoicing_certificates | 023 |
+| `einvoicing_certificate_operation` | SIGN, DECRYPT | e_invoicing_certificate_usage | 023 |
+| `bank_parked_line_status` | PARKED, RESOLVED, DISCARDED | bank_statement_parked_lines | 023 |
+| `bank_statement_format_family` | csv, xlsx | bank_statement_formats (seed) | 023 |
+| `commerce_order_status` | IMPORTED, CONFLICT, RESOLVED | commerce_channel_orders | 023 |
+| `commerce_import_status` | COMPLETED, FAILED | commerce_channel_imports | 023 |
+| `billing_payout_status` | PENDING, RECONCILED, DRIFT | billing_payouts | 023 |
 | `tenant_status` | ACTIVE, SUSPENDED, OFFBOARDED | tenants | 003 |
 | `user_status` | PENDING, ACTIVE, LOCKED, DEACTIVATED | users | 003 |
 | `membership_status` | ACTIVE, REVOKED | memberships | 003 |

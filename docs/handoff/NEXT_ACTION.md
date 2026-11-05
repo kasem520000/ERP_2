@@ -1,84 +1,78 @@
 # Next Action
 
-> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-04
+> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-05
 
 ## The single next action
 
-**Execute PHASE-021 — Desktop Application** per
-[../implementation/phases/PHASE-021.md](../implementation/phases/PHASE-021.md): ship the
-Windows-first desktop client as a **Tauri v2 shell** around the static-exported web ERP
-([ADR-0013](../architecture/ADR/ADR-0013-tauri-desktop.md)) — Rust-side plugins for local
-SQLite (SQLCipher, WAL) consumed through the PHASE-020 `packages/sync-core` client,
-OS-keychain credential storage (refresh token, device key, SQLite key — access tokens
-memory-only), the **signed auto-update channel with crash-rate-gated staged rollout**,
-crash recovery that preserves the outbox, receipt/printer integration points, and
-WebView2 minimum-version enforcement with graceful degradation. Offline behavior is
-exactly the desktop column of the OFFLINE_CAPABILITIES_MATRIX: cached read models with
-as-of-cursor labels + OFFLINE-DRAFT creation where the matrix allows (rows 6, 7, 10, 11,
-21, 23, 25, 26, 34) — never a disconnected back office; ONLINE-ONLY operations disabled
-with the "requires connection" reason; offline login = app unlock against the cached
-permission snapshot degrading to read-only after the 7-day watermark.
+**Execute PHASE-024 — Security Hardening & Compliance Review** per
+[../implementation/phases/PHASE-024.md](../implementation/phases/PHASE-024.md): execute the
+SECURITY_TEST_PLAN §11 penetration test across its full scope (multi-tenancy/RLS with a
+tenant-pair setup, auth + MFA, POS, the complete API surface, sync endpoints,
+uploads/exports, native clients, the e-invoicing sandbox surface, CI/CD exposure) with
+severity-mapped remediation SLAs (Critical 7d release-blocking / High 30d / Medium 90d /
+Low next release); enforce MFA policies per role/plan (completing ADR-0015 §4) with
+admin-assisted reset and the WebAuthn/passkeys decision record; re-verify rate-limit and
+lockout behavior (R-01…R-08); execute the secrets-rotation drill once (S-03 dual-accept
+window, S-01 DB credentials, S-11 webhook signers; S-10 certificate rotation rehearsed
+against the fake-authority harness only); complete dependency triage (audit + SBOM);
+ship tenant-admin audit review tooling; the CSP/headers final pass; drive the
+privacy-notices legal review to a recorded retention decision (OQ-009); verify the
+tenant-offboarding purge job end-to-end; review support-access auditing; and refresh the
+threat model for every surface added since PHASE-001 — leaving the findings log at
+`docs/operations/security-findings.md` with retest proofs and regression tests.
 
-Why now: PHASE-020 is COMPLETE (2026-11-04; evidence:
-[../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) PHASE-020
+Why now: PHASE-023 is COMPLETE (2026-11-05; evidence:
+[../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) PHASE-023
 row + the completion report at
-  `docs/implementation/phases/reports/PHASE-020-COMPLETION.md`
+  `docs/implementation/phases/reports/PHASE-023-COMPLETION.md`
 — written by the orchestrator with this phase's close-out)
-— **the Offline Synchronization Foundation is live**: the `sync` module (migrations
-0029–0031, schema_version 31) owns the device registry with `tauri-desktop` as a
-first-class device class, 4 device-class feed groups + the 9-entity catch-up writer +
-the permissions snapshot feed, pull v2 / push v2 with typed per-item results and the
-full conflict-policy set (SERVER_DECISION / FIELD_LEVEL_MERGE / OWNER_DEVICE_WINS /
-ONLINE_ONLY), inbox dedupe + rate limiting + DEFERRED, refresh-token rotation with
-reuse detection, four maintenance jobs, the reconciliation queue + admin health
-aggregate, and the three platform web screens; `packages/sync-core` v1 ships the
-reference client engine (runCycle, retry, recovery, pruning, watermark — LOCAL_MIGRATIONS
-v2). The FULL chaos matrix C-01…C-16 + duplicates + D-series + Y-series suites are green
-and blocking (9 files / 74 tests in `apps/api/src/__db__/sync/`; sync-core 36/36).
-PHASE-021 builds directly on it: the Tauri shell hosts the sync client UNMODIFIED, the
-SQLite store is the LOCAL_DATABASE §1.1 desktop subset with byte-exact LRU budgets
-(020 shipped the documented row-count approximation), and the contract-version gate +
-grace window (`2026-11-04.1` / `2026-10-27.1`) are already enforced server-side.
+— **the External Integrations & E-Invoicing surface is live**: the operational
+submission registry (migration 0035, schema_version 35 — 1:N per adapter, retry chains,
+sealed artifacts), the S-10 certificate store with its append-only usage audit, the
+per-tenant adapter rollout flags default OFF with the certificate-before-enablement
+gate, the ZATCA adapter as the honestly-UNVERIFIED refuse-to-submit stub (the
+verification gate items are all NOT_VERIFIED in the delivery environment — DR-001 stays
+OPEN with option C recommended), the fake-authority harnesses (fake-zatca/fake-eta)
+driving the real registry+jobs through submit/accept/reject/timeout/retry/DLQ, the
+bank-statement parking + two new format families, the commerce channel staging import
+(`sales.commerce.manage` — the 244-key catalog), and the sandbox payment hardening
+(refund + payout reconciliation; DR-002 OPEN — no production cutover claim).
+PHASE-024 builds directly on it: the pen-test scope list includes the e-invoicing
+sandbox surface verbatim, and the S-10 rotation drill rides the shipped certificate
+service against the fake-authority harness.
 
 How:
 
-1. Follow the handoff protocol: read the PHASE-020 material first (the completion
-   report; migrations `0029`–`0031`; the `sync` module — pull/push/registry/health
-   services, handlers, jobs, the admin controller; `packages/sync-core` — cycle,
-   retry, recovery, pruning, watermark + the LOCAL_MIGRATIONS v2 store contract),
-   then the consumed-as-is specs: ADR-0013 (Tauri shell),
-   [../offline/LOCAL_DATABASE.md](../offline/LOCAL_DATABASE.md) (§1.1 desktop subset,
-   §5 budgets, §6.4 corruption path),
-   [../offline/OFFLINE_CAPABILITIES_MATRIX.md](../offline/OFFLINE_CAPABILITIES_MATRIX.md)
-   (the desktop column),
-   [../offline/SECURITY_AND_DEVICE_MANAGEMENT.md](../offline/SECURITY_AND_DEVICE_MANAGEMENT.md)
-   (§3 keychain, §4 revocation), and
-   [../offline/SYNC_PROTOCOL.md](../offline/SYNC_PROTOCOL.md) (§8 desktop triggers).
-2. Confirm prerequisites per the dependency graph: PHASE-020 ✓ (+ PHASE-019 ✓,
-   PHASE-018 ✓, PHASE-016 ✓ — the POS terminal interop proof, PHASE-013 ✓ (printing),
-   PHASE-005 ✓ (the web UI being wrapped), PHASE-001 ✓ (`apps/desktop` placeholder) —
-   all verified in IMPLEMENTATION_STATUS).
-3. Register any intake keys first per the FEATURE_CATALOG §25 protocol —
-   `offline.desktop_app` is already catalogued (permission key: app install; depends
-   on `offline.sync_protocol`, granted business+enterprise via the 0029 plan grants).
-4. Honor the binding constraints: the shell hosts the PHASE-020 sync client UNMODIFIED
-   (no protocol forks); app logic stays TypeScript (Rust confined to plugins); no
-   secrets in SQLite, logs, or preferences (keychain only; access tokens memory-only);
-   offline writes only where the capabilities matrix allows (OFFLINE-DRAFT set);
-   honest local states (`DRAFT_LOCAL`/`PENDING_MERGE`/`SYNC_FAILED` rendered
-   distinctly, `PENDING_SYNC` never as posted); the static export must not depend on
-   Next.js server features at runtime (build-target check in CI); signed updates with
-   staged rollout gates; crash recovery preserves the outbox.
-5. Do NOT implement PHASE-022+ in the same run.
+1. Follow the handoff protocol: read the PHASE-023 material first (the completion
+   report; migration `0035_external_integrations.sql`; the `tax/submissions` state
+   machine + registry + jobs + monitoring; `tax/certs`; `tax/adapters/zatca` (the
+   refusing stub); `tax/rollout`; `treasury/parsers`; `sales/adapters/commerce`;
+   `tenancy/application/billing/refund-payout-service.ts`; `tests/authorities/`),
+   then the consumed-as-is specs:
+   [../security/SECURITY_TEST_PLAN.md](../security/SECURITY_TEST_PLAN.md) §11/§13/§14,
+   [../security/SECRETS_MANAGEMENT.md](../security/SECRETS_MANAGEMENT.md) §3/§7,
+   [../architecture/ADR/ADR-0015-authentication.md](../architecture/ADR/ADR-0015-authentication.md) §4,
+   and the threat-model baseline
+   [../security/THREAT_MODEL.md](../security/THREAT_MODEL.md).
+2. Confirm prerequisites per the dependency graph: PHASE-023 ✓ (+ the full delivered
+   stack PHASE-001…022 ✓ — all verified in IMPLEMENTATION_STATUS).
+3. Register any intake keys first per the FEATURE_CATALOG §25 protocol — PHASE-024
+   adds tooling over existing surfaces; new feature keys (audit review tooling,
+   MFA policy admin) follow the protocol before landing.
+4. Honor the binding constraints: findings ingested the same day the report lands;
+   fix SLAs enforced with waivers only via decision record; every fixed finding gets
+   a retest proof + an automated regression test where automatable; the external
+   pen-test leg is infra-gated (record the substitute honestly per the follow-up
+   obligations pattern if no external firm is reachable); drills executed, not
+   described.
+5. Do NOT implement PHASE-025+ in the same run.
 
-## Next eligible: PHASE-021 — Desktop Application
+## Next eligible: PHASE-024 — Security Hardening & Compliance Review
 
 Per [../planning/PHASE_DEPENDENCY_GRAPH.md](../planning/PHASE_DEPENDENCY_GRAPH.md):
-PHASE-021 requires PHASE-020 ✓ (plus the delivered stack PHASE-019 ✓, PHASE-018 ✓,
-PHASE-017 ✓, PHASE-016 ✓, PHASE-015 ✓, PHASE-013 ✓, PHASE-005 ✓ …). **PHASE-022 —
-Android Application — becomes parallel-eligible once 021 lands** (the Expo client rides
-the same sync-core engine + device classes; its field/personal feed groups are already
-live server-side). The agent protocol executes one phase at a time.
+PHASE-024 requires PHASE-023 ✓ (plus the delivered stack PHASE-001…022 ✓). **PHASE-025
+(GA readiness) becomes eligible once 024 lands.** The agent protocol executes one
+phase at a time.
 
 ## Follow-up obligations (waived evidence — attach at first infra availability)
 
@@ -100,7 +94,7 @@ live server-side). The agent protocol executes one phase at a time.
 
 ## Do NOT
 
-- Do not implement PHASE-022+ in the same run as PHASE-021.
+- Do not implement PHASE-025+ in the same run as PHASE-024.
 - Do not modify the ADRs or the roadmap without the change-control process
   ([IMPLEMENTATION_PROTOCOL.md](IMPLEMENTATION_PROTOCOL.md) §3).
 - Do not relax the frozen substrates (PHASE-002 infra, PHASE-003 identity trust,

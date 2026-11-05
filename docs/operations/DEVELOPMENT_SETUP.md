@@ -124,6 +124,8 @@ rejects any secret committed to the repo.
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `erp_dev` / `erp_dev` / `erp_dev` | compose provisioning | First-run bootstrap superuser; not used by the app after `0001` |
 | `IDENTITY_SECRET_KEY` | `openssl rand -base64 32` (dev may leave unset) | api | PHASE-003: AES-256-GCM envelope for TOTP secrets + HMAC derivation for reset tokens ([ADR-0015](../architecture/ADR/ADR-0015-authentication.md)); unset in dev/test derives the documented local key — **production fails closed** |
 | `IDENTITY_SECRET_KEY_ID` | `v1` | api | Envelope key id for rotation (≤ 8 chars) |
+| `EINVOICING_SECRET_KEY` | `openssl rand -base64 32` (dev may leave unset) | api | PHASE-023: AES-256-GCM envelope sealing e-invoicing submission payloads + authority responses at rest ([../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md) §6); falls back to `IDENTITY_SECRET_KEY`; unset in dev/test derives the documented local key — **production fails closed** |
+| `EINVOICING_SECRET_KEY_ID` | `v1` | api | Envelope key id for rotation (≤ 8 chars) |
 | `SMTP_USER` / `SMTP_PASS` | *(empty locally — mailpit needs no auth)* | notifications | SMTP AUTH PLAIN when the provider requires it |
 | `WEB_BASE_URL` | `http://localhost:3000` | api | Absolute links inside emails (invitations, resets) — replaces the planned `PUBLIC_WEB_URL` row |
 | `MAX_UPLOAD_BYTES` / `SIGNED_URL_TTL_SECONDS` / `S3_*` | see files module | files module | PHASE-002 delivered |

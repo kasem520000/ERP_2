@@ -33,8 +33,9 @@ function tenantTx(): TenantDb {
 /**
  * Notification categories: the PHASE-014 billing-critical set, the
  * PHASE-015 generalization (stock reorder alerts; industry template
- * upgrade offers), and the PHASE-019 crm set (task reminders — the 05:30
- * sweep's in-app leg).
+ * upgrade offers), the PHASE-019 crm set (task reminders — the 05:30
+ * sweep's in-app leg), and the PHASE-023 einvoicing set (submission
+ * failures/rejections + certificate expiry + reject spikes).
  */
 export type NotificationCategory =
   | "limits"
@@ -43,7 +44,8 @@ export type NotificationCategory =
   | "invoice_overdue"
   | "stock"
   | "templates"
-  | "crm";
+  | "crm"
+  | "einvoicing";
 export type NotificationSeverity = "info" | "warning" | "critical";
 
 export interface BilingualText {

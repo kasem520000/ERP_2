@@ -49,23 +49,23 @@ export interface BankAdapter {
 }
 
 /** AR/EN header aliases resolved case/blindly (localization §bilingual). */
-const DATE_ALIASES = ["date", "value date", "posting date", "التاريخ", "تاريخ العملية", "تاريخ القيمة"];
-const AMOUNT_ALIASES = ["amount", "debit", "credit", "value", "المبلغ", "قيمة", "مدين", "دائن"];
-const REFERENCE_ALIASES = ["reference", "ref", "txn id", "المرجع", "رقم المرجع", "رقم العملية"];
-const DESCRIPTION_ALIASES = ["description", "details", "narrative", "البيان", "التفاصيل", "الوصف"];
+export const DATE_ALIASES = ["date", "value date", "posting date", "التاريخ", "تاريخ العملية", "تاريخ القيمة"];
+export const AMOUNT_ALIASES = ["amount", "debit", "credit", "value", "المبلغ", "قيمة", "مدين", "دائن"];
+export const REFERENCE_ALIASES = ["reference", "ref", "txn id", "المرجع", "رقم المرجع", "رقم العملية"];
+export const DESCRIPTION_ALIASES = ["description", "details", "narrative", "البيان", "التفاصيل", "الوصف"];
 const OPENING_ALIASES = ["opening balance", "opening", "الرصيد الافتتاحي", "رصيد أول المدة"];
 const CLOSING_ALIASES = ["closing balance", "closing", "balance", "الرصيد الختامي", "الرصيد"];
 
-function normalizeHeader(header: string): string {
+export function normalizeHeader(header: string): string {
   return header.trim().toLowerCase().replace(/\u200f/g, "").replace(/\s+/g, " ");
 }
 
-function headerMatches(header: string, aliases: readonly string[]): boolean {
+export function headerMatches(header: string, aliases: readonly string[]): boolean {
   const normalized = normalizeHeader(header);
   return aliases.some((alias) => normalized === alias);
 }
 
-function resolveColumn(
+export function resolveColumn(
   headers: readonly string[],
   requested: string | undefined,
   aliases: readonly string[],
@@ -87,7 +87,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const ISO_DATETIME = /^\d{4}-\d{2}-\d{2}[T ].*/;
 
 /** Canonical 4-dp money string from a raw cell (rejects NaN/inf — ADR-0009). */
-function toAmount(raw: string): string {
+export function toAmount(raw: string): string {
   const cleaned = raw.trim().replace(/[,\s\u00a0]/g, "").replace(/[()]/g, "");
   if (cleaned === "" || !/^-?\d+(\.\d{1,8})?$/.test(cleaned)) {
     throw new StatementFormatError(`amount "${raw}" is not a plain decimal`);
@@ -99,7 +99,7 @@ function toAmount(raw: string): string {
   return `${negative ? "-" : ""}${int}.${padded}`;
 }
 
-function toIsoDate(raw: string): string {
+export function toIsoDate(raw: string): string {
   const cleaned = raw.trim();
   if (ISO_DATE.test(cleaned)) return cleaned;
   if (ISO_DATETIME.test(cleaned)) return cleaned.slice(0, 10);
@@ -117,7 +117,7 @@ function toIsoDate(raw: string): string {
 class StatementFormatError extends Error {}
 
 /** Split CSV respecting quoted cells (RFC-4180-ish; banks love stray quotes). */
-function splitCsvRow(line: string): string[] {
+export function splitCsvRow(line: string): string[] {
   const cells: string[] = [];
   let current = "";
   let inQuotes = false;

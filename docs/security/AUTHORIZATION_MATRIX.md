@@ -39,7 +39,7 @@ permissions cannot be granted to `viewer`-derived templates).
 |-----------|---------|------------------------|---------------|
 | `owner` (المالك) | Tenant administrator | All tenant permissions incl. role assignment, settings, offboarding; approval limits highest | tenant |
 | `accountant` (المحاسب) | Books and close | All `accounting.*`, `tax.*`, partner statements, reports, treasury view + approve, period close; from PHASE-017 also `distribution.settlements.approve` + `sales.commissions.manage`; no user management | tenant |
-| `sales` (المبيعات) | Sell and invoice | `sales.*` documents up to approve/post per limits, partner view+create, items view, receipts create; from PHASE-017 also job cards, commission rules/runs, tiers, free-goods rules, and settlement create/count | branch |
+| `sales` (المبيعات) | Sell and invoice | `sales.*` documents up to approve/post per limits, partner view+create, items view, receipts create; from PHASE-017 also job cards, commission rules/runs, tiers, free-goods rules, and settlement create/count; from PHASE-023 also `sales.commerce.manage` (channel-order staging imports + conflict resolution) | branch |
 | `purchasing` (المشتريات) | Buy and pay | `purchasing.*` documents up to approve per limits, partner view+create, items view, payments create | branch |
 | `warehouse` (المستودع) | Stock operations | `inventory.*` operational actions (receive, issue, transfer, counts create/approve), items view; van operations from PHASE-017 (`distribution.van_stock.*`, `distribution.routes.manage`); no posting of financial adjustments | branch |
 | `cashier` (أمين الصندوق) | POS terminal | POS-scoped subset: `pos.sales.sell`, `pos.shifts.manage`, `pos.receipts.print` + the `sales.pos_session.*` session keys, shift open/close, cash sales create+post via terminal, no approvals, no data exports | branch (terminal) |
@@ -91,6 +91,7 @@ permissions cannot be granted to `viewer`-derived templates).
 | `sales.reps.manage` | Manage sales reps / إدارة مندوبي المبيعات | owner | tenant | no |
 | `sales.job_cards.manage` | Workshop job-card lifecycle / إدارة بطاقات العمل | sales, owner | branch | no (posting rides the invoice chain's approve/post keys) |
 | `sales.commissions.manage` | Commission rules and runs / إدارة العمولات وتشغيلها | sales, accountant, owner | tenant | no (accrual posting is engine-gated INV-013 + audited; never touches invoices/VAT) |
+| `sales.commerce.manage` | Import e-commerce channel orders + resolve import conflicts / استيراد طلبات قنوات التجارة الإلكترونية وحل تعارضات الاستيراد | sales, owner | tenant | no (staging surface only — conflict resolution is an explicit human decision ADR-0012; no posting from the import path) |
 
 ### 3.3 `purchasing` (PHASE-011)
 

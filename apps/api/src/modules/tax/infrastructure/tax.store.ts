@@ -623,14 +623,30 @@ export async function insertEInvoicingSubmission(input: {
   payloadDigest: string | null;
 }): Promise<string> {
   const id = generateUuidV7();
-  await tenantTx().execute(sql`
+  // PHASE-023: the registry unique is (tenant, source, adapter) — 1:N per
+  // adapter (RELATIONSHIPS.md); a re-react to the same doc×adapter is the
+  // idempotent no-op that returns the EXISTING row's id.
+  const inserted = await tenantTx().execute<{ id: string }>(sql`
     INSERT INTO e_invoicing_submissions (id, tenant_id, country_code, adapter_id,
       source_type, source_id, status, payload_digest)
     VALUES (${id}, erp.current_tenant_id(), ${input.countryCode},
       ${input.adapterId}, ${input.sourceType}, ${input.sourceId}, 'PENDING', ${input.payloadDigest})
-    ON CONFLICT ("tenant_id", "source_type", "source_id") DO NOTHING
+    ON CONFLICT ("tenant_id", "source_type", "source_id", "adapter_id")
+      WHERE "status" IN ('PENDING', 'GENERATED', 'SIGNED', 'SUBMITTED', 'ACCEPTED', 'REPORTED')
+    DO NOTHING
+    RETURNING id
   `);
-  return id;
+  if (inserted.rows.length > 0) {
+    return inserted.rows[0]!.id;
+  }
+  const existing = await tenantTx().execute<{ id: string }>(sql`
+    SELECT id FROM e_invoicing_submissions
+    WHERE tenant_id = erp.current_tenant_id()
+      AND source_type = ${input.sourceType}
+      AND source_id = ${input.sourceId}
+      AND adapter_id = ${input.adapterId}
+  `);
+  return existing.rows[0]?.id ?? id;
 }
 
 /** Registry state walker (test-only lifecycle states — the fake adapter's substrate). */

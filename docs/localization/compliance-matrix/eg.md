@@ -1,6 +1,6 @@
 # Egypt (EG) — Compliance File
 
-> **Status:** STABLE (baseline research snapshot) · **Owner:** Tax & Compliance Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE (baseline research snapshot) · **Owner:** Tax & Compliance Architecture · **Updated:** 2026-11-05
 
 Jurisdiction compliance record for the Egypt pack (`eg`). **Every regulatory value below
 is research-date baseline knowledge carrying `REQUIRES_VERIFICATION`** — see
@@ -109,7 +109,7 @@ where required, qty, unit price, discounts, line net, line tax + rate, totals, c
 | feature | status | phase |
 |---------|--------|-------|
 | Jurisdiction pack `eg` | **SEEDED (PHASE-009 2026-10-30)** — rate row 14% from 2017-01-01, `verified_at NULL`; schedule rates deliberately not asserted | [PHASE-009](../../implementation/phases/PHASE-009.md) |
-| ETA e-invoicing adapter | **NOT_IMPLEMENTED** — port + registry schema shipped; gated on verified specs | [PHASE-023](../../implementation/phases/PHASE-023.md) |
+| ETA e-invoicing adapter | **NOT_STARTED (PHASE-023 2026-11-05)** — evaluation deferred ([DR-003](../../decisions/compliance/DR-003-egypt-eta-scope.md) draft with DEFERRED recommendation, PHASE-023 T9); the fake-eta test harness + the adapter-neutral registry/state machine shipped and are exercised in tests; no ETA integration claim | [PHASE-023](../../implementation/phases/PHASE-023.md) |
 | VAT return report for EG | **SHIPPED (PHASE-009 v1)** — 2-dp EGP fixtures green | PHASE-009 |
 | Per-pack fixture suite | **GREEN (PHASE-009)** — `pack-eg.spec.ts`: the 7 classes (boundary = fail-closed before 2017-01) + rounding 2-dp + determinism + return-prepare | PHASE-009 |
 | Scenarios deferred | invoice field sets/print → 012/013; payload goldens → 023 | 012/013/023 |

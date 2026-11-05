@@ -1793,7 +1793,13 @@ export const vatReturns = pgTable(
   ],
 );
 
-/** E-invoicing submission registry (schema only — adapters PHASE-023). */
+/**
+ * E-invoicing submission registry — OPERATIONAL since PHASE-023 (migration
+ * 0035): 1:N per adapter (RELATIONSHIPS.md), retry chains via
+ * retry_of_submission_id (append-only history — a resubmission is a NEW
+ * row), sealed payload/response artifacts (files module), and the retry
+ * sweep on (status, next_attempt_at).
+ */
 export const eInvoicingSubmissions = pgTable(
   "e_invoicing_submissions",
   {
@@ -1806,22 +1812,278 @@ export const eInvoicingSubmissions = pgTable(
     status: text("status").notNull().default("PENDING"),
     payloadDigest: text("payload_digest"),
     authorityReference: text("authority_reference"),
+    // PHASE-023 (migration 0035) operational columns.
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true, mode: "string" }),
+    retryOfSubmissionId: uuid("retry_of_submission_id"),
+    authorityRefs: jsonb("authority_refs").notNull().default([]),
+    payloadFileId: uuid("payload_file_id"),
+    responseFileId: uuid("response_file_id"),
+    reportedAt: timestamp("reported_at", { withTimezone: true, mode: "string" }),
+    lastErrorCode: text("last_error_code"),
     submittedAt: timestamp("submitted_at", { withTimezone: true, mode: "string" }),
     respondedAt: timestamp("responded_at", { withTimezone: true, mode: "string" }),
     errorDetail: jsonb("error_detail"),
     createdBy: uuid("created_by"),
   },
   (table) => [
-    uniqueIndex("uq_e_invoicing_submissions_source").on(
+    // Registry idempotency: ONE LIVE row per document × adapter — REJECTED/
+    // FAILED rows are history (the retry chain appends new rows).
+    uniqueIndex("uq_einvoicing_submissions_live")
+      .on(table.tenantId, table.sourceType, table.sourceId, table.adapterId)
+      .where(
+        sql`${table.status} IN ('PENDING', 'GENERATED', 'SIGNED', 'SUBMITTED', 'ACCEPTED', 'REPORTED')`,
+      ),
+    index("ix_einvoicing_submissions_retry_of").on(
       table.tenantId,
-      table.sourceType,
-      table.sourceId,
+      table.retryOfSubmissionId,
     ),
+    index("ix_einvoicing_submissions_retry")
+      .on(table.status, table.nextAttemptAt)
+      .where(sql`${table.status} IN ('PENDING', 'GENERATED', 'SIGNED', 'SUBMITTED')`),
     index("ix_e_invoicing_tenant_status").on(
       table.tenantId,
       table.countryCode,
       table.status,
     ),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// PHASE-023 · External Integrations cluster (migration
+// 0035_external_integrations.sql; TABLES/tax-compliance.md §e-invoicing).
+// The S-10 certificate registry (secret-store PATH only — key material
+// lives in the files store), its append-only usage audit, the per-tenant
+// adapter rollout flags (default OFF), the bank-statement parked lines +
+// seeded format registry, the commerce channel staging tables, and the
+// billing payout batches.
+// ---------------------------------------------------------------------------
+
+/**
+ * S-10 certificate registry (SECRETS §6 HIGHEST): metadata + lifecycle
+ * ONLY — the encrypted blob is external (files store
+ * einvoicing/{jurisdiction}/{tenant}/…). Signing-job-only access; expiry
+ * alerts 30/14/7 (expires_alerted_at dedupes per threshold); offboarding
+ * purge removes secret paths.
+ */
+export const eInvoicingCertificates = pgTable(
+  "e_invoicing_certificates",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    countryCode: char("country_code", { length: 2 }).notNull(),
+    adapterId: text("adapter_id").notNull(),
+    label: text("label").notNull(),
+    keyVersion: text("key_version").notNull(),
+    secretPath: text("secret_path").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    notBefore: timestamp("not_before", { withTimezone: true, mode: "string" }).notNull(),
+    notAfter: timestamp("not_after", { withTimezone: true, mode: "string" }).notNull(),
+    status: text("status").notNull().default("ACTIVE"),
+    enrolledBy: uuid("enrolled_by"),
+    enrolledAt: timestamp("enrolled_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    rotatedFromId: uuid("rotated_from_id"),
+    signCount: bigint("sign_count", { mode: "number" }).notNull().default(0),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true, mode: "string" }),
+    expiresAlertedAt: jsonb("expires_alerted_at").notNull().default({}),
+    createdBy: uuid("created_by"),
+  },
+  (table) => [
+    uniqueIndex("uq_e_invoicing_certificates_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_e_invoicing_certificates_path").on(table.secretPath),
+    index("ix_einvoicing_certs_tenant").on(
+      table.tenantId,
+      table.adapterId,
+      table.status,
+    ),
+  ],
+);
+
+/**
+ * Append-only certificate usage audit — every decrypt/sign writes a row
+ * (the signing-volume dashboard substrate). INSERT + SELECT only (grants);
+ * retention sweeps bound growth.
+ */
+export const eInvoicingCertificateUsage = pgTable(
+  "e_invoicing_certificate_usage",
+  {
+    id: uuid("id").primaryKey(),
+    tenantId: uuid("tenant_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    certificateId: uuid("certificate_id").notNull(),
+    submissionId: uuid("submission_id"),
+    operation: text("operation").notNull(),
+    keyVersion: text("key_version").notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("uq_einvoicing_cert_usage_id_tenant").on(table.id, table.tenantId),
+    index("ix_einvoicing_cert_usage_cert").on(
+      table.tenantId,
+      table.certificateId,
+      table.usedAt,
+    ),
+  ],
+);
+
+/**
+ * Per-tenant adapter rollout flag (T13) — default OFF; enabling requires a
+ * provisioned ACTIVE certificate (service gate) and is audited. NEVER the
+ * global feature_flags table (platform L8 vs tenant configuration).
+ */
+export const eInvoicingAdapterSettings = pgTable(
+  "e_invoicing_adapter_settings",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    adapterId: text("adapter_id").notNull(),
+    countryCode: char("country_code", { length: 2 }).notNull(),
+    enabled: boolean("enabled").notNull().default(false),
+    config: jsonb("config").notNull().default({}),
+    enabledBy: uuid("enabled_by"),
+    enabledAt: timestamp("enabled_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("uq_e_invoicing_adapter_settings").on(table.tenantId, table.adapterId),
+  ],
+);
+
+/**
+ * Parked unparseable bank-statement rows (T7) — raw cells verbatim,
+ * amounts NEVER guessed; resolution writes the mapped bank_statement_line
+ * and links it; discard records why.
+ */
+export const bankStatementParkedLines = pgTable(
+  "bank_statement_parked_lines",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    statementId: uuid("statement_id").notNull(),
+    lineIndex: integer("line_index").notNull(),
+    rawCells: jsonb("raw_cells").notNull(),
+    rawLine: text("raw_line").notNull(),
+    parkedReason: text("parked_reason").notNull(),
+    status: text("status").notNull().default("PARKED"),
+    resolvedLineId: uuid("resolved_line_id"),
+    resolvedBy: uuid("resolved_by"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: "string" }),
+    resolutionNote: text("resolution_note"),
+    createdBy: uuid("created_by"),
+  },
+  (table) => [
+    uniqueIndex("uq_bank_parked_lines_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_bank_parked_lines_slot").on(table.statementId, table.lineIndex),
+    index("ix_bank_parked_tenant_status").on(table.tenantId, table.status),
+  ],
+);
+
+/**
+ * Commerce channel orders staged for the server-decision conflict policy
+ * (T8) — upsert by natural key (tenant, channel, channel order id);
+ * financial-field drift on re-import flags CONFLICT with the previous
+ * payload preserved; resolution is an explicit human decision (ADR-0012 —
+ * no LWW anywhere).
+ */
+export const commerceChannelOrders = pgTable(
+  "commerce_channel_orders",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    channelAdapterId: text("channel_adapter_id").notNull(),
+    channelOrderId: text("channel_order_id").notNull(),
+    payload: jsonb("payload").notNull(),
+    status: text("status").notNull().default("IMPORTED"),
+    conflictDetail: jsonb("conflict_detail"),
+    importBatchId: uuid("import_batch_id"),
+    resolvedBy: uuid("resolved_by"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true, mode: "string" }),
+    resolution: text("resolution"),
+    createdBy: uuid("created_by"),
+  },
+  (table) => [
+    uniqueIndex("uq_commerce_channel_orders_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_commerce_channel_orders_natural").on(
+      table.tenantId,
+      table.channelAdapterId,
+      table.channelOrderId,
+    ),
+    index("ix_commerce_orders_tenant_status").on(
+      table.tenantId,
+      table.channelAdapterId,
+      table.status,
+    ),
+  ],
+);
+
+/**
+ * Commerce import batch bookkeeping (T8) — the Idempotency-Key per batch
+ * (a duplicate batch replays the recorded outcome without re-pulling),
+ * cursors before/after, and the per-batch counters the UI surfaces.
+ */
+export const commerceChannelImports = pgTable(
+  "commerce_channel_imports",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    channelAdapterId: text("channel_adapter_id").notNull(),
+    batchKey: text("batch_key").notNull(),
+    cursorBefore: jsonb("cursor_before"),
+    cursorAfter: jsonb("cursor_after"),
+    pulledCount: integer("pulled_count").notNull().default(0),
+    importedCount: integer("imported_count").notNull().default(0),
+    skippedCount: integer("skipped_count").notNull().default(0),
+    conflictCount: integer("conflict_count").notNull().default(0),
+    status: text("status").notNull().default("COMPLETED"),
+    error: text("error"),
+    createdBy: uuid("created_by"),
+  },
+  (table) => [
+    uniqueIndex("uq_commerce_imports_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_commerce_imports_batch").on(
+      table.tenantId,
+      table.channelAdapterId,
+      table.batchKey,
+    ),
+  ],
+);
+
+/**
+ * Provider payout batches (T6) — the row records what the provider
+ * REPORTED (gross/fee/net per batch); reconciliation compares against
+ * settled platform payments in the window: RECONCILED or DRIFT with the
+ * reported-vs-computed detail (drift NEVER auto-corrected). Sandbox-depth
+ * until DR-002 decides the provider.
+ */
+export const billingPayouts = pgTable(
+  "billing_payouts",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    providerRef: text("provider_ref").notNull(),
+    periodStart: date("period_start").notNull(),
+    periodEnd: date("period_end").notNull(),
+    grossAmount: numeric("gross_amount", { precision: 18, scale: 4 }).notNull(),
+    feeAmount: numeric("fee_amount", { precision: 18, scale: 4 }).notNull(),
+    netAmount: numeric("net_amount", { precision: 18, scale: 4 }).notNull(),
+    currencyCode: char("currency_code", { length: 3 }).notNull(),
+    status: text("status").notNull().default("PENDING"),
+    settledPaymentCount: integer("settled_payment_count"),
+    reconciledAt: timestamp("reconciled_at", { withTimezone: true, mode: "string" }),
+    driftDetail: jsonb("drift_detail"),
+    raw: jsonb("raw"),
+    createdBy: uuid("created_by"),
+  },
+  (table) => [
+    uniqueIndex("uq_billing_payouts_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_billing_payouts_ref").on(table.providerId, table.providerRef),
+    index("ix_billing_payouts_tenant").on(table.tenantId, table.status, table.periodEnd),
   ],
 );
 

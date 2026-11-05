@@ -3649,3 +3649,66 @@ export interface CrmDashboardSummary {
   contractsExpiringIn30d: number;
   upcomingBillingEntries: number;
 }
+
+/** PHASE-023: GET /tax/einvoicing/registry/submissions → the operational registry rows. */
+export interface EInvoicingSubmissionRow {
+  id: string;
+  countryCode: string;
+  adapterId: string;
+  sourceType: string;
+  sourceId: string;
+  status:
+    | "PENDING"
+    | "GENERATED"
+    | "SIGNED"
+    | "SUBMITTED"
+    | "ACCEPTED"
+    | "REJECTED"
+    | "REPORTED"
+    | "FAILED";
+  attempts: number;
+  nextAttemptAt: string | null;
+  authorityReference: string | null;
+  authorityRefs: readonly unknown[];
+  lastErrorCode: string | null;
+  errorDetail: Record<string, unknown> | null;
+  submittedAt: string | null;
+  respondedAt: string | null;
+  reportedAt: string | null;
+  retryOfSubmissionId: string | null;
+  createdAt: string;
+}
+
+/** PHASE-023: GET /tax/einvoicing/adapters → the registered adapter surface. */
+export interface EInvoicingAdapterRow {
+  id: string;
+  supportedCountries: readonly string[];
+  regimeVerified: boolean;
+}
+
+/** PHASE-023: GET /tax/einvoicing/certificates → metadata only (no key material). */
+export interface EInvoicingCertificateRow {
+  id: string;
+  countryCode: string;
+  adapterId: string;
+  label: string;
+  keyVersion: string;
+  secretPath: string;
+  fingerprint: string;
+  notBefore: string;
+  notAfter: string;
+  status: "ACTIVE" | "EXPIRING_SOON" | "EXPIRED" | "REVOKED";
+  enrolledAt: string;
+  rotatedFromId: string | null;
+  signCount: number;
+  lastUsedAt: string | null;
+}
+
+/** PHASE-023: GET /tax/einvoicing/funnel → the monitoring aggregate (MONITORING §1). */
+export interface EInvoicingFunnelWire {
+  byStatus: Record<string, number>;
+  rejectionReasons: readonly { code: string; count: number }[];
+  deadLetter: number;
+  latencyMs: { p50: number | null; p95: number | null };
+  rejectionWindow: { total: number; rejected: number; ratePct: number | null };
+}

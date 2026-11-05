@@ -23,6 +23,10 @@ export const FEATURE_DEPS: Readonly<Record<string, readonly string[]>> = Object.
   "platform.audit_trail": [],
   "platform.entitlements": ["platform.tenant_lifecycle"],
   "platform.subscriptions": ["platform.entitlements"],
+  // PHASE-023 intake (migration 0035): the operator's refund + payout
+  // reconciliation console — the platform.subscriptions pattern, never
+  // plan-gated.
+  "platform.payouts": ["platform.subscriptions"],
   "platform.admin_console": ["platform.entitlements"],
   "platform.support_access": ["platform.admin_console"],
   "platform.notifications": [],
@@ -85,6 +89,9 @@ export const FEATURE_DEPS: Readonly<Record<string, readonly string[]>> = Object.
   // the key + plan grants): the workshop work order. PHASE-019 generalizes it
   // into crm.service_orders.
   "sales.job_cards": ["sales.quotations", "inventory.reservations"],
+  // PHASE-023 intake (migration 0035 registered the key + plan grants): the
+  // commerce channel staging import (server-decision conflicts, ADR-0012).
+  "sales.commerce_channels": ["partners.directory"],
   // purchasing
   "purchasing.requests": ["items.item_master"],
   "purchasing.orders": ["purchasing.requests", "partners.directory"],
@@ -103,6 +110,9 @@ export const FEATURE_DEPS: Readonly<Record<string, readonly string[]>> = Object.
   "treasury.expense_categories": ["treasury.expenses"],
   "treasury.cashier_shifts": ["treasury.accounts"],
   "treasury.bank_reconciliation": ["treasury.accounts"],
+  // PHASE-023 intake (migration 0035): the parked-lines manual-mapping aid —
+  // raw cells verbatim, amounts never guessed.
+  "treasury.bank_statement_parking": ["treasury.bank_reconciliation"],
   "treasury.cheques": ["treasury.receipts_disbursements"],
   // tax
   "tax.engine": ["accounting.journal_entries"],

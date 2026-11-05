@@ -1,6 +1,6 @@
 # TABLES — Treasury & Tax Cluster
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-10-30 · **Phases:** 008 (tax sections grow at 009)
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05 · **Phases:** 008 (tax sections grow at 009; parked lines + format registry 023)
 
 Column-level specification for the treasury cluster delivered in PHASE-008,
 consistent with the [ERD/treasury-tax.md](../ERD/treasury-tax.md) diagram,
@@ -257,6 +257,55 @@ convention: positive = money into the bank account, negative = money out.
 
 Indexes: `ix_bank_statement_lines_tenant_statement (tenant_id, bank_statement_id, line_no)`,
 `ix_bank_statement_lines_tenant_movement` (partial, `matched_movement_id IS NOT NULL`).
+
+## `bank_statement_parked_lines` — unparseable rows parked for manual mapping (PHASE-023, migration `0035_external_integrations.sql`; T7)
+
+A row a family parser cannot parse parks here instead of failing the file:
+raw cells verbatim, **amounts NEVER guessed** (the BR-022/RECONCILIATION §4
+"no parser writes a guessed amount" rule made structural). Resolution is manual
+mapping — the mapper confirms every field, the service writes the mapped
+`bank_statement_lines` row and links it; discard records why.
+
+| Column | Type | Null | Default | Constraints | Description |
+|--------|------|------|---------|-------------|-------------|
+| `id`, `tenant_id` **+standard** | — | — | — | `UNIQUE (id, tenant_id)` | — |
+| `statement_id` | uuid | no | — | soft link — no FK (parked rows precede their mapped line); `uq_bank_parked_lines_slot` with `line_index` | The parent statement |
+| `line_index` | integer | no | — | `CHECK (line_index >= 0)` | File row order (the parking slot) |
+| `raw_cells` | jsonb | no | — | — | The split cells verbatim |
+| `raw_line` | text | no | — | — | The raw line verbatim |
+| `parked_reason` | text | no | — | `length 1..200` | Why it parked (typed reason) |
+| `status` | text | no | `PARKED` | ck: `PARKED \| RESOLVED \| DISCARDED` | Resolution state |
+| `resolved_line_id` | uuid | yes | — | soft link — no FK | The mapped `bank_statement_lines` row (set at resolve) |
+| `resolved_by` / `resolved_at` | uuid / timestamptz | yes / yes | — | — | Resolution audit |
+| `resolution_note` | text | yes | — | — | Mandatory why on discard |
+
+Index: `ix_bank_parked_tenant_status (tenant_id, status)` — the mapping queue.
+Grants: SELECT/INSERT/UPDATE for `erp_app` (no DELETE — the parking audit
+survives; discard is a status).
+
+## `bank_statement_formats` — the shipped parser-format registry (PHASE-023 seeded; global reference)
+
+Format **FAMILIES** with declared required columns — structural shapes, not
+bank-specific claims; no format is attributed to a bank without verified
+documentation (NO-FABRICATION). `erp_migrate` writes; everyone else reads (the
+currencies/jurisdictions pattern — **no `tenant_id`, no RLS**).
+
+| Column | Type | Null | Default | Constraints | Description |
+|--------|------|------|---------|-------------|-------------|
+| `key` | text | no | — | **PK** (natural: `generic-csv`, `csv-debit-credit`, …) | Registry key (what `bank_statements.adapter_id` records) |
+| `label_en` / `label_ar` | text | no / no | — | — | Bilingual labels |
+| `family` | text | no | — | ck: `csv \| xlsx` | The structural family |
+| `extensions` | jsonb | no | — | — | Accepted file extensions |
+| `required_columns` | jsonb | no | — | — | The columns a parser of this family REQUIRES (rows missing them park) |
+| `notes` | text | yes | — | — | Provenance/semantics notes |
+| `created_at` | timestamptz | no | `now()` | — | Seed marker |
+
+Seeded rows (0035): `generic-csv` + `generic-xlsx` (the PHASE-008 adapters,
+carried into the registry), `csv-debit-credit` (two-column amount family — the
+signed amount derives from the debit/credit pair; a row with both or neither
+parks; balance columns optional) and `csv-with-balances` (single signed amount +
+running balance; balance drift is recorded as an advisory warning, never a
+silent correction).
 
 ## Widening of existing tables (this migration)
 

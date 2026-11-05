@@ -1,6 +1,6 @@
 # Seeds — Reference Data
 
-> **Status:** STABLE · **Owner:** Database & Product Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Database & Product Architecture · **Updated:** 2026-11-05
 
 Reference (seed) data is the platform's built-in, versioned configuration — distinct
 from tenant data. Applied by migrations; idempotent by natural keys; versioned with the
@@ -22,6 +22,7 @@ packs they belong to.
 | `report_catalog` | Registered report contracts ([../../reporting/REPORT_CATALOG.md](../../reporting/REPORT_CATALOG.md)) | P-013 | Code-defined + registry row |
 | `print_templates` | A4 document / A4 report / 80mm / 58mm base templates (AR/EN) | P-013 | Tenant-overridable (logo, footer) |
 | `uoms` | Common units (piece, kg, g, L, box, carton, meter, hour) with factor table | P-006 | Tenant-extendable |
+| `bank_statement_formats` | Bank-statement parser-format registry (migration 0035 §6): the PHASE-008 generic formats (`generic-csv`, `generic-xlsx`) plus the PHASE-023 structural format families `csv-debit-credit` (separate debit/credit columns; required columns `date`, `debit_or_credit`) and `csv-with-balances` (running balance; required columns `date`, `amount`, `balance`), each with declared `required_columns` | P-023 | Global, read-only; **format families only — no bank-specific attribution without verified documentation** (no-fabrication; [../../api/integrations/README.md](../../api/integrations/README.md) §3.6) |
 
 ## Rules
 

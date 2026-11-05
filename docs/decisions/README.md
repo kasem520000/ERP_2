@@ -30,7 +30,7 @@ follow their own protocol ([../accounting/ACCOUNTING_INVARIANTS.md](../accountin
 | [product/](product/README.md) | Pricing, packaging, payment providers, product-scope commitments | DR-001 (pricing tiers, OPEN), DR-002 (payment provider, OPEN), DR-003 (platform expansion v2.0, ACCEPTED) |
 | [technical/](technical/README.md) | Operational-technical choices (vendors/tools) that do not change architecture — architecture decisions default to ADRs | DR-003 (observability vendors, OPEN) |
 | [accounting/](accounting/README.md) | Accounting policy defaults (costing, period conventions, financial-depth module policies) | DR-001 (costing method default, ACCEPTED), DR-002 (fixed assets, ACCEPTED), DR-003 (notes & installments, ACCEPTED), DR-004 (budgeting, ACCEPTED), DR-005 (payroll scope, ACCEPTED), DR-006 (consolidation, ACCEPTED) |
-| [compliance/](compliance/README.md) | Jurisdiction scope and timing (e-invoicing, tax reporting) | DR-001 (ZATCA scope/timing, OPEN), DR-002 (Yemen scope, OPEN) |
+| [compliance/](compliance/README.md) | Jurisdiction scope and timing (e-invoicing, tax reporting) | DR-001 (ZATCA scope/timing, OPEN), DR-002 (Yemen scope, OPEN), DR-003 (Egypt ETA scope, OPEN — draft, DEFERRED recommendation) |
 
 Numbering: `DR-NNN` **per folder**; records are referenced folder-qualified
 (`product/DR-001`) to stay unambiguous across folders.

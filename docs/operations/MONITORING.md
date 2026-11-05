@@ -1,6 +1,6 @@
 # Monitoring
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-04
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-05
 
 Operationalization of [../architecture/OBSERVABILITY.md](../architecture/OBSERVABILITY.md):
 dashboards, the alert catalog with runbook links, on-call basics, SLO/error-budget
@@ -19,7 +19,7 @@ observability wired from PHASE-001/002 as a phase exit criterion.
 | Backup success | PHASE-002 (config), MVP (drills) | Last dump age, restore-smoke result, PITR window oldest point, WORM config check | Feeds release pre-flight ([DEPLOYMENT.md](DEPLOYMENT.md) §1) and monthly attestation |
 | Tenant isolation | PHASE-003 | **RLS denial counter — target 0**, policy-violation errors, cross-tenant 404-vs-403 audit | Any nonzero count is investigated immediately (RISK-010) |
 | Sync health | PHASE-020 (**LIVE 2026-11-04**) | Push success/p95 latency (7-day window), pull cursor lag by entity, conflicts by type, rejected pushes by reason code, `outbox.lag` gauge buckets (`never\|lt1h\|lt6h\|lt24h\|lt7d\|gt7d` devices), `device.revoked.pending_ops` (devices, pending commands, owned drafts), tombstone GC ledger size, the alert feed | `GET /api/v1/sync/admin/health` (60 s tenant cache) renders the `/[locale]/platform/sync-health` screen; feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync |
-| E-invoicing funnel | PHASE-023 | Submissions by state (pending→signed→submitted→accepted/rejected), latency, rejection reasons, certificate-expiry countdown, sandbox-vs-prod health | Feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing |
+| E-invoicing funnel | PHASE-023 (**LIVE 2026-11-05**) | Submissions by state (PENDING→GENERATED→SIGNED→SUBMITTED→ACCEPTED/REJECTED→REPORTED; FAILED = dead-letters), latency p50/p95, rejection reasons by `last_error_code`, the 15-min rejection-rate gauge, dead-letter count, certificate-expiry countdowns (30/14/7 ladder) | `GET /api/v1/tax/einvoicing/funnel` (per-tenant aggregate, `tax.einvoicing.manage`) renders the `/[locale]/platform/einvoicing-funnel` screen; alerts land in the notifications inbox (category `einvoicing`); feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing |
 | Client stability | PHASE-021 (**LIVE 2026-11-04** — desktop) / 022 (**LIVE 2026-11-05** — Android) | Crash-free sessions per device class, update-channel distribution (`stagePercent` cohorts), min-version enforcement hits, update adoption | Staged-rollout gates (10%→50%→100%) read from this dashboard |
 | Business SLO | PHASE-014+ | Failed-login spike, tenant suspension events, signups/onboarding funnel, entitlement overrides | Suspensions are high-signal: they precede churn or abuse |
 
@@ -46,6 +46,22 @@ DR-P21-05; runbook: [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §desktop). With th
 client live, the sync-health dashboard's device rows and the devices registry screen now
 carry real `tauri-desktop`-class devices alongside POS terminals (per-device sync state,
 outbox lag buckets, revocation queue) — the same aggregate, no separate pipeline.
+
+The e-invoicing funnel shipped with PHASE-023 (2026-11-05): the per-tenant aggregate
+(`GET /api/v1/tax/einvoicing/funnel`, behind `tax.einvoicing.manage`) computes from
+`e_invoicing_submissions` the state funnel, latency p50/p95, rejection reasons, the
+dead-letter count, and the 15-minute rejection window that feeds `EInvoiceRejectSpike`
+(the `einvoicing.reject.spike` sweep evaluates every 5 min, fires at > 5% with ≥ 5
+submissions in the window, deduped per 15-min window per tenant). Certificate countdowns
+come from the certificates surface (`GET /api/v1/tax/einvoicing/certificates` — metadata
++ signing volume ONLY, never key material) with the `CertExpiry` ladder evaluated by the
+daily `einvoicing.cert.expiry` sweep (each 30/14/7-day threshold fires exactly once —
+`e_invoicing_certificates.expires_alerted_at`). All e-invoicing alerts land in the
+notifications inbox (category `einvoicing` — reject spike, dead-letter watch, cert
+expiry). Honest state: the ZATCA adapter is the `UNVERIFIED` refuse-to-submit stub until
+the verification gate passes (DR-001 OPEN), so the funnel shows pipeline health —
+exercised end-to-end by the fake-authority harnesses (`tests/authorities/fake-zatca`,
+`fake-eta`) driving the real registry + jobs — never real authority acceptance.
 
 ## 2. Health endpoint contract (summary)
 
@@ -75,8 +91,8 @@ no alert exists without one.
 | `SlowQueryRate` | >10 queries > 250 ms per minute, 10 min sustained | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §database | Ticket |
 | `MigrationFailed` | Deploy migration job non-zero exit | **Sev-1** | [DEPLOYMENT.md](DEPLOYMENT.md) §3 (abort criteria) | Page deploy on-call — deploy is aborted |
 | `SLOBurn` | Error-budget burn 2× (Sev-2) / 4× (Sev-1) | Sev-2/1 | §5 + [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §api | Page per severity |
-| `CertExpiry` | TLS or e-invoicing certificate < 30 days (Sev-3) / < 7 days (Sev-2) | Sev-3→Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket → page under 7 days |
-| `EInvoiceRejectSpike` | Rejection rate > 5% of submissions in 15 min | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket; page if tenant-wide outage |
+| `CertExpiry` | TLS or e-invoicing certificate < 30 days (Sev-3) / < 7 days (Sev-2); the e-invoicing leg is **live 2026-11-05** — the daily `einvoicing.cert.expiry` sweep walks ACTIVE/EXPIRING_SOON certificates and fires each 30/14/7-day threshold exactly once (`e_invoicing_certificates.expires_alerted_at` per-threshold dedupe; critical inbox severity at 7 days) | Sev-3→Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket → page under 7 days |
+| `EInvoiceRejectSpike` | Rejection rate > 5% of submissions in 15 min (PHASE-023; **live 2026-11-05** — the `einvoicing.reject.spike` sweep evaluates every 5 min from the funnel aggregate, fires at > 5% with ≥ 5 submissions in the 15-min window, deduped per window per tenant) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket; page if tenant-wide outage |
 | `SyncPushFailSpike` | Push failure > 5% in 15 min (PHASE-020+; **live 2026-11-04** — the in-product health aggregate fires it at successRate < 90% with ≥ 20 commands over the 7-day window; the metrics pipeline refines to the 15-minute threshold) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
 | `SyncCursorStall` | Any entity cursor lag > threshold (e.g., 15 min of change_log ahead; **live 2026-11-04** — the in-product health aggregate + the daily `sync.cursor.compact` lag audit fire at > 7-day `now() − acknowledged_at`, with deduped owner notifications) | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
 | `ClientCrashRate` | Crash-free sessions below staged-rollout gate (PHASE-021+; **live 2026-11-04** — the trailing-24 h rate from the desktop telemetry feeds the gates; from PHASE-022 the Android channel reads the same gate table — halt below 98.5% publishes the `minVersion` force-update at any sample size) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §desktop / §android | Ticket; rollout halt is automatic per gates |

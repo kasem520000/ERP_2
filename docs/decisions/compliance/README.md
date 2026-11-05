@@ -1,6 +1,6 @@
 # Compliance Decision Records
 
-> **Status:** STABLE · **Owner:** Product Owner & Compliance Review · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Product Owner & Compliance Review · **Updated:** 2026-11-05
 
 Jurisdiction scope and timing decisions: which regulatory regimes the platform targets,
 for which taxpayer segments, and by when. Process and format: [../README.md](../README.md).
@@ -24,6 +24,7 @@ not even a product-owner signature.
 |--------|-------|--------|-------------------|
 | [DR-001-zatca-scope-and-timing.md](DR-001-zatca-scope-and-timing.md) | ZATCA integration scope & timing (KSA launch segment) | OPEN | Before PHASE-023 planning; affects GA gate wording |
 | [DR-002-yemen-scope.md](DR-002-yemen-scope.md) | Yemen scope at GA (no-VAT pack only vs. sales-tax reporting) | OPEN | Before PHASE-023 evaluation window |
+| [DR-003-egypt-eta-scope.md](DR-003-egypt-eta-scope.md) | Egypt ETA scope at GA (e-invoice vs e-receipt vs both; taxpayer segments; timeline) | OPEN — draft (PHASE-023 T9), DEFERRED recommendation | Before the Egypt launch segment planning |
 
 ## Inputs expected in records here
 

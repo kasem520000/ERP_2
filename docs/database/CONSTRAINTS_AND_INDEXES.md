@@ -1,6 +1,6 @@
 # Constraints & Indexes — Catalog and Rules
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05
 
 Catalog of the **critical** unique constraints, check constraints, and indexes with their
 purpose — the ones encoding invariants or carrying hot query paths. Naming follows
@@ -28,6 +28,13 @@ ship.
 | `uq_sessions_token_hash`, `uq_devices_key_hash`, `uq_invitations_token_hash` | `UNIQUE (token_hash)` / `UNIQUE (key_hash)` | Session/device/invitation tokens are lookup keys — unique doubles as the hot-path index |
 | `uq_entitlements_tenant_feature` | `UNIQUE (tenant_id, feature_key)` | Entitlement materialization: one row per tenant-feature (re-materialize = upsert) |
 | `uq_tenant_settings_tenant_key` | `UNIQUE (tenant_id, key)` | Typed key-value config |
+| `uq_einvoicing_submissions_live` | Partial unique index on `e_invoicing_submissions (tenant_id, source_type, source_id, adapter_id)` `WHERE status IN ('PENDING','GENERATED','SIGNED','SUBMITTED','ACCEPTED','REPORTED')` | **Registry idempotency — no double clearance**: ONE LIVE row per document × adapter; `REJECTED`/`FAILED` rows stay as immutable history and resubmission appends a new row chained via `retry_of_submission_id` (0035 expand-contract replacing 009's `uq_e_invoicing_submissions_source` — no legacy rows existed, the schema was test-only) |
+| `uq_e_invoicing_certificates_path` | `UNIQUE (secret_path)` on `e_invoicing_certificates` | One registry row per secret-store path (the encrypted blob is external — S-10; the path is the identity) |
+| `uq_einvoicing_adapter_settings` | `UNIQUE (tenant_id, adapter_id)` on `e_invoicing_adapter_settings` | One rollout flag per adapter per tenant (default OFF — DEPLOYMENT §7) |
+| `uq_bank_parked_lines_slot` | `UNIQUE (statement_id, line_index)` on `bank_statement_parked_lines` | One parking slot per statement row (the manual-mapping queue key) |
+| `uq_commerce_channel_orders_natural` | `UNIQUE (tenant_id, channel_adapter_id, channel_order_id)` on `commerce_channel_orders` | The channel-order natural key (upsert identity); financial drift on re-import flags `CONFLICT` — never LWW (ADR-0012) |
+| `uq_commerce_imports_batch` | `UNIQUE (tenant_id, channel_adapter_id, batch_key)` on `commerce_channel_imports` | The Idempotency-Key per import batch — a duplicate batch replays the recorded outcome without re-pulling |
+| `uq_billing_payouts_ref` | `UNIQUE (provider_id, provider_ref)` on `billing_payouts` | One row per provider-reported payout batch (idempotent sync) |
 | `uq_role_permissions_pk` | `UNIQUE (role_id, permission_id)` | No duplicate grants |
 | `excl_fiscal_periods_no_overlap` | `EXCLUDE USING gist (fiscal_year_id WITH =, daterange(start_date, end_date, '[]') WITH &&)` | Fiscal periods inside a year never overlap ([TABLES/core-accounting.md](TABLES/core-accounting.md)) |
 
@@ -45,6 +52,9 @@ ship.
 | Price non-negativity | `CHECK (unit_price >= 0)`, `CHECK (discount >= 0)` on lines/price list items | Prices are not negative; corrections flow through credit/debit notes |
 | Balanced entry (belt-and-braces) | **Engine-enforced** first (posting engine validation #7 = INV-001/002), plus a **deferrable constraint trigger** on `journal_lines` asserting Σdebit = Σcredit per entry within tolerance 0, evaluated **at transaction commit** (`CREATE CONSTRAINT TRIGGER journal_entry_balanced AFTER INSERT OR UPDATE ON journal_lines DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION assert_entry_balanced();` — the function re-checks the whole parent entry). **Consolidation correction DEF-010 (adopted from Folder 4):** an immediate row-level `AFTER INSERT` trigger would fire on the *first* inserted line of a multi-line posting and abort valid transactions (a single line never balances); deferral to commit is required for correctness. PHASE-007 must ship this trigger **plus one test that bypasses the posting engine** (direct SQL insert of an unbalanced entry must fail at commit) — engine bypass must never reach the ledger | Configuration or a future bug cannot bypass the engine; the deferred trigger is the second lock, and it is commit-atomic with the posting transaction ([DATABASE_CONVENTIONS.md](DATABASE_CONVENTIONS.md) §9 pattern — same philosophy as the INV-003 immutability triggers) |
 | Append-only enforcement | Guard triggers rejecting UPDATE/DELETE on `journal_entries`, `journal_lines`, `stock_moves`, `audit_events` for the app role | INV-003; RLS + grants + triggers are three layers, deliberately |
+| Payout arithmetic | `ck_billing_payouts_net CHECK (net_amount = gross_amount - fee_amount)` on `billing_payouts` | The provider report's internal arithmetic holds at rest; reconciliation compares windows and REPORTS drift — it never repairs the report |
+| Rollout-flag shape | `ck_einvoicing_settings_enabled_shape CHECK (enabled = false OR (enabled_by IS NOT NULL AND enabled_at IS NOT NULL))` on `e_invoicing_adapter_settings` | An enabled adapter always carries its audited enabler (the gate is additionally service-enforced: ACTIVE certificate required) |
+| Certificate path/window shapes | `ck_e_invoicing_cert_path_shape CHECK (secret_path LIKE 'einvoicing/%')` + `ck_e_invoicing_cert_window CHECK (not_after > not_before)` on `e_invoicing_certificates` | Secret paths stay inside the e-invoicing namespace; validity-window sanity for the 30/14/7 expiry ladder |
 
 ## 3. RLS standard note
 
@@ -78,7 +88,8 @@ fail the check — PHASE-002 acceptance). Global reference tables: no `tenant_id
 | Trigram name search | `gin (name gin_trgm_ops)` on `partners.name`, `items.name` (+ `name_ar` where searched) | User-facing search boxes | 006 |
 | `ix_change_log_tenant_entity_seq` | `(tenant_id, entity_type, seq)` on `change_log` | Sync pull cursors (ADR-0012); cursor stall alerts read this | 020 |
 | `ix_report_runs_tenant_status_created` | `(tenant_id, status, created_at)` on `report_runs` | Report queue UX ("my reports"), queue-depth monitoring | 013 |
-| `ix_einvoicing_submissions_tenant_status` | `(tenant_id, adapter_id, status)` + `(tenant_id, doc_id)` on `e_invoicing_submissions` | Submission funnel dashboard; per-document lookup (never a JOIN across `doc_type/doc_id`) | 023 |
+| `ix_einvoicing_submissions_tenant_status` | `ix_e_invoicing_tenant_status (tenant_id, country_code, status)` on `e_invoicing_submissions` | Submission funnel dashboard + per-tenant registry browsing (per-document lookup rides the natural-key partial unique; never a JOIN across `source_type`/`source_id`) | 009 |
+| `ix_einvoicing_submissions_retry` | `(status, next_attempt_at)` on `e_invoicing_submissions`, partial `WHERE status IN ('PENDING','GENERATED','SIGNED','SUBMITTED')` | The pg-boss retry sweep's due-row scan (only live-retry states carry `next_attempt_at`); retry chains walk `ix_einvoicing_submissions_retry_of (tenant_id, retry_of_submission_id)` | 023 |
 | `ix_subscriptions_tenant_status` | `(tenant_id, status, period_end)` on `subscriptions` | Billing/dunning sweeps read PAST_DUE by `period_end` | 014 |
 | `ix_receipts_tenant_partner` / `ix_payments_tenant_partner` | `(tenant_id, partner_id)` on receipt/payment allocation sources | AR/AP allocation + statement generation (INV-016 checks) | 011/012 |
 | Queue hygiene | pg-boss `boss.job` state maintenance per ADR-0008 (prune completed; monitor failed/expired) | DLQ triage + retention; no extra custom indexes on queue tables before measured need | 002 |

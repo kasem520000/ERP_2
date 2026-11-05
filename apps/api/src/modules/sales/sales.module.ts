@@ -18,6 +18,7 @@ import { JobCardService } from "./job-cards/application/job-card-service";
 import { JobCardPosting } from "./job-cards/application/posting/job-card-posting";
 import { SalesController, PartnerCreditCheckController } from "./presentation/sales.controller";
 import { JobCardsController } from "./presentation/job-cards.controller";
+import { CommerceController } from "./presentation/commerce.controller";
 
 /**
  * Sales module (PHASE-012): the quote-to-cash chain — quotations (BR-006
@@ -42,7 +43,7 @@ import { JobCardsController } from "./presentation/job-cards.controller";
  */
 @Module({
   imports: [AccountingModule, AuditModule, TaxModule, InventoryModule, NotificationsModule],
-  controllers: [SalesController, PartnerCreditCheckController, JobCardsController],
+  controllers: [SalesController, PartnerCreditCheckController, JobCardsController, CommerceController],
   providers: [
     QuotationService,
     SalesOrderService,

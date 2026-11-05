@@ -55,6 +55,38 @@ export interface ProviderAdapterPort {
     amount: string;
     currency: string;
   }): SettledWebhook;
+  /**
+   * PHASE-023 T6 (refund flow — sandbox depth until DR-002 decides the
+   * provider): refund a settled payment by its provider reference. The
+   * sandbox adapter issues a deterministic refund id — production shapes
+   * ship with the chosen provider's adapter (no wire format is guessed).
+   */
+  refund(input: {
+    providerRef: string;
+    amount: string;
+    currency: string;
+  }): Promise<{ refundRef: string; status: "succeeded" }>;
+  /**
+   * PHASE-023 T6 (payout reconciliation — sandbox depth): list provider
+   * payout batches for a period window. The sandbox generates them from
+   * the recorded settlements with its documented FAKE fee model; a real
+   * provider's payouts API ships with its adapter.
+   */
+  listPayouts(input: {
+    periodStart: string;
+    periodEnd: string;
+  }): Promise<
+    readonly {
+      providerRef: string;
+      periodStart: string;
+      periodEnd: string;
+      grossAmount: string;
+      feeAmount: string;
+      netAmount: string;
+      currencyCode: string;
+      settledPaymentRefs: readonly string[];
+    }[]
+  >;
 }
 
 export interface WebhookEventPayload {
@@ -153,14 +185,41 @@ export interface SandboxAdapterDeps {
 }
 
 /**
+ * The sandbox fee model (PHASE-023 T6 — DOCUMENTED FAKE, never a real
+ * acquiring tariff): 2.9% + 0.30 per settled payment. It exists so the
+ * payout reconciliation job has a deterministic provider-reported shape
+ * to reconcile against; the real provider's fee schedule ships with its
+ * adapter once DR-002 decides (no fee is ever charged to a tenant by the
+ * sandbox — it only feeds reconciliation math).
+ */
+export const SANDBOX_FEE_PERCENT = "0.029";
+export const SANDBOX_FEE_FIXED = "0.30";
+
+/**
  * The sandbox provider (PHASE-014 §2.2): real HTTP-shaped behavior with a
  * deterministic in-process settlement — `settleCheckout` produces the
  * signed webhook delivery that `POST /api/v1/platform/billing/webhook`
  * (and the tenant-plane complete route) processes through the IDENTICAL
  * verification + idempotency pipeline an external provider hits.
+ *
+ * PHASE-023 T6 hardening: `refund` (deterministic refund references) and
+ * `listPayouts` (payout batches computed from the recorded settlements
+ * with the documented FAKE fee model) complete the port for the refund +
+ * payout/fee reconciliation flows — still SANDBOX-only (DR-002 OPEN; the
+ * production cutover is the phase's INCOMPLETE item with the DR pointer).
  */
 export class SandboxProviderAdapter implements ProviderAdapterPort {
   readonly id = "sandbox";
+
+  /** The recorded settlements (provider-side ledger for payouts/refunds). */
+  private readonly settlements: {
+    sessionRef: string;
+    invoiceNumber: string;
+    amount: string;
+    currency: string;
+    settledAt: string;
+  }[] = [];
+  private readonly refunds = new Map<string, { refundRef: string; amount: string }>();
 
   constructor(private readonly deps: SandboxAdapterDeps) {}
 
@@ -184,6 +243,15 @@ export class SandboxProviderAdapter implements ProviderAdapterPort {
     amount: string;
     currency: string;
   }): SettledWebhook {
+    if (input.outcome === "succeeded") {
+      this.settlements.push({
+        sessionRef: input.sessionRef,
+        invoiceNumber: input.invoiceNumber,
+        amount: input.amount,
+        currency: input.currency,
+        settledAt: new Date().toISOString(),
+      });
+    }
     return buildWebhookEvent({
       sessionRef: input.sessionRef,
       tenantId: input.tenantId,
@@ -193,5 +261,78 @@ export class SandboxProviderAdapter implements ProviderAdapterPort {
       outcome: input.outcome,
       atUnixSeconds: (Date.now() / 1000) | 0,
     });
+  }
+
+  async refund(input: {
+    providerRef: string;
+    amount: string;
+    currency: string;
+  }): Promise<{ refundRef: string; status: "succeeded" }> {
+    const refundRef = `re_sbx_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+    this.refunds.set(input.providerRef, { refundRef, amount: input.amount });
+    return { refundRef, status: "succeeded" };
+  }
+
+  async listPayouts(input: {
+    periodStart: string;
+    periodEnd: string;
+  }): Promise<
+    readonly {
+      providerRef: string;
+      periodStart: string;
+      periodEnd: string;
+      grossAmount: string;
+      feeAmount: string;
+      netAmount: string;
+      currencyCode: string;
+      settledPaymentRefs: readonly string[];
+    }[]
+  > {
+    const inWindow = this.settlements.filter(
+      (settlement) => settlement.settledAt.slice(0, 10) >= input.periodStart && settlement.settledAt.slice(0, 10) <= input.periodEnd,
+    );
+    if (inWindow.length === 0) {
+      return [];
+    }
+    // Group by currency (payouts settle per currency).
+    const byCurrency = new Map<string, typeof inWindow>();
+    for (const settlement of inWindow) {
+      const list = byCurrency.get(settlement.currency) ?? [];
+      list.push(settlement);
+      byCurrency.set(settlement.currency, list);
+    }
+    const payouts: {
+      providerRef: string;
+      periodStart: string;
+      periodEnd: string;
+      grossAmount: string;
+      feeAmount: string;
+      netAmount: string;
+      currencyCode: string;
+      settledPaymentRefs: readonly string[];
+    }[] = [];
+    for (const [currencyCode, settlements] of byCurrency) {
+      let gross = 0;
+      let fee = 0;
+      for (const settlement of settlements) {
+        const amount = Number(settlement.amount);
+        gross += amount;
+        fee += amount * Number(SANDBOX_FEE_PERCENT) + Number(SANDBOX_FEE_FIXED);
+      }
+      const round4 = (value: number): string => value.toFixed(4);
+      payouts.push({
+        // DETERMINISTIC per (period, currency): re-listing the same window
+        // yields the SAME ref — the sync path's idempotency key.
+        providerRef: `po_sbx_${input.periodStart}_${input.periodEnd}_${currencyCode}`,
+        periodStart: input.periodStart,
+        periodEnd: input.periodEnd,
+        grossAmount: round4(gross),
+        feeAmount: round4(fee),
+        netAmount: round4(gross - fee),
+        currencyCode,
+        settledPaymentRefs: settlements.map((settlement) => settlement.sessionRef),
+      });
+    }
+    return payouts;
   }
 }

@@ -17,7 +17,7 @@ import type { ReportResult } from "../../modules/reporting/application/contract"
  * FINANCIAL_REPORT_RULES §1–§11): the four statements over the pinned
  * four-entry golden book — every §11 assertion PASSes, the exact-decimal
  * figures pin (AR 880, net income 900, BS difference 0, Δ cash 10200), the
- * registry snapshot stays at 68 (50 core + 18 industry), and two runs at a
+ * registry snapshot stays at 71 (50 core + 18 industry + 3 fixed-assets, PHASE-026), and two runs at a
  * fixed asOf produce byte-identical rows/totals/assertions
  * (REPORT_RECONCILIATION §2 reproducibility).
  */
@@ -133,11 +133,11 @@ describe("cash flow golden (§5 + INV-019)", () => {
 });
 
 describe("registry snapshot", () => {
-  it("exposes exactly the 68 frozen contracts (50 core + 18 industry)", () => {
+  it("exposes exactly the 71 frozen contracts (50 core + 18 industry + 3 fixed assets)", () => {
     const snapshot = registrySnapshot(newRunService().contracts());
-    expect(snapshot).toHaveLength(68);
+    expect(snapshot).toHaveLength(71);
     const ids = new Set(snapshot.map((row) => row.id));
-    expect(ids.size).toBe(68);
+    expect(ids.size).toBe(71);
   });
 });
 

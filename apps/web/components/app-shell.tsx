@@ -141,6 +141,16 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   "crm/time": { group: "crmNavSection", label: "crmTimeTitle" },
   "crm/service-orders": { group: "crmNavSection", label: "crmServiceOrdersTitle" },
   "accounting/projects": { label: "accountingProjectsTitle" },
+  // -- PHASE-026 (T13-UI): fixed assets & depreciation. The registry row
+  // `accounting.fixed-assets` (contracts NAV_ITEMS) drives the sidebar; this
+  // fallback covers nav-fetch failure for the module's sub-surfaces (the
+  // support-sessions rule — crumbs only; the sidebar stays registry-driven).
+  "fixed-assets": { group: "navAccounting", label: "navFixedAssets" },
+  "fixed-assets/new": { group: "navAccounting", label: "navFixedAssets" },
+  "fixed-assets/categories": { group: "navAccounting", label: "faCategoriesTitle" },
+  "fixed-assets/depreciation": { group: "navAccounting", label: "faDepTitle" },
+  "fixed-assets/disposals": { group: "navAccounting", label: "faDisposalsTitle" },
+  "fixed-assets/reports": { group: "navAccounting", label: "faReportsTitle" },
 };
 
 /**
@@ -168,6 +178,20 @@ function fallbackCrumbsFor(
   }
   if (pagePath.startsWith("treasury/payments/")) {
     return { groupLabel: d.navTreasury, label: d.navTreasuryPayments };
+  }
+  // PHASE-026 (T13-UI) — fixed-asset detail/edit routes (fixed-assets/:id,
+  // fixed-assets/:id/edit): the record title is the honest leaf crumb (the
+  // inventory/items/:id rule; static module routes resolve via the exact map
+  // above).
+  if (
+    pagePath.startsWith("fixed-assets/") &&
+    pagePath !== "fixed-assets/new" &&
+    pagePath !== "fixed-assets/categories" &&
+    pagePath !== "fixed-assets/depreciation" &&
+    pagePath !== "fixed-assets/disposals" &&
+    pagePath !== "fixed-assets/reports"
+  ) {
+    return { groupLabel: d.navAccounting, label: d.navFixedAssets };
   }
   return undefined;
 }

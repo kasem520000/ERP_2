@@ -3627,6 +3627,233 @@ export interface Dictionary {
   sloDataSourceNote: string;
   sloWindowNote: string;
   sloGeneratedAt: string;
+
+  // -- PHASE-026 (T13-UI): fixed assets & depreciation ------------------------
+  // (asset register + categories + the depreciation-run workspace + the
+  // disposal wizard + the module report page; every string in BOTH locales)
+
+  commonEdit: string;
+  navAccounting: string;
+  navFixedAssets: string;
+
+  // asset statuses + methods (§9 enums)
+  faStatusActive: string;
+  faStatusFullyDepreciated: string;
+  faStatusDisposed: string;
+  faStatusWrittenOff: string;
+  faMethodSl: string;
+  faMethodDb: string;
+  faMethodUop: string;
+
+  // asset list (§2)
+  faTitle: string;
+  faAssetsEmpty: string;
+  faAssetsNewButton: string;
+  faSearchPlaceholder: string;
+  faAllStatuses: string;
+  faFilterCategory: string;
+  faFilterBranch: string;
+  faFilterCustodian: string;
+  faColCode: string;
+  faColAcquisitionDate: string;
+  faColCost: string;
+  faColAccumulated: string;
+  faColNbv: string;
+  faColBranch: string;
+  faColCustodian: string;
+
+  // asset create/edit (§3)
+  faFormTitleCreate: string;
+  faFormTitleEdit: string;
+  faFormCode: string;
+  faFormCodeHint: string;
+  faFormName: string;
+  faFormNameAr: string;
+  faFormCategory: string;
+  faFormCategoryHint: string;
+  faFormAcquisitionDate: string;
+  faFormCost: string;
+  faFormSalvage: string;
+  faFormSalvageHint: string;
+  faFormLife: string;
+  faFormMethod: string;
+  faFormBranch: string;
+  faFormCustodian: string;
+  faFormNote: string;
+  faFormNoteAr: string;
+  faFormUnitsTotal: string;
+  faFormUnitsHint: string;
+  faFormOpeningAccumulated: string;
+  faFormOpeningHint: string;
+  faFormCreatedToast: string;
+  faFormSavedToast: string;
+  faFormImmutableHint: string;
+
+  // asset detail (§5)
+  faOverviewTitle: string;
+  faFinancialTitle: string;
+  faAccumulatedCard: string;
+  faNbvCard: string;
+  faSourceLabel: string;
+  faSourceNone: string;
+  faHistoryTitle: string;
+  faHistoryColDate: string;
+  faHistoryColAmount: string;
+  faHistoryColAccumAfter: string;
+  faHistoryColUnits: string;
+  faHistoryEmpty: string;
+  faReversedBadge: string;
+  faLifecycleTitle: string;
+  faJournalEntry: string;
+
+  // capitalization (G-21)
+  faCapitalizeTitle: string;
+  faCapitalizeHint: string;
+  faCapitalizeFunding: string;
+  faFundingCredit: string;
+  faFundingCash: string;
+  faFundingOpening: string;
+  faCapitalizePartner: string;
+  faCapitalizeOpeningNote: string;
+  faCapitalizeButton: string;
+  faCapitalizePostedToast: string;
+
+  // revaluation (BR-044)
+  faRevaluateTitle: string;
+  faRevNewGross: string;
+  faRevNewAccum: string;
+  faRevDeltaPreview: string;
+  faRevReason: string;
+  faRevCreateButton: string;
+  faRevPostButton: string;
+  faRevCreatedToast: string;
+  faRevPostedToast: string;
+
+  // categories (§8)
+  faCategoriesTitle: string;
+  faCategoriesEmpty: string;
+  faCatNewButton: string;
+  faCatColLife: string;
+  faCatColMethod: string;
+  faCatColActive: string;
+  faCatInUseBadge: string;
+  faCatCode: string;
+  faCatCodeHint: string;
+  faCatName: string;
+  faCatNameAr: string;
+  faCatLife: string;
+  faCatMethod: string;
+  faCatPurposesTitle: string;
+  faCatPurposesHint: string;
+  faCatPurposeAsset: string;
+  faCatPurposeAccum: string;
+  faCatPurposeExpense: string;
+  faCatActive: string;
+  faCatEditTitle: string;
+  faCatCreatedToast: string;
+  faCatSavedToast: string;
+
+  // depreciation runs + workspace (§4)
+  faDepTitle: string;
+  faDepEmpty: string;
+  faDepPeriodLabel: string;
+  faDepPeriodYear: string;
+  faDepPeriodPeriod: string;
+  faDepAssembleButton: string;
+  faDepAssembleHint: string;
+  faDepAssembledToast: string;
+  faDepApplyUsage: string;
+  faDepApplyUsageHint: string;
+  faDepPostButton: string;
+  faDepPostConfirmTitle: string;
+  faDepPostConfirmBody: string;
+  faDepPostedToast: string;
+  faDepReverseTitle: string;
+  faDepReverseReason: string;
+  faDepReverseButton: string;
+  faDepReversedToast: string;
+  faDepColPeriod: string;
+  faDepColAssets: string;
+  faDepColTotal: string;
+  faDepColPostedAt: string;
+  faDepWorkspaceTitle: string;
+  faDepColMethod: string;
+  faDepColUnits: string;
+  faDepColPeriodAmount: string;
+  faDepColAccumAfter: string;
+  faDepColNbvAfter: string;
+  faDepNoLines: string;
+  faDepUopHint: string;
+  faDepPreviewNote: string;
+
+  // disposals + wizard (§9)
+  faDisposalsTitle: string;
+  faDisposalsEmpty: string;
+  faDispNewButton: string;
+  faDispColNo: string;
+  faDispColAsset: string;
+  faDispColKind: string;
+  faDispColDate: string;
+  faDispColProceeds: string;
+  faDispColNbv: string;
+  faDispColGainLoss: string;
+  faDispKindSale: string;
+  faDispKindScrap: string;
+  faDispWizardTitle: string;
+  faDispStep1: string;
+  faDispStep2: string;
+  faDispStep3: string;
+  faDispNext: string;
+  faDispBack: string;
+  faDispCreatedToast: string;
+  faDispAssetLabel: string;
+  faDispAssetHint: string;
+  faDispKindLabel: string;
+  faDispDateLabel: string;
+  faDispProceedsLabel: string;
+  faDispProceedsHint: string;
+  faDispScrapZeroLabel: string;
+  faDispReviewTitle: string;
+  faDispReviewCost: string;
+  faDispReviewAccum: string;
+  faDispReviewNbv: string;
+  faDispReviewGainLoss: string;
+  faDispSubmitButton: string;
+  faDispApproveHint: string;
+  faDispApproveButton: string;
+  faDispApprovedToast: string;
+  faDispPostButton: string;
+  faDispPostedToast: string;
+  faDispVoucherTitle: string;
+  faDispPrintButton: string;
+  faDispVoucherTotalsProceeds: string;
+  faDispVoucherTotalsAccum: string;
+  faDispVoucherTotalsCost: string;
+  faDispVoucherTotalsGainLoss: string;
+
+  // module report page (§7)
+  faReportsTitle: string;
+  faReportsHint: string;
+  faReportsEmpty: string;
+
+  // fixed-assets error pack
+  faErrCategoryCodeTaken: string;
+  faErrAssetCodeTaken: string;
+  faErrAssetImmutable: string;
+  faErrPurposesNotMapped: string;
+  faErrInvalidAmount: string;
+  faErrUopUnitsRequired: string;
+  faErrImmutableDocument: string;
+  faErrRunNotDraft: string;
+  faErrRunDuplicate: string;
+  faErrPeriodLocked: string;
+  faErrNbvFloor: string;
+  faErrDisposalState: string;
+  faErrDisposalSod: string;
+  faErrDisposalProceeds: string;
+  faErrRevalState: string;
+  faErrCapitalizeState: string;
+  faErrAssetDisposedReuse: string;
 }
 
 const ar: Dictionary = {
@@ -7299,6 +7526,224 @@ const ar: Dictionary = {
   sloWindowNote:
     "نافذة القياس هي عمر العملية الحالي (تُصفَّر العدّادات عند إعادة التشغيل)؛ نافذة الثلاثين يومًا لميزانية الأخطاء مسؤولية خط المقاييس، ولا تُفبرك هنا. حالة «لا بيانات» صريحة ولا تُعد نجاحًا.",
   sloGeneratedAt: "آخر تقييم:",
+
+  // -- PHASE-026 (T13-UI): fixed assets & depreciation (AR) --------------------
+  commonEdit: "تعديل",
+  navAccounting: "المحاسبة",
+  navFixedAssets: "الأصول الثابتة",
+
+  faStatusActive: "نشط",
+  faStatusFullyDepreciated: "مستهلك بالكامل",
+  faStatusDisposed: "مستبعد",
+  faStatusWrittenOff: "مشطوب",
+  faMethodSl: "قسط ثابت",
+  faMethodDb: "قسط متناقص",
+  faMethodUop: "وحدات الإنتاج",
+
+  faTitle: "الأصول الثابتة",
+  faAssetsEmpty: "لا توجد أصول بعد.",
+  faAssetsNewButton: "أصل جديد",
+  faSearchPlaceholder: "ابحث برمز الأصل أو اسمه…",
+  faAllStatuses: "كل الحالات",
+  faFilterCategory: "الفئة",
+  faFilterBranch: "الفرع",
+  faFilterCustodian: "أمين العهدة",
+  faColCode: "الرمز",
+  faColAcquisitionDate: "تاريخ الاقتناء",
+  faColCost: "التكلفة",
+  faColAccumulated: "المجمع",
+  faColNbv: "القيمة الدفترية",
+  faColBranch: "الفرع",
+  faColCustodian: "أمين العهدة",
+
+  faFormTitleCreate: "أصل ثابت جديد",
+  faFormTitleEdit: "تعديل الأصل",
+  faFormCode: "الرمز",
+  faFormCodeHint: "يُولَّد تلقائيًا عند تركه فارغًا",
+  faFormName: "الاسم (إنجليزي)",
+  faFormNameAr: "الاسم (عربي)",
+  faFormCategory: "الفئة",
+  faFormCategoryHint: "تظهر الفئات النشطة؛ يتحقق الخادم من اكتمال أغراض الفئة قبل الاستخدام",
+  faFormAcquisitionDate: "تاريخ الاقتناء",
+  faFormCost: "التكلفة",
+  faFormSalvage: "القيمة التخليدية",
+  faFormSalvageHint: "يجب أن تكون أقل من التكلفة أو تساويها",
+  faFormLife: "العمر الإنتاجي (شهر)",
+  faFormMethod: "طريقة الإهلاك",
+  faFormBranch: "الفرع",
+  faFormCustodian: "أمين العهدة",
+  faFormNote: "ملاحظة (إنجليزي)",
+  faFormNoteAr: "ملاحظة (عربي)",
+  faFormUnitsTotal: "إجمالي الوحدات التقديرية",
+  faFormUnitsHint: "مطلوب لطريقة وحدات الإنتاج",
+  faFormOpeningAccumulated: "المجمع الافتتاحي حتى التاريخ",
+  faFormOpeningHint: "للأصول القائمة عند التطبيق — يستأنف الإهلاك من القيمة الدفترية الحقيقية",
+  faFormCreatedToast: "تم إنشاء الأصل.",
+  faFormSavedToast: "تم حفظ الأصل.",
+  faFormImmutableHint:
+    "حقول الأساس غير قابلة للتعديل بعد الإنشاء (التكلفة/التخليدية/العمر/الطريقة/الفئة/تاريخ الاقتناء) — التصحيح بالعكس عبر محرك القيود",
+
+  faOverviewTitle: "بيانات الأصل",
+  faFinancialTitle: "الوضع المالي",
+  faAccumulatedCard: "مجمع الإهلاك",
+  faNbvCard: "القيمة الدفترية",
+  faSourceLabel: "المصدر",
+  faSourceNone: "غير مرسملة — لا يوجد قيد رسملة بعد",
+  faHistoryTitle: "سجل الإهلاك",
+  faHistoryColDate: "التاريخ",
+  faHistoryColAmount: "إهلاك الفترة",
+  faHistoryColAccumAfter: "المجمع بعدها",
+  faHistoryColUnits: "وحدات الفترة",
+  faHistoryEmpty: "لا يوجد إهلاك بعد.",
+  faReversedBadge: "معكوس",
+  faLifecycleTitle: "دورة الحياة",
+  faJournalEntry: "قيد اليومية",
+
+  faCapitalizeTitle: "رسملة الأصل (G-21)",
+  faCapitalizeHint: "ينشئ قيد الرسملة عبر محرك القيود — لا يكتب الأصول في دفتر الأستاذ مباشرة أبدًا",
+  faCapitalizeFunding: "مصدر التمويل",
+  faFundingCredit: "آجل (حساب الدائنين)",
+  faFundingCash: "نقدي",
+  faFundingOpening: "رصيد افتتاحي",
+  faCapitalizePartner: "المورد",
+  faCapitalizeOpeningNote: "سيُقيَّد المجمع الافتتاحي المسجل على الأصل في نفس القيد",
+  faCapitalizeButton: "رسملة",
+  faCapitalizePostedToast: "تمت الرسملة — قيد اليومية {entry}",
+
+  faRevaluateTitle: "إعادة تقييم الأصل",
+  faRevNewGross: "القيمة الإجمالية الجديدة",
+  faRevNewAccum: "المجمع الجديد",
+  faRevDeltaPreview: "فرق القيمة الدفترية (يُرحَّل إلى احتياطي إعادة التقييم)",
+  faRevReason: "السبب",
+  faRevCreateButton: "إنشاء مسودة",
+  faRevPostButton: "ترحيل",
+  faRevCreatedToast: "تم إنشاء مسودة إعادة التقييم.",
+  faRevPostedToast: "تم ترحيل إعادة التقييم إلى احتياطي إعادة التقييم.",
+
+  faCategoriesTitle: "فئات الأصول",
+  faCategoriesEmpty: "لا فئات بعد — أنشئ فئة أولًا.",
+  faCatNewButton: "فئة جديدة",
+  faCatColLife: "العمر الافتراضي (شهر)",
+  faCatColMethod: "الطريقة الافتراضية",
+  faCatColActive: "نشطة",
+  faCatInUseBadge: "قيد الاستخدام",
+  faCatCode: "رمز الفئة",
+  faCatCodeHint: "مفتاح طبيعي خاص بالمستأجر",
+  faCatName: "الاسم (إنجليزي)",
+  faCatNameAr: "الاسم (عربي)",
+  faCatLife: "العمر الافتراضي (شهر)",
+  faCatMethod: "الطريقة الافتراضية",
+  faCatPurposesTitle: "ربط الأغراض (متقدم)",
+  faCatPurposesHint:
+    "القيم الافتراضية معروضة أدناه؛ يتحقق الخادم من تعيينها إلى حسابات نشطة قبل أي استخدام (BR-041)",
+  faCatPurposeAsset: "غرض الأصل",
+  faCatPurposeAccum: "غرض مجمع الإهلاك",
+  faCatPurposeExpense: "غرض مصروف الإهلاك",
+  faCatActive: "نشطة",
+  faCatEditTitle: "تعديل الفئة",
+  faCatCreatedToast: "تم إنشاء الفئة.",
+  faCatSavedToast: "تم حفظ الفئة.",
+
+  faDepTitle: "تشغيلات الإهلاك",
+  faDepEmpty: "لا توجد تشغيلات بعد.",
+  faDepPeriodLabel: "الفترة المالية",
+  faDepPeriodYear: "السنة المالية",
+  faDepPeriodPeriod: "الفترة",
+  faDepAssembleButton: "تجميع التشغيل",
+  faDepAssembleHint: "تشغيل واحد لكل فترة مالية — يعاد استخدام المسودة القائمة إن وُجدت",
+  faDepAssembledToast: "تم تجميع التشغيل.",
+  faDepApplyUsage: "تحديث الاستخدام وإعادة التجميع",
+  faDepApplyUsageHint: "تُعاد كتابة سطور المسودة بقيم الوحدات المحدثة",
+  faDepPostButton: "ترحيل التشغيل",
+  faDepPostConfirmTitle: "تأكيد ترحيل التشغيل",
+  faDepPostConfirmBody:
+    "سيُنشأ قيد يومية واحد بمبلغ {amount} (G-22) ولا يمكن التراجع إلا بعكس عبر محرك القيود. المتابعة؟",
+  faDepPostedToast: "تم ترحيل التشغيل — قيد اليومية {entry}",
+  faDepReverseTitle: "عكس التشغيل",
+  faDepReverseReason: "سبب العكس",
+  faDepReverseButton: "عكس",
+  faDepReversedToast: "تم عكس التشغيل — تبقى السطور للمراجعة.",
+  faDepColPeriod: "الفترة",
+  faDepColAssets: "الأصول",
+  faDepColTotal: "الإجمالي",
+  faDepColPostedAt: "وقت الترحيل",
+  faDepWorkspaceTitle: "مساحة تشغيل الإهلاك",
+  faDepColMethod: "الطريقة",
+  faDepColUnits: "وحدات الفترة",
+  faDepColPeriodAmount: "إهلاك الفترة",
+  faDepColAccumAfter: "المجمع بعدها",
+  faDepColNbvAfter: "القيمة الدفترية بعدها",
+  faDepNoLines: "لا سطور في المسودة — قم بالتجميع أولًا.",
+  faDepUopHint: "الاستخدام يدوي لكل سطر لطريقة وحدات الإنتاج (لا قياس آلي)",
+  faDepPreviewNote:
+    "المعاينة حساب محلي دقيق (لا فواصل عائمة)؛ إعادة التجميع الخادمية هي المرجع عند الترحيل",
+
+  faDisposalsTitle: "استبعاد الأصول",
+  faDisposalsEmpty: "لا توجد عمليات استبعاد بعد.",
+  faDispNewButton: "استبعاد جديد",
+  faDispColNo: "الرقم",
+  faDispColAsset: "الأصل",
+  faDispColKind: "النوع",
+  faDispColDate: "التاريخ",
+  faDispColProceeds: "المتحصلات",
+  faDispColNbv: "القيمة الدفترية",
+  faDispColGainLoss: "الربح/(الخسارة)",
+  faDispKindSale: "بيع",
+  faDispKindScrap: "كشط",
+  faDispWizardTitle: "معالج الاستبعاد",
+  faDispStep1: "اختيار الأصل",
+  faDispStep2: "بيانات الاستبعاد",
+  faDispStep3: "المراجعة والإرسال",
+  faDispNext: "متابعة",
+  faDispBack: "رجوع",
+  faDispCreatedToast: "تم إنشاء مسودة الاستبعاد — تنتظر اعتماد مستخدم ثانٍ.",
+  faDispAssetLabel: "الأصل",
+  faDispAssetHint: "الأصول النشطة أو المستهلكة بالكامل فقط",
+  faDispKindLabel: "نوع الاستبعاد",
+  faDispDateLabel: "تاريخ الاستبعاد",
+  faDispProceedsLabel: "المتحصلات",
+  faDispProceedsHint: "للكشط: يجب إثبات الصفر صراحةً",
+  faDispScrapZeroLabel: "أُقر أن المتحصلات صفر (كشط)",
+  faDispReviewTitle: "المراجعة المحسوبة",
+  faDispReviewCost: "التكلفة",
+  faDispReviewAccum: "المجمع",
+  faDispReviewNbv: "القيمة الدفترية",
+  faDispReviewGainLoss: "الربح/(الخسارة)",
+  faDispSubmitButton: "إنشاء المسودة",
+  faDispApproveHint:
+    "فصل المهام: اعتماد مستخدم ثانٍ إلزامي — منشئ المسودة لا يستطيع الاعتماد أو الترحيل",
+  faDispApproveButton: "اعتماد (مستخدم ثانٍ)",
+  faDispApprovedToast: "تم اعتماد الاستبعاد.",
+  faDispPostButton: "ترحيل وعرض السند",
+  faDispPostedToast: "تم ترحيل الاستبعاد {no} — قيد اليومية {entry}",
+  faDispVoucherTitle: "سند الاستبعاد (A4)",
+  faDispPrintButton: "طباعة",
+  faDispVoucherTotalsProceeds: "المتحصلات",
+  faDispVoucherTotalsAccum: "مجمع الإهلاك",
+  faDispVoucherTotalsCost: "تكلفة الأصل",
+  faDispVoucherTotalsGainLoss: "الربح/(الخسارة)",
+
+  faReportsTitle: "تقارير الأصول",
+  faReportsHint: "سجل الأصول (بحدّ تاريخ)، جدول الإهلاك، وحركات الأصول — مع روابط المطابقة",
+  faReportsEmpty: "لا تقارير أصول متاحة بعد.",
+
+  faErrCategoryCodeTaken: "رمز الفئة مستخدم مسبقًا.",
+  faErrAssetCodeTaken: "رمز الأصل مستخدم مسبقًا.",
+  faErrAssetImmutable: "حقول الأساس غير قابلة للتعديل على أصل قائم.",
+  faErrPurposesNotMapped: "أغراض الفئة غير معينة إلى حسابات نشطة (BR-041).",
+  faErrInvalidAmount: "قيمة غير صالحة — راجع التكلفة والقيمة التخليدية والعمر.",
+  faErrUopUnitsRequired: "إجمالي الوحدات التقديرية مطلوب لطريقة وحدات الإنتاج.",
+  faErrImmutableDocument: "المستند مُرحَّل ولا يمكن تعديله — التصحيح بالعكس فقط.",
+  faErrRunNotDraft: "التشغيل ليس مسودة — لا يمكن تعديله.",
+  faErrRunDuplicate: "يوجد تشغيل واحد فقط لكل فترة مالية.",
+  faErrPeriodLocked: "الفترة المالية مقفلة (INV-011).",
+  faErrNbvFloor: "القيمة الدفترية ستهبط دون الحد الأدنى (القيمة التخليدية).",
+  faErrDisposalState: "حالة الاستبعاد لا تسمح بهذه العملية.",
+  faErrDisposalSod: "فصل المهام: المنشئ لا يستطيع الاعتماد أو الترحيل.",
+  faErrDisposalProceeds: "قيمة المتحصلات غير صالحة.",
+  faErrRevalState: "حالة إعادة التقييم لا تسمح بهذه العملية.",
+  faErrCapitalizeState: "الأصل مرسمل مسبقًا أو حالته لا تسمح بالرسملة.",
+  faErrAssetDisposedReuse: "الاستبعاد مرة واحدة فقط ومن حالة نشط/مستهلك بالكامل (INV-023).",
 };
 
 const en: Dictionary = {
@@ -10980,6 +11425,224 @@ const en: Dictionary = {
   sloWindowNote:
     "The measurement window is the current process lifetime (counters reset on restart); the 30-day error-budget window is the metrics pipeline's concern and is never fabricated here. A “no data” state is explicit and is never treated as green.",
   sloGeneratedAt: "Last evaluated:",
+
+  // -- PHASE-026 (T13-UI): fixed assets & depreciation (EN) --------------------
+  commonEdit: "Edit",
+  navAccounting: "Accounting",
+  navFixedAssets: "Fixed assets",
+
+  faStatusActive: "Active",
+  faStatusFullyDepreciated: "Fully depreciated",
+  faStatusDisposed: "Disposed",
+  faStatusWrittenOff: "Written off",
+  faMethodSl: "Straight line",
+  faMethodDb: "Declining balance",
+  faMethodUop: "Units of production",
+
+  faTitle: "Fixed assets",
+  faAssetsEmpty: "No assets yet.",
+  faAssetsNewButton: "New asset",
+  faSearchPlaceholder: "Search by asset code or name…",
+  faAllStatuses: "All statuses",
+  faFilterCategory: "Category",
+  faFilterBranch: "Branch",
+  faFilterCustodian: "Custodian",
+  faColCode: "Code",
+  faColAcquisitionDate: "Acquisition date",
+  faColCost: "Cost",
+  faColAccumulated: "Accumulated",
+  faColNbv: "Net book value",
+  faColBranch: "Branch",
+  faColCustodian: "Custodian",
+
+  faFormTitleCreate: "New fixed asset",
+  faFormTitleEdit: "Edit asset",
+  faFormCode: "Code",
+  faFormCodeHint: "auto-generated when left empty",
+  faFormName: "Name (English)",
+  faFormNameAr: "Name (Arabic)",
+  faFormCategory: "Category",
+  faFormCategoryHint: "Active categories listed; the server validates purpose completeness before use",
+  faFormAcquisitionDate: "Acquisition date",
+  faFormCost: "Cost",
+  faFormSalvage: "Salvage value",
+  faFormSalvageHint: "must be less than or equal to the cost",
+  faFormLife: "Useful life (months)",
+  faFormMethod: "Depreciation method",
+  faFormBranch: "Branch",
+  faFormCustodian: "Custodian",
+  faFormNote: "Note (English)",
+  faFormNoteAr: "Note (Arabic)",
+  faFormUnitsTotal: "Total estimated units",
+  faFormUnitsHint: "required for units of production",
+  faFormOpeningAccumulated: "Opening accumulated to date",
+  faFormOpeningHint: "for assets onboarded mid-life — future runs resume from the true NBV",
+  faFormCreatedToast: "Asset created.",
+  faFormSavedToast: "Asset saved.",
+  faFormImmutableHint:
+    "Basis fields are immutable after creation (cost/salvage/life/method/category/acquisition) — corrections are reversal-only via the posting engine",
+
+  faOverviewTitle: "Asset details",
+  faFinancialTitle: "Financial position",
+  faAccumulatedCard: "Accumulated depreciation",
+  faNbvCard: "Net book value",
+  faSourceLabel: "Source",
+  faSourceNone: "Not capitalized — no capitalization journal yet",
+  faHistoryTitle: "Depreciation history",
+  faHistoryColDate: "Date",
+  faHistoryColAmount: "Period depreciation",
+  faHistoryColAccumAfter: "Accumulated after",
+  faHistoryColUnits: "Period units",
+  faHistoryEmpty: "No depreciation yet.",
+  faReversedBadge: "Reversed",
+  faLifecycleTitle: "Lifecycle",
+  faJournalEntry: "Journal entry",
+
+  faCapitalizeTitle: "Capitalize asset (G-21)",
+  faCapitalizeHint: "posts the capitalization journal through the engine — fixed assets never write GL directly",
+  faCapitalizeFunding: "Funding source",
+  faFundingCredit: "Credit (AP control)",
+  faFundingCash: "Cash",
+  faFundingOpening: "Opening equity",
+  faCapitalizePartner: "Supplier",
+  faCapitalizeOpeningNote: "the asset's recorded opening accumulated rides the same journal",
+  faCapitalizeButton: "Capitalize",
+  faCapitalizePostedToast: "Capitalized — journal entry {entry}",
+
+  faRevaluateTitle: "Asset revaluation",
+  faRevNewGross: "New gross value",
+  faRevNewAccum: "New accumulated",
+  faRevDeltaPreview: "NBV delta (posts to revaluation reserve)",
+  faRevReason: "Reason",
+  faRevCreateButton: "Create draft",
+  faRevPostButton: "Post",
+  faRevCreatedToast: "Revaluation draft created.",
+  faRevPostedToast: "Revaluation posted to the revaluation reserve.",
+
+  faCategoriesTitle: "Asset categories",
+  faCategoriesEmpty: "No categories yet — create one first.",
+  faCatNewButton: "New category",
+  faCatColLife: "Default life (months)",
+  faCatColMethod: "Default method",
+  faCatColActive: "Active",
+  faCatInUseBadge: "In use",
+  faCatCode: "Category code",
+  faCatCodeHint: "tenant-scoped natural key",
+  faCatName: "Name (English)",
+  faCatNameAr: "Name (Arabic)",
+  faCatLife: "Default life (months)",
+  faCatMethod: "Default method",
+  faCatPurposesTitle: "Purpose links (advanced)",
+  faCatPurposesHint:
+    "defaults shown below; the server re-checks they resolve to active accounts before any use (BR-041)",
+  faCatPurposeAsset: "Asset purpose",
+  faCatPurposeAccum: "Accum. depreciation purpose",
+  faCatPurposeExpense: "Depreciation expense purpose",
+  faCatActive: "Active",
+  faCatEditTitle: "Edit category",
+  faCatCreatedToast: "Category created.",
+  faCatSavedToast: "Category saved.",
+
+  faDepTitle: "Depreciation runs",
+  faDepEmpty: "No runs yet.",
+  faDepPeriodLabel: "Fiscal period",
+  faDepPeriodYear: "Fiscal year",
+  faDepPeriodPeriod: "Period",
+  faDepAssembleButton: "Assemble run",
+  faDepAssembleHint: "one run per fiscal period — an existing draft is reused",
+  faDepAssembledToast: "Run assembled.",
+  faDepApplyUsage: "Apply usage & re-assemble",
+  faDepApplyUsageHint: "rewrites the draft lines with the updated unit values",
+  faDepPostButton: "Post run",
+  faDepPostConfirmTitle: "Confirm run posting",
+  faDepPostConfirmBody:
+    "One journal entry of {amount} will be created (G-22); undo is engine-reversal only. Continue?",
+  faDepPostedToast: "Run posted — journal entry {entry}",
+  faDepReverseTitle: "Reverse run",
+  faDepReverseReason: "Reversal reason",
+  faDepReverseButton: "Reverse",
+  faDepReversedToast: "Run reversed — the lines stay for audit.",
+  faDepColPeriod: "Period",
+  faDepColAssets: "Assets",
+  faDepColTotal: "Total",
+  faDepColPostedAt: "Posted at",
+  faDepWorkspaceTitle: "Depreciation run workspace",
+  faDepColMethod: "Method",
+  faDepColUnits: "Period units",
+  faDepColPeriodAmount: "Period amount",
+  faDepColAccumAfter: "Accumulated after",
+  faDepColNbvAfter: "NBV after",
+  faDepNoLines: "No draft lines — assemble first.",
+  faDepUopHint: "usage is manual per line for units of production (no metering)",
+  faDepPreviewNote:
+    "the preview is exact local math (no floats); the server re-assembly is the authority at posting",
+
+  faDisposalsTitle: "Asset disposals",
+  faDisposalsEmpty: "No disposals yet.",
+  faDispNewButton: "New disposal",
+  faDispColNo: "No.",
+  faDispColAsset: "Asset",
+  faDispColKind: "Kind",
+  faDispColDate: "Date",
+  faDispColProceeds: "Proceeds",
+  faDispColNbv: "Net book value",
+  faDispColGainLoss: "Gain/(loss)",
+  faDispKindSale: "Sale",
+  faDispKindScrap: "Scrap",
+  faDispWizardTitle: "Disposal wizard",
+  faDispStep1: "Pick asset",
+  faDispStep2: "Disposal details",
+  faDispStep3: "Review & submit",
+  faDispNext: "Continue",
+  faDispBack: "Back",
+  faDispCreatedToast: "Disposal draft created — awaiting a second-user approval.",
+  faDispAssetLabel: "Asset",
+  faDispAssetHint: "active or fully depreciated assets only",
+  faDispKindLabel: "Disposal kind",
+  faDispDateLabel: "Disposal date",
+  faDispProceedsLabel: "Proceeds",
+  faDispProceedsHint: "for scrap: the zero must be explicit",
+  faDispScrapZeroLabel: "I confirm proceeds are zero (scrap)",
+  faDispReviewTitle: "Computed review",
+  faDispReviewCost: "Cost",
+  faDispReviewAccum: "Accumulated",
+  faDispReviewNbv: "Net book value",
+  faDispReviewGainLoss: "Gain/(loss)",
+  faDispSubmitButton: "Create draft",
+  faDispApproveHint:
+    "separation of duties: a second user must approve — the draft creator cannot approve or post",
+  faDispApproveButton: "Approve (second user)",
+  faDispApprovedToast: "Disposal approved.",
+  faDispPostButton: "Post & show voucher",
+  faDispPostedToast: "Disposal {no} posted — journal entry {entry}",
+  faDispVoucherTitle: "Disposal voucher (A4)",
+  faDispPrintButton: "Print",
+  faDispVoucherTotalsProceeds: "Proceeds",
+  faDispVoucherTotalsAccum: "Accumulated depreciation",
+  faDispVoucherTotalsCost: "Asset cost",
+  faDispVoucherTotalsGainLoss: "Gain/(loss)",
+
+  faReportsTitle: "Fixed-asset reports",
+  faReportsHint: "asset register (as-of), depreciation schedule, and movements — with the tie assertions",
+  faReportsEmpty: "No fixed-asset reports available yet.",
+
+  faErrCategoryCodeTaken: "Category code is already taken.",
+  faErrAssetCodeTaken: "Asset code is already taken.",
+  faErrAssetImmutable: "Basis fields are immutable on an existing asset.",
+  faErrPurposesNotMapped: "The category purposes do not resolve to active accounts (BR-041).",
+  faErrInvalidAmount: "Invalid value — check cost, salvage value and life.",
+  faErrUopUnitsRequired: "Total estimated units is required for units of production.",
+  faErrImmutableDocument: "The document is posted and immutable — corrections are reversal-only.",
+  faErrRunNotDraft: "The run is not a draft — it cannot be modified.",
+  faErrRunDuplicate: "Only one run per fiscal period is allowed.",
+  faErrPeriodLocked: "The fiscal period is locked (INV-011).",
+  faErrNbvFloor: "Net book value would drop below the floor (salvage value).",
+  faErrDisposalState: "The disposal state does not allow this operation.",
+  faErrDisposalSod: "Separation of duties: the creator cannot approve or post.",
+  faErrDisposalProceeds: "Invalid proceeds value.",
+  faErrRevalState: "The revaluation state does not allow this operation.",
+  faErrCapitalizeState: "The asset is already capitalized or not in a capitalizable state.",
+  faErrAssetDisposedReuse: "Disposal happens exactly once, only from active/fully depreciated (INV-023).",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

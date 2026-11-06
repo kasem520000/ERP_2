@@ -227,12 +227,20 @@ export function ReportWorkspace({
   initialRuns,
   permissions,
   canExport,
+  reportKeyPrefix,
 }: {
   locale: Locale;
   registry: readonly ReportRegistryItem[];
   initialRuns: readonly ReportRunSummary[];
   permissions: readonly string[];
   canExport: boolean;
+  /**
+   * PHASE-026 (T13-UI) — optional module scoping for module report pages
+   * (e.g. "/fixed-assets/reports" passes "fixed_assets."): filters the
+   * catalog AND the run history to keys with this prefix. Absent = the
+   * whole registry (the /reports default — behavior unchanged).
+   */
+  reportKeyPrefix?: string;
 }): JSX.Element {
   const d = getDictionary(locale);
   const other = otherLocale(locale);
@@ -247,7 +255,8 @@ export function ReportWorkspace({
   const [result, setResult] = useState<ReportResultEnvelope | null>(null);
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [pollStage, setPollStage] = useState<{ status: string; stage: string | null } | null>(null);
-  const [runs, setRuns] = useState<readonly ReportRunSummary[]>(initialRuns);
+  const [initialRunsState, setInitialRunsState] =
+    useState<readonly ReportRunSummary[]>(initialRuns);
 
   const [views, setViews] = useState<readonly SavedView[]>([]);
   const [viewNameAr, setViewNameAr] = useState("");
@@ -297,10 +306,19 @@ export function ReportWorkspace({
     }
   }, []);
 
-  /** The catalog is filtered to reports whose requiredPermission the user holds. */
+  /**
+   * The catalog is filtered to reports whose requiredPermission the user
+   * holds — plus the optional module prefix (PHASE-026: the fixed-assets
+   * report page scopes to the "fixed_assets." keys).
+   */
   const permitted = useMemo(
-    () => registry.filter((item) => permissions.includes(item.requiredPermission)),
-    [registry, permissions],
+    () =>
+      registry.filter(
+        (item) =>
+          permissions.includes(item.requiredPermission) &&
+          (reportKeyPrefix === undefined || item.id.startsWith(reportKeyPrefix)),
+      ),
+    [registry, permissions, reportKeyPrefix],
   );
 
   const categories = useMemo(() => {
@@ -426,11 +444,24 @@ export function ReportWorkspace({
     setNotice(null);
   }
 
+  /**
+   * Run history, scoped by the module prefix when present (PHASE-026):
+   * refreshRuns re-fetches unfiltered, then this filter narrows the list.
+   */
+  const runs =
+    reportKeyPrefix === undefined
+      ? initialRunsState
+      : initialRunsState.filter((row) => row.reportKey.startsWith(reportKeyPrefix));
+
   async function refreshRuns(): Promise<void> {
     setBusy("history");
     const refreshed = await bffFetch<readonly ReportRunSummary[]>("reporting/report-runs?limit=20");
     if (refreshed.ok) {
-      setRuns(refreshed.data);
+      setInitialRunsState(
+        reportKeyPrefix === undefined
+          ? refreshed.data
+          : refreshed.data.filter((row) => row.reportKey.startsWith(reportKeyPrefix)),
+      );
     }
     setBusy(null);
   }

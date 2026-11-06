@@ -1,6 +1,6 @@
 # Accounting Tests
 
-> **Status:** STABLE · **Owner:** Quality Engineering & Accounting Domain · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Quality Engineering & Accounting Domain · **Updated:** 2026-11-07
 
 The accounting test bible: (a) invariant suite mapping INV-001..INV-026, (b) golden tests
 for every canonical posting rule in
@@ -17,6 +17,12 @@ below are exact.
 - Suites: `tests/accounting/invariants/` (§2), `tests/accounting/golden/` (§3),
   `tests/accounting/property/` (§4), `tests/accounting/reconciliation/` (§5),
   `tests/accounting/concurrency/` (§6), `tests/accounting/periods/` (§7).
+- Module rule suites (per [../product/BUSINESS_RULES.md](../product/BUSINESS_RULES.md) §8):
+  PHASE-026 adds `fixed-assets-rules.spec` (BR-041 category usability, BR-042
+  run-only/period-locked depreciation, BR-043 salvage floor + disposal lock, BR-044
+  audited revaluation to `REVALUATION_RESERVE`) alongside the fixed-assets S-04 spoof
+  battery (foreign category/branch/custodian/asset/period references → typed 404s,
+  zero partial creation).
 - Harness: real PostgreSQL via Testcontainers (`erp_app` role, RLS on); posting through
   module services exactly as production code paths do — **no direct journal inserts**.
 - Amounts: `NUMERIC(19,4)`; assertions compare exact decimals, tolerance **0.00**
@@ -230,6 +236,7 @@ INV-006).
 | RC-08 (INV-019) | treasury ops incl. transfers, fees, shift differences | every cash/bank balance = Σ movements |
 | RC-09 (GRNI) | GRN without supplier invoice → invoice → partial | GRNI register = GRNI account at each step |
 | RC-10 (determinism) | run statement/aging twice as-of same date | byte-identical results (no caching drift) |
+| RC-11 (fixed assets — [../accounting/RECONCILIATION.md](../accounting/RECONCILIATION.md) §1 row 10, kind `FIXED_ASSETS`, PHASE-026) | capitalization ×2 paths (direct G-21 + purchase) → run G-22 → revaluation → disposal, then the register check after each op set | per category account Σ gross current value = `FIXED_ASSET` balance and Σ accumulated = `ACCUM_DEPRECIATION` balance, exact 0.00; seeded drift (register row without ledger effect) → `BROKEN` with the offending id + notification + period-close block (PC-04) |
 
 ## 6. Concurrency tests
 

@@ -101,6 +101,9 @@ import {
   servicesContractRevenueScheduleContract,
   servicesTimeBillingSummaryContract,
 } from "./industry/phase019";
+import { fixedAssetsAssetRegisterContract } from "./fixed-assets/asset-register.contract";
+import { fixedAssetsDepreciationScheduleContract } from "./fixed-assets/depreciation-schedule.contract";
+import { fixedAssetsMovementsContract } from "./fixed-assets/movements.contract";
 
 export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   // §1 financial statements
@@ -189,6 +192,13 @@ export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   // professional-services services set)
   servicesContractRevenueScheduleContract,
   servicesTimeBillingSummaryContract,
+  // §9 financial depth (REPORT_CATALOG §9 PHASE-026 rows — the fixed-assets
+  // set: the as-of register with the fa-cost-tie/fa-accum-tie block-on-fail
+  // checks, the remaining depreciation schedule, the movements register
+  // with journal provenance)
+  fixedAssetsAssetRegisterContract,
+  fixedAssetsDepreciationScheduleContract,
+  fixedAssetsMovementsContract,
 ]);
 
 export { validateRegistry, registrySnapshot } from "./runtime";

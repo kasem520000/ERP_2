@@ -1,8 +1,57 @@
 # Changelog
 
-> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-06
+> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-07
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
+
+- 2026-11-07 — **PHASE-026 — Fixed Assets & Depreciation (IN PROGRESS — the parallel
+  build waves landed; the serial orchestrator gate — full DB suite + drift battery +
+  completion report — pending; status flips COMPLETE only on its evidence)**: migration
+  `0037_fixed_assets.sql` (schema_version 37; catalog 156→162) — six RLS'd tenant
+  tables (`asset_categories` BR-041 purpose links, `assets` with the NBV-floor
+  CHECKs, `depreciation_runs` one-per-period, `depreciation_lines` 🔒 append-only by
+  grants + `erp.depreciation_lines_guard` (INV-003 pattern, purge-path-only DELETE),
+  `asset_disposals` with frozen snapshots + SoD stamps, `asset_revaluations` with the
+  frozen delta + mandatory reason), the 0036-discipline purge_path policies on every
+  table, the `reconciliation_runs.kind` widening with `FIXED_ASSETS` (RC-10 — the
+  0012 BANK_REC precedent), the six v2.0 CoA template purposes (1210/1220/3210/4910/
+  5300/5910), and the 13 §3.11 permission seeds (owner=13/accountant=11/viewer=3;
+  drift-checked). The `fixed_assets` module: P26-A — category-service (BR-041 at
+  create/update/first-use, staging allowed, in-use steering blocked),
+  asset-service (register + the ACTIVE→FULLY_DEPRECIATED→DISPOSED machine,
+  economic-column immutability, membership-scoped custodian A7), capitalization G-21
+  (CREDIT partner-leg INV-009 / CASH / the OPENING variant resuming from the true
+  NBV), the purchase-capitalization port (GRN capital-expense seam — documented port,
+  zero purchasing edits); P26-B — the depreciation kernel (STRAIGHT_LINE /
+  DECLINING_BALANCE 12/life on opening NBV / UNITS_OF_PRODUCTION manual usage;
+  next-month convention; salvage-floor cap; final-period residual absorption —
+  Σ over the life = cost − salvage EXACTLY, property-proven 17/17 in
+  depreciation-math.spec), the ADR-0008 bounded/cancelable assembly job (500-asset
+  chunks), run-service G-22 (per-asset pairs ≤ 50 assets then per-category
+  collapse; PERIOD_LOCKED; INV-013 replay; INV-014 reversal with un-flip);
+  P26-C — revaluation-service (BR-044 audited, both directions to
+  REVALUATION_RESERVE, frozen-delta contract, disposal-math.spec 19/19 pinning the
+  G-23 four shapes incl. the MANDATORY loss mirror), disposal-service (SoD
+  second-user approve + SELF_APPROVAL_BLOCKED backstop, DSP- numbering, INV-023
+  exactly-once lock), the RC-10 register check (kind FIXED_ASSETS, zero-tolerance,
+  BROKEN → notification + PC-04 close block) + the non-blocking close-checklist
+  advisory; P26-E — 8 archetype screens under `/[locale]/fixed-assets` (list, new,
+  detail, edit, categories, the run workspace with UoP editing + live totals, the
+  disposal wizard, reports) + the الأصول الثابتة nav item + i18n 3599 keys/locale.
+  T12/T14 (P26-F): the six tables registered in the isolation registry with the
+  generated A1–A10 coverage (incl. the append-only grant proof for
+  depreciation_lines and the A3 mismatched-INSERT shapes for all six), the S-04
+  spoof battery (foreign category/branch/custodian/asset/period references → typed
+  404s, zero partial creation), `fixed-assets-rules.spec` covering BR-041…BR-044
+  (BUSINESS_RULES §8 row), and the docs sync: SECURITY_TEST_PLAN §2 PHASE-026 row,
+  RECONCILIATION §1 row 10 deferred→PHASE-026 + the PC-04 close-block list,
+  PERIOD_CLOSING §2 advisory item 8, ACCOUNTING_TESTS §1 module-rule-suite row +
+  §5 RC-11 fixed-assets row, DATA_DICTIONARY §14 fixed-assets column semantics,
+  TABLES/fixed-assets.md authored in-phase (grow-per-phase rule), SCOPE ED-18 +
+  ENTITY_CATALOG §fixed_assets + BUSINESS_WORKFLOWS §11 verified pre-authored.
+  Pre-authored v2.0 docs verified untouched: JOURNAL_RULES §7, ACCOUNTING_INVARIANTS
+  INV-023, POSTING_ENGINE §4.1, FEATURE_CATALOG §19, AUTHORIZATION_MATRIX §3.11/§4,
+  NAVIGATION_MODEL, REPORT_CATALOG, BUSINESS_RULES BR-041..044. — PHASE-026
 
 - 2026-11-06 — **PHASE-025 — Performance, Reliability & GA Readiness (COMPLETE — **GA
   RELEASE `v1.1.0`** · CalVer `v1.26.11.0` · tags `release/v1.1.0` + `v1.26.11.0` +

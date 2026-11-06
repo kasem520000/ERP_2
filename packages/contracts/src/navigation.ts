@@ -579,6 +579,24 @@ export const NAV_ITEMS: readonly NavItem[] = [
     archetype: "list-search",
     order: 60,
   },
+  // PHASE-026 (T13-UI): fixed assets & depreciation. The v2.0 registry row
+  // `accounting.fixed-assets` (NAVIGATION_MODEL §1.1): featureKey is the
+  // FEATURE_CATALOG §19 `fixed_assets.register` string; permission the exact
+  // seeded §3.11 viewer key. One top-level item — the sub-surfaces
+  // (categories, depreciation runs, disposals, reports) are in-screen tabs
+  // under the module route, the manufacturing decision-8 precedent.
+  {
+    id: "accounting.fixed-assets",
+    parentGroup: "accounting",
+    label: { ar: "الأصول الثابتة", en: "Fixed assets" },
+    icon: "building",
+    route: "/fixed-assets",
+    featureKey: "fixed_assets.register",
+    permission: "fixed_assets.assets.view",
+    branchScoped: false,
+    archetype: "list-search",
+    order: 70,
+  },
   // purchasing group — PHASE-011 (T13-UI): the procure-to-pay chain.
   // Feature keys are the exact FEATURE_CATALOG §9 strings; permissions the
   // exact seeded matrix keys the purchasing controller enforces (matrix

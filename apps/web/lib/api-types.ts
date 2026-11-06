@@ -3751,3 +3751,202 @@ export interface EInvoicingFunnelWire {
   latencyMs: { p50: number | null; p95: number | null };
   rejectionWindow: { total: number; rejected: number; ratePct: number | null };
 }
+
+// ---------------------------------------------------------------------------
+// PHASE-026 (T13-UI) — fixed assets & depreciation rows. The shapes mirror
+// the fixed_assets store DTOs (apps/api fixed-assets.store.ts selects), the
+// single source the parallel backend (P26-A/B/C) wraps; money stays canonical
+// decimal strings (ADR-0009), ids are UUIDv7 strings.
+// ---------------------------------------------------------------------------
+
+/** GET /fixed-assets/categories → rows (categories manage). */
+export interface FixedAssetCategoryRow {
+  id: string;
+  code: string;
+  name: string;
+  nameAr: string;
+  usefulLifeMonthsDefault: number;
+  depreciationMethodDefault: string;
+  assetPurposeKey: string;
+  accumDepreciationPurposeKey: string;
+  expensePurposeKey: string;
+  active: boolean;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/** GET /fixed-assets/assets → rows (register list + search). */
+export interface FixedAssetRow {
+  id: string;
+  code: string;
+  name: string;
+  nameAr: string;
+  categoryId: string;
+  acquisitionDate: string;
+  cost: string;
+  salvageValue: string;
+  openingAccumulated: string;
+  usefulLifeMonths: number;
+  depreciationMethod: string;
+  totalEstimatedUnits: string | null;
+  branchId: string;
+  custodianUserId: string | null;
+  status: string;
+  sourceType: string | null;
+  sourceId: string | null;
+  note: string | null;
+  noteAr: string | null;
+  disposedAt: string | null;
+  writtenOffAt: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/** One depreciation-history line on the asset detail (run status joined). */
+export interface FixedAssetHistoryLine {
+  id: string;
+  runId: string;
+  assetId: string;
+  lineNo: number;
+  periodUnits: string | null;
+  periodAmount: string;
+  accumulatedAmount: string;
+  runStatus: "DRAFT" | "POSTED";
+  reversedAt: string | null;
+  createdAt: string;
+}
+
+/**
+ * GET /fixed-assets/assets/:id → the detail: the register row plus the NBV
+ * read model (accumulated-to-date + NBV — INV-023 mirror) and the
+ * depreciation history over the append-only lines (reversed runs marked).
+ */
+export interface FixedAssetDetailRow extends FixedAssetRow {
+  accumulatedToDate: string;
+  nbv: string;
+  history: readonly FixedAssetHistoryLine[];
+}
+
+/** GET /fixed-assets/depreciation-runs → rows (runs list). */
+export interface DepreciationRunListRow {
+  id: string;
+  fiscalPeriodId: string;
+  status: "DRAFT" | "POSTED";
+  assetCount: number;
+  totalAmount: string;
+  assemblyJobId: string | null;
+  assembledAt: string | null;
+  assembledBy: string | null;
+  postedAt: string | null;
+  postedBy: string | null;
+  journalEntryId: string | null;
+  reversalJournalEntryId: string | null;
+  reversedAt: string | null;
+  reversalReason: string | null;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/**
+ * One assembly-grid line in the run workspace: the append-only line joined
+ * with the asset fields the grid + the live UoP preview need (code, method,
+ * cost/salvage/opening basis, the UoP denominator) and the NBV read model.
+ */
+export interface DepreciationRunLineView {
+  id: string;
+  runId: string;
+  assetId: string;
+  lineNo: number;
+  periodUnits: string | null;
+  periodAmount: string;
+  accumulatedAmount: string;
+  assetCode: string;
+  assetName: string;
+  assetNameAr: string;
+  method: string;
+  cost: string;
+  salvageValue: string;
+  openingAccumulated: string;
+  totalEstimatedUnits: string | null;
+  nbvAfter: string;
+  createdAt: string;
+}
+
+/** GET /fixed-assets/depreciation-runs/:id → the workspace payload. */
+export interface DepreciationRunDetailRow {
+  run: DepreciationRunListRow;
+  lines: readonly DepreciationRunLineView[];
+}
+
+/** POST /fixed-assets/assets/:id/capitalize → the posted capitalization. */
+export interface CapitalizeResultRow {
+  assetId: string;
+  sourceType: string;
+  sourceId: string;
+  journalEntryId: string;
+  journalEntryNo: string | null;
+}
+
+/** GET /fixed-assets/disposals + the wizard drafts (disposals list). */
+export interface AssetDisposalRow {
+  id: string;
+  assetId: string;
+  disposalNo: string | null;
+  kind: string;
+  disposalDate: string;
+  proceeds: string;
+  netBookValue: string;
+  accumulatedSnapshot: string;
+  gainLoss: string;
+  status: "DRAFT" | "POSTED";
+  approvedBy: string | null;
+  approvedAt: string | null;
+  postedAt: string | null;
+  postedBy: string | null;
+  journalEntryId: string | null;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/** POST /fixed-assets/revaluations → DRAFT; :id/post → POSTED. */
+export interface AssetRevaluationRow {
+  id: string;
+  assetId: string;
+  revaluationDate: string;
+  newGrossValue: string;
+  newAccumulated: string;
+  delta: string;
+  status: "DRAFT" | "POSTED";
+  reason: string;
+  postedAt: string | null;
+  postedBy: string | null;
+  journalEntryId: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/**
+ * PHASE-026 (T13-UI) — the list rows the register screen renders: the store
+ * AssetRow plus the NBV read model (assetAccumulated/assetNbv helpers) the
+ * list table's accumulated/NBV columns display.
+ */
+export interface FixedAssetListRow extends FixedAssetRow {
+  accumulatedToDate: string;
+  nbv: string;
+}

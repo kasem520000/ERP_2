@@ -1,6 +1,6 @@
 # Data Dictionary — Shared Column Semantics
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-07
 
 The semantic dictionary for **recurring columns and value sets** across all tables. It
 sits between [DATABASE_CONVENTIONS.md](DATABASE_CONVENTIONS.md) (mechanical rules:
@@ -247,6 +247,11 @@ dictionary term — no table may redefine them.
 
 | Column | Type | Rule | Meaning |
 |--------|------|------|---------|
+| `opening_accumulated` | `numeric(19,4)` | §6 money; CHECK `0 ≤ opening_accumulated ≤ cost − salvage_value`; immutable after creation (the register's economic columns never change — corrections are revaluation/disposal documents) | `assets` (PHASE-026): the opening-variant accumulated-to-date input — the G-21 OPENING funding posts `DR OPENING_EQUITY · CR ACCUM_DEPRECIATION` for it so future runs resume from the true NBV (INV-023 from day one; the PHASE-007 opening-balances discipline) |
+| `period_amount` / `accumulated_amount` | `numeric(19,4)` | `period_amount` CHECK > 0 (never a zero line); `accumulated_amount` CHECK ≥ 0; append-only 🔒 row | `depreciation_lines` (PHASE-026): the period's depreciation quantum and the asset's running accumulated AFTER the line — the NBV-floor proof chain (`cost − salvage − accumulated ≥ 0`, INV-023); history is never rewritten (grants + guard trigger) |
+| `period_units` | `numeric(19,6)` | NULL or CHECK ≥ 0 | `depreciation_lines` (PHASE-026): the manual UNITS_OF_PRODUCTION usage for the period (DR-002 — no metering; entered per line in the run workspace, then re-assembled) |
+| `net_book_value` / `accumulated_snapshot` / `gain_loss` | `numeric(19,4)` | Frozen at DRAFT, immutable after post (disposal snapshots) | `asset_disposals` (PHASE-026): the disposal-time register side — NBV = cost − accumulated, `gain_loss = proceeds − NBV`; the G-23 legs derive from these frozen values (never re-computed at post), so the posted journal and the document agree by construction |
+| `new_gross_value` / `new_accumulated` / `delta` | `numeric(19,4)` | Revaluation basis: CHECK `new_gross_value > 0`, `new_accumulated ≥ 0`, `new_gross_value − new_accumulated ≥ 0`; `delta` frozen at DRAFT from the then-live NBV | `asset_revaluations` (PHASE-026): the restated basis + the NBV delta that posts to `REVALUATION_RESERVE` (BR-044 — never P&L, both directions); subsequent depreciation runs compute on the revalued basis (the snapshot chain is the audit trail; `reason` 1..500 is mandatory) |
 | `maturity_date` | `date` | §11 timestamps-vs-dates | `notes`: the business calendar day a cheque/promissory note falls due — drives the PDC maturity calendar (BR-045) and notes aging; never a `timestamptz` |
 | `component_snapshot` | `jsonb` | Frozen-copy rule, same discipline as §8 `tax_snapshot` | `payroll_run_lines`: frozen per-employee copy of the resolved salary components (amounts, rates, structure version) at run posting — structure edits never mutate posted lines (INV-025); recomputing a DRAFT run must reproduce it exactly (determinism); missing snapshot on a posting attempt is an engine rejection |
 | `late_fee_policy` | `jsonb` | Policy blob, not a data channel ([DATABASE_CONVENTIONS.md](DATABASE_CONVENTIONS.md) §4) | `installment_plans`: per-plan rate + cap + grace (BR-049) — defaults PLACEHOLDER pending [OQ-002](../ASSUMPTIONS_AND_OPEN_QUESTIONS.md); enforced server-side, fee posts via the engine only (golden G-28) |

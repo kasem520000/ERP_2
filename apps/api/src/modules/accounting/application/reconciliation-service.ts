@@ -129,8 +129,10 @@ export class ReconciliationService {
       // PC-04: AR/AP (PHASE-007) + CASH (PHASE-008 INV-019 — treasury's
       // check runs record into this framework) + VAT (PHASE-009 INV-012 —
       // the tax module's RC-06 check) + GRNI (PHASE-011 RC-09) + WIP
-      // (PHASE-018 §11 — the manufacturing module's INV-010 extension);
-      // BROKEN blocks the lock.
+      // (PHASE-018 §11 — the manufacturing module's INV-010 extension) +
+      // FIXED_ASSETS (PHASE-026 RC-10 — the fixed-assets register ties to
+      // the FIXED_ASSET/ACCUM_DEPRECIATION GL accounts); BROKEN blocks the
+      // lock.
       if (
         run.status === "BROKEN" &&
         (run.kind === "AR" ||
@@ -139,7 +141,8 @@ export class ReconciliationService {
           run.kind === "VAT" ||
           run.kind === "INVENTORY" ||
           run.kind === "GRNI" ||
-          run.kind === "WIP")
+          run.kind === "WIP" ||
+          run.kind === "FIXED_ASSETS")
       ) {
         throw new ReconciliationBrokenError({ kind: run.kind, diffCount: run.diffCount });
       }

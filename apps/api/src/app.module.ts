@@ -26,6 +26,7 @@ import { TreasuryModule } from "./modules/treasury/treasury.module";
 import { TaxModule } from "./modules/tax/tax.module";
 import { InventoryModule } from "./modules/inventory/inventory.module";
 import { PurchasingModule } from "./modules/purchasing/purchasing.module";
+import { FixedAssetsModule } from "./modules/fixed_assets/fixed_assets.module";
 import { SalesModule } from "./modules/sales/sales.module";
 import { DistributionModule } from "./modules/distribution/distribution.module";
 import { ManufacturingModule } from "./modules/manufacturing/manufacturing.module";
@@ -62,6 +63,7 @@ import { UsageLimitGuard } from "./infra/auth/usage-limit.guard";
     TaxModule,
     InventoryModule,
     PurchasingModule,
+    FixedAssetsModule,
     SalesModule,
     DistributionModule,
     ManufacturingModule,

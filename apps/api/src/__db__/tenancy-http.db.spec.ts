@@ -207,9 +207,13 @@ describe("owner journey: login → onboarding → branches → settings", () => 
     // (no purpose) and its 5410/5420 labor/overhead leaves (50 accounts /
     // 24 purposes); 0027 UPDATEs the 2130 template row in place to the
     // DEFERRED_REVENUE marker (50 accounts / 25 purposes — no new account
-    // row, the pre-019 slot already existed as a plain row).
-    expect(diff.accounts.created).toBe(50);
-    expect(diff.purposes.created).toBe(25);
+    // row, the pre-019 slot already existed as a plain row); 0037 adds the
+    // fixed-assets set — the 1220 ACCUM_DEPRECIATION / 3210
+    // REVALUATION_RESERVE / 4910 ASSET_DISPOSAL_GAIN / 5910
+    // ASSET_DISPOSAL_LOSS rows + the 1210 FIXED_ASSET / 5300
+    // DEPRECIATION_EXPENSE in-place markers (54 accounts / 31 purposes).
+    expect(diff.accounts.created).toBe(54);
+    expect(diff.purposes.created).toBe(31);
 
     const reRun = await request(
       "POST",

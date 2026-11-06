@@ -19,8 +19,8 @@ import { withTenant } from "../infra/db/tenant-context";
  * - duplicate owner email → 409 EmailAlreadyRegisteredError and NO
  *   partial state (no tenant row, no user row);
  * - invalid country/currency/template/tax inputs → 422 shapes;
- * - acceptance 2: provisionWorkspace instantiates the CoA template (42
- *   accounts, 16 1:1 purpose markers), the system role templates, the
+ * - acceptance 2: provisionWorkspace instantiates the CoA template (54
+ *   accounts, 31 1:1 purpose markers), the system role templates, the
  *   numbering/fiscal/jurisdiction settings — and a re-run surfaces a
  *   created=0 diff with ZERO duplicates.
  */
@@ -234,7 +234,7 @@ describe("public registration (acceptance 1)", () => {
 describe("provisionWorkspace (acceptance 2)", () => {
   const OWNER_PASSWORD2 = "an-extremely-strong-passphrase-2";
 
-  it("instantiates CoA (45 accounts, 20 markers) + 8 system roles + defaults — idempotently", async () => {
+  it("instantiates CoA (54 accounts, 31 markers) + 8 system roles + defaults — idempotently", async () => {
     const created = await registration.register({
       businessName: "Onboard Co",
       businessNameAr: "شركة التهيئة",
@@ -252,9 +252,9 @@ describe("provisionWorkspace (acceptance 2)", () => {
     const first = await withTenant(created.tenantId, async () =>
       onboarding.provision(created.ownerUserId, { fiscalCalendarStartMonth: 4 }),
     );
-    expect(first.accounts.created).toBe(50);
+    expect(first.accounts.created).toBe(54);
     expect(first.accounts.existing).toBe(0);
-    expect(first.purposes.created).toBe(25);
+    expect(first.purposes.created).toBe(31);
     // owner was cloned at registration → 8 system-role clones here (owner
     // already exists: created 7, existing 1? — the registration clones
     // 'owner'; provision clones the remaining 8 keys incl. owner as skip).
@@ -277,7 +277,7 @@ describe("provisionWorkspace (acceptance 2)", () => {
       [created.tenantId],
     );
     await su.end();
-    expect(accounts.rows).toHaveLength(50); // 42 + 1151 + 2150/5250 (0024/0025) + 1160/5120/5400/5410/5420 (0026; 0027 adds no account row — the 2130 template row is UPDATED in place)
+    expect(accounts.rows).toHaveLength(54); // 42 + 1151 + 2150/5250 (0024/0025) + 1160/5120/5400/5410/5420 (0026; 0027 adds no account row — the 2130 template row is UPDATED in place) + 1220/3210/4910/5910 (0037 fixed assets; the 1210/5300 template rows are UPDATED in place to the FIXED_ASSET/DEPRECIATION_EXPENSE markers)
     expect(accounts.rows.find((row) => row.code === "1000")?.name_ar).toBe("الأصول");
     expect(accounts.rows.find((row) => row.code === "1111")?.is_postable).toBe(true);
     expect(accounts.rows.find((row) => row.code === "1000")?.is_postable).toBe(false);
@@ -287,15 +287,17 @@ describe("provisionWorkspace (acceptance 2)", () => {
       onboarding.provision(created.ownerUserId, {}),
     );
     expect(second.accounts.created).toBe(0);
-    expect(second.accounts.existing).toBe(50);
+    expect(second.accounts.existing).toBe(54);
     expect(second.purposes.created).toBe(0);
-    expect(second.purposes.existing).toBe(25);
+    expect(second.purposes.existing).toBe(31);
     expect(second.roles.created).toEqual([]);
 
-    // still exactly 50 accounts / 25 active purposes / 9 roles after 0027
+    // still exactly 54 accounts / 31 active purposes / 9 roles after 0037
     // (the 1160/5120/5410/5420 markers + the 5400 group from 0026 — the
     // group row carries no purpose_key; 0027 UPDATEs the 2130 template row
-    // in place to the DEFERRED_REVENUE marker, +1 purpose, no new account)
+    // in place to the DEFERRED_REVENUE marker, +1 purpose, no new account;
+    // 0037 adds the 1220/3210/4910/5910 rows + the 1210/5300 in-place
+    // purpose UPDATEs + four more purpose markers — fixed assets)
     const after = await superuserClient();
     const counts = await after.query<{
       accounts: number;
@@ -311,7 +313,7 @@ describe("provisionWorkspace (acceptance 2)", () => {
     await after.end();
     // 8 tenant roles: owner (registration) + the 7 business templates —
     // platform_admin is platform staff only, never a tenant role (§2).
-    expect(counts.rows[0]).toEqual({ accounts: 50, purposes: 25, roles: 8 });
+    expect(counts.rows[0]).toEqual({ accounts: 54, purposes: 31, roles: 8 });
 
     // numbering + fiscal + jurisdiction settings written (policy rows only)
     const settings = await superuserClient();

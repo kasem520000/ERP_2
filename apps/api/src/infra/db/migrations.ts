@@ -98,6 +98,11 @@ export const MIGRATIONS: readonly string[] = [
   // PHASE-024: 0036_security_hardening.sql (MFA policy substrate + the
   // offboarding purge path + audit-review indexes — T4/T8/T11).
   "0036_security_hardening",
+  // PHASE-026: 0037_fixed_assets.sql (the fixed_assets module per DR-002
+  // option A: asset_categories/assets/depreciation_runs/depreciation_lines 🔒/
+  // asset_disposals/asset_revaluations + the six v2.0 CoA purposes + 13
+  // permission seeds + plan/role grants + the RC-10 reconciliation kind).
+  "0037_fixed_assets",
 ];
 
 /**

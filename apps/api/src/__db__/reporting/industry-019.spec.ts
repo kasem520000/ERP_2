@@ -957,7 +957,7 @@ describe("registry integration + permission gating (the shared contract)", () =>
       expect(contract!.executionClass).toBe("inline");
       expect(ALL_KNOWN_PERMISSIONS.has(permission), permission).toBe(true);
     }
-    expect(snapshot).toHaveLength(68);
+    expect(snapshot).toHaveLength(71);
   });
 
   it("a session without crm.contracts.manage cannot run either report (PermissionDeniedError, before params bind)", async () => {

@@ -37,7 +37,8 @@ export type DataSourceModule =
   | "pos" // PHASE-016: the pos module query surface (Z-report contracts)
   | "distribution" // PHASE-017: the distribution query surface (settlements/van/routes)
   | "manufacturing" // PHASE-018: the manufacturing query surface (production cost/genealogy/QC)
-  | "crm"; // PHASE-019: the CRM query surface (contract revenue schedule / time billing)
+  | "crm" // PHASE-019: the CRM query surface (contract revenue schedule / time billing)
+  | "fixed_assets"; // PHASE-026: the fixed_assets query surface (asset register/schedule/movements)
 
 export interface DataSourceDecl {
   readonly module: DataSourceModule;
@@ -162,6 +163,16 @@ export interface ReportParams {
   readonly contractId?: string;
   /** PHASE-019 (industry): the project of `services.time_billing_summary`. */
   readonly projectId?: string;
+  /** PHASE-026 (fixed assets): the category of the asset-register/schedule filters. */
+  readonly categoryId?: string;
+  /** PHASE-026 (fixed assets): the custodian of the asset-register filter. */
+  readonly custodianUserId?: string;
+  /** PHASE-026 (fixed assets): the depreciation method filter (schedule). */
+  readonly method?: string;
+  /** PHASE-026 (fixed assets): the movement kind filter (movements). */
+  readonly movementKind?: string;
+  /** PHASE-026 (fixed assets): the projection fiscal period (schedule). */
+  readonly fiscalPeriodId?: string;
   readonly customerId?: string;
   readonly supplierId?: string;
   readonly itemId?: string;

@@ -1858,3 +1858,92 @@ export function localizedProjectStatus(d: Dictionary, status: string): string {
   };
   return map[status] ?? status;
 }
+
+// ---------------------------------------------------------------------------
+// PHASE-026 (T13-UI) — fixed assets & depreciation vocabulary + the module
+// error registry (the manufacturing precedent: known contract codes get a
+// localized message; unknown codes fall back to localizedApiError).
+// ---------------------------------------------------------------------------
+
+/** Asset register statuses (DATA_DICTIONARY §9 asset_status). */
+export function localizedAssetStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    ACTIVE: d.faStatusActive,
+    FULLY_DEPRECIATED: d.faStatusFullyDepreciated,
+    DISPOSED: d.faStatusDisposed,
+    WRITTEN_OFF: d.faStatusWrittenOff,
+  };
+  return map[status] ?? status;
+}
+
+/** Depreciation methods (the §9 enum is exhaustive — three, no more). */
+export function localizedDepreciationMethod(d: Dictionary, method: string): string {
+  const map: Record<string, string> = {
+    STRAIGHT_LINE: d.faMethodSl,
+    DECLINING_BALANCE: d.faMethodDb,
+    UNITS_OF_PRODUCTION: d.faMethodUop,
+  };
+  return map[method] ?? method;
+}
+
+/** Disposal kinds (SALE/SCRAP — the disposal-kind §9 enum). */
+export function localizedDisposalKind(d: Dictionary, kind: string): string {
+  const map: Record<string, string> = {
+    SALE: d.faDispKindSale,
+    SCRAP: d.faDispKindScrap,
+  };
+  return map[kind] ?? kind;
+}
+
+/** Fixed-assets module error mapping (BR-041..044 packs + engine failures). */
+export function localizedFixedAssetsError(
+  d: Dictionary,
+  error: ApiErrorBody,
+  retryAfterSeconds?: number,
+): string {
+  switch (error.code) {
+    case "ASSET_CATEGORY_NOT_FOUND":
+    case "ASSET_NOT_FOUND":
+    case "DEPRECIATION_RUN_NOT_FOUND":
+    case "ASSET_DISPOSAL_NOT_FOUND":
+    case "ASSET_REVALUATION_NOT_FOUND":
+      return d.errorsNotFound;
+    case "ASSET_CATEGORY_CODE_TAKEN":
+      return d.faErrCategoryCodeTaken;
+    case "ASSET_CODE_TAKEN":
+      return d.faErrAssetCodeTaken;
+    case "ASSET_IMMUTABLE_FIELDS":
+      return d.faErrAssetImmutable;
+    case "PURPOSE_NOT_MAPPED":
+      return d.faErrPurposesNotMapped;
+    case "INVALID_AMOUNT":
+    case "SALVAGE_EXCEEDS_COST":
+      return d.faErrInvalidAmount;
+    case "UOP_UNITS_REQUIRED":
+      return d.faErrUopUnitsRequired;
+    case "IMMUTABLE_DOCUMENT":
+      return d.faErrImmutableDocument;
+    case "RUN_ALREADY_POSTED":
+      return d.faErrRunNotDraft;
+    case "RUN_PERIOD_DUPLICATE":
+      return d.faErrRunDuplicate;
+    case "PERIOD_LOCKED":
+      return d.faErrPeriodLocked;
+    case "NBV_FLOOR_VIOLATION":
+      return d.faErrNbvFloor;
+    case "DISPOSAL_STATE_INVALID":
+      return d.faErrDisposalState;
+    case "DISPOSAL_SOD_VIOLATION":
+      return d.faErrDisposalSod;
+    case "DISPOSAL_PROCEEDS_INVALID":
+      return d.faErrDisposalProceeds;
+    case "REVALUATION_STATE_INVALID":
+      return d.faErrRevalState;
+    case "CAPITALIZATION_STATE_INVALID":
+      return d.faErrCapitalizeState;
+    case "ASSET_DISPOSED_REUSE":
+      return d.faErrAssetDisposedReuse;
+    default:
+      return localizedApiError(d, error, retryAfterSeconds);
+  }
+}

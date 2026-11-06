@@ -34,7 +34,10 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // legal_hold + tenant_offboarding + purged_tenants + the per-table
     // purge_path RLS policies + the audit-guard purge exception; the
     // audit-review indexes — T4/T8/T11).
-    expect(files.at(-1)?.tag).toBe("0036_security_hardening");
+    // PHASE-026: 0037_fixed_assets (the fixed_assets module per DR-002
+    // option A — six tenant tables + append-only 🔒 depreciation_lines +
+    // the six v2.0 CoA purposes + 13 permission seeds + the RC-10 kind).
+    expect(files.at(-1)?.tag).toBe("0037_fixed_assets");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

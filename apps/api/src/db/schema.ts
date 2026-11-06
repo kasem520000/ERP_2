@@ -5178,3 +5178,222 @@ export const purgedTenants = pgTable(
     uniqueIndex("uq_purged_tenants_hash").on(table.hashedTenantId),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// fixed_assets (PHASE-026 — migration 0037; DR-002 option A). Six tenant-
+// owned tables, all RLS'd; depreciation_lines is append-only 🔒 (INV-003
+// pattern: SELECT/INSERT grants + the erp.depreciation_lines_guard trigger;
+// the offboarding purge path admits DELETE only under erp.purge_mode).
+// ---------------------------------------------------------------------------
+
+/** Asset categories (T2): tenant-scoped code, bilingual names, life/method
+ * defaults, and the three purpose links (BR-041: unusable until all three
+ * resolve to active accounts — the category service checks at create/
+ * update, first asset use, and every posting, fail-closed). */
+export const assetCategories = pgTable(
+  "asset_categories",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    nameAr: text("name_ar").notNull(),
+    usefulLifeMonthsDefault: integer("useful_life_months_default").notNull(),
+    depreciationMethodDefault: text("depreciation_method_default")
+      .notNull()
+      .default("STRAIGHT_LINE"),
+    assetPurposeKey: text("asset_purpose_key").notNull().default("FIXED_ASSET"),
+    accumDepreciationPurposeKey: text("accum_depreciation_purpose_key")
+      .notNull()
+      .default("ACCUM_DEPRECIATION"),
+    expensePurposeKey: text("expense_purpose_key").notNull().default("DEPRECIATION_EXPENSE"),
+    active: boolean("active").notNull().default(true),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_asset_categories_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_asset_categories_tenant_code").on(table.tenantId, table.code),
+    index("ix_asset_categories_tenant_active").on(table.tenantId, table.active),
+  ],
+);
+
+/** The asset register (T3): code (tenant-scoped natural key), category,
+ * acquisition date/cost, salvage floor, life/method, branch/custodian,
+ * status machine (asset_status §9). opening_accumulated is the opening-
+ * variant accumulated-to-date (G-21 opening leg). NBV = cost −
+ * opening_accumulated − Σ posted lines ≥ salvage (INV-023). */
+export const assets = pgTable(
+  "assets",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    nameAr: text("name_ar").notNull(),
+    categoryId: uuid("category_id").notNull(),
+    acquisitionDate: date("acquisition_date").notNull(),
+    cost: numeric("cost", { precision: 19, scale: 4 }).notNull(),
+    salvageValue: numeric("salvage_value", { precision: 19, scale: 4 })
+      .notNull()
+      .default("0"),
+    openingAccumulated: numeric("opening_accumulated", { precision: 19, scale: 4 })
+      .notNull()
+      .default("0"),
+    usefulLifeMonths: integer("useful_life_months").notNull(),
+    depreciationMethod: text("depreciation_method").notNull().default("STRAIGHT_LINE"),
+    totalEstimatedUnits: numeric("total_estimated_units", { precision: 19, scale: 6 }),
+    branchId: uuid("branch_id").notNull(),
+    custodianUserId: uuid("custodian_user_id"),
+    status: text("status").notNull().default("ACTIVE"),
+    sourceType: text("source_type"),
+    sourceId: uuid("source_id"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+    disposedAt: timestamp("disposed_at", { withTimezone: true, mode: "string" }),
+    writtenOffAt: timestamp("written_off_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("uq_assets_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_assets_tenant_code").on(table.tenantId, table.code),
+    index("ix_assets_tenant_cat_status_branch").on(
+      table.tenantId,
+      table.categoryId,
+      table.status,
+      table.branchId,
+    ),
+    index("ix_assets_tenant_custodian").on(table.tenantId, table.custodianUserId),
+    index("ix_assets_tenant_source").on(table.tenantId, table.sourceType, table.sourceId),
+  ],
+);
+
+/** Monthly depreciation batches (T6/T7): ONE per (tenant, fiscal period)
+ * (BR-042; the UNIQUE is the dedupe — second assembly same period → 409).
+ * DRAFT assembly (bounded pg-boss job, ADR-0008) → explicit POST (G-22).
+ * Reversal is engine-only (INV-014): counter-entry + reversed_at; the
+ * append-only lines stay for audit. */
+export const depreciationRuns = pgTable(
+  "depreciation_runs",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    fiscalPeriodId: uuid("fiscal_period_id").notNull(),
+    status: text("status").notNull().default("DRAFT"),
+    assetCount: integer("asset_count").notNull().default(0),
+    totalAmount: numeric("total_amount", { precision: 19, scale: 4 })
+      .notNull()
+      .default("0"),
+    assemblyJobId: text("assembly_job_id"),
+    assembledAt: timestamp("assembled_at", { withTimezone: true, mode: "string" }),
+    assembledBy: uuid("assembled_by"),
+    postedAt: timestamp("posted_at", { withTimezone: true, mode: "string" }),
+    postedBy: uuid("posted_by"),
+    journalEntryId: uuid("journal_entry_id"),
+    reversalJournalEntryId: uuid("reversal_journal_entry_id"),
+    reversedAt: timestamp("reversed_at", { withTimezone: true, mode: "string" }),
+    reversalReason: text("reversal_reason"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_depreciation_runs_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_depreciation_runs_tenant_period").on(
+      table.tenantId,
+      table.fiscalPeriodId,
+    ),
+    index("ix_depreciation_runs_tenant_status").on(table.tenantId, table.status),
+  ],
+);
+
+/** Append-only 🔒 per-asset run lines (T6 — INV-003 pattern): one line per
+ * (run, asset); period_units is the manual UoP usage; accumulated_amount
+ * is the asset accumulated AFTER the line (the NBV floor proof chain). */
+export const depreciationLines = pgTable(
+  "depreciation_lines",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    runId: uuid("run_id").notNull(),
+    assetId: uuid("asset_id").notNull(),
+    lineNo: integer("line_no").notNull(),
+    periodUnits: numeric("period_units", { precision: 19, scale: 6 }),
+    periodAmount: numeric("period_amount", { precision: 19, scale: 4 }).notNull(),
+    accumulatedAmount: numeric("accumulated_amount", { precision: 19, scale: 4 }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_depreciation_lines_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_depreciation_lines_run_asset").on(table.runId, table.assetId),
+    index("ix_depreciation_lines_tenant_asset").on(table.tenantId, table.assetId),
+  ],
+);
+
+/** SALE/SCRAP disposal documents (T9): official disposal_no (numbering
+ * service, INV-021), frozen NBV/accumulated snapshots, gain_loss = proceeds
+ * − NBV (G-23 with the MANDATORY loss mirror). The §4 SoD approval
+ * (second user) is service-enforced + audited; posting locks the asset. */
+export const assetDisposals = pgTable(
+  "asset_disposals",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    assetId: uuid("asset_id").notNull(),
+    disposalNo: text("disposal_no"),
+    kind: text("kind").notNull(),
+    disposalDate: date("disposal_date").notNull(),
+    proceeds: numeric("proceeds", { precision: 19, scale: 4 }).notNull().default("0"),
+    netBookValue: numeric("net_book_value", { precision: 19, scale: 4 }).notNull(),
+    accumulatedSnapshot: numeric("accumulated_snapshot", { precision: 19, scale: 4 }).notNull(),
+    gainLoss: numeric("gain_loss", { precision: 19, scale: 4 }).notNull(),
+    status: text("status").notNull().default("DRAFT"),
+    approvedBy: uuid("approved_by"),
+    approvedAt: timestamp("approved_at", { withTimezone: true, mode: "string" }),
+    postedAt: timestamp("posted_at", { withTimezone: true, mode: "string" }),
+    postedBy: uuid("posted_by"),
+    journalEntryId: uuid("journal_entry_id"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_asset_disposals_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_asset_disposals_tenant_no")
+      .on(table.tenantId, table.disposalNo)
+      .where(sql`${table.disposalNo} IS NOT NULL`),
+    index("ix_asset_disposals_tenant_asset").on(table.tenantId, table.assetId),
+    index("ix_asset_disposals_tenant_status_date").on(
+      table.tenantId,
+      table.status,
+      table.disposalDate,
+    ),
+  ],
+);
+
+/** Audited revaluations (T8 — BR-044): the NBV delta posts to
+ * REVALUATION_RESERVE (never P&L), both directions golden-tested; reason
+ * mandatory; subsequent runs compute on the revalued basis. */
+export const assetRevaluations = pgTable(
+  "asset_revaluations",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    assetId: uuid("asset_id").notNull(),
+    revaluationDate: date("revaluation_date").notNull(),
+    newGrossValue: numeric("new_gross_value", { precision: 19, scale: 4 }).notNull(),
+    newAccumulated: numeric("new_accumulated", { precision: 19, scale: 4 }).notNull(),
+    delta: numeric("delta", { precision: 19, scale: 4 }).notNull(),
+    status: text("status").notNull().default("DRAFT"),
+    reason: text("reason").notNull(),
+    postedAt: timestamp("posted_at", { withTimezone: true, mode: "string" }),
+    postedBy: uuid("posted_by"),
+    journalEntryId: uuid("journal_entry_id"),
+  },
+  (table) => [
+    uniqueIndex("uq_asset_revaluations_id_tenant").on(table.id, table.tenantId),
+    index("ix_asset_revaluations_tenant_asset").on(table.tenantId, table.assetId),
+  ],
+);

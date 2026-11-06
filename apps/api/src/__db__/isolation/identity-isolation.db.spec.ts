@@ -72,6 +72,14 @@ const NO_UPDATE_GRANT = new Set([
   // INSERT + SELECT only (grants) — every decrypt/sign is append-only
   // history; retention is the DELETE-granted sweep.
   "e_invoicing_certificate_usage",
+  // PHASE-026 (migration 0037): the per-asset depreciation lines are
+  // append-only 🔒 (INV-003 pattern): UPDATE is grant-denied outright
+  // (proven here); DELETE is grant-CAPABLE but policy-owned by the
+  // erp.depreciation_lines_guard trigger (posted-run lines are immutable
+  // history — DELETE passes only for purge_mode or DRAFT-run assembly
+  // resets). The column fallback below (updated_at) exists on the table,
+  // so the A4 denial proves the grant shape directly.
+  "depreciation_lines",
 ]);
 
 /** Fixture rows seeded per tenant (A2's total-count expectation). The
@@ -1811,6 +1819,89 @@ async function seedFixtures(superuser: {
     [TENANT_A, TENANT_B],
   );
 
+  // PHASE-026 fixtures (migration 0037): the fixed-assets cluster — one
+  // FK-consistent row per registered table per tenant (category → the
+  // tenant's own branch/period/asset chain; the B rows double as the A4/A7
+  // foreign probe targets). All money shapes honor the migration CHECKs
+  // (cost ≥ 0, salvage ≤ cost, opening ≤ cost − salvage, period_amount > 0,
+  // revaluation basis ≥ 0).
+  await superuser.query(
+    `INSERT INTO asset_categories (id, tenant_id, code, name, name_ar,
+        useful_life_months_default, depreciation_method_default, asset_purpose_key,
+        accum_depreciation_purpose_key, expense_purpose_key, active)
+     VALUES
+       ('fa0a0a0a-0000-4000-8000-000000000001', $1, 'VEH', 'Vehicles', 'مركبات',
+        60, 'STRAIGHT_LINE', 'FIXED_ASSET', 'ACCUM_DEPRECIATION', 'DEPRECIATION_EXPENSE', true),
+       ('fa0a0a0a-0000-4000-8000-000000000002', $2, 'VEH', 'Vehicles', 'مركبات',
+        60, 'STRAIGHT_LINE', 'FIXED_ASSET', 'ACCUM_DEPRECIATION', 'DEPRECIATION_EXPENSE', true)
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO assets (id, tenant_id, code, name, name_ar, category_id,
+        acquisition_date, cost, salvage_value, opening_accumulated, useful_life_months,
+        depreciation_method, branch_id, status)
+     VALUES
+       ('fa1a1a1a-0000-4000-8000-000000000001', $1, 'A-ISO-001', 'Isolation truck', 'شاحنة العزل',
+        'fa0a0a0a-0000-4000-8000-000000000001', '2026-01-15', 12000, 0, 0, 60,
+        'STRAIGHT_LINE', 'abababab-0000-4000-8000-000000000001', 'ACTIVE'),
+       ('fa1a1a1a-0000-4000-8000-000000000002', $2, 'A-ISO-001', 'Isolation truck', 'شاحنة العزل',
+        'fa0a0a0a-0000-4000-8000-000000000002', '2026-01-15', 12000, 0, 0, 60,
+        'STRAIGHT_LINE', 'abababab-0000-4000-8000-000000000002', 'ACTIVE')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO depreciation_runs (id, tenant_id, fiscal_period_id, status,
+        asset_count, total_amount)
+     VALUES
+       ('fa2a2a2a-0000-4000-8000-000000000001', $1,
+        'c2c2c2c2-0000-4000-8000-000000000001', 'DRAFT', 1, 200),
+       ('fa2a2a2a-0000-4000-8000-000000000002', $2,
+        'c2c2c2c2-0000-4000-8000-000000000002', 'DRAFT', 1, 200)
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO depreciation_lines (id, tenant_id, run_id, asset_id, line_no,
+        period_amount, accumulated_amount)
+     VALUES
+       ('fa3a3a3a-0000-4000-8000-000000000001', $1,
+        'fa2a2a2a-0000-4000-8000-000000000001', 'fa1a1a1a-0000-4000-8000-000000000001',
+        1, 200, 200),
+       ('fa3a3a3a-0000-4000-8000-000000000002', $2,
+        'fa2a2a2a-0000-4000-8000-000000000002', 'fa1a1a1a-0000-4000-8000-000000000002',
+        1, 200, 200)
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO asset_disposals (id, tenant_id, asset_id, kind, disposal_date,
+        proceeds, net_book_value, accumulated_snapshot, gain_loss, status)
+     VALUES
+       ('fa4a4a4a-0000-4000-8000-000000000001', $1,
+        'fa1a1a1a-0000-4000-8000-000000000001', 'SCRAP', '2026-06-30',
+        0, 11800, 200, -11800, 'DRAFT'),
+       ('fa4a4a4a-0000-4000-8000-000000000002', $2,
+        'fa1a1a1a-0000-4000-8000-000000000002', 'SCRAP', '2026-06-30',
+        0, 11800, 200, -11800, 'DRAFT')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO asset_revaluations (id, tenant_id, asset_id, revaluation_date,
+        new_gross_value, new_accumulated, delta, status, reason)
+     VALUES
+       ('fa5a5a5a-0000-4000-8000-000000000001', $1,
+        'fa1a1a1a-0000-4000-8000-000000000001', '2026-06-15',
+        13000, 200, 1000, 'DRAFT', 'iso fixture'),
+       ('fa5a5a5a-0000-4000-8000-000000000002', $2,
+        'fa1a1a1a-0000-4000-8000-000000000002', '2026-06-15',
+        13000, 200, 1000, 'DRAFT', 'iso fixture')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+
   // -- seedFixtures end --
 
 }
@@ -2187,6 +2278,31 @@ const OWN_ROW: Record<string, [string, string]> = {
   billing_payouts: [
     "a8a8a8a8-0000-4000-8000-000000000001",
     "a8a8a8a8-0000-4000-8000-000000000002",
+  ],
+  // PHASE-026 fixed-assets cluster (migration 0037): the fa-prefixed
+  // hex ids (fa0=categories, fa1=assets, fa2=runs, fa3=lines,
+  // fa4=disposals, fa5=revaluations — the B row doubles as the A4/A7
+  // foreign probe target).
+  asset_categories: [
+    "fa0a0a0a-0000-4000-8000-000000000001",
+    "fa0a0a0a-0000-4000-8000-000000000002",
+  ],
+  assets: ["fa1a1a1a-0000-4000-8000-000000000001", "fa1a1a1a-0000-4000-8000-000000000002"],
+  depreciation_runs: [
+    "fa2a2a2a-0000-4000-8000-000000000001",
+    "fa2a2a2a-0000-4000-8000-000000000002",
+  ],
+  depreciation_lines: [
+    "fa3a3a3a-0000-4000-8000-000000000001",
+    "fa3a3a3a-0000-4000-8000-000000000002",
+  ],
+  asset_disposals: [
+    "fa4a4a4a-0000-4000-8000-000000000001",
+    "fa4a4a4a-0000-4000-8000-000000000002",
+  ],
+  asset_revaluations: [
+    "fa5a5a5a-0000-4000-8000-000000000001",
+    "fa5a5a5a-0000-4000-8000-000000000002",
   ],
 };
 
@@ -2712,6 +2828,40 @@ const MISMATCHED_INSERT: Record<string, string> = {
   tenant_offboarding: `INSERT INTO tenant_offboarding (id, tenant_id, status, requested_by)
      VALUES ('a9a9a9a9-3000-4000-8000-000000000003', $1, 'REQUESTED',
        'eeeeeeee-0000-4000-8000-000000000001')`,
+  // PHASE-026 (migration 0037): the fixed-assets cluster. FK columns point
+  // at the ATTACKER tenant's (B's) own isolation fixtures so the composite
+  // tenant FKs stay satisfied and the RLS WITH CHECK is the isolated
+  // rejection (the partners pattern — foreign tenant id, own-tenant refs).
+  asset_categories: `INSERT INTO asset_categories (id, tenant_id, code, name, name_ar,
+        useful_life_months_default, depreciation_method_default, asset_purpose_key,
+        accum_depreciation_purpose_key, expense_purpose_key)
+     VALUES ('fa0a0a0a-3000-4000-8000-000000000003', $1, 'ATK-FA', 'Attack Category', 'فئة هجوم',
+       36, 'STRAIGHT_LINE', 'FIXED_ASSET', 'ACCUM_DEPRECIATION', 'DEPRECIATION_EXPENSE')`,
+  assets: `INSERT INTO assets (id, tenant_id, code, name, name_ar, category_id,
+        acquisition_date, cost, salvage_value, opening_accumulated, useful_life_months,
+        depreciation_method, branch_id, status)
+     VALUES ('fa1a1a1a-3000-4000-8000-000000000003', $1, 'ATK-ASSET', 'Attack Asset', 'أصل هجوم',
+       'fa0a0a0a-0000-4000-8000-000000000002', '2026-01-15', 12000, 0, 0, 60,
+       'STRAIGHT_LINE', 'abababab-0000-4000-8000-000000000002', 'ACTIVE')`,
+  depreciation_runs: `INSERT INTO depreciation_runs (id, tenant_id, fiscal_period_id, status,
+        asset_count, total_amount)
+     VALUES ('fa2a2a2a-3000-4000-8000-000000000003', $1,
+       'c2c2c2c2-0000-4000-8000-000000000002', 'DRAFT', 0, 0)`,
+  depreciation_lines: `INSERT INTO depreciation_lines (id, tenant_id, run_id, asset_id, line_no,
+        period_amount, accumulated_amount)
+     VALUES ('fa3a3a3a-3000-4000-8000-000000000003', $1,
+       'fa2a2a2a-0000-4000-8000-000000000002', 'fa1a1a1a-0000-4000-8000-000000000002',
+       1, 200, 200)`,
+  asset_disposals: `INSERT INTO asset_disposals (id, tenant_id, asset_id, kind, disposal_date,
+        proceeds, net_book_value, accumulated_snapshot, gain_loss, status)
+     VALUES ('fa4a4a4a-3000-4000-8000-000000000003', $1,
+       'fa1a1a1a-0000-4000-8000-000000000002', 'SCRAP', '2026-06-30',
+       0, 11800, 200, -11800, 'DRAFT')`,
+  asset_revaluations: `INSERT INTO asset_revaluations (id, tenant_id, asset_id, revaluation_date,
+        new_gross_value, new_accumulated, delta, status, reason)
+     VALUES ('fa5a5a5a-3000-4000-8000-000000000003', $1,
+       'fa1a1a1a-0000-4000-8000-000000000002', '2026-06-15',
+       13000, 200, 1000, 'DRAFT', 'attack fixture')`,
 };
 
 beforeAll(async () => {

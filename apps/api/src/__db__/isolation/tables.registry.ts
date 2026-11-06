@@ -273,6 +273,22 @@ export const TENANT_TABLES_REGISTRY: readonly RegisteredTenantTable[] = [
   // tenant in the purge it tracks; purged_tenants is platform-owned and
   // not in this registry).
   { table: "tenant_offboarding" },
+
+  // PHASE-026 fixed-assets cluster (migration 0037): the asset categories
+  // (BR-041 purpose links), the asset register, the monthly depreciation
+  // runs + their append-only 🔒 lines (UPDATE grant-denied; DELETE is
+  // grant-capable but POLICY-OWNED by the erp.depreciation_lines_guard
+  // trigger — posted-run lines never leave; DELETE passes only for
+  // purge_mode or DRAFT-run assembly resets), the disposal documents, and
+  // the audited revaluations. Everything else is status-lifecycled — no
+  // delete grants on the rest of the cluster (deactivation is the category
+  // delete; disposals are documents).
+  { table: "asset_categories" },
+  { table: "assets" },
+  { table: "depreciation_runs" },
+  { table: "depreciation_lines", deleteGranted: true },
+  { table: "asset_disposals" },
+  { table: "asset_revaluations" },
 ];
 
 export const TENANT_TABLE_NAMES: readonly string[] = TENANT_TABLES_REGISTRY.map(

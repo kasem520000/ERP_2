@@ -1,6 +1,6 @@
 # Period Closing
 
-> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-11-07
 
 Fiscal calendar, period states, close checklist, and year-end procedures.
 
@@ -28,6 +28,9 @@ The close workspace renders the checklist from live checks:
 5. FX revaluation run or explicitly waived (multi-currency tenants).
 6. Stock counts pending variance review: zero (or waived with reason).
 7. Tax summary for the period verified (VAT return draft matches GL tax accounts).
+8. Depreciation run POSTED for the closing period (advisory, PHASE-026 — a DRAFT or
+   missing run warns, never blocks: late-registered assets legitimately depreciate in a
+   later period; the item is NOT_APPLICABLE when the tenant holds no live assets).
 
 Closing actions: mark checklist reviewed → set `SOFT_CLOSED` → (after final review, e.g.,
 audit adjustments) set `LOCKED`. The period may be re-opened only by

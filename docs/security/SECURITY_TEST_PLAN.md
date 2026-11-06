@@ -1,6 +1,6 @@
 # Security Test Plan
 
-> **Status:** STABLE · **Owner:** Security Architecture & Quality Engineering · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Security Architecture & Quality Engineering · **Updated:** 2026-11-07
 
 The security testing program, phase-mapped. Security is CI-gated from PHASE-001 — not a
 PHASE-024 afterthought; PHASE-024 hardens what earlier phases built and adds external
@@ -57,6 +57,7 @@ report ([../planning/PHASE_ACCEPTANCE_CRITERIA.md](../planning/PHASE_ACCEPTANCE_
 | PHASE-013 | reporting: report run with foreign branch filter; export of foreign run id (A11) |
 | PHASE-016 | POS: terminal of branch X issuing for branch Y |
 | PHASE-020+ | sync: device of tenant A pushing commands referencing tenant B entities (→ rejection, no effects) |
+| PHASE-026 | fixed assets: asset create with foreign `category_id`/`branch_id`/`custodian_user_id` (custodian is membership-scoped — a foreign-tenant user 404s like an unknown one); disposal/revaluation drafted on a foreign `asset_id`; a depreciation run assembled against a foreign `fiscal_period_id` — typed 404 rejection (`ASSET_CATEGORY_NOT_FOUND`/`BRANCH_NOT_FOUND`/`USER_NOT_FOUND`/`ASSET_NOT_FOUND`/`PERIOD_NOT_FOUND`), zero partial creation (S-04; A7) — the six tables also enter the A1–A10 isolation registry (incl. the append-only `depreciation_lines` grant proof) |
 
 All cross-tenant id enumeration MUST return **404** (no existence leak — A7).
 

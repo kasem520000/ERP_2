@@ -1,6 +1,6 @@
 # Reconciliation
 
-> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-11-07
 
 What must reconcile to what, how it is verified, and what happens on drift. Every check
 below is (a) a scheduled job producing a reconciliation record, (b) part of period close
@@ -19,7 +19,7 @@ checklist, and (c) backed by an automated test with seeded drift scenarios.
 | 7 | Tax summaries per document | GL tax accounts (`VAT_PAYABLE`/`VAT_RECOVERABLE`/`VAT_EXPENSED`) | INV-012 |
 | 8 | GRNI (received-not-invoiced) register | `GRNI` account balance | INV-010 |
 | 9 | Payroll/salary accruals (if used) | Accrued liability account | deferred |
-| 10 | Fixed assets register → depreciation | FA accounts (post-MVP) | deferred |
+| 10 | Fixed assets register → depreciation (RC-10, `FIXED_ASSETS` kind) | Per category account: Σ gross current value = `FIXED_ASSET` balance; Σ accumulated = `ACCUM_DEPRECIATION` balance (INV-023) | PHASE-026 |
 
 ## 2. Verification mechanics
 
@@ -40,7 +40,8 @@ checklist, and (c) backed by an automated test with seeded drift scenarios.
    discipline (RISK-009: Sev-1 if ledger-vs-subledger drift).
 2. Fixes are **always additive documents** (reversals/adjustments) or configuration
    corrections with audit — never UPDATEs that "force-balance".
-3. A period cannot be `LOCKED` with a `BROKEN` core check (AR/AP/inventory/VAT/cash).
+3. A period cannot be `LOCKED` with a `BROKEN` core check (AR/AP/inventory/VAT/cash, plus GRNI, WIP and
+   fixed assets since their registering phases — PC-04).
 4. Postmortem: drift above materiality threshold (per tenant, default 0) requires a
    written incident note attached to the reconciliation record.
 

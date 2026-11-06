@@ -11,6 +11,7 @@ import { AutomotiveQueriesService } from "./industry/automotive-queries";
 import { DistributionQueriesService } from "./industry/distribution-queries";
 import { ManufacturingQueriesService } from "./industry/manufacturing-queries";
 import { CrmQueriesService } from "./industry/crm-queries";
+import { FixedAssetsQueriesService } from "./fixed-assets/fixed-assets-queries";
 import { TreasuryQueriesService } from "../../treasury/application/treasury-queries";
 import { PartnerQueriesService } from "../../partners/application/partner-queries";
 import { TaxQueriesService } from "../../tax/application/tax-queries";
@@ -46,6 +47,8 @@ export interface ReportingServices {
   manufacturing: ManufacturingQueriesService;
   /** PHASE-019 · the CRM query surface (contract revenue schedule + revenue GL tie + the AR overdue open-item buckets, the time-billing summary). */
   crm: CrmQueriesService;
+  /** PHASE-026 · the fixed_assets query surface (as-of asset register + fa-cost-tie/fa-accum-tie, depreciation schedule, movements with journal provenance). */
+  fixedAssets: FixedAssetsQueriesService;
   treasury: TreasuryQueriesService;
   partners: PartnerQueriesService;
   tax: TaxQueriesService;
@@ -71,6 +74,7 @@ export function reportingServices(): ReportingServices {
       distribution: new DistributionQueriesService(),
       manufacturing: new ManufacturingQueriesService(),
       crm: new CrmQueriesService(),
+      fixedAssets: new FixedAssetsQueriesService(),
       treasury: new TreasuryQueriesService(),
       partners: new PartnerQueriesService(),
       tax: new TaxQueriesService(),

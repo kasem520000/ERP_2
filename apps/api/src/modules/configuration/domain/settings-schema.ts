@@ -73,6 +73,22 @@ export const SETTINGS_REGISTRY: Readonly<Record<string, SettingDefinition>> = Ob
     default: false,
     description: "Tenant toggle enabling platform support sessions (matrix §7 rule 1).",
   }),
+  // PHASE-024 T4 (ADR-0015 §4 "mandatory-able per role/plan"): the
+  // tenant-level MFA policy. mode "plan" (default) inherits the plan's
+  // mfa_required_role_keys; mode "custom" overrides it — an explicitly
+  // empty custom list makes MFA optional even when the plan mandates it.
+  // Enforcement lands in the login flow (423 MFA_REQUIRED with
+  // enrollmentRequired until the bootstrap enrollment completes).
+  "identity.mfa.policy": Object.freeze({
+    key: "identity.mfa.policy",
+    schema: z.object({
+      mode: z.enum(["plan", "custom"]),
+      required_roles: z.array(z.string().min(1).max(100)).max(20),
+    }),
+    default: { mode: "plan", required_roles: [] },
+    description:
+      "MFA enforcement policy: inherit the plan's mandatory roles or override with an explicit tenant list.",
+  }),
   // PHASE-014 T8: onboarding journey completion state (Journey A steps
   // A1–A9; skip is honest and resumable — the state records exactly where
   // the tenant stopped, never a fabricated "done").

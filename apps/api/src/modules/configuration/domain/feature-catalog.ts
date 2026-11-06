@@ -29,6 +29,12 @@ export const FEATURE_DEPS: Readonly<Record<string, readonly string[]>> = Object.
   "platform.payouts": ["platform.subscriptions"],
   "platform.admin_console": ["platform.entitlements"],
   "platform.support_access": ["platform.admin_console"],
+  // PHASE-024 (T8/T12 + T4): the security-tooling cluster — registered per
+  // FEATURE_CATALOG §25, platform-provided (permission-gated, never
+  // plan-metered — the platform.support_access precedent).
+  "platform.support_review": ["platform.support_access"],
+  "identity.mfa_policy": ["platform.users_roles"],
+  "audit.review_console": ["platform.audit_trail"],
   "platform.notifications": [],
   "platform.files": [],
   "platform.data_export": ["platform.tenant_lifecycle"],

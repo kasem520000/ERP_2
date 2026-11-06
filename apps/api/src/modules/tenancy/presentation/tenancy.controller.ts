@@ -26,6 +26,7 @@ import { publishTenancyEvent } from "../../configuration/api";
 import { NotFoundError, UnauthenticatedError } from "../../identity/api/identity";
 import { InvalidSettingValueError } from "../../configuration/api";
 import { OnboardingService } from "../application/onboarding-service";
+import { OffboardingService } from "../application/offboarding/offboarding-service";
 import { BranchService } from "../application/branch-service";
 import { SettingsService } from "../application/settings-service";
 import { EntitlementsService } from "../application/entitlements-service";
@@ -97,6 +98,10 @@ function assertIanaTimezone(timezone: string): void {
   }
 }
 
+const offboardingRequestSchema = z.object({
+  confirmName: z.string().min(1).max(200),
+});
+
 @Controller("api/v1/tenancy")
 export class TenancyController {
   constructor(
@@ -107,6 +112,7 @@ export class TenancyController {
     @Inject(SupportAccessService) private readonly support: SupportAccessService,
     @Inject(SubscriptionService) private readonly subscriptions: SubscriptionService,
     @Inject(UsageService) private readonly usage: UsageService,
+    @Inject(OffboardingService) private readonly offboarding: OffboardingService,
   ) {}
 
   // -- profile ---------------------------------------------------------------
@@ -154,6 +160,59 @@ export class TenancyController {
     const identity = requireIdentity(request);
     const input = settingWriteSchema.parse(body);
     return envelope(await this.settings.write(identity.userId, key, input.value));
+  }
+
+  // -- offboarding (PHASE-024 T11; Journey H — the tenant plane) -------------
+
+  /** H1: the owner requests offboarding (typed-name confirmation). */
+  @Post("offboarding/request")
+  @RequirePermissions("tenancy.offboarding.execute")
+  async requestOffboarding(@Req() request: Request, @Body() body: unknown): Promise<unknown> {
+    const identity = requireIdentity(request);
+    if (identity.activeTenantId === null) {
+      throw new NotFoundError("tenant");
+    }
+    const input = offboardingRequestSchema.parse(body);
+    const row = await this.offboarding.request({
+      tenantId: identity.activeTenantId,
+      requestedBy: identity.userId,
+      confirmName: input.confirmName,
+    });
+    return envelope({ status: row.status, graceUntil: row.graceUntil });
+  }
+
+  /** H2: the full export package (tenancy.export.request — the seeded key). */
+  @Post("offboarding/export")
+  @RequirePermissions("tenancy.export.request")
+  async triggerExport(@Req() request: Request): Promise<unknown> {
+    const identity = requireIdentity(request);
+    if (identity.activeTenantId === null) {
+      throw new NotFoundError("tenant");
+    }
+    const result = await this.offboarding.triggerExport({
+      tenantId: identity.activeTenantId,
+      actorId: identity.userId,
+    });
+    return envelope({
+      manifestChecksum: result.manifestChecksum,
+      downloadUrl: result.downloadUrl,
+      artifacts: result.artifacts,
+    });
+  }
+
+  /** H4 edge: the owner cancels during grace. */
+  @Post("offboarding/cancel")
+  @RequirePermissions("tenancy.offboarding.execute")
+  async cancelOffboarding(@Req() request: Request): Promise<unknown> {
+    const identity = requireIdentity(request);
+    if (identity.activeTenantId === null) {
+      throw new NotFoundError("tenant");
+    }
+    await this.offboarding.cancel({
+      tenantId: identity.activeTenantId,
+      actorId: identity.userId,
+    });
+    return envelope({ cancelled: true });
   }
 
   // -- branches ---------------------------------------------------------------

@@ -1,6 +1,6 @@
 # Current State
 
-> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-05
+> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-06
 
 What actually exists in this repository right now. Paired with
 [../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) (phase
@@ -17,7 +17,7 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   status, release strategy, risk register), database (conventions, entity catalog, data
   dictionary, relationships, constraints/indexes, tenant isolation, migration strategy,
   backup/recovery, ERDs, table specs, seeds), product (personas, journeys, workflows,
-  BR-001…056 business rules, industry/feature catalogs — 22 modules, 169 feature keys
+  BR-001…056 business rules, industry/feature catalogs — 22 modules, 172 feature keys
   (131 v1.1 + 38 v2.0) — subscriptions & entitlements,
   configuration engine), accounting (principles, bilingual CoA, posting engine,
   document lifecycle, journal rules with golden postings G-01…G-32, AR/AP, inventory
@@ -44,7 +44,7 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   provider, costing default, ZATCA scope, Yemen scope, observability vendors, and the
   v2.0 expansion set: platform expansion, fixed assets, notes & installments,
   budgeting, payroll scope, consolidation), and this handoff set.
-- **Application code: PHASE-001 … PHASE-023 (all COMPLETE) — the MVP v1.0
+- **Application code: PHASE-001 … PHASE-024 (all COMPLETE) — the MVP v1.0
   release + the industry configuration engine + Point of Sale + the
   automotive/distribution templates + Manufacturing & Production + CRM/Service
   Contracts & Projects + the Offline Synchronization Foundation + the Desktop

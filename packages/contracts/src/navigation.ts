@@ -346,6 +346,20 @@ export const NAV_ITEMS: readonly NavItem[] = [
     archetype: "list-search",
     order: 70,
   },
+  // PHASE-024 T8: the tenant-admin audit review console — permission-gated
+  // only (no featureKey), the settings.support/platform.audit declaration
+  // rule; the cross-tenant console stays at platform/audit.
+  {
+    id: "settings.audit",
+    parentGroup: "settings",
+    label: { ar: "سجل التدقيق", en: "Audit review" },
+    icon: "file-text",
+    route: "/audit",
+    permission: "audit.view",
+    branchScoped: false,
+    archetype: "list-search",
+    order: 75,
+  },
   // partners group — PHASE-006 master data (T11): partner directory + the
   // opening-balance DRAFT capture console. Feature keys are the exact
   // FEATURE_CATALOG strings; permissions the exact seeded matrix keys.

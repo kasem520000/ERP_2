@@ -120,6 +120,25 @@ export function webhookSecret(): string {
   return "local-dev-billing-webhook-secret";
 }
 
+/**
+ * PHASE-024 T6 — S-11 dual-secret window (SECRETS_MANAGEMENT §3
+ * "Zero-downtime dual-secret window"): the signing secrets accepted during
+ * a provider-coordinated rotation — the CURRENT secret first, then the
+ * PREVIOUS one (WEBHOOK_SIGNING_SECRET_PREVIOUS) while the window is
+ * open. Deliveries signed with either secret pass; once the operator
+ * removes the previous secret, only the current one verifies. Drill +
+ * runbook: docs/operations/drills/2026-11-06-secrets-rotation.md,
+ * docs/operations/SECRETS_ROTATION_RUNBOOK.md §4.
+ */
+export function acceptedWebhookSecrets(): readonly string[] {
+  const current = webhookSecret();
+  const previous = env.WEBHOOK_SIGNING_SECRET_PREVIOUS;
+  if (previous === undefined || previous === "" || previous === current) {
+    return [current];
+  }
+  return [current, previous];
+}
+
 export function signWebhook(rawBody: string, atUnixSeconds: number, secret: string): string {
   const mac = createHmac("sha256", secret).update(`${atUnixSeconds}.${rawBody}`).digest("hex");
   return `t=${atUnixSeconds},v1=${mac}`;
@@ -148,6 +167,32 @@ export function verifyWebhookSignature(
     return { ok: false, reason: "mismatch" };
   }
   return { ok: true };
+}
+
+/**
+ * Rotation-aware verification (the ingest path): verify against the
+ * CURRENT secret, then the PREVIOUS one while the dual-secret window is
+ * open. Malformed/stale verdicts are secret-independent and surface
+ * immediately; a signature must match SOME accepted secret or the
+ * delivery is rejected (mismatch — fail closed).
+ */
+export function verifyWebhookSignatureWithRotation(
+  rawBody: string,
+  signatureHeader: string,
+  nowUnixSeconds: number,
+): { ok: true } | { ok: false; reason: "malformed" | "stale" | "mismatch" } {
+  for (const secret of acceptedWebhookSecrets()) {
+    const verdict = verifyWebhookSignature(rawBody, signatureHeader, secret, nowUnixSeconds);
+    if (verdict.ok) {
+      return verdict;
+    }
+    if (verdict.reason !== "mismatch") {
+      // malformed/stale are secret-independent — reject immediately.
+      return verdict;
+    }
+  }
+  // Every accepted secret mismatched (the list is never empty).
+  return { ok: false, reason: "mismatch" };
 }
 
 export function buildWebhookEvent(input: {

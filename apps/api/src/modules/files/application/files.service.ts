@@ -38,6 +38,10 @@ export abstract class FilesStore {
     body: Buffer,
     contentType: string,
   ): Promise<void>;
+  /** PHASE-024 T11: list every object key under a prefix (the purge). */
+  abstract listPrefix(prefix: string): Promise<string[]>;
+  /** PHASE-024 T11: bulk delete (the purge's storage wipe). */
+  abstract deleteObjects(keys: string[]): Promise<void>;
 }
 
 export const FILES_STORE = Symbol("FILES_STORE");
@@ -185,6 +189,21 @@ export class FilesService {
     const key = `${tenantId}/${folder}/${generateUuidV7()}/${safeName}`;
     await this.store.putObject(key, body, "application/octet-stream");
     return key;
+  }
+
+  /**
+   * PHASE-024 T11: every object key under a prefix (the offboarding
+   * purge's storage inventory — counted for the deletion certificate).
+   */
+  async listPrefix(prefix: string): Promise<string[]> {
+    return this.store.listPrefix(prefix);
+  }
+
+  /** PHASE-024 T11: bulk storage delete (the purge's prefix wipe). */
+  async deleteObjects(keys: string[]): Promise<void> {
+    if (keys.length > 0) {
+      await this.store.deleteObjects(keys);
+    }
   }
 }
 

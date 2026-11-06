@@ -28,6 +28,10 @@ agent-ctx/local/
 
 # tool-output artifacts (session-local)
 tool-results/
+# PHASE-024 T7 — locally generated SBOMs (CI `sbom` job uploads the
+# authoritative artifacts; local runs are recorded in
+# docs/operations/dependency-triage-2026-11.md, never committed)
+sbom*.json
 # PHASE-021 desktop export prebuild stash (defense-in-depth — the prebuild's
 # finally-restore removes it; ignored so a crashed run never dirties status)
 .desktop-stash/

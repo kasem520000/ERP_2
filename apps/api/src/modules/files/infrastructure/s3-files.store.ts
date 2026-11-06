@@ -1,4 +1,10 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectsCommand,
+  GetObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { env } from "../../../config/env";
@@ -77,4 +83,41 @@ export class S3FilesStore extends FilesStore {
     );
     log.debug({ action: "put-object", key }, "export object stored");
   }
+  /** PHASE-024 T11: prefix listing (the purge inventory) — paginated. */
+async listPrefix(prefix: string): Promise<string[]> {
+  const client = this.client();
+  const keys: string[] = [];
+  let token: string | undefined;
+  do {
+    const result = await client.send(
+      new ListObjectsV2Command({
+        Bucket: env.S3_BUCKET,
+        Prefix: prefix,
+        ContinuationToken: token,
+      }),
+    );
+    for (const object of result.Contents ?? []) {
+      if (object.Key !== undefined) {
+        keys.push(object.Key);
+      }
+    }
+    token = result.IsTruncated ? result.NextContinuationToken : undefined;
+  } while (token !== undefined);
+  return keys;
+}
+
+/** PHASE-024 T11: bulk delete (the purge's storage wipe) — 1000/key batch. */
+async deleteObjects(keys: string[]): Promise<void> {
+  const client = this.client();
+  for (let index = 0; index < keys.length; index += 1000) {
+    const batch = keys.slice(index, index + 1000);
+    await client.send(
+      new DeleteObjectsCommand({
+        Bucket: env.S3_BUCKET,
+        Delete: { Objects: batch.map((key) => ({ Key: key })) },
+      }),
+    );
+  }
+  log.warn({ action: "delete-objects", count: keys.length }, "storage objects deleted (purge)");
+}
 }

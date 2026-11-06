@@ -22,6 +22,8 @@ import {
   InvalidResetTokenError,
   InvalidTotpCodeError,
   InvitationNotAcceptableError,
+  MfaBootstrapNotEligibleError,
+  MfaEnrollmentRequiredError,
   MfaRequiredError,
   NotFoundError,
   RateLimitedError,
@@ -385,6 +387,13 @@ function domainStatus(error: DomainError): number {
   }
   if (error instanceof MfaRequiredError) {
     return HttpStatus.LOCKED; // 423 per ERROR_MODEL §2
+  }
+  // PHASE-024: the enrollment-gate + bootstrap-eligibility contracts.
+  if (error instanceof MfaEnrollmentRequiredError) {
+    return HttpStatus.LOCKED; // 423 — same family as MFA_REQUIRED
+  }
+  if (error instanceof MfaBootstrapNotEligibleError) {
+    return HttpStatus.CONFLICT; // 409 — conflicts with the account state
   }
   if (
     error instanceof ForbiddenError ||

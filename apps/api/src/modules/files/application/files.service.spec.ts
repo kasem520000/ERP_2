@@ -22,6 +22,12 @@ class FakeStore extends FilesStore {
   putObject(): Promise<void> {
     return Promise.resolve();
   }
+  listPrefix(): Promise<string[]> {
+    return Promise.resolve([]);
+  }
+  deleteObjects(): Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 const TENANT_A = "11111111-1111-4111-8111-111111111111";

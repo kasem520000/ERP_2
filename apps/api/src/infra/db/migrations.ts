@@ -95,6 +95,9 @@ export const MIGRATIONS: readonly string[] = [
   // and the billing payout batches (T6 reconciliation substrate). See
   // 0035_external_integrations.sql.
   "0035_external_integrations",
+  // PHASE-024: 0036_security_hardening.sql (MFA policy substrate + the
+  // offboarding purge path + audit-review indexes — T4/T8/T11).
+  "0036_security_hardening",
 ];
 
 /**

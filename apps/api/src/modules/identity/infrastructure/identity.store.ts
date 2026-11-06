@@ -145,6 +145,8 @@ export interface SessionRow {
   revokedAt: string | null;
   ip: string | null;
   lastSeenAt: string;
+  /** PHASE-024: false only on the enrollment-bootstrap session. */
+  mfaGatePassed: boolean;
 }
 
 export interface NewSession {
@@ -153,6 +155,8 @@ export interface NewSession {
   activeTenantId: string | null;
   expiresAt: string;
   ip?: string;
+  /** PHASE-024: defaults true; the bootstrap passes false. */
+  mfaGatePassed?: boolean;
 }
 
 export async function insertSession(input: NewSession): Promise<SessionRow> {
@@ -165,6 +169,7 @@ export async function insertSession(input: NewSession): Promise<SessionRow> {
       activeTenantId: input.activeTenantId,
       expiresAt: input.expiresAt,
       ip: input.ip,
+      mfaGatePassed: input.mfaGatePassed ?? true,
     })
     .returning();
   return row as SessionRow;
@@ -177,6 +182,28 @@ export async function findSessionByTokenHash(tokenHash: string): Promise<Session
     .where(eq(schema.sessions.tokenHash, tokenHash))
     .limit(1);
   return rows[0] as SessionRow | undefined;
+}
+
+/** Minimal tenant reference a session token resolves to (R-04 hot path). */
+export interface SessionTenantRef {
+  activeTenantId: string | null;
+}
+
+/**
+ * PHASE-024 (R-04): the tenant-rate-limit middleware's ONE indexed query —
+ * active tenant only, no session-row hydration, no expiry re-validation
+ * (the SessionMiddleware/guard chain owns that; a revoked row must not
+ * consume a tenant's burst budget, hence the revoked_at filter). `sessions`
+ * is a global table (no RLS) — a plain app-pool read is correct here.
+ */
+export async function findSessionTenantByTokenHash(
+  tokenHash: string,
+): Promise<SessionTenantRef | undefined> {
+  const result = await db().execute(
+    sql`SELECT active_tenant_id FROM sessions WHERE token_hash = ${tokenHash} AND revoked_at IS NULL LIMIT 1`,
+  );
+  const row = (result.rows as unknown as { active_tenant_id: string | null }[])[0];
+  return row === undefined ? undefined : { activeTenantId: row.active_tenant_id };
 }
 
 export async function findSessionById(id: string): Promise<SessionRow | undefined> {
@@ -233,7 +260,7 @@ export async function listSessionsForTenant(tenantId: string): Promise<SessionRo
     SELECT s.id, s.user_id AS "userId", s.token_hash AS "tokenHash",
            s.active_tenant_id AS "activeTenantId", s.created_at AS "createdAt",
            s.expires_at AS "expiresAt", s.revoked_at AS "revokedAt", s.ip,
-           s.last_seen_at AS "lastSeenAt"
+           s.last_seen_at AS "lastSeenAt", s.mfa_gate_passed AS "mfaGatePassed"
     FROM sessions s
     JOIN memberships m ON m.user_id = s.user_id
     WHERE m.tenant_id = ${tenantId} AND m.status = 'ACTIVE'
@@ -641,4 +668,53 @@ export async function setRecoveryCodes(id: string, hashes: string[]): Promise<vo
     .update(schema.mfaFactors)
     .set({ recoveryCodesHash: hashes })
     .where(eq(schema.mfaFactors.id, id));
+}
+
+// ---------------------------------------------------------------------------
+// PHASE-024 · MFA policy (ADR-0015 §4 enforcement — migration 0036)
+
+/**
+ * The plan-level mandatory role keys for the tenant's CURRENT subscription
+ * (plans.mfa_required_role_keys). Runs inside the ambient tenant scope
+ * (withTenant): subscriptions are tenant-visible, plans are visible to any
+ * authenticated tenant context (the plans select policy).
+ */
+export async function findPlanMfaRequiredRoleKeys(tenantId: string): Promise<string[]> {
+  const tx = tenantTx();
+  const result = await tx.execute(sql`
+    SELECT p.mfa_required_role_keys AS "requiredRoleKeys"
+    FROM subscriptions s
+    JOIN plans p ON p.id = s.plan_id
+    WHERE s.tenant_id = ${tenantId}
+      AND s.status IN ('ACTIVE', 'TRIAL', 'PAST_DUE', 'GRACE_READ_ONLY')
+    ORDER BY s.created_at DESC
+    LIMIT 1
+  `);
+  const row = (result.rows as unknown as { requiredRoleKeys: string[] | null }[])[0];
+  return row?.requiredRoleKeys ?? [];
+}
+
+/**
+ * Flip the enrollment gate on every live session of the user (the TOTP
+ * confirmation inside MfaService.verify) — the proof happened once; all
+ * bootstrap sessions for that user unlock together.
+ */
+export async function passMfaGateForUser(userId: string): Promise<void> {
+  await db().execute(
+    sql`UPDATE sessions SET mfa_gate_passed = true
+        WHERE user_id = ${userId} AND revoked_at IS NULL AND mfa_gate_passed = false`,
+  );
+}
+
+/**
+ * Admin-assisted MFA reset (identity.mfa.admin_reset — SECRETS §3 S-05
+ * emergency column): removes EVERY factor of the target (confirmed AND
+ * pending) so a locked-out user starts clean. Audited by the caller.
+ * Returns the number of factors removed.
+ */
+export async function clearMfaFactorsForUser(userId: string): Promise<number> {
+  const result = await db().execute(
+    sql`DELETE FROM mfa_factors WHERE user_id = ${userId}`,
+  );
+  return result.rowCount ?? 0;
 }

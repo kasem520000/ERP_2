@@ -5,6 +5,7 @@ import { SessionService } from "../../modules/identity/application/session-servi
 import * as store from "../../modules/identity/infrastructure/identity.store";
 import { verifyAccessToken } from "../../modules/sync/application/device-tokens";
 import { setIdentity, type SessionContext } from "../context/session-context";
+import { getCorrelationId } from "../observability/request-context";
 
 /**
  * Session middleware (PHASE-003 T11): resolves the BFF-presented
@@ -20,18 +21,58 @@ import { setIdentity, type SessionContext } from "../context/session-context";
  * and the sync services re-verify the device row (revocation is enforced
  * per request, never by token lifetime alone). Session tokens keep
  * priority when both are presented (the BFF path).
+ *
+ * PHASE-024 (ADR-0015 §4 enforcement): an enrollment-bootstrap session
+ * (mfa_gate_passed = false) is short-circuited to 423 MFA_ENROLLMENT_REQUIRED
+ * outside the MFA enrollment allowlist — the restricted session unlocks
+ * nothing but the enrollment surface + whoami/logout until a valid TOTP
+ * confirmation flips the gate (MfaService.verify).
  */
+
+/** Routes a gated enrollment session may still reach. */
+const MFA_ENROLLMENT_ALLOWLIST: readonly RegExp[] = [
+  /^\/api\/v1\/identity\/mfa(\/|$)/,
+  /^\/api\/v1\/identity\/sessions\/current$/,
+];
+
+/**
+ * Nest's per-route middleware mounting resets `request.path`/`request.url`
+ * to "/" — the ORIGINAL full path survives only on `originalUrl` (query
+ * string stripped; the allowlist anchors on `$`).
+ */
+function routePathOf(request: Request): string {
+  const original = request.originalUrl ?? request.path;
+  return original.split("?")[0] ?? original;
+}
+
 @Injectable()
 export class SessionMiddleware implements NestMiddleware {
   constructor(@Inject(SessionService) private readonly sessions: SessionService) {}
 
-  async use(request: Request, _response: Response, next: NextFunction): Promise<void> {
+  async use(request: Request, response: Response, next: NextFunction): Promise<void> {
     const presented = request.header("x-session-token");
     if (presented !== undefined && presented !== "") {
       try {
         const validation = await this.sessions.validate(presented);
         const user = await store.findUserById(validation.userId);
         if (user !== undefined && user.status !== "DEACTIVATED") {
+          if (
+            validation.mfaGatePassed === false &&
+            !MFA_ENROLLMENT_ALLOWLIST.some((pattern) => pattern.test(routePathOf(request)))
+          ) {
+            // The enrollment gate: same envelope shape the error filter
+            // emits, 423 per the MFA_REQUIRED contract.
+            response.status(423).json({
+              error: {
+                code: "MFA_ENROLLMENT_REQUIRED",
+                message:
+                  "multi-factor enrollment must be completed before this session can proceed",
+                retryable: false,
+                traceId: getCorrelationId() ?? "",
+              },
+            });
+            return;
+          }
           const context: SessionContext = {
             sessionId: validation.sessionId,
             userId: user.id,

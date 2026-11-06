@@ -51,6 +51,9 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   mfa: { group: "navSettings", label: "navMfa" },
   onboarding: { group: "navSettings", label: "navOnboarding" },
   "support-sessions": { group: "navSettings", label: "navSupport" },
+  // -- PHASE-024 T8: the tenant audit review console (registry-driven; this
+  // fallback covers nav-fetch failure — the support-sessions rule).
+  audit: { group: "navSettings", label: "auditReviewTitle" },
   platform: { group: "navPlatformSection", label: "navPlatformConsole" },
   "platform/audit": { group: "navPlatformSection", label: "navPlatformAudit" },
   // -- PHASE-020 (T14): the sync admin surfaces. The nav registry

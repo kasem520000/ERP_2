@@ -1,8 +1,69 @@
 # Changelog
 
-> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-05
+> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-06
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
+
+- 2026-11-06 — **PHASE-024 — Security Hardening & Compliance Review (COMPLETE — the
+  honest split: internal leg evidenced; the external pen-test firm leg infra-gated as
+  the recorded waiver; OQ-009 BLOCKED-EXTERNAL per DR-024-02)**: migration
+  `0036_security_hardening.sql` (schema_version 36; catalog 154→156) — the MFA policy
+  substrate (`plans.mfa_required_role_keys` default '{}' + `sessions.mfa_gate_passed`),
+  the offboarding purge substrate (`tenants.legal_hold`, the `tenant_offboarding` flow
+  state, `purged_tenants` deletion certificates keyed by HMAC-SHA256
+  `hashed_tenant_id`, the audit-review indexes) + the EXPLICIT purge path
+  (command-scoped `purge_path_delete`/`purge_path_update` RLS policies for
+  erp_migrate on every tenant table — NO insert policy, the forged-insert denial
+  proven — + the id-keyed tenants variant + the audit-guard `erp.purge_mode` UPDATE
+  exception; check-rls drift-checks all of it; erp_app grants unchanged everywhere).
+  T4: MFA enforcement per role/plan live (ADR-0015 §4's "mandatory-able later" —
+  plan lists + the `identity.mfa.policy` tenant override where an explicit empty
+  custom list beats a plan mandate; login 423 `MFA_REQUIRED` with
+  `details.enrollmentRequired`; the 15-minute enrollment-bootstrap session — the
+  deadlock-breaker, middleware route-gated `MFA_ENROLLMENT_REQUIRED`, rotation
+  inherits the gate; admin-assisted reset — `identity.mfa.admin_reset`'s first
+  route; the plan lever `PUT /platform/plans/:key/mfa-policy`; the web settings
+  card + login routing; DR-024-01 WebAuthn DEFER post-GA; the matrix spec 9/9 at
+  service AND HTTP level). T11: the offboarding purge END-TO-END (Journey H1–H6) —
+  typed-name request → read-only grace (the subscription GRACE_READ_ONLY reuse,
+  recorded) → the manifest export (per-artifact sha256 + counts + schema_version
+  36; manifest + signed URLs — no zip dep added mid-phase, the deviation recorded)
+  → two-person execution → suspend + the 90-day retention → the daily sweep on
+  `MIGRATE_DATABASE_URL` (NEVER the app pool: FK-topological batched deletes,
+  storage prefix wipe, session severance, audit ANONYMIZATION — tenant/actor/device
+  → NULL, never deletion, the append-only guard holds — tenants → OFFBOARDED, the
+  0-rows verification, the certificate) + legal-hold blocking audited; the staging
+  drill spec 7/7. T5: R-04 per-tenant burst limiter (429 + Retry-After +
+  X-RateLimit; A/B isolation) + R-05 per-account reset flood (uniform 200 kept — no
+  oracle, the email skipped). T9: API + BFF security headers + CSP report-only
+  capture (`CSP_REPORT_ONLY=1` + `/csp-report`) + the M-03 cookie DOM probe. T8:
+  the tenant-admin audit review console (actor/action/correlationId filters + the
+  bounded audited CSV export + `/audit` web screens + NAV). T12: the support-access
+  review report (the ADR-0005 per-tenant fetch off the platform-widened audit
+  index; the explicit gap list: expired-unclosed / zero-action / orphaned-reads).
+  The RLS canary (`erp_rls_denials_total`, */5 no-GUC crown-jewel probes,
+  auto-SEV-1 fatal logging; AppModule queue). T6 drills EXECUTED (S-01 ALTER ROLE
+  + reconnect canary, S-03 envelope dual-accept — `IDENTITY_SECRET_KEY_PREVIOUS`,
+  S-11 webhook dual-secret — `WEBHOOK_SIGNING_SECRET_PREVIOUS`, S-10 cert rotation
+  against the fake-authority harness only) + the runbook + the drill record. T7
+  triage: lockfile lint clean (11 manifests), `pnpm audit --prod` **0 CRITICAL**
+  (the blocking rule holds; 3 high + 1 moderate recorded as SLA-clock findings),
+  SBOMs server + web (the pnpm-9 invocation fix documented), the gitleaks local
+  substitute clean + the CI job authoritative. T13: the threat-model update cycle
+  (9 new boundary rows, S-14/15/16, residual-risk owners). T14: the public
+  disclosure policy page AR+EN + the login link. The findings log
+  `docs/operations/security-findings.md` (SF-024-001..022) opens as the living
+  artifact — every internal finding fixed in-phase with regression links or open
+  with SLA clocks + rationale; 0 Critical open at exit. FEATURE_CATALOG §25 +3
+  platform-provided keys (`platform.support_review`, `identity.mfa_policy`,
+  `audit.review_console` — never plan-metered). The pg-boss `createQueue` boot
+  deadlock FIXED (proven pre-existing at 023 HEAD and flagged for this phase —
+  every createQueue now serializes in `getBoss()`). The Nest middleware
+  `request.path`-resets-to-"/" mounting behavior documented + worked around
+  (`originalUrl`). Final sweep ALL GREEN: typecheck 8/8 · lint · depcruise 0
+  violations/2194 modules · unit api 31/310 + web 5/73 + desktop 16/274 + mobile
+  27/393 · **DB suite 139 files / 2019 tests** (+4/+29) · permissions-drift
+  244=244 · i18n 3343=3343 (+59/locale) · docs 29/29. — PHASE-NNN
 
 - 2026-11-05 — **PHASE-023 — External Integrations & E-Invoicing (COMPLETE)**: the
   external-integration substrate ships with the no-fabrication discipline made

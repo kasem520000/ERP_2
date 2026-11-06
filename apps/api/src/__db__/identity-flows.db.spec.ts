@@ -126,7 +126,7 @@ beforeAll(() => {
 });
 
 describe("seeds (acceptance 9)", () => {
-  it("permissions catalog = 243 keys matching AUTHORIZATION_MATRIX (drift green)", async () => {
+  it("permissions catalog = 244 keys matching AUTHORIZATION_MATRIX (drift green)", async () => {
     const su = await superuserClient();
     const result = await su.query<{ n: number }>("SELECT count(*)::int AS n FROM permissions");
     await su.end();

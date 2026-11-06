@@ -8,6 +8,7 @@ import {
   ambientAnyTx,
   ambientPlatformContext,
   requireTenantContext,
+  withTenant,
 } from "../../../infra/db/tenant-context";
 
 /**
@@ -145,6 +146,8 @@ export interface PlanRow {
   limits: unknown;
   featureKeys: string[];
   isActive: boolean;
+  /** PHASE-024 (migration 0036): the plan-level MFA policy. */
+  mfaRequiredRoleKeys: string[];
 }
 
 export async function findPlanById(id: string): Promise<PlanRow | undefined> {
@@ -752,6 +755,63 @@ export async function findSupportSession(id: string): Promise<SupportSessionRow 
     SELECT ${SUPPORT_COLUMNS} FROM support_sessions WHERE id = ${id} LIMIT 1
   `);
   return (rows.rows as unknown as SupportSessionRow[])[0];
+}
+
+/**
+ * PHASE-024 T12: the support sessions that opened inside the window,
+ * discovered CROSS-TENANT from the platform-widened audit trail
+ * (support.session.opened rows) and then fetched through each target
+ * tenant's own scope (ADR-0005 per-operation scoping — support_sessions
+ * itself carries the STRICT macro, never a blanket platform GUC).
+ */
+export async function supportSessionWindowIndex(
+  fromAt: string,
+  toAt: string,
+): Promise<{ sessionId: string; tenantId: string }[]> {
+  const tx = platformTx();
+  const rows = await tx.execute(sql`
+    SELECT DISTINCT entity_id AS "sessionId", tenant_id AS "tenantId"
+    FROM audit_events
+    WHERE action = 'support.session.opened'
+      AND at >= ${fromAt}::timestamptz AND at <= ${toAt}::timestamptz
+      AND tenant_id IS NOT NULL
+  `);
+  return rows.rows as unknown as { sessionId: string; tenantId: string }[];
+}
+
+/** PHASE-024 T12: fetch specific session rows inside the TARGET tenant scope. */
+export async function findSupportSessionsByIds(
+  tenantId: string,
+  sessionIds: string[],
+): Promise<SupportSessionRow[]> {
+  if (sessionIds.length === 0) {
+    return [];
+  }
+  return withTenant(tenantId, async (tx) => {
+    // Query-builder binding (the setRecoveryCodes lesson: raw array
+    // parameters arrive as tuples/records — inArray binds correctly).
+    const rows = await tx
+      .select()
+      .from(schema.supportSessions)
+      .where(inArray(schema.supportSessions.id, sessionIds));
+    return rows as unknown as SupportSessionRow[];
+  });
+}
+
+/** PHASE-024 T12: proxied-read counts per support session over the window. */
+export async function supportActionCounts(
+  fromAt: string,
+  toAt: string,
+): Promise<{ sessionId: string; count: number }[]> {
+  const tx = platformTx();
+  const rows = await tx.execute(sql`
+    SELECT entity_id AS "sessionId", count(*)::int AS count
+    FROM audit_events
+    WHERE action = 'support.session.action'
+      AND at >= ${fromAt}::timestamptz AND at <= ${toAt}::timestamptz
+    GROUP BY entity_id
+  `);
+  return rows.rows as unknown as { sessionId: string; count: number }[];
 }
 
 export async function listSupportSessions(): Promise<SupportSessionRow[]> {

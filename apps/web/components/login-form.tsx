@@ -7,6 +7,12 @@
  * T19-WEB (PHASE-014): optional `next` — an internal locale-prefixed path
  * the pricing CTAs pass through `login?next=…`; validated by the page, only
  * ever used for the post-login redirect (open-redirect safe by shape).
+ * PHASE-024 T4: 423 MFA_REQUIRED with details.enrollmentRequired=true means
+ * the organization's policy mandates MFA for the user's role and they have
+ * no confirmed factor — the same credentials are exchanged for the 15-minute
+ * enrollment-only session at the bootstrap BFF route, and the browser is
+ * routed to the MFA enrollment page with ?enforced=1. The plain code-challenge
+ * path (showMfa) is unchanged.
  */
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -15,10 +21,15 @@ import type { FormEvent, JSX } from "react";
 import { Button, Input } from "@erp/ui";
 
 import { getDictionary, type Locale } from "../i18n/dictionaries";
-import type { LoginResult } from "../lib/api-types";
+import { isRecord, type LoginResult, type MfaBootstrapResult } from "../lib/api-types";
 import { bffFetch } from "../lib/client-api";
 import { localizedLoginError } from "../lib/messages";
 import { ErrorNotice } from "./notices";
+
+/** `error.details.enrollmentRequired === true` (the PHASE-024 423 shape). */
+function enrollmentRequiredOf(details: unknown): boolean {
+  return isRecord(details) && details.enrollmentRequired === true;
+}
 
 export function LoginForm({
   locale,
@@ -51,10 +62,36 @@ export function LoginForm({
       router.refresh();
       return;
     }
+    if (result.error.code === "MFA_REQUIRED" && enrollmentRequiredOf(result.error.details)) {
+      // Policy-mandated enrollment: no factor exists, so no code can be
+      // produced — exchange the same credentials for the enrollment-only
+      // bootstrap session and route to the MFA page.
+      await onEnforcedEnrollment();
+      return;
+    }
     if (result.error.code === "MFA_REQUIRED") {
       setShowMfa(true);
     }
     setError(localizedLoginError(d, result.error, result.retryAfterSeconds));
+    setBusy(false);
+  }
+
+  /** PHASE-024 T4 — the enrollment bootstrap exchange (sets the cookies). */
+  async function onEnforcedEnrollment(): Promise<void> {
+    const bootstrap = await bffFetch<MfaBootstrapResult>("identity/mfa/bootstrap", {
+      method: "POST",
+      body: { email, password },
+    });
+    if (bootstrap.ok) {
+      router.push(`/${locale}/mfa?enforced=1`);
+      router.refresh();
+      return;
+    }
+    if (bootstrap.error.code === "MFA_BOOTSTRAP_NOT_ELIGIBLE") {
+      setError(d.loginErrorMfaBootstrapIneligible);
+    } else {
+      setError(localizedLoginError(d, bootstrap.error, bootstrap.retryAfterSeconds));
+    }
     setBusy(false);
   }
 

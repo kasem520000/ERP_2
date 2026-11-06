@@ -6,6 +6,11 @@
  *  2. verify  → POST /api/bff/identity/mfa/totp/verify { code };
  *  3. recovery codes → POST /api/bff/identity/mfa/recovery-codes
  *     (shown ONCE; the API stores only hashes).
+ *
+ * PHASE-024 T4: `enforced` renders the policy-mandated notice banner — the
+ * user arrived through the enrollment bootstrap (a 15-minute session that
+ * ONLY the MFA endpoints answer; every other API call is 423 until a TOTP
+ * verify passes, which also flips the gate for the live sessions).
  */
 import { useState } from "react";
 import type { FormEvent, JSX } from "react";
@@ -21,7 +26,7 @@ import { ErrorNotice, SuccessNotice } from "./notices";
 
 type Phase = "idle" | "enrolled" | "confirmed";
 
-export function MfaPanel({ locale }: { locale: Locale }): JSX.Element {
+export function MfaPanel({ locale, enforced = false }: { locale: Locale; enforced?: boolean }): JSX.Element {
   const d = getDictionary(locale);
   const [phase, setPhase] = useState<Phase>("idle");
   const [enrollment, setEnrollment] = useState<MfaEnrollResult | null>(null);
@@ -90,6 +95,14 @@ export function MfaPanel({ locale }: { locale: Locale }): JSX.Element {
 
   return (
     <div className="flex flex-col gap-4">
+      {enforced && (
+        <p
+          role="note"
+          className="rounded-md border border-warning-border bg-warning-bg px-3 py-2 text-sm font-medium text-warning-text"
+        >
+          {d.mfaEnforcedNotice}
+        </p>
+      )}
       <p className="text-sm text-gray-600">{d.mfaDescription}</p>
 
       <Card title={d.mfaEnrollTitle} ariaLabel={d.mfaEnrollTitle}>

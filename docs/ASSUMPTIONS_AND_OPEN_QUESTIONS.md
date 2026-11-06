@@ -1,6 +1,6 @@
 # Assumptions and Open Questions
 
-> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-06
 
 Per the operating principles, unresolved product decisions never block the blueprint. Each
 item below records an **assumption** (safe provisional decision used by the blueprint) or an
@@ -41,6 +41,13 @@ made, update this file, the linked documents, and `CHANGELOG.md`.
 | OQ-008 | Support SLA commitments per plan (response times)? | Define after GA readiness review (PHASE-025). | Affects staffing, not architecture. |
 | OQ-009 | Data-retention period after tenant offboarding (export window)? | 90 days then hard delete, with documented purge job. | Legal review needed per jurisdiction before GA. |
 | OQ-010 | Does the platform promise Arabic-only support channel at MVP? | Bilingual support processes documented; tooling out of scope. | Operational, not architectural. |
+
+> OQ-009 pointer → decision record
+> [DR-024-02](decisions/DR-024-02-privacy-retention-oq009.md) filed 2026-11-06
+> (PHASE-024 T10): **BLOCKED-EXTERNAL** — the legal review requires the client's
+> legal counsel; the 90-day-then-hard-delete working assumption (with the 14-day
+> read-only grace) **remains in force** until the record lands; revisit before GA
+> (the PHASE-025 gate re-reads the BLOCKED status).
 
 ## C. How to resolve an item
 

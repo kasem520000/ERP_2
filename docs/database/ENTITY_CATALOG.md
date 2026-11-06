@@ -289,6 +289,13 @@ post + COGS journals carries the project stamp.
 > [../offline/LOCAL_DATABASE.md](../offline/LOCAL_DATABASE.md) §1 and exercised by the
 > desktop chaos profile ([../testing/SYNC_TESTS.md](../testing/SYNC_TESTS.md) §7).
 
+## security & offboarding (PHASE-024)
+
+| Entity | Purpose | Key fields | Phase | OC |
+|--------|---------|-----------|-------|----|
+| `tenant_offboarding` | The Journey-H offboarding flow state machine (tenant-owned DURING the flow — the row dies with the tenant in the purge it tracks; the permanent record is `purged_tenants`): REQUESTED (read-only grace) → EXPORTED (manifest verified) → EXECUTED (two-person execution; SUSPENDED + retention window) → PURGED; CANCELLED is the owner-during-grace reversal | tenant_id (one LIVE row — partial unique over status ≠ CANCELLED), status, requested_by/at, grace_until, export_file_id, manifest_checksum, exported_at, executed_by/at, retention_until, purged_at, cancelled_at | 024 | no |
+| `purged_tenants` | Deletion certificates (Journey H5 "what/when/by-whom retained in platform audit") — platform-owned, survives the purge it certifies; `hashed_tenant_id` (HMAC-SHA256 under the platform salt) is the only post-purge correlation handle (the tenant's audit rows are anonymized to tenant_id NULL by the purge) | tenant_id_at_purge (uq), hashed_tenant_id (uq), tenant_name_snapshot, manifest_checksum, export_file_id, performed_by, purged_at, table_row_counts jsonb, storage_objects_deleted, audit_rows_anonymized, verification jsonb | 024 | no |
+
 ## industry configuration (PHASE-004/015)
 
 | Entity | Purpose | Key fields | Phase | OC |

@@ -8,6 +8,7 @@ import { PasswordService } from "./application/password-service";
 import { SessionService } from "./application/session-service";
 import { LoginService } from "./application/login-service";
 import { MfaService } from "./application/mfa-service";
+import { MfaBootstrapService } from "./application/mfa-bootstrap-service";
 import { RecoveryService } from "./application/recovery-service";
 import { InvitationService } from "./application/invitation-service";
 import { UsersService } from "./application/users-service";
@@ -31,6 +32,18 @@ import { UsersController } from "./presentation/users.controller";
     SessionService,
     MfaService,
     UsersService,
+    // PHASE-024 T4: the enrollment bootstrap (ADR-0015 §4 enforcement) —
+    // the same PasswordService/SessionService/AuditService substrate as
+    // login, so the credential discipline is identical by construction.
+    {
+      provide: MfaBootstrapService,
+      useFactory: (
+        password: PasswordService,
+        sessions: SessionService,
+        audit: AuditService,
+      ) => new MfaBootstrapService({ password, sessions, audit }),
+      inject: [PasswordService, SessionService, AuditService],
+    },
     {
       provide: LoginService,
       useFactory: (

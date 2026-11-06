@@ -68,7 +68,11 @@ import {
  * ZATCA adapter is the UNVERIFIED refusing stub and rollout flags default
  * OFF, so no e-invoicing capability resolves LIVE from this bump).
  */
-export const CURRENT_SHIPPED_PHASE = "PHASE-023";
+// PHASE-024 security hardening shipped (2026-11-06): the MFA policy
+// substrate, the offboarding purge, the audit review tooling, the rate-limit
+// + headers hardening — no new industry-template capabilities, so no
+// template chain changes (the 023→024 bump is bookkeeping only).
+export const CURRENT_SHIPPED_PHASE = "PHASE-024";
 
 /** "PHASE-0NN" → the numeric phase (for ordering). */
 export function phaseNumber(phase: string): number {

@@ -1,6 +1,6 @@
 # Data Protection
 
-> **Status:** STABLE · **Owner:** Security Architecture · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Security Architecture · **Updated:** 2026-11-06
 
 Data classification, handling rules per state (transit, rest, logs, exports, backups),
 PII inventory, tenant offboarding (export → purge), retention, sub-processors, and device
@@ -69,7 +69,7 @@ webhook/query-string parameters (all in bodies/headers that are not logged).
 | 2 | System | Build export package: ZIP containing JSON (documents, ledger, subledgers, partners, items, settings) + attachments + CSV alternates for core lists | Full-fidelity financial data (posted journal entries with all lines) so books can be audited after leaving |
 | 3 | System | Deliver via tenant-scoped signed URL | Expiry default 7 days; one regeneration allowed; download audited |
 | 4 | Tenant owner | Confirm offboarding (`tenancy.offboarding.execute`) | Two-person: owner request + platform admin execution; subscription must be settled/cancelled first |
-| 5 | System | Enter **retention placeholder: 90 days** (OQ-009) then hard purge | **Decision-record note:** the 90-day window is a provisional default; final period requires legal review per jurisdiction and a decision record before GA ([../ASSUMPTIONS_AND_OPEN_QUESTIONS.md](../ASSUMPTIONS_AND_OPEN_QUESTIONS.md) OQ-009) |
+| 5 | System | Enter **retention placeholder: 90 days** (OQ-009) then hard purge | **Decision-record note:** the 90-day window is a provisional default; final period requires legal review per jurisdiction and a decision record before GA ([../ASSUMPTIONS_AND_OPEN_QUESTIONS.md](../ASSUMPTIONS_AND_OPEN_QUESTIONS.md) OQ-009). **Record filed:** [DR-024-02](../decisions/DR-024-02-privacy-retention-oq009.md) — BLOCKED-EXTERNAL (legal counsel unreachable from the delivery environment); the 90-day working assumption stays in force, and the constants ship as named placeholders (`OFFBOARDING_RETENTION_DAYS`, `OFFBOARDING_GRACE_DAYS`) in the purge service |
 | 6 | System | Purge job: delete tenant rows (batched, per table), delete object-storage objects under the tenant prefix, revoke sessions/devices, cancel jobs | Purge is idempotent + resumable; runs with `erp_migrate`-scoped tooling outside normal app traffic |
 | 7 | System | Purge verification: row-count catalog query asserts 0 tenant-owned rows; storage prefix listing asserts 0 objects; verification report stored | Verification is itself an audit event |
 | 8 | System | Audit events: retained (append-only) with tenant identifiers **hashed** in the post-purge archive per OQ-009 direction | Keeps platform-forensic ability without retaining tenant business data |
@@ -89,6 +89,13 @@ sign-off ([INCIDENT_RESPONSE.md](INCIDENT_RESPONSE.md)).
 | Exports (signed URLs) | URL expiry 7 days | Package per tenant export retention | Deleted in purge |
 | Backups | PITR 7d, nightly 35d, weekly 8w, monthly 12m ([../database/BACKUP_AND_RECOVERY.md](../database/BACKUP_AND_RECOVERY.md)) | Monthly archive per compliance window | Purged tenant's data ages out of all windows; monthly archives re-keyed per legal direction |
 | E-invoicing payloads/responses | Per jurisdiction pack policy ([../localization/E_INVOICING_ARCHITECTURE.md](../localization/E_INVOICING_ARCHITECTURE.md) §6) | Same | Per pack policy (regulatory record) |
+
+Retention-decision pointer: the 90-day end-of-tenancy window and the 14-day read-only
+grace (Journey H1/H5) are the working-assumption placeholders governed by
+[DR-024-02](../decisions/DR-024-02-privacy-retention-oq009.md) (BLOCKED-EXTERNAL —
+legal review pending; the record must land or be re-read as BLOCKED at the GA gate);
+AR+EN privacy-notice drafts for the same review live at
+[../legal/PRIVACY_NOTICES.md](../legal/PRIVACY_NOTICES.md).
 
 ## 6. Device data (offline clients)
 

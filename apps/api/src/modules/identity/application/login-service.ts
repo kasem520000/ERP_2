@@ -1,6 +1,7 @@
 import { AuditService } from "../../audit/api/audit";
 import { childLogger } from "../../../infra/observability/logger";
 import { withTenant } from "../../../infra/db/tenant-context";
+import { readEffectiveSetting } from "../../../infra/settings/setting-reader";
 import { PasswordService } from "./password-service";
 import { SessionService } from "./session-service";
 import { MfaService } from "./mfa-service";
@@ -13,6 +14,11 @@ import {
   systemClock,
   type Clock,
 } from "../domain/session-policy";
+import {
+  mfaRequiredForRole,
+  resolveMfaRequiredRoles,
+  type MfaTenantPolicy,
+} from "../domain/mfa-policy";
 import {
   AccountLockedError,
   InvalidCredentialsError,
@@ -123,10 +129,36 @@ export class LoginService {
       log.warn({ user_id: user.id }, "authenticated user has no active membership");
       throw new UnauthenticatedError();
     }
+    const tenant = activeOnes[0]!;
+
+    // PHASE-024 (ADR-0015 §4): policy-driven enforcement — resolve the
+    // mandatory role keys for the login-selected tenant (plan list ∪/△ the
+    // tenant override) BEFORE the factor check. A mandated role without a
+    // confirmed factor is the enrollment bootstrap case (423 with
+    // enrollmentRequired); a mandated role WITH a factor is the existing
+    // code-challenge case.
+    const requiredRoles = await withTenant(tenant.tenantId, async () => {
+      const planKeys = await store.findPlanMfaRequiredRoleKeys(tenant.tenantId);
+      const tenantPolicy = await readEffectiveSetting<MfaTenantPolicy>(
+        "identity.mfa.policy",
+      );
+      return resolveMfaRequiredRoles({
+        planRequiredRoleKeys: planKeys,
+        tenantPolicy,
+      });
+    });
+    const policyMandates = mfaRequiredForRole(tenant.roleKey, requiredRoles);
 
     const confirmed = (await store.findMfaFactorsForUser(user.id)).find(
       (factor) => factor.confirmedAt !== null,
     );
+    if (confirmed === undefined && policyMandates) {
+      // No factor yet + policy demands one: the user cannot produce a code.
+      // The client exchanges credentials for the 15-minute enrollment
+      // bootstrap session at POST /identity/mfa/bootstrap.
+      log.info({ user_id: user.id }, "login refused: policy-mandated mfa enrollment required");
+      throw new MfaRequiredError(true);
+    }
     if (confirmed !== undefined) {
       if (input.mfaCode === undefined || input.mfaCode === "") {
         throw new MfaRequiredError();
@@ -162,7 +194,6 @@ export class LoginService {
 
     // Issue inside the target tenant's scope: the session row + the audit
     // event share one transaction (withTenant UoW from PHASE-002).
-    const tenant = activeOnes[0]!;
     const issued = await withTenant(tenant.tenantId, async () => {
       const session = await this.deps.sessions.issue({
         userId: user.id,

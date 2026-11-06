@@ -23,8 +23,7 @@ import {
 import { PlanNotFoundError } from "../../domain/tenancy-errors";
 import {
   SandboxProviderAdapter,
-  verifyWebhookSignature,
-  webhookSecret,
+  verifyWebhookSignatureWithRotation,
   type ProviderAdapterPort,
   type WebhookEventPayload,
 } from "./provider-adapter";
@@ -284,7 +283,10 @@ export class SubscriptionService {
   }> {
     // Unix-seconds arithmetic (not money — ADR-0009 targets money math).
     const now = (Date.now() / 1000) | 0;
-    const verdict = verifyWebhookSignature(rawBody, signature, webhookSecret(), now);
+    // PHASE-024 T6 (S-11 dual-secret window): current secret first, then
+    // the previous one while WEBHOOK_SIGNING_SECRET_PREVIOUS is set —
+    // provider-coordinated zero-downtime rotation (SECRETS_MANAGEMENT §3).
+    const verdict = verifyWebhookSignatureWithRotation(rawBody, signature, now);
     if (!verdict.ok) {
       if (verdict.reason === "stale") {
         throw new WebhookReplayError(0, 300);

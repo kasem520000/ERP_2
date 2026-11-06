@@ -2,7 +2,12 @@ import { Inject, Injectable } from "@nestjs/common";
 
 import { AuditService } from "../../audit/api/audit";
 import { listTenantMembers, listTenantRoles, systemClock } from "../../identity/api/identity";
-import { withTenant, withTenantOnTx, type TenantDb } from "../../../infra/db/tenant-context";
+import {
+  withPlatformScope,
+  withTenant,
+  withTenantOnTx,
+  type TenantDb,
+} from "../../../infra/db/tenant-context";
 import { NotFoundError } from "../../identity/api/identity";
 import * as store from "../infrastructure/tenancy.store";
 import {
@@ -211,6 +216,103 @@ export class SupportAccessService {
   }
 
   /** Console listing (platform plane, per-operation scoping). */
+  /**
+   * PHASE-024 T12 (matrix §7): the review report over a window — every
+   * support session that opened (or was still live) inside [fromAt, toAt],
+   * with its grant (who/when, opt-in or ticket), its end (closed/expired),
+   * the count of proxied reads, and the EXPLICIT gap list:
+   *   · expired-unclosed — status ACTIVE past expires_at (the lazy
+   *     write-back should have caught it; a row here is a capture gap);
+   *   · zero-action — a session that opened but never proxied a read
+   *     (suspicious grant or honest no-op; reviewer decides);
+   *   · orphaned-reads — proxied reads in the window whose session is not
+   *     in the window's list (data drift by definition).
+   */
+  async reviewReport(input: {
+    fromAt: string;
+    toAt: string;
+  }): Promise<{
+    window: { fromAt: string; toAt: string };
+    sessions: {
+      id: string;
+      tenantId: string;
+      platformUserId: string;
+      optIn: boolean;
+      ticketRef: string | null;
+      reason: string;
+      openedAt: string;
+      expiresAt: string;
+      closedAt: string | null;
+      status: string;
+      proxiedReads: number;
+    }[];
+    gaps: { kind: "expired-unclosed" | "zero-action" | "orphaned-reads"; detail: string }[];
+    fullyAudited: boolean;
+  }> {
+    // The session universe is discovered CROSS-TENANT from the
+    // platform-widened audit trail (every open() is audited), then each
+    // session row is fetched through its TARGET tenant's own scope —
+    // support_sessions itself carries the STRICT macro (ADR-0005
+    // per-operation scoping, never a blanket platform GUC).
+    const index = await withPlatformScope(async () =>
+      store.supportSessionWindowIndex(input.fromAt, input.toAt),
+    );
+    const byTenant = new Map<string, string[]>();
+    for (const entry of index) {
+      const list = byTenant.get(entry.tenantId) ?? [];
+      list.push(entry.sessionId);
+      byTenant.set(entry.tenantId, list);
+    }
+    const sessions: SupportSessionRow[] = [];
+    for (const [tenantId, sessionIds] of byTenant) {
+      const rows = await store.findSupportSessionsByIds(tenantId, sessionIds);
+      sessions.push(...rows);
+    }
+    const readCounts = await withPlatformScope(async () =>
+      store.supportActionCounts(input.fromAt, input.toAt),
+    );
+    {
+      const sessionIds = new Set(sessions.map((row) => row.id));
+      const countsById = new Map(readCounts.map((row) => [row.sessionId, row.count]));
+      const orphaned = readCounts.filter((row) => !sessionIds.has(row.sessionId));
+      const gaps: { kind: "expired-unclosed" | "zero-action" | "orphaned-reads"; detail: string }[] = [];
+      const enriched = sessions.map((row) => {
+        const proxiedReads = countsById.get(row.id) ?? 0;
+        if (row.status === "ACTIVE" && Date.parse(row.expiresAt) < Date.now()) {
+          gaps.push({ kind: "expired-unclosed", detail: `session ${row.id} past expires_at without close` });
+        }
+        if (proxiedReads === 0) {
+          gaps.push({ kind: "zero-action", detail: `session ${row.id} proxied no reads` });
+        }
+        return {
+          id: row.id,
+          tenantId: row.tenantId,
+          platformUserId: row.platformUserId,
+          optIn: row.optIn,
+          ticketRef: row.ticketRef,
+          reason: row.reason,
+          openedAt: row.openedAt,
+          expiresAt: row.expiresAt,
+          closedAt: row.closedAt,
+          status: row.status,
+          proxiedReads,
+        };
+      });
+      for (const row of orphaned) {
+        gaps.push({
+          kind: "orphaned-reads",
+          detail: `${row.count} proxied read(s) reference session ${row.sessionId} outside the window`,
+        });
+      }
+      return {
+        window: { fromAt: input.fromAt, toAt: input.toAt },
+        sessions: enriched,
+        gaps,
+        fullyAudited: gaps.length === 0,
+      };
+    }
+  }
+
   async listForConsole(tenantId: string, tx: TenantDb): Promise<SupportSessionRow[]> {
     return withTenantOnTx(tenantId, tx, () => store.listSupportSessions());
   }

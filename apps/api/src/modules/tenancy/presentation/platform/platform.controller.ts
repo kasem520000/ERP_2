@@ -8,6 +8,7 @@ import {
   Inject,
   Param,
   Post,
+  Put,
   Query,
   Req,
   Res,
@@ -49,6 +50,17 @@ const revokeSchema = z.object({ reason: z.string().min(3).max(500) });
 const planAssignSchema = z.object({
   planKey: z.enum(["starter", "business", "enterprise"]),
   trialDays: z.number().int().min(1).max(365).optional(),
+});
+// PHASE-024 T4: the plan-level MFA policy payload (role keys; unknown
+// roles are inert by the resolver's total design — documented in
+// identity/domain/mfa-policy.ts).
+const planMfaPolicySchema = z.object({
+  requiredRoles: z.array(z.string().min(1).max(100)).max(20),
+});
+// PHASE-024 T12: the review window (default: the last 7 days).
+const supportReviewWindowSchema = z.object({
+  fromAt: z.string().datetime().optional(),
+  toAt: z.string().datetime().optional(),
 });
 const supportOpenSchema = z.object({
   reason: z.string().min(3).max(500),
@@ -232,6 +244,22 @@ export class PlatformConsoleController {
     );
   }
 
+  // -- plan-level MFA policy (PHASE-024 T4; platform.plans.manage) --------------
+
+  @Put("plans/:key/mfa-policy")
+  @RequirePermissions("platform.plans.manage")
+  async setPlanMfaPolicy(
+    @Req() request: Request,
+    @Param("key") planKey: string,
+    @Body() body: unknown,
+  ): Promise<unknown> {
+    const identity = requireIdentity(request);
+    const input = planMfaPolicySchema.parse(body);
+    return envelope(
+      await this.console.setPlanMfaPolicy(identity.userId, planKey, input.requiredRoles),
+    );
+  }
+
   // -- cross-tenant audit viewer (platform.audit.view) --------------------------
 
   @Get("audit/events")
@@ -274,6 +302,26 @@ export class PlatformConsoleController {
   }
 
   // -- support sessions console (§7) -------------------------------------------
+
+  /**
+   * PHASE-024 T12 (matrix §7): the support-access review report over a
+   * window — every session with grant + end + proxied-read counts + the
+   * explicit gap list (expired-unclosed / zero-action / orphaned-reads).
+   */
+  @Get("support-sessions/review")
+  @RequirePermissions("platform.support.access")
+  async supportReview(
+    @Req() request: Request,
+    @Query("fromAt") rawFromAt?: string,
+    @Query("toAt") rawToAt?: string,
+  ): Promise<unknown> {
+    requireIdentity(request);
+    const parsed = supportReviewWindowSchema.parse({ fromAt: rawFromAt, toAt: rawToAt });
+    const windowToAt = parsed.toAt ?? new Date().toISOString();
+    const windowFromAt =
+      parsed.fromAt ?? new Date(Date.parse(windowToAt) - 7 * 24 * 60 * 60 * 1000).toISOString();
+    return envelope(await this.support.reviewReport({ fromAt: windowFromAt, toAt: windowToAt }));
+  }
 
   @Get("tenants/:id/support-sessions")
   @RequirePermissions("platform.support.access")

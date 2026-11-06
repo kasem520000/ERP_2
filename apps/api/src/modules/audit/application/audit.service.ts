@@ -56,6 +56,8 @@ export interface AuditQuery {
   actorId?: string;
   /** PHASE-013: action filter (report parameter). */
   action?: string;
+  /** PHASE-024 T8: the correlation-id lookup (one request's full trail). */
+  correlationId?: string;
   fromAt?: string;
   toAt?: string;
   limit?: number;

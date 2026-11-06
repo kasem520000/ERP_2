@@ -31,8 +31,47 @@ export class RateLimitedError extends DomainError {
 }
 
 export class MfaRequiredError extends DomainError {
+  /**
+   * PHASE-024 (ADR-0015 §4 policy enforcement): `enrollmentRequired = true`
+   * when the login was refused because POLICY mandates MFA for the user's
+   * role and they have no confirmed factor yet — the client routes them to
+   * the enrollment bootstrap instead of prompting for a code they cannot
+   * have.
+   */
+  constructor(readonly enrollmentRequired = false) {
+    super("MFA_REQUIRED", "a verification code from your authenticator is required", {
+      enrollmentRequired,
+    });
+  }
+}
+
+/**
+ * PHASE-024: an enrollment-bootstrap session (mfa_gate_passed = false)
+ * attempted a route outside the MFA enrollment allowlist. 423 per the
+ * MfaRequiredError contract — the session exists but stays locked to the
+ * enrollment surface until a valid TOTP confirmation flips the gate.
+ */
+export class MfaEnrollmentRequiredError extends DomainError {
   constructor() {
-    super("MFA_REQUIRED", "a verification code from your authenticator is required");
+    super(
+      "MFA_ENROLLMENT_REQUIRED",
+      "multi-factor enrollment must be completed before this session can proceed",
+    );
+  }
+}
+
+/**
+ * PHASE-024: the enrollment bootstrap was called by a user whose policy
+ * does NOT mandate MFA (or who already has a confirmed factor) — the
+ * restricted session is never handed to a user who could have a full one.
+ * 409: the request conflicts with the account's current state.
+ */
+export class MfaBootstrapNotEligibleError extends DomainError {
+  constructor() {
+    super(
+      "MFA_BOOTSTRAP_NOT_ELIGIBLE",
+      "multi-factor enrollment bootstrap is only available when your organization requires it and no authenticator is set up",
+    );
   }
 }
 

@@ -6,6 +6,8 @@ import { ReadinessService } from "./health/readiness.service";
 import { InfrastructureModule } from "./infra/infra.module";
 import { RequestIdMiddleware } from "./infra/observability/request-id.middleware";
 import { SessionMiddleware } from "./infra/auth/session.middleware";
+import { SecurityHeadersMiddleware } from "./infra/http/security-headers.middleware";
+import { TenantRateLimitMiddleware } from "./infra/http/tenant-rate-limit.middleware";
 import { PermissionsGuard } from "./infra/auth/permissions.guard";
 import { TenantContextInterceptor } from "./infra/context/tenant-context.interceptor";
 import { ErrorModelFilter } from "./infra/http/error.filter";
@@ -80,7 +82,53 @@ import { UsageLimitGuard } from "./infra/auth/usage-limit.guard";
   ],
 })
 export class AppModule implements NestModule {
+  /**
+   * PHASE-024 (SECURITY_TEST_PLAN §3): the RLS denial canary — every 5
+   * minutes, known-bad no-GUC counts over the crown-jewel tables; the
+   * erp_rls_denials_total counter must stay 0 (any breach is auto-SEV-1).
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      const { getBoss } = await import("./infra/jobs/boss");
+      const {
+        SECURITY_RLS_CANARY_CRON,
+        SECURITY_RLS_CANARY_QUEUE,
+        runRlsCanary,
+      } = await import("./infra/security/rls-canary");
+      const boss = getBoss();
+      await boss.createQueue(SECURITY_RLS_CANARY_QUEUE).catch(() => undefined);
+      await boss.work(SECURITY_RLS_CANARY_QUEUE, async (jobs) => {
+        for (let index = 0; index < jobs.length; index += 1) {
+          await runRlsCanary();
+        }
+      });
+      await boss
+        .schedule(SECURITY_RLS_CANARY_QUEUE, SECURITY_RLS_CANARY_CRON, { system: true })
+        .catch(() => undefined);
+    } catch {
+      // Worker-mode / no-queue environments: the canary also runs inside
+      // the DB suite (the spec asserts 0 breaches on a seeded stack).
+    }
+  }
+
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(RequestIdMiddleware).forRoutes("*").apply(SessionMiddleware).forRoutes("*");
+    consumer
+      .apply(RequestIdMiddleware)
+      .forRoutes("*")
+      // PHASE-024 T9: security headers run BEFORE anything that can
+      // short-circuit a response (the session 423 gate, the tenant 429
+      // below) — headers set before next() ride along on those too.
+      .apply(SecurityHeadersMiddleware)
+      .forRoutes("*")
+      .apply(SessionMiddleware)
+      .forRoutes("*")
+      // PHASE-024 T5 (R-04): the per-tenant burst limiter. Registered
+      // AFTER the session middleware block on purpose: it resolves the
+      // tenant with its OWN indexed lookup (token-hash → active tenant),
+      // so it is functionally order-independent of SessionMiddleware —
+      // this slot just keeps the throttle as the last gate before the
+      // guards, wrapping every tenant-scoped request with quota headers.
+      .apply(TenantRateLimitMiddleware)
+      .forRoutes("*");
   }
 }

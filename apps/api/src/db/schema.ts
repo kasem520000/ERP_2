@@ -62,6 +62,10 @@ export const tenants = pgTable(
     timezone: text("timezone").notNull().default("UTC"),
     industryTemplateKey: text("industry_template_key"),
     deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
+    // PHASE-024 (migration 0036; Journey H guardrail): the platform-level
+    // legal-hold flag — blocks the offboarding purge of a tenant held for
+    // investigation (security sign-off required; INCIDENT_RESPONSE).
+    legalHold: boolean("legal_hold").notNull().default(false),
   },
   (table) => [index("ix_tenants_status").on(table.status)],
 );
@@ -244,6 +248,11 @@ export const sessions = pgTable(
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true, mode: "string" })
       .notNull()
       .defaultNow(),
+    // PHASE-024 (migration 0036; ADR-0015 §4 enforcement): TRUE on every
+    // normal session; FALSE only on the 15-minute enrollment-bootstrap
+    // session issued when policy mandates MFA and the user has no confirmed
+    // factor — the session middleware restricts it to the MFA endpoints.
+    mfaGatePassed: boolean("mfa_gate_passed").notNull().default(true),
   },
   (table) => [
     index("ix_sessions_user_expires").on(table.userId, table.expiresAt),
@@ -393,6 +402,11 @@ export const plans = pgTable(
       .default("0"),
     highlight: boolean("highlight").notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
+    // PHASE-024 (migration 0036; ADR-0015 §4 "mandatory-able per role/plan"):
+    // the plan-level MFA policy — role keys for which TOTP is mandatory.
+    // Stays '{}' on every seeded plan (expand-contract: opt-in behavior
+    // until a plan or tenant turns a policy on).
+    mfaRequiredRoleKeys: text("mfa_required_role_keys").array().notNull().default([]),
   },
   (table) => [uniqueIndex("uq_plans_key").on(table.key)],
 );
@@ -5091,5 +5105,76 @@ export const crmTimeEntries = pgTable(
     index("ix_crm_time_entries_pullable")
       .on(table.tenantId, table.entryDate)
       .where(sql`${table.billedInvoiceId} IS NULL AND ${table.status} = 'APPROVED'`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// PHASE-024 · Security Hardening cluster (migration 0036_security_hardening.sql;
+// DATA_PROTECTION §4 + Journey H). The offboarding flow state is tenant-owned
+// (dies with the tenant in the purge it tracks); the deletion-certificate
+// registry is platform-owned and SURVIVES the purge it certifies.
+// ---------------------------------------------------------------------------
+
+/** Offboarding flow state (Journey H1–H5; tenant-owned, macro RLS). */
+export const tenantOffboarding = pgTable(
+  "tenant_offboarding",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    status: text("status").notNull().default("REQUESTED"),
+    requestedBy: uuid("requested_by").notNull(),
+    requestedAt: timestamp("requested_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    graceUntil: timestamp("grace_until", { withTimezone: true, mode: "string" }),
+    // No FK: the export artifact is a file_objects row of the SAME tenant —
+    // it dies in the purge; purged_tenants keeps the checksum snapshot.
+    exportFileId: uuid("export_file_id"),
+    manifestChecksum: text("manifest_checksum"),
+    exportedAt: timestamp("exported_at", { withTimezone: true, mode: "string" }),
+    executedBy: uuid("executed_by"),
+    executedAt: timestamp("executed_at", { withTimezone: true, mode: "string" }),
+    retentionUntil: timestamp("retention_until", { withTimezone: true, mode: "string" }),
+    purgedAt: timestamp("purged_at", { withTimezone: true, mode: "string" }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("uq_tenant_offboarding_live")
+      .on(table.tenantId)
+      .where(sql`${table.status} <> 'CANCELLED'`),
+    index("ix_tenant_offboarding_retention").on(table.status, table.retentionUntil),
+  ],
+);
+
+/**
+ * Deletion certificates (Journey H5 "what/when/by-whom retained in platform
+ * audit"; platform-owned — the plans pattern). hashed_tenant_id is the only
+ * post-purge correlation handle: the tenant's audit rows are anonymized to
+ * tenant_id NULL by the purge (DATA_PROTECTION §4 step 8).
+ */
+export const purgedTenants = pgTable(
+  "purged_tenants",
+  {
+    id: uuid("id").primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    tenantIdAtPurge: uuid("tenant_id_at_purge").notNull(),
+    hashedTenantId: text("hashed_tenant_id").notNull(),
+    tenantNameSnapshot: text("tenant_name_snapshot").notNull(),
+    manifestChecksum: text("manifest_checksum"),
+    exportFileId: uuid("export_file_id"),
+    performedBy: uuid("performed_by").notNull(),
+    purgedAt: timestamp("purged_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    tableRowCounts: jsonb("table_row_counts").notNull().default({}),
+    storageObjectsDeleted: integer("storage_objects_deleted").notNull().default(0),
+    auditRowsAnonymized: integer("audit_rows_anonymized").notNull().default(0),
+    verification: jsonb("verification").notNull().default({}),
+  },
+  (table) => [
+    uniqueIndex("uq_purged_tenants_tenant").on(table.tenantIdAtPurge),
+    uniqueIndex("uq_purged_tenants_hash").on(table.hashedTenantId),
   ],
 );

@@ -29,7 +29,12 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // PHASE-023: 0035_external_integrations (e-invoicing submissions/certs/
     // suppression + commerce channels + payouts/refunds/settlements + the
     // parked-lines/pending-formats treasury registry — T1/T3/T5/T6/T8).
-    expect(files.at(-1)?.tag).toBe("0035_external_integrations");
+    // PHASE-024: 0036_security_hardening (MFA policy substrate — plan role
+    // keys + the bootstrap session gate; the offboarding purge substrate —
+    // legal_hold + tenant_offboarding + purged_tenants + the per-table
+    // purge_path RLS policies + the audit-guard purge exception; the
+    // audit-review indexes — T4/T8/T11).
+    expect(files.at(-1)?.tag).toBe("0036_security_hardening");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

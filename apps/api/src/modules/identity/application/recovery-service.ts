@@ -6,8 +6,9 @@ import { AuditService } from "../../audit/api/audit";
 import { checkPasswordPolicy } from "../domain/password-policy";
 import { PASSWORD_RESET_TOKEN_TTL_MS } from "../domain/session-policy";
 import { InvalidResetTokenError, NotFoundError } from "../domain/identity-errors";
+import { hashToken } from "../domain/tokens";
 import * as store from "../infrastructure/identity.store";
-import { RESET_LIMITER } from "../infrastructure/rate-limiter";
+import { RESET_ACCOUNT_LIMITER, RESET_LIMITER } from "../infrastructure/rate-limiter";
 import { keyMaterialForTokens } from "../infrastructure/reset-token-key";
 import { PasswordService } from "./password-service";
 import { SessionService } from "./session-service";
@@ -51,6 +52,21 @@ export class RecoveryService {
     const user = await store.findUserByEmail(normalized);
     if (user === undefined) {
       log.info({ email_domain: normalized.split("@")[1] }, "reset requested for unknown email");
+      return { accepted: true };
+    }
+    // PHASE-024 (R-05 per-ACCOUNT leg, 3/h): the distributed-IP complement
+    // to the per-IP window above. Saturated → the uniform 200 SURVIVES (the
+    // user-existence oracle discipline) but the email is SKIPPED — no
+    // bombing. The warn line (hashed discriminator, never the raw id) is
+    // the suppression trail; the audit keeps recording because the request
+    // genuinely happened. No token is signed — nothing to deliver.
+    const account = RESET_ACCOUNT_LIMITER.attempt(`reset-account:${user.id}`);
+    if (!account.allowed) {
+      log.warn(
+        { account_hash: hashToken(user.id) },
+        "reset email suppressed (per-account flood limit R-05)",
+      );
+      await this.auditResetRequested(user.id);
       return { accepted: true };
     }
     const token = this.signResetToken(user.id, user.version, Date.now() + PASSWORD_RESET_TOKEN_TTL_MS);

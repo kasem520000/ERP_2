@@ -388,6 +388,45 @@ export interface PlatformAuditEvent {
   viaPlatformAdmin: boolean;
 }
 
+/**
+ * PHASE-024 T4 — POST /identity/mfa/bootstrap → data (public credential
+ * exchange; token stripped by the BFF before the browser sees it). The
+ * 15-minute enrollment-only session: everything except the MFA endpoints +
+ * logout answers 423 MFA_ENROLLMENT_REQUIRED until a TOTP verify passes.
+ */
+export interface MfaBootstrapResult {
+  token: string;
+  sessionId: string;
+  expiresAt: string;
+  mfaEnrollmentRequired: true;
+  user: SessionUser;
+}
+
+/**
+ * PHASE-024 T4 — the `identity.mfa.policy` tenant setting value (SETTINGS_REGISTRY
+ * schema): "plan" inherits plans.mfa_required_role_keys; "custom" overrides it
+ * (an explicitly empty custom list makes MFA optional even when the plan mandates).
+ */
+export interface MfaPolicyValue {
+  mode: "plan" | "custom";
+  required_roles: string[];
+}
+
+/**
+ * PHASE-024 T8 — audit event wire row (GET /audit/events, tenant plane; RLS-
+ * confined, ordered by `at` ASC, limit ≤ 500). actorId/correlationId are null
+ * on system-scope rows.
+ */
+export interface TenantAuditEvent {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  actorId: string | null;
+  correlationId: string | null;
+  at: string;
+}
+
 // -- PHASE-006 master-data payloads (P6-T11a; hand-written per ADR-0003) -------
 
 export type PartnerKind = "CUSTOMER" | "SUPPLIER" | "BOTH";

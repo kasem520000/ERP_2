@@ -55,6 +55,16 @@ export default async function LoginPage({
           {d.loginForgotLink}
         </a>
       </p>
+      {/* PHASE-024 T14: discreet link to the public security disclosure
+          policy page (reachable without a session). */}
+      <p className="text-xs text-gray-500">
+        <a
+          href={`/${locale}/security`}
+          className="underline-offset-2 hover:text-gray-700 hover:underline"
+        >
+          {d.loginSecurityLink}
+        </a>
+      </p>
     </PublicShell>
   );
 }

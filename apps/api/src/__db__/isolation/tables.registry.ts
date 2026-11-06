@@ -268,6 +268,11 @@ export const TENANT_TABLES_REGISTRY: readonly RegisteredTenantTable[] = [
   { table: "commerce_channel_orders" },
   { table: "commerce_channel_imports", deleteGranted: true },
   { table: "billing_payouts" },
+  // PHASE-024 security hardening (migration 0036): the offboarding flow
+  // state machine (tenant-owned during the flow — the row dies with the
+  // tenant in the purge it tracks; purged_tenants is platform-owned and
+  // not in this registry).
+  { table: "tenant_offboarding" },
 ];
 
 export const TENANT_TABLE_NAMES: readonly string[] = TENANT_TABLES_REGISTRY.map(

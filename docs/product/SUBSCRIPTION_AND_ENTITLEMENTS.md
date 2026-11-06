@@ -169,6 +169,17 @@ additive activation, read-only historical access on removal); payroll reads rema
 permission-restricted regardless of entitlement
 ([../security/AUTHORIZATION_MATRIX.md](../security/AUTHORIZATION_MATRIX.md) §3.14).
 
+### Platform-provided security tooling (never plan-metered — FEATURE_CATALOG §3)
+
+The PHASE-024 security-tooling feature keys — `platform.support_review`,
+`identity.mfa_policy`, `audit.review_console` — are registered in the catalog
+with dependencies but deliberately NOT granted through any plan's
+`feature_keys` (the `platform.support_access` / `platform.admin_console`
+precedent): security tooling is permission-gated (`platform.support.access`,
+`tenancy.settings.manage` + `identity.mfa.admin_reset`, `audit.view`), never
+paywalled. Entitlement materialization never grants them; no plan revision is
+required to harden a tenant.
+
 ## 4. Entitlement resolution pipeline
 
 ```mermaid

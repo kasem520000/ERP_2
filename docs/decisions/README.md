@@ -100,10 +100,12 @@ Open record status:
 | OQ-006 | Manufacturing depth at GA (MRP vs execution+costing) | *(to be opened under `product/` — assumption A-006 governs until then)* | Not yet opened |
 | OQ-007 | Personal-account app online payments at GA | *(to be opened under `product/` — deferred per recommendation)* | Not yet opened |
 | OQ-008 | Support SLA commitments per plan | *(to be opened under `product/` after PHASE-025 readiness review)* | Not yet opened |
-| OQ-009 | Data-retention window after offboarding | *(to be opened under `compliance/`; legal review input required before GA)* | Not yet opened |
+| OQ-009 | Data-retention window after offboarding | [DR-024-02](DR-024-02-privacy-retention-oq009.md) — BLOCKED-EXTERNAL (legal counsel unreachable from the delivery environment); the 90-day working assumption stays in force with named constants | Opened PHASE-024 |
 | OQ-010 | Arabic-only support channel at MVP | *(to be opened under `product/` — bilingual processes documented meanwhile)* | Not yet opened |
 | — | Observability vendors (error tracking + log sink) | [technical/DR-003-observability-vendors.md](technical/DR-003-observability-vendors.md) | OPEN — decide at staging provisioning |
 | A-005 | Costing method default (WAC/FIFO) | [accounting/DR-001-costing-method-default.md](accounting/DR-001-costing-method-default.md) | **ACCEPTED** 2026-10-27 |
 
 When a "to be opened" item becomes urgent, copy its context from the OQ table — do not
 paraphrase from memory.
+- [DR-024-01 — WebAuthn/passkeys: DEFER post-GA](DR-024-01-webauthn-passkeys.md) (PHASE-024 T4; ADR-0015 §4's roadmap decision recorded either way)
+- [DR-024-02 — OQ-009 privacy/retention: BLOCKED-EXTERNAL, working assumption in force](DR-024-02-privacy-retention-oq009.md) (PHASE-024 T10; the 90-day placeholder keeps its named constants until the legal review lands)

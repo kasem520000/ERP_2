@@ -70,6 +70,10 @@ export class MfaService {
     }
     const at = timestepStartInstant(verification.matchedTimestep).toISOString();
     await store.confirmMfaFactor(factor.id, at);
+    // PHASE-024: the proof happened — every live enrollment-bootstrap
+    // session of this user unlocks together (passMfaGateForUser touches
+    // only gated, non-revoked sessions).
+    await store.passMfaGateForUser(userId);
     const memberships = await store.membershipOptions(userId);
     const target = memberships.find(
       (m) => m.membershipStatus === "ACTIVE" && m.tenantStatus === "ACTIVE",
@@ -143,5 +147,40 @@ export class MfaService {
     }
     await store.removeMfaFactor(factor.id);
     log.info({ user_id: userId }, "mfa factor disabled");
+  }
+
+  /**
+   * Admin-assisted MFA reset (PHASE-024 T4; SECRETS_MANAGEMENT §3 S-05
+   * emergency column; the seeded `identity.mfa.admin_reset` permission's
+   * first route): removes EVERY factor of the target — confirmed AND
+   * pending — so a locked-out user starts clean. The caller supplies the
+   * acting admin (audited as the actor; the target rides entityId). If a
+   * policy still mandates MFA for the target, their next login goes the
+   * enrollment-bootstrap path — surfaced honestly in the result.
+   */
+  async adminReset(input: {
+    adminId: string;
+    targetUserId: string;
+    tenantId: string;
+  }): Promise<{ factorsRemoved: number }> {
+    const target = await store.findUserById(input.targetUserId);
+    if (target === undefined) {
+      throw new NotFoundError("user");
+    }
+    const factorsRemoved = await store.clearMfaFactorsForUser(input.targetUserId);
+    await withTenant(input.tenantId, async () => {
+      await this.audit.record({
+        action: "mfa.admin_reset",
+        entityType: "user",
+        entityId: input.targetUserId,
+        actorId: input.adminId,
+        after: { factors_removed: factorsRemoved },
+      });
+    });
+    log.warn(
+      { admin_id: input.adminId, target_user_id: input.targetUserId, factors_removed: factorsRemoved },
+      "admin-assisted mfa reset",
+    );
+    return { factorsRemoved };
   }
 }

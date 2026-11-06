@@ -43,6 +43,7 @@ export interface Dictionary {
   loginForgotLink: string;
   loginErrorInvalidCredentials: string;
   loginErrorMfaRequired: string;
+  loginErrorMfaBootstrapIneligible: string;
   loginErrorRateLimited: string;
   loginErrorAccountLocked: string;
   loginErrorGeneric: string;
@@ -131,6 +132,7 @@ export interface Dictionary {
   mfaRecoveryRegenerate: string;
   mfaInvalidCode: string;
   mfaNeedConfirmed: string;
+  mfaEnforcedNotice: string;
 
   rolesTitle: string;
   rolesDescription: string;
@@ -264,6 +266,22 @@ export interface Dictionary {
   settingsSaved: string;
   settingsErrorInvalidValue: string;
 
+  // -- PHASE-024 T4: MFA policy settings card --------------------------------
+  mfaPolicyTitle: string;
+  mfaPolicyDescription: string;
+  mfaPolicyModeLabel: string;
+  mfaPolicyModePlan: string;
+  mfaPolicyModeCustom: string;
+  mfaPolicyModePlanHint: string;
+  mfaPolicyModeCustomHint: string;
+  mfaPolicyRolesLabel: string;
+  mfaPolicyRolesHint: string;
+  mfaPolicyRolesUnavailable: string;
+  mfaPolicyNoRoles: string;
+  mfaPolicyRoleMissing: string;
+  mfaPolicySelectedCount: string;
+  mfaPolicyRolesMaxError: string;
+
   // -- P4-T12a: support sessions (tenant plane) ----------------------------------
   supportSessionsTitle: string;
   supportSessionsHint: string;
@@ -363,6 +381,29 @@ export interface Dictionary {
   platformAuditEmpty: string;
   platformErrorInvalidTransition: string;
   platformErrorPlanNotFound: string;
+
+  // -- PHASE-024 T8: tenant audit review console -------------------------------
+  auditReviewTitle: string;
+  auditReviewHint: string;
+  auditFilterAction: string;
+  auditFilterActorId: string;
+  auditFilterEntityType: string;
+  auditFilterEntityId: string;
+  auditFilterCorrelationId: string;
+  auditFilterFromAt: string;
+  auditFilterToAt: string;
+  auditFilterLimit: string;
+  auditFilterApply: string;
+  auditColAt: string;
+  auditColAction: string;
+  auditColEntityType: string;
+  auditColEntityId: string;
+  auditColActor: string;
+  auditColCorrelation: string;
+  auditEmpty: string;
+  auditExportCsv: string;
+  auditResultCount: string;
+  auditOrderHint: string;
 
   // -- P5-T12 (PHASE-005): design-system shell + status/stepper labels --------
   shellSkipToContent: string;
@@ -3504,6 +3545,30 @@ export interface Dictionary {
 
   // Dashboard quick action (the entry affordance)
   dashboardOfflineNote: string;
+
+  // -- T14 (PHASE-024): public security disclosure policy page (/{locale}/security) --
+  disclosureTitle: string;
+  disclosureIntro: string;
+  disclosureContactHeading: string;
+  disclosureContactBody: string;
+  disclosureContactAddress: string;
+  disclosureContactPlaceholderNote: string;
+  disclosureCommitmentHeading: string;
+  disclosureCommitmentAck: string;
+  disclosureCommitmentUpdates: string;
+  disclosureCommitmentCoordinated: string;
+  disclosureSafeHarborHeading: string;
+  disclosureSafeHarborBody: string;
+  disclosureGuidelinesHeading: string;
+  disclosureGuidelineTesting: string;
+  disclosureGuidelineNoDegrade: string;
+  disclosureGuidelineReport: string;
+  disclosureScopeHeading: string;
+  disclosureScopeBody: string;
+  disclosureTriageHeading: string;
+  disclosureTriageBody: string;
+  disclosureBountyNote: string;
+  loginSecurityLink: string;
 }
 
 const ar: Dictionary = {
@@ -3532,6 +3597,8 @@ const ar: Dictionary = {
   loginForgotLink: "نسيت كلمة المرور؟",
   loginErrorInvalidCredentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   loginErrorMfaRequired: "هذا الحساب محمي بالتحقق بخطوتين — أدخل رمز التحقق.",
+  loginErrorMfaBootstrapIneligible:
+    "لا يمكن استخدام مسار التسجيل الإجباري لهذا الحساب — سجّل الدخول بالطريقة المعتادة.",
   loginErrorRateLimited: "محاولات كثيرة — أعد المحاولة بعد {seconds} ثانية.",
   loginErrorAccountLocked: "الحساب مقفل مؤقتًا — أعد المحاولة بعد {seconds} ثانية.",
   loginErrorGeneric: "تعذّر تسجيل الدخول — حاول مرة أخرى.",
@@ -3620,6 +3687,8 @@ const ar: Dictionary = {
   mfaRecoveryRegenerate: "إعادة إنشاء الرموز",
   mfaInvalidCode: "رمز التحقق غير صحيح.",
   mfaNeedConfirmed: "أكّد التسجيل أولًا ثم أنشئ رموز الاستعادة.",
+  mfaEnforcedNotice:
+    "مؤسستك تفرض التحقق بخطوتين — أكمل التسجيل للمتابعة. تنتهي صلاحية هذه الجلسة خلال 15 دقيقة.",
 
   rolesTitle: "الأدوار",
   rolesDescription: "استنسخ قالبًا معياريًا لإنشاء دور خاص بمنشأتك.",
@@ -3751,6 +3820,24 @@ const ar: Dictionary = {
   settingsSaved: "تم الحفظ.",
   settingsErrorInvalidValue: "قيمة غير صالحة لهذا الإعداد.",
 
+  // -- PHASE-024 T4: MFA policy settings card
+  mfaPolicyTitle: "سياسة التحقق بخطوتين",
+  mfaPolicyDescription: "حدّد الأدوار التي يُفرض عليها التحقق بخطوتين عند تسجيل الدخول.",
+  mfaPolicyModeLabel: "الوضع",
+  mfaPolicyModePlan: "وراثة الخطة",
+  mfaPolicyModeCustom: "مخصص",
+  mfaPolicyModePlanHint: "في وضع وراثة الخطة تُطبَّق الأدوار الإلزامية المحددة في خطة اشتراك منشأتك.",
+  mfaPolicyModeCustomHint:
+    "في الوضع المخصص تحل قائمة الأدوار أدناه محل قائمة الخطة — قائمة فارغة تعني أن التحقق اختياري للجميع.",
+  mfaPolicyRolesLabel: "الأدوار المطلوب منها التحقق بخطوتين",
+  mfaPolicyRolesHint:
+    "اختر أدوار المنشأة التي سيُطلب منها إكمال تسجيل التحقق بخطوتين عند دخولها التالي (حتى 20 دورًا).",
+  mfaPolicyRolesUnavailable: "تعذّر تحميل قائمة الأدوار — تُعرض المفاتيح المحددة حاليًا فقط.",
+  mfaPolicyNoRoles: "لا توجد أدوار في هذه المنشأة بعد.",
+  mfaPolicyRoleMissing: "دور محفوظ غير موجود في القائمة الحالية:",
+  mfaPolicySelectedCount: "المحدد: {count} من {max}",
+  mfaPolicyRolesMaxError: "الحد الأقصى {max} دورًا.",
+
   supportSessionsTitle: "جلسات الدعم",
   supportSessionsHint:
     "هذه الجلسات التي يفتحها فريق المنصة عند طلبك أو بموافقتك؛ يمكنك إنهاء أي جلسة نشطة قائمة على الموافقة في أي وقت.",
@@ -3847,6 +3934,30 @@ const ar: Dictionary = {
   platformAuditEmpty: "لا توجد أحداث.",
   platformErrorInvalidTransition: "حالة المنشأة لا تسمح بهذا الانتقال.",
   platformErrorPlanNotFound: "خطة غير معروفة.",
+
+  // -- PHASE-024 T8: tenant audit review console
+  auditReviewTitle: "سجل التدقيق",
+  auditReviewHint:
+    "راجع أحداث التدقيق في منشأتك: الإجراء والفاعل والكيان ومعرّف الارتباط لكل عملية — مع تصدير CSV لنفس التصفيحة.",
+  auditFilterAction: "الإجراء (اختياري)",
+  auditFilterActorId: "معرّف الفاعل (UUID، اختياري)",
+  auditFilterEntityType: "نوع الكيان (اختياري)",
+  auditFilterEntityId: "معرّف الكيان (UUID، اختياري)",
+  auditFilterCorrelationId: "معرّف الارتباط (UUID، اختياري)",
+  auditFilterFromAt: "من (توقيت UTC)",
+  auditFilterToAt: "إلى (توقيت UTC)",
+  auditFilterLimit: "الحد الأقصى للصفوف",
+  auditFilterApply: "تصفية",
+  auditColAt: "الوقت",
+  auditColAction: "الإجراء",
+  auditColEntityType: "نوع الكيان",
+  auditColEntityId: "معرّف الكيان",
+  auditColActor: "الفاعل",
+  auditColCorrelation: "معرّف الارتباط",
+  auditEmpty: "لا توجد أحداث مطابقة.",
+  auditExportCsv: "تصدير CSV",
+  auditResultCount: "عدد النتائج: {count}",
+  auditOrderHint: "النتائج مرتبة تصاعديًا حسب الوقت.",
 
   shellSkipToContent: "تخطَّ إلى المحتوى",
   shellCommandSearch: "ابحث أو انتقل إلى…",
@@ -7029,6 +7140,42 @@ const ar: Dictionary = {
 
   // بطاقة لوحة المعلومات
   dashboardOfflineNote: "مسودات وقراءات وقائمة مزامنة تعمل دون اتصال داخل تطبيق سطح المكتب.",
+
+  // صفحة سياسة الإفصاح الأمني (المرحلة 024 — T14)
+  disclosureTitle: "سياسة الإفصاح عن الثغرات الأمنية",
+  disclosureIntro:
+    "كيف تبلّغنا عن الثغرات الأمنية، وما نلتزم به مقابل ذلك، والقواعد التي تحافظ على حسن نية البحث.",
+  disclosureContactHeading: "الإبلاغ عن ثغرة",
+  disclosureContactBody:
+    "أرسل لنا بريدًا يصف المشكلة وخطوات إعادة إنتاجها وأي مثال توضيحي، ويُفضّل تشفير التفاصيل الحساسة إن أمكن، مع ذكر وسيلة تواصل للوصول إليك.",
+  disclosureContactAddress: "security@erp.example",
+  disclosureContactPlaceholderNote:
+    "العنوان أعلاه قيمة موثّقة مؤقتة في وثائق هذا النشر؛ ويُضبَط العنوان الفعلي عند وقت النشر.",
+  disclosureCommitmentHeading: "التزامنا",
+  disclosureCommitmentAck: "نُقرّ باستلام البلاغات خلال ٤٨ ساعة.",
+  disclosureCommitmentUpdates:
+    "نُبقي المُبلّغين على اطّلاع على الفحص والتقدّم وجدول الإصلاح حتى تُحلّ المشكلة.",
+  disclosureCommitmentCoordinated:
+    "نتبع الإفصاح المنسّق: لا تُنشر التفاصيل إلا بعد توفر الإصلاح وبالاتفاق مع المُبلّغ.",
+  disclosureSafeHarborHeading: "الملاذ الآمن",
+  disclosureSafeHarborBody:
+    "لن نتخذ إجراءات قانونية ضد الباحثين الذين يعملون بحسن نية، ويحترمون الإرشادات أدناه، ويتجنبون الإضرار بخدمتنا أو ببيانات مستأجرينا.",
+  disclosureGuidelinesHeading: "ما نطلبه منك",
+  disclosureGuidelineTesting:
+    "تجنّب بيانات المستأجرين في بيئة الإنتاج: اختبر فقط بحساباتك ومستأجريك، ولا تصل إلى بيانات مستأجرين آخرين ولا تعدّلها ولا تسربها.",
+  disclosureGuidelineNoDegrade:
+    "لا تحاول هجمات الحرمان من الخدمة أو الرسائل المزعجة أو الهندسة الاجتماعية، ولا تستخدم أدوات فحص تُحدث حملًا ثقيلًا.",
+  disclosureGuidelineReport:
+    "أبلغ فور اكتشاف المشكلة، وامنحنا وقتًا معقولًا للإصلاح قبل أي إفصاح عام.",
+  disclosureScopeHeading: "النطاق",
+  disclosureScopeBody:
+    "داخل النطاق: تطبيق الويب وواجهاته البرمجية، وتطبيقات سطح المكتب وأندرويد، ونقاط نهاية المزامنة، وسطح بيئة الفوترة الإلكترونية التجريبية. أمّا بلاغات التوافر والرسائل المزعجة والتخمينات خارج هذه الأسطح فخارج النطاق.",
+  disclosureTriageHeading: "كيف تُعالج البلاغات",
+  disclosureTriageBody:
+    "تُوجّه البلاغات إلى مسار الفحص لدى فريق الاستجابة المناوب وتُصنّف وفق سلّم خطورة الحوادث (SEV-1 حتى SEV-4)؛ وتتبع الثغرات المؤكدة جداول إصلاح مرتبطة بالخطورة، ويُعاد اختبار كل بلاغ مؤكد قبل إغلاقه.",
+  disclosureBountyNote:
+    "برنامج المكافآت المدفوعة قرار منفصل بعد الإطلاق العام؛ وهذه الصفحة هي سياسة الإفصاح نفسها.",
+  loginSecurityLink: "سياسة الإفصاح الأمني",
 };
 
 const en: Dictionary = {
@@ -7057,6 +7204,8 @@ const en: Dictionary = {
   loginForgotLink: "Forgot your password?",
   loginErrorInvalidCredentials: "Email or password is incorrect.",
   loginErrorMfaRequired: "This account is protected with two-factor authentication — enter your MFA code.",
+  loginErrorMfaBootstrapIneligible:
+    "The enforced-enrollment path is not available for this account — sign in the usual way.",
   loginErrorRateLimited: "Too many attempts — try again in {seconds} seconds.",
   loginErrorAccountLocked: "This account is temporarily locked — try again in {seconds} seconds.",
   loginErrorGeneric: "Could not sign you in — please try again.",
@@ -7146,6 +7295,8 @@ const en: Dictionary = {
   mfaRecoveryRegenerate: "Regenerate codes",
   mfaInvalidCode: "That code is not valid.",
   mfaNeedConfirmed: "Confirm enrollment first, then generate recovery codes.",
+  mfaEnforcedNotice:
+    "Your organization requires multi-factor authentication — complete enrollment to continue. This session expires in 15 minutes.",
 
   rolesTitle: "Roles",
   rolesDescription: "Clone a system template to create a role for your organization.",
@@ -7277,6 +7428,24 @@ const en: Dictionary = {
   settingsSaved: "Saved.",
   settingsErrorInvalidValue: "Invalid value for this setting.",
 
+  // -- PHASE-024 T4: MFA policy settings card
+  mfaPolicyTitle: "Multi-factor authentication policy",
+  mfaPolicyDescription: "Choose which roles must enroll in two-factor authentication at sign-in.",
+  mfaPolicyModeLabel: "Mode",
+  mfaPolicyModePlan: "Inherit plan",
+  mfaPolicyModeCustom: "Custom",
+  mfaPolicyModePlanHint: "Inherit-plan mode applies the mandatory roles defined by your subscription plan.",
+  mfaPolicyModeCustomHint:
+    "Custom mode replaces the plan's list with the roles below — an explicitly empty list makes MFA optional for everyone.",
+  mfaPolicyRolesLabel: "Roles required to use MFA",
+  mfaPolicyRolesHint:
+    "Pick the tenant roles that will be asked to complete MFA enrollment at their next sign-in (up to 20 roles).",
+  mfaPolicyRolesUnavailable: "The roles list could not be loaded — only the currently selected keys are shown.",
+  mfaPolicyNoRoles: "This tenant has no roles yet.",
+  mfaPolicyRoleMissing: "Stored role missing from the current list:",
+  mfaPolicySelectedCount: "Selected: {count} of {max}",
+  mfaPolicyRolesMaxError: "The maximum is {max} roles.",
+
   supportSessionsTitle: "Support sessions",
   supportSessionsHint:
     "These are sessions the platform team opens on your request or with your consent; you can terminate any active opt-in session at any time.",
@@ -7374,6 +7543,30 @@ const en: Dictionary = {
   platformAuditEmpty: "No events.",
   platformErrorInvalidTransition: "The organization's state does not allow this transition.",
   platformErrorPlanNotFound: "Unknown plan.",
+
+  // -- PHASE-024 T8: tenant audit review console
+  auditReviewTitle: "Audit review",
+  auditReviewHint:
+    "Review your tenant's audit events — the action, actor, entity and correlation id of every operation — with a CSV export of the same filter set.",
+  auditFilterAction: "Action (optional)",
+  auditFilterActorId: "Actor id (UUID, optional)",
+  auditFilterEntityType: "Entity type (optional)",
+  auditFilterEntityId: "Entity id (UUID, optional)",
+  auditFilterCorrelationId: "Correlation id (UUID, optional)",
+  auditFilterFromAt: "From (UTC)",
+  auditFilterToAt: "To (UTC)",
+  auditFilterLimit: "Row limit",
+  auditFilterApply: "Apply filters",
+  auditColAt: "When",
+  auditColAction: "Action",
+  auditColEntityType: "Entity type",
+  auditColEntityId: "Entity id",
+  auditColActor: "Actor",
+  auditColCorrelation: "Correlation id",
+  auditEmpty: "No matching events.",
+  auditExportCsv: "Export CSV",
+  auditResultCount: "Results: {count}",
+  auditOrderHint: "Results are ordered oldest-first.",
 
   shellSkipToContent: "Skip to content",
   shellCommandSearch: "Search or jump to…",
@@ -10563,6 +10756,42 @@ const en: Dictionary = {
 
   // Dashboard quick action
   dashboardOfflineNote: "Drafts, cached reads, and the sync queue — working without a connection inside the desktop app.",
+
+  // Security disclosure policy page (PHASE-024 T14)
+  disclosureTitle: "Security disclosure policy",
+  disclosureIntro:
+    "How to report security vulnerabilities to us, what we commit to in return, and the ground rules that keep research in good faith.",
+  disclosureContactHeading: "Reporting a vulnerability",
+  disclosureContactBody:
+    "Email us with a description of the issue, the steps to reproduce it, and any proof of concept. Please encrypt sensitive details where you can, and include a contact address so we can reach you.",
+  disclosureContactAddress: "security@erp.example",
+  disclosureContactPlaceholderNote:
+    "The address above is a documented placeholder in this deployment's documentation; the live contact address is configured at deployment time.",
+  disclosureCommitmentHeading: "Our commitment",
+  disclosureCommitmentAck: "We acknowledge reports within 48 hours.",
+  disclosureCommitmentUpdates:
+    "We keep reporters informed of triage, progress, and the fix timeline until the issue is resolved.",
+  disclosureCommitmentCoordinated:
+    "We follow coordinated disclosure: details are published only after a fix is available, in agreement with the reporter.",
+  disclosureSafeHarborHeading: "Safe harbor",
+  disclosureSafeHarborBody:
+    "We will not take legal action against researchers who act in good faith, respect the guidelines below, and avoid harming our service or our tenants' data.",
+  disclosureGuidelinesHeading: "What we ask of you",
+  disclosureGuidelineTesting:
+    "Please avoid production tenant data: test only with your own accounts and tenants, and never access, modify, or exfiltrate another tenant's data.",
+  disclosureGuidelineNoDegrade:
+    "Do not attempt denial-of-service, spam, or social engineering, and do not use scanners that generate heavy load.",
+  disclosureGuidelineReport:
+    "Report promptly once you find an issue, and give us reasonable time to fix it before any public disclosure.",
+  disclosureScopeHeading: "Scope",
+  disclosureScopeBody:
+    "In scope: the web application and its API, the desktop and Android clients, the synchronization endpoints, and the e-invoicing sandbox surface. Reports about availability, spam, or configuration guesses outside these surfaces are out of scope.",
+  disclosureTriageHeading: "How reports are handled",
+  disclosureTriageBody:
+    "Reports route to the on-call triage path and are classified on the incident severity ladder (SEV-1 to SEV-4); confirmed vulnerabilities follow severity-mapped fix timelines, and every confirmed report is retested before it is closed.",
+  disclosureBountyNote:
+    "A paid bug-bounty program is a separate post-GA decision; this page is the disclosure policy itself.",
+  loginSecurityLink: "Security disclosure policy",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

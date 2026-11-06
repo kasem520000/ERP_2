@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, Query, Req } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Post, Query, Req } from "@nestjs/common";
 import type { Request } from "express";
 import { z } from "zod";
 
@@ -9,6 +9,7 @@ import { RequireLimit } from "../../../infra/auth/require-limit.decorator";
 import { InvitationService } from "../application/invitation-service";
 import { UsersService } from "../application/users-service";
 import { SessionService } from "../application/session-service";
+import { MfaService } from "../application/mfa-service";
 import { NotFoundError, UnauthenticatedError } from "../domain/identity-errors";
 
 /**
@@ -40,6 +41,7 @@ export class UsersController {
     @Inject(UsersService) private readonly users: UsersService,
     @Inject(InvitationService) private readonly invitations: InvitationService,
     @Inject(SessionService) private readonly sessions: SessionService,
+    @Inject(MfaService) private readonly mfa: MfaService,
   ) {}
 
   // -- users (tenant plane) -------------------------------------------------
@@ -182,6 +184,32 @@ export class UsersController {
     const input = grantsSchema.parse(body);
     await this.users.setRoleGrants({ roleId: id, keys: input.keys, actorId: identity.userId });
     return envelope({ updated: true });
+  }
+
+  // -- MFA admin reset (PHASE-024 T4) ---------------------------------------
+
+  /**
+   * Admin-assisted MFA reset (matrix §3.9 `identity.mfa.admin_reset` — the
+   * seeded key's first route; SECRETS_MANAGEMENT §3 S-05 emergency column):
+   * removes every factor of the target user (confirmed + pending), audited.
+   * If a policy still mandates MFA for them, the response says so — their
+   * next login takes the enrollment-bootstrap path.
+   */
+  @Delete("users/:userId/mfa")
+  @RequirePermissions("identity.mfa.admin_reset")
+  async adminResetMfa(@Req() request: Request, @Param("userId") userId: string) {
+    const identity = requireIdentity(request);
+    const tenantId = requireActiveTenant(identity.activeTenantId);
+    const result = await this.mfa.adminReset({
+      adminId: identity.userId,
+      targetUserId: userId,
+      tenantId,
+    });
+    return envelope({
+      reset: true,
+      factorsRemoved: result.factorsRemoved,
+      note: "if a policy mandates mfa for this user, their next login starts the enrollment bootstrap",
+    });
   }
 }
 

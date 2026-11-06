@@ -63,3 +63,58 @@ test.describe("secure headers probe", () => {
     expect(errors).toEqual([]);
   });
 });
+
+test.describe("PHASE-024 T9 — BFF header set + M-03 cookie DOM probe", () => {
+  test("BFF JSON responses carry the fixed security header set (unauthenticated 4xx)", async ({ request }) => {
+    // No body → the BFF's own 400 VALIDATION_ERROR (no upstream call), so
+    // the probe asserts headers without needing the API process.
+    const response = await request.post(`${BASE}/api/bff/session`);
+    expect(response.status()).toBeGreaterThanOrEqual(400);
+    expect(response.status()).toBeLessThan(500);
+    const headers = response.headers();
+
+    expect(headers["x-content-type-options"]).toBe("nosniff");
+    expect(headers["x-frame-options"]).toBe("DENY");
+    expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+    // API-grade CSP for a JSON plane — no script-src/nonce here (that is the
+    // document-origin flow only).
+    expect(headers["content-security-policy"]).toBe("default-src 'none'; frame-ancestors 'none'");
+  });
+
+  test("M-03: erp_session is httpOnly (JS-blind) while erp_csrf stays readable", async ({ page, request }) => {
+    // (1) A failed BFF login issues NO session cookie — no fixation, no
+    // oracle. 401 with the API up; 502 in the API-less probe environment —
+    // both are "failed login" and must set nothing.
+    const failed = await request.post(`${BASE}/api/bff/session`, {
+      data: { email: "probe@example.com", password: "definitely-wrong" },
+    });
+    expect(failed.status()).toBeGreaterThanOrEqual(400);
+    expect(failed.headers()["set-cookie"] ?? "").not.toContain("erp_session");
+
+    // (2) The DOM proof of the cookie design (lib/bff.ts applySessionCookies):
+    // plant the exact pair a successful BFF login would set — httpOnly
+    // `erp_session`, readable `erp_csrf`, SameSite=Lax — then read what JS
+    // can see on a real document.
+    await page.context().addCookies([
+      {
+        name: "erp_session",
+        value: "probe-session-token",
+        url: BASE,
+        httpOnly: true,
+        sameSite: "Lax",
+      },
+      {
+        name: "erp_csrf",
+        value: "probe-csrf-token",
+        url: BASE,
+        httpOnly: false,
+        sameSite: "Lax",
+      },
+    ]);
+    await page.goto(`${BASE}/ar/login`);
+    const visible = await page.evaluate(() => document.cookie);
+    expect(visible).not.toContain("erp_session"); // httpOnly proof
+    expect(visible).not.toContain("probe-session-token"); // nor the value
+    expect(visible).toContain("erp_csrf=probe-csrf-token"); // readable by design
+  });
+});

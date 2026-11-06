@@ -74,6 +74,11 @@ export class DrizzleAuditStore extends AuditStore {
       query.entityId !== undefined ? eq(auditEvents.entityId, query.entityId) : undefined,
       query.actorId !== undefined ? eq(auditEvents.actorId, query.actorId) : undefined,
       query.action !== undefined ? eq(auditEvents.action, query.action) : undefined,
+      // PHASE-024 T8: the correlation-id lookup (the tenant-admin review
+      // tooling's "follow one request" filter).
+      query.correlationId !== undefined
+        ? eq(auditEvents.correlationId, query.correlationId)
+        : undefined,
       query.fromAt !== undefined ? gte(auditEvents.at, query.fromAt) : undefined,
       query.toAt !== undefined ? lte(auditEvents.at, query.toAt) : undefined,
     ].filter((filter) => filter !== undefined);

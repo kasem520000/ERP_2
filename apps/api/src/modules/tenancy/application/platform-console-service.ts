@@ -1,4 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
+import { sql } from "drizzle-orm";
 
 import {
   AuditService,
@@ -143,6 +144,40 @@ export class PlatformConsoleService {
           ? JSON.stringify({ at: page[page.length - 1]!.at, id: page[page.length - 1]!.id })
           : undefined;
       return { rows: page, hasMore, nextCursor };
+    });
+  }
+
+  /**
+   * PHASE-024 T4 (ADR-0015 §4): the plan-level MFA policy lever
+   * (platform.plans.manage). Rewrites plans.mfa_required_role_keys under
+   * the platform scope and audits the change as a platform event — the
+   * enforcement itself lives in the login flow (tenants may override via
+   * the `identity.mfa.policy` tenant setting).
+   */
+  async setPlanMfaPolicy(
+    actorId: string,
+    planKey: string,
+    requiredRoleKeys: readonly string[],
+  ): Promise<{ planKey: string; requiredRoleKeys: string[] }> {
+    return withPlatformScope(async (tx) => {
+      const plan = await store.findPlanByKey(planKey);
+      if (plan === undefined) {
+        throw new NotFoundError("plan");
+      }
+      const deduped = [...new Set(requiredRoleKeys)];
+      await tx.execute(
+        sql`UPDATE plans SET mfa_required_role_keys = ${deduped}, updated_at = now()
+            WHERE key = ${planKey}`,
+      );
+      await this.audit.recordPlatform({
+        action: "plan.mfa_policy_updated",
+        entityType: "plan",
+        entityId: plan.id,
+        actorId,
+        before: { required_role_keys: plan.mfaRequiredRoleKeys ?? [] },
+        after: { required_role_keys: deduped },
+      });
+      return { planKey, requiredRoleKeys: deduped };
     });
   }
 

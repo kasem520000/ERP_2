@@ -1,5 +1,6 @@
 import { generateOpaqueToken, hashToken } from "../domain/tokens";
 import {
+  MFA_ENROLLMENT_SESSION_IDLE_MS,
   SESSION_ABSOLUTE_TIMEOUT_MS,
   SESSION_IDLE_TIMEOUT_MS,
   systemClock,
@@ -29,6 +30,8 @@ export interface SessionValidation {
   activeTenantId: string | null;
   /** True when the sliding window moved — caller persists last_seen. */
   touched: boolean;
+  /** PHASE-024: false on the enrollment-bootstrap session (route-gated). */
+  mfaGatePassed: boolean;
 }
 
 export class SessionService {
@@ -38,20 +41,30 @@ export class SessionService {
    * Issue a fresh session bound to the user's active tenant choice. The
    * token exists exactly once in plaintext: the login response. Everything
    * else stores the SHA-256 hash.
+   *
+   * PHASE-024: `mfaGatePassed: false` issues the enrollment-bootstrap
+   * session (15-minute idle window — MFA_ENROLLMENT_SESSION_IDLE_MS); the
+   * session middleware restricts it to the MFA endpoints until a valid
+   * TOTP confirmation flips the gate.
    */
   async issue(input: {
     userId: string;
     activeTenantId: string | null;
     ip?: string;
+    mfaGatePassed?: boolean;
   }): Promise<IssuedSession> {
     const token = generateOpaqueToken();
-    const expiresAt = new Date(this.clock.now().getTime() + SESSION_IDLE_TIMEOUT_MS);
+    const idleMs = input.mfaGatePassed === false
+      ? MFA_ENROLLMENT_SESSION_IDLE_MS
+      : SESSION_IDLE_TIMEOUT_MS;
+    const expiresAt = new Date(this.clock.now().getTime() + idleMs);
     const row = await store.insertSession({
       userId: input.userId,
       tokenHash: hashToken(token),
       activeTenantId: input.activeTenantId,
       expiresAt: expiresAt.toISOString(),
       ip: input.ip,
+      mfaGatePassed: input.mfaGatePassed ?? true,
     });
     return { token, sessionId: row.id, expiresAt: row.expiresAt };
   }
@@ -79,6 +92,7 @@ export class SessionService {
       userId: row.userId,
       activeTenantId: row.activeTenantId,
       touched: true,
+      mfaGatePassed: row.mfaGatePassed,
     };
   }
 
@@ -93,7 +107,13 @@ export class SessionService {
       throw new UnauthenticatedError();
     }
     const token = generateOpaqueToken();
-    const expiresAt = new Date(this.clock.now().getTime() + SESSION_IDLE_TIMEOUT_MS);
+    // PHASE-024: rotation inherits the enrollment gate (and its short idle
+    // window) — a bootstrap session can never rotate itself into a full
+    // session; only a valid TOTP confirmation flips the gate.
+    const idleMs = row.mfaGatePassed === false
+      ? MFA_ENROLLMENT_SESSION_IDLE_MS
+      : SESSION_IDLE_TIMEOUT_MS;
+    const expiresAt = new Date(this.clock.now().getTime() + idleMs);
     await store.revokeSession(row.id);
     const next = await store.insertSession({
       userId: row.userId,
@@ -101,6 +121,7 @@ export class SessionService {
       activeTenantId: row.activeTenantId,
       expiresAt: expiresAt.toISOString(),
       ip: row.ip ?? undefined,
+      mfaGatePassed: row.mfaGatePassed,
     });
     // Re-anchor the absolute window to the original issue instant so
     // rotation cannot extend lifetime beyond 12 h from first login (M-02).

@@ -1798,6 +1798,19 @@ async function seedFixtures(superuser: {
     [TENANT_A, TENANT_B],
   );
 
+  // -- PHASE-024 (migration 0036): one offboarding flow row per tenant
+  // (REQUESTED — the read-only grace state).
+  await superuser.query(
+    `INSERT INTO tenant_offboarding (id, tenant_id, status, requested_by)
+     VALUES
+       ('a9a9a9a9-0000-4000-8000-000000000001', $1, 'REQUESTED',
+        'eeeeeeee-0000-4000-8000-000000000001'),
+       ('a9a9a9a9-0000-4000-8000-000000000002', $2, 'REQUESTED',
+        'eeeeeeee-0000-4000-8000-000000000002')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+
   // -- seedFixtures end --
 
 }
@@ -2157,6 +2170,11 @@ const OWN_ROW: Record<string, [string, string]> = {
   bank_statement_parked_lines: [
     "a5a5a5a5-0000-4000-8000-000000000001",
     "a5a5a5a5-0000-4000-8000-000000000002",
+  ],
+  // PHASE-024 security hardening cluster (migration 0036).
+  tenant_offboarding: [
+    "a9a9a9a9-0000-4000-8000-000000000001",
+    "a9a9a9a9-0000-4000-8000-000000000002",
   ],
   commerce_channel_orders: [
     "a6a6a6a6-0000-4000-8000-000000000001",
@@ -2688,6 +2706,12 @@ const MISMATCHED_INSERT: Record<string, string> = {
         period_start, period_end, gross_amount, fee_amount, net_amount, currency_code, status)
      VALUES ('a8a8a8a8-3000-4000-8000-000000000003', $1, 'sandbox', 'po_iso_attack', '2027-01-01',
        '2027-01-31', 100, 1, 99, 'SAR', 'PENDING')`,
+  // PHASE-024 (migration 0036): the offboarding flow row (REQUESTED — the
+  // requested_by FK is the attacker tenant's own user so the RLS WITH
+  // CHECK stays the isolated rejection).
+  tenant_offboarding: `INSERT INTO tenant_offboarding (id, tenant_id, status, requested_by)
+     VALUES ('a9a9a9a9-3000-4000-8000-000000000003', $1, 'REQUESTED',
+       'eeeeeeee-0000-4000-8000-000000000001')`,
 };
 
 beforeAll(async () => {

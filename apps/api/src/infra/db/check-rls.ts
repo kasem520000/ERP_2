@@ -48,6 +48,10 @@ interface TableCheckRow {
   policy_with_checks: string | null;
   /** true when the policy applies to erp_app */
   policy_applies_to_app: boolean | null;
+  /** PHASE-024: true when the purge_path_delete policy applies to erp_migrate. */
+  purge_delete_applies_to_migrate: boolean | null;
+  /** PHASE-024: true when the purge_path_update policy applies to erp_migrate. */
+  purge_update_applies_to_migrate: boolean | null;
 }
 
 export interface CheckResult {
@@ -89,7 +93,17 @@ export async function runChecks(
         SELECT bool_or('erp_app' = ANY(pol.roles)) FROM pg_policies pol
         WHERE pol.schemaname = 'public' AND pol.tablename = c.relname
           AND pol.policyname = 'tenant_isolation'
-      ) AS policy_applies_to_app
+      ) AS policy_applies_to_app,
+      (
+        SELECT bool_or('erp_migrate' = ANY(pol.roles)) FROM pg_policies pol
+        WHERE pol.schemaname = 'public' AND pol.tablename = c.relname
+          AND pol.policyname = 'purge_path_delete'
+      ) AS purge_delete_applies_to_migrate,
+      (
+        SELECT bool_or('erp_migrate' = ANY(pol.roles)) FROM pg_policies pol
+        WHERE pol.schemaname = 'public' AND pol.tablename = c.relname
+          AND pol.policyname = 'purge_path_update'
+      ) AS purge_update_applies_to_migrate
     FROM pg_class c
     JOIN pg_namespace n ON n.oid = c.relnamespace
     WHERE n.nspname = 'public' AND c.relkind = 'r'
@@ -123,6 +137,28 @@ export async function runChecks(
             `${row.table_name}: policy predicate must match the documented macro (${row.table_name === PLATFORM_TABLE ? "id/platform variant" : "tenant_id = erp.current_tenant_id()"}), got USING=${usings}`,
           );
         }
+      }
+      // PHASE-024 (migration 0036): the explicit purge path — every
+      // tenant-owned table carries `purge_path_delete` + `purge_path_update`
+      // for erp_migrate (command-scoped; NO insert policy by design) so the
+      // offboarding purge can reach exactly the GUC-named tenant's rows on
+      // the migration-scope connection (DATA_PROTECTION §4 step 6).
+      // Drift-checking the policies here keeps a future table from silently
+      // shipping without them.
+      if (row.table_name === "tenants") {
+        // The id-keyed platform table: update-only (the OFFBOARDED marking).
+        if (row.purge_update_applies_to_migrate !== true) {
+          violations.push(
+            `${row.table_name}: missing purge_path_update policy for erp_migrate (PHASE-024 purge path — the id-scoped tenants variant)`,
+          );
+        }
+      } else if (
+        row.purge_delete_applies_to_migrate !== true ||
+        row.purge_update_applies_to_migrate !== true
+      ) {
+        violations.push(
+          `${row.table_name}: missing purge_path_delete/purge_path_update policies for erp_migrate (PHASE-024 purge path — DATA_PROTECTION §4 step 6)`,
+        );
       }
     }
   }

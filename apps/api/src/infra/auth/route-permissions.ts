@@ -57,6 +57,58 @@ export const ROUTE_PERMISSIONS: readonly RoutePermissionRule[] = [
     path: "/api/v1/identity/roles",
     permission: "identity.roles.assign",
   },
+  // PHASE-024 T4: the admin-assisted MFA reset (matrix §3.9
+  // identity.mfa.admin_reset — the seeded key's first route).
+  {
+    method: "DELETE",
+    path: "/api/v1/identity/users/:userId/mfa",
+    permission: "identity.mfa.admin_reset",
+  },
+  // PHASE-024 T4: the plan-level MFA policy lever.
+  {
+    method: "PUT",
+    path: "/api/v1/platform/plans/:key/mfa-policy",
+    permission: "platform.plans.manage",
+  },
+  // PHASE-024 T11 (Journey H): the offboarding flow — tenant plane
+  // (owner request/export/cancel) + platform plane (two-person execution,
+  // legal hold, state read).
+  {
+    method: "POST",
+    path: "/api/v1/tenancy/offboarding/request",
+    permission: "tenancy.offboarding.execute",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/tenancy/offboarding/export",
+    permission: "tenancy.export.request",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/tenancy/offboarding/cancel",
+    permission: "tenancy.offboarding.execute",
+  },
+  {
+    method: "POST",
+    path: "/api/v1/platform/tenants/:id/offboard",
+    permission: "platform.tenants.offboard",
+  },
+  {
+    method: "PUT",
+    path: "/api/v1/platform/tenants/:id/legal-hold",
+    permission: "platform.tenants.offboard",
+  },
+  {
+    method: "GET",
+    path: "/api/v1/platform/tenants/:id/offboarding",
+    permission: "platform.tenants.view",
+  },
+  // PHASE-024 T12: the support-access review report over a window.
+  {
+    method: "GET",
+    path: "/api/v1/platform/support-sessions/review",
+    permission: "platform.support.access",
+  },
   {
     method: "POST",
     path: "/api/v1/identity/roles/clone-template",
@@ -70,6 +122,12 @@ export const ROUTE_PERMISSIONS: readonly RoutePermissionRule[] = [
   {
     method: "GET",
     path: "/api/v1/audit/events",
+    permission: "audit.view",
+  },
+  // PHASE-024 T8: the tenant-admin CSV export (audit.view; audited E-04).
+  {
+    method: "GET",
+    path: "/api/v1/audit/events/export",
     permission: "audit.view",
   },
   // -- PHASE-004: tenancy tenant-plane routes (matrix §3.9) ---------------
@@ -2827,6 +2885,10 @@ export const PUBLIC_ROUTES: readonly { method: string; path: string }[] = [
   { method: "PUT", path: "/api/v1/identity/password-resets/:token" },
   { method: "GET", path: "/api/v1/identity/invitations/accept" },
   { method: "POST", path: "/api/v1/identity/invitations/accept" },
+  // PHASE-024 T4: the MFA enrollment bootstrap — the login discipline
+  // re-verified for the 15-minute enrollment-only session (session-creating
+  // like login: Idempotency-exempt by the same §1.5 reading).
+  { method: "POST", path: "/api/v1/identity/mfa/bootstrap" },
   // PHASE-004: public registration (rate-limited inside the service).
   { method: "GET", path: "/api/v1/platform/register/options" },
   { method: "POST", path: "/api/v1/platform/register" },
@@ -2853,6 +2915,16 @@ export function isIdempotencyExempt(method: string, path: string): boolean {
   return PUBLIC_ROUTES.some(
     (route) => route.method === method && (route.path.endsWith(":token") || pathMatches(route.path, path)),
   );
+}
+
+/**
+ * PHASE-024 (R-04): true when (method, path) is a PUBLIC_ROUTES row — the
+ * anonymous surface the per-tenant burst limiter must skip (those requests
+ * carry no tenant budget; the login/reset limiters own them). Reuses the
+ * registry rows (incl. `:param` matching) instead of re-listing paths.
+ */
+export function isPublicRoute(method: string, path: string): boolean {
+  return PUBLIC_ROUTES.some((route) => route.method === method && pathMatches(route.path, path));
 }
 
 function pathMatches(pattern: string, path: string): boolean {

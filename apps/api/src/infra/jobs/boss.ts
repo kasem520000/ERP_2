@@ -33,6 +33,21 @@ export function getBoss(): PgBoss {
       max: 5,
 
     });
+    // PHASE-024 (the race PROVEN pre-existing at PHASE-022/023 HEAD and
+    // flagged for this phase): concurrent createQueue calls from modules
+    // booting in parallel deadlock on the boss schema's catalog rows
+    // (pg-boss creates/locks queue rows non-idempotently under
+    // concurrency). Serialize every createQueue behind one promise chain —
+    // caller semantics identical, the boot race gone.
+    const originalCreateQueue = bossInstance.createQueue.bind(bossInstance);
+    let createQueueChain: Promise<unknown> = Promise.resolve();
+    bossInstance.createQueue = ((name: string, options?: unknown) => {
+      const run = createQueueChain.then(() =>
+        originalCreateQueue(name, options as never),
+      );
+      createQueueChain = run.catch(() => undefined);
+      return run;
+    }) as PgBoss["createQueue"];
   }
   return bossInstance;
 }

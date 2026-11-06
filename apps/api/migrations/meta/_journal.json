@@ -246,6 +246,13 @@
       "when": 1793700000000,
       "tag": "0035_external_integrations",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793900000000,
+      "tag": "0036_security_hardening",
+      "breakpoints": true
     }
   ]
 }

@@ -116,14 +116,19 @@ describe("check-rls (RLS presence + catalog drift)", () => {
     ).toBe(true);
 
     // The documented macro repairs the RLS half (erp.apply_tenant_policy);
-    // the probe's remaining violation is the deliberate catalog gap, which
-    // resolves only when the fixture is dropped (catalog strictness by design).
+    // the probe's remaining violations are the deliberate catalog gap and
+    // (since PHASE-024) the purge-path gap — the macro creates the
+    // tenant_isolation policy only, the 0036 DO-block owns the purge
+    // policies — both resolve only when the fixture is dropped (strictness
+    // by design).
     await su.query(`SELECT erp.apply_tenant_policy('_rls_probe')`);
     const afterMacro = await runChecks(state.migrateUrl, resolveEntityCatalog());
     expect(
       afterMacro.violations.some(
         (violation) =>
-          violation.startsWith("_rls_probe:") && !violation.includes("ENTITY_CATALOG"),
+          violation.startsWith("_rls_probe:") &&
+          !violation.includes("ENTITY_CATALOG") &&
+          !violation.includes("purge_path"),
       ),
     ).toBe(false);
     expect(

@@ -1,6 +1,6 @@
 # Accounting Invariants
 
-> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-11-07
 
 The testable, normative invariants of the financial core. Each invariant has an ID
 referenced by module code comments, test names (`INV-xxx`), and phase acceptance
@@ -70,7 +70,7 @@ entitlement may violate any invariant (directive §1.15). Test plan:
 | ID | Invariant | Enforced by / tested at |
 |----|-----------|------------------------|
 | INV-023 | For every asset: Σ depreciation ≤ cost − salvage_value; NBV ≥ 0 always; disposal only once and only from status ACTIVE/FULLY_DEPRECIATED. | Fixed-assets run + disposal services (per-category purpose maps, BR-041…043) · INV-023 suite ([../testing/ACCOUNTING_TESTS.md](../testing/ACCOUNTING_TESTS.md) §2) |
-| INV-024 | Note custody equals its journal effects: a COLLECTED/DISCOUNTED/RETURNED note carries zero `NOTES_RECEIVABLE` balance; a DISHONORED note restores the AR open item exactly (amount + references). | Notes event service + posting engine (G-24…G-27, BR-046/047) · INV-024 suite + note-custody reconciliation |
+| INV-024 | Note custody equals its journal effects: a COLLECTED/DISCOUNTED/RETURNED note carries zero `NOTES_RECEIVABLE` balance; a DISHONORED note restores the AR open item exactly (amount + references). | Notes custody machine (`custody-machine.ts` legal transitions) + dishonor/return services (the repoint-restore algebra over `treasury_allocations.note_id`; G-24…G-27, BR-045…047) · INV-024 property suite ([../testing/ACCOUNTING_TESTS.md](../testing/ACCOUNTING_TESTS.md) §2) + RC-11 notes reconciliation (kind `NOTES`, [RECONCILIATION.md](RECONCILIATION.md) §1 row 11) |
 | INV-025 | Payroll run totals equal Σ lines (gross, deductions, net) and net = gross − deductions exactly; posted runs are immutable (reversal-only). | Payroll run service (same-transaction totals, BR-052/053) + posted-row guards · INV-025 suite |
 | INV-026 | Consolidation runs never write member books; consolidated statement = Σ member statements (group currency, dated FX) − eliminations; every elimination is a balanced journal in the consolidation books. | Consolidation run service (read-only cross-tenant access, [../architecture/ADR/ADR-0018-multi-entity-consolidation.md](../architecture/ADR/ADR-0018-multi-entity-consolidation.md); BR-056) + engine · INV-026 suite |
 

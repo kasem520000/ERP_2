@@ -103,6 +103,14 @@ export const MIGRATIONS: readonly string[] = [
   // asset_disposals/asset_revaluations + the six v2.0 CoA purposes + 13
   // permission seeds + plan/role grants + the RC-10 reconciliation kind).
   "0037_fixed_assets",
+  // PHASE-027: 0038_notes_installments.sql (the notes & installments modules
+  // per DR-003/ED-03 option A: notes/note_events 🔒/installment_plans/
+  // installment_lines + the treasury_allocations note_id widening (the
+  // settle/restore substrate) + the four v2.0 CoA purposes (1160/2150/4920/
+  // 5260) + the notes.notes.return seed (0004/0005 in-phase edits) + the 12
+  // feature-key plan grants + the RC-11 'NOTES' kind + the notification
+  // category widening).
+  "0038_notes_installments",
 ];
 
 /**

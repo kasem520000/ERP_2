@@ -1,6 +1,6 @@
 # Journal Rules
 
-> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Accounting Domain Architecture · **Updated:** 2026-11-07
 
 Rules governing manual journals, recurring entries, approvals, FX entries, and rounding
 entries. Posted-entry mechanics (immutability, reversal) are defined in
@@ -120,4 +120,40 @@ Notes:
 4. Module invariants INV-023…INV-026 govern these rows
    ([ACCOUNTING_INVARIANTS.md](ACCOUNTING_INVARIANTS.md)); eliminations are reversible only
    by counter-entry (BR-056) and never write member books (ADR-0018).
+5. **G-24…G-28 delivered mechanics (PHASE-027, migration 0038).** The note create
+   journals (G-24 received / G-27 issued) are **BASE-denominated with explicit base line
+   amounts** (the fx-settlement precedent — receipts post the same way): the GL is always
+   base; document currencies enter via their stored rates. The allocated portion settles
+   each open item at the **item's original stored rate** (INV-008) — for an allocated
+   foreign note the note's stored rate must equal the item's (typed `NOTE_RATE_MISMATCH`
+   otherwise; FX movement accrues to collection); the on-account portion (BR-027) posts at
+   the note's own stored rate. The G-24/G-27 credit (debit for G-27) control lines carry
+   the partner (INV-009(a)).
+6. **FX residual at collection (G-25):** cash settles at the collection-day rate r₁ while
+   the note leg derecognizes at the ORIGINAL stored rate r₀ — the residual is an explicit
+   `FX_GAIN`/`FX_LOSS` line (the receipt G-06 mirror — never absorbed). The treasury money
+   movement runs through the treasury store API with INV-019 exact and
+   `cash_movements.source_type = 'note'`.
+7. **Dishonor fee legs (G-26):** the optional bank fee posts `DR BANK_CHARGES · CR cash`
+   plus a treasury movement OUT — the fee is explicit, never dropped; the reason is
+   required (`DISHONOR_REASON_REQUIRED`, BR-046).
+8. **Discounting (G-24 family) is base-currency-only this phase:** a foreign-currency note
+   submitted for discount is rejected with typed `NOTE_DISCOUNT_CURRENCY_UNSUPPORTED` —
+   the honest deferral (the phase pins no FX semantics for discounting; collect or return
+   instead); documented in [TABLES/notes-installments.md](../database/TABLES/notes-installments.md).
+9. **The repoint-restore algebra (G-26/RETURN):** dishonor/return restores the AR/AP open
+   item **exactly** by repointing — the note's `treasury_allocations` rows are deleted and
+   one consolidated row is inserted, anchored at the restore journal's control debit
+   entry (required on the line by INV-009(a), anchored to outstanding 0). The ORIGINAL
+   open item returns byte-equal while the new entry stays anchored, so aging never
+   double-counts and `partner_balances` ties (INV-024). On-account notes have no
+   allocations to repoint — the restore lands a new explicit open item.
+10. **INV-013 source keys (lowercase snake_case per §4.1):** `note/post` (G-24/G-27
+    create), `note/collect` (G-25 + the issued paid mirror), `note/dishonor`,
+    `note/discount`, `note/return`, and `installment_line/late_fee` (G-28 — once per
+    line). Every journal goes through the engine with the standard failure packs
+    (`PERIOD_LOCKED`, `PURPOSE_NOT_MAPPED`, `ALREADY_POSTED`, zero residue); INV-024 and
+    RC-11 (the notes register↔GL reconciliation, kind `NOTES`) are enforced and tested
+    ([ACCOUNTING_INVARIANTS.md](ACCOUNTING_INVARIANTS.md) INV-024;
+    [RECONCILIATION.md](RECONCILIATION.md) §1 row 11).
 

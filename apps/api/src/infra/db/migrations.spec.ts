@@ -37,7 +37,12 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // PHASE-026: 0037_fixed_assets (the fixed_assets module per DR-002
     // option A — six tenant tables + append-only 🔒 depreciation_lines +
     // the six v2.0 CoA purposes + 13 permission seeds + the RC-10 kind).
-    expect(files.at(-1)?.tag).toBe("0037_fixed_assets");
+    // PHASE-027: 0038_notes_installments (the notes & installments modules
+    // per DR-003/ED-03 — notes/note_events 🔒/installment_plans/
+    // installment_lines + the treasury_allocations.note_id settle/restore
+    // substrate + the cash_movements 'note' source kind + the four v2.0
+    // CoA purposes + the RC-11 'NOTES' kind + the notification categories).
+    expect(files.at(-1)?.tag).toBe("0038_notes_installments");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

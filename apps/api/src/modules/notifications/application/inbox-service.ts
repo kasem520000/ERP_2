@@ -34,8 +34,9 @@ function tenantTx(): TenantDb {
  * Notification categories: the PHASE-014 billing-critical set, the
  * PHASE-015 generalization (stock reorder alerts; industry template
  * upgrade offers), the PHASE-019 crm set (task reminders — the 05:30
- * sweep's in-app leg), and the PHASE-023 einvoicing set (submission
- * failures/rejections + certificate expiry + reject spikes).
+ * sweep's in-app leg), the PHASE-023 einvoicing set (submission
+ * failures/rejections + certificate expiry + reject spikes), and the
+ * PHASE-027 notes/installments set (dishonor surfacing, DEFAULTED dunning).
  */
 export type NotificationCategory =
   | "limits"
@@ -45,7 +46,11 @@ export type NotificationCategory =
   | "stock"
   | "templates"
   | "crm"
-  | "einvoicing";
+  | "einvoicing"
+  // PHASE-027 (0038 category widening): dishonor surfacing (BR-046) and
+  // installment dunning/DEFAULTED (BR-049 family).
+  | "notes"
+  | "installments";
 export type NotificationSeverity = "info" | "warning" | "critical";
 
 export interface BilingualText {

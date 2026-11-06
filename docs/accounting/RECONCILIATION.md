@@ -20,6 +20,7 @@ checklist, and (c) backed by an automated test with seeded drift scenarios.
 | 8 | GRNI (received-not-invoiced) register | `GRNI` account balance | INV-010 |
 | 9 | Payroll/salary accruals (if used) | Accrued liability account | deferred |
 | 10 | Fixed assets register → depreciation (RC-10, `FIXED_ASSETS` kind) | Per category account: Σ gross current value = `FIXED_ASSET` balance; Σ accumulated = `ACCUM_DEPRECIATION` balance (INV-023) | PHASE-026 |
+| 11 | Notes register → custody (RC-11, `NOTES` kind, PHASE-027 — migration 0038) | Per purpose side: Σ live received notes (amount × the note's stored rate, INV-008) = `NOTES_RECEIVABLE` balance; issued mirror on `NOTES_PAYABLE` (credit-positive read — the GRNI convention); resolved notes contribute zero (INV-024); a GL balance with no live register (external journals on a notes-purpose account) is surfaced per key | INV-024 |
 
 ## 2. Verification mechanics
 
@@ -40,8 +41,11 @@ checklist, and (c) backed by an automated test with seeded drift scenarios.
    discipline (RISK-009: Sev-1 if ledger-vs-subledger drift).
 2. Fixes are **always additive documents** (reversals/adjustments) or configuration
    corrections with audit — never UPDATEs that "force-balance".
-3. A period cannot be `LOCKED` with a `BROKEN` core check (AR/AP/inventory/VAT/cash, plus GRNI, WIP and
-   fixed assets since their registering phases — PC-04).
+3. A period cannot be `LOCKED` with a `BROKEN` core check (AR/AP/inventory/VAT/cash, plus GRNI, WIP,
+   fixed assets and notes since their registering phases — PC-04). RC-11 runs NIGHTLY (2:30 UTC
+   pg-boss leg) and on demand (`POST /api/v1/notes/reconciliation/notes-check`); seeded drift
+   (a note row without its journal, or an external journal on a notes-purpose account) →
+   `BROKEN` with the offending note + critical notification + the close block.
 4. Postmortem: drift above materiality threshold (per tenant, default 0) requires a
    written incident note attached to the reconciliation record.
 

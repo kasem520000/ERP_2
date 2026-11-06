@@ -1209,7 +1209,10 @@ export async function arOpenItemsAsOf(input: {
         AND ((a.receipt_id IS NOT NULL AND EXISTS (SELECT 1 FROM receipts r
                  WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
           OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
-                 WHERE p.id = a.payment_id AND p.status = 'POSTED')))
+                 WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+          -- PHASE-027 (0038): note-owned allocations are effective by
+          -- presence (see lockOpenItemAndSumPostedAllocations).
+          OR (a.note_id IS NOT NULL))
     ) settled ON true
     WHERE s.entry_date <= ${input.asOf}
       AND (${input.customerId ?? null}::uuid IS NULL OR s.partner_id = ${input.customerId ?? null})
@@ -1278,7 +1281,10 @@ export async function partnerArStatementEntries(input: {
         AND ((a.receipt_id IS NOT NULL AND EXISTS (SELECT 1 FROM receipts r
                  WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
           OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
-                 WHERE p.id = a.payment_id AND p.status = 'POSTED')))
+                 WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+          -- PHASE-027 (0038): note-owned allocations are effective by
+          -- presence (see lockOpenItemAndSumPostedAllocations).
+          OR (a.note_id IS NOT NULL))
     ) settled ON true
     WHERE s.entry_date <= ${input.asOf}
       AND s.partner_id = ${input.customerId}
@@ -1361,7 +1367,9 @@ export async function overdueInvoiceCandidates(asOf: string): Promise<
           AND ((a.receipt_id IS NOT NULL AND EXISTS (SELECT 1 FROM receipts r
                    WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
             OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
-                   WHERE p.id = a.payment_id AND p.status = 'POSTED')))), 0))::numeric(19,4) AS outstanding
+                   WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+            -- PHASE-027 (0038): note-owned allocations effective by presence.
+            OR (a.note_id IS NOT NULL))), 0))::numeric(19,4) AS outstanding
       FROM partner_subledger_entries s
       WHERE s.source_type = 'sales_invoice' AND s.source_id = i.id AND s.direction = 'DEBIT'
     ) o ON o.outstanding > 0

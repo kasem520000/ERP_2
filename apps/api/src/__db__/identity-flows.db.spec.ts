@@ -126,7 +126,7 @@ beforeAll(() => {
 });
 
 describe("seeds (acceptance 9)", () => {
-  it("permissions catalog = 244 keys matching AUTHORIZATION_MATRIX (drift green)", async () => {
+  it("permissions catalog = 245 keys matching AUTHORIZATION_MATRIX (drift green)", async () => {
     const su = await superuserClient();
     const result = await su.query<{ n: number }>("SELECT count(*)::int AS n FROM permissions");
     await su.end();
@@ -148,9 +148,12 @@ describe("seeds (acceptance 9)", () => {
     // seed and were already counted above).
     // + 1 PHASE-023 key (0035 seed §12: sales.commerce.manage — the
     // commerce-channel staging import surface).
+    // + 1 PHASE-027 key (0004 seed §3.12 completion: notes.notes.return — the
+    // doc-sync action key for the return money event; role grants in 0005).
     // (233 after 0025 + 8 = 241; 241 + 2 = 243 after 0027; 243 + 1 = 244
-    // after 0035; the drift CLI agrees: matrix 244 = seed 244.)
-    expect(result.rows[0]?.n).toBe(244);
+    // after 0035; 244 + 1 = 245 after 0038-phase; the drift CLI agrees:
+    // matrix 245 = seed 245.)
+    expect(result.rows[0]?.n).toBe(245);
   });
 
   it("nine system templates with template grants; owner carries identity keys", async () => {

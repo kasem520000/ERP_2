@@ -1386,6 +1386,10 @@ export const treasuryAllocations = pgTable(
     createdBy: uuid("created_by"),
     receiptId: uuid("receipt_id"),
     paymentId: uuid("payment_id"),
+    // PHASE-027 (0038): notes own allocations too — exactly one of
+    // receipt/payment/note (the CHECK owns the invariant; the settled-sum
+    // read models add the note branch with no status filter).
+    noteId: uuid("note_id"),
     openItemId: uuid("open_item_id").notNull(),
     amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
   },
@@ -1398,6 +1402,11 @@ export const treasuryAllocations = pgTable(
     uniqueIndex("uq_treasury_allocations_payment_item").on(
       table.tenantId,
       table.paymentId,
+      table.openItemId,
+    ),
+    uniqueIndex("uq_treasury_allocations_note_item").on(
+      table.tenantId,
+      table.noteId,
       table.openItemId,
     ),
     index("ix_treasury_allocations_tenant_item").on(table.tenantId, table.openItemId),
@@ -5395,5 +5404,149 @@ export const assetRevaluations = pgTable(
   (table) => [
     uniqueIndex("uq_asset_revaluations_id_tenant").on(table.id, table.tenantId),
     index("ix_asset_revaluations_tenant_asset").on(table.tenantId, table.assetId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// PHASE-027 (migration 0038) — notes & installments (DR-003/ED-03): the
+// notes register with custody states + the append-only 🔒 custody log, and
+// installment plans + lines. The v1.1 treasury.cheques deferral chain
+// terminates here (cheques are delivered by the notes module).
+// ---------------------------------------------------------------------------
+
+/** Notes register (T2 — BR-045): kind/direction/partner + REQUIRED maturity
+ * date; the instrument's own number as data (ADR-0006); stored rate INV-008;
+ * custody states note_status §9; source = origin invoice/supplier invoice
+ * (service-validated own-tenant); cash_account_id is the treasury account
+ * for the money legs (stored at DEPOSIT); journal_entry_id = the G-24/G-27
+ * entry. */
+export const notes = pgTable(
+  "notes",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    kind: text("kind").notNull(),
+    direction: text("direction").notNull(),
+    partnerId: uuid("partner_id").notNull(),
+    number: text("number"),
+    issuingBank: text("issuing_bank"),
+    amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
+    currency: text("currency").notNull(),
+    exchangeRate: numeric("exchange_rate", { precision: 19, scale: 6 }).notNull(),
+    issueDate: date("issue_date"),
+    maturityDate: date("maturity_date").notNull(),
+    status: text("status").notNull(),
+    sourceType: text("source_type"),
+    sourceId: uuid("source_id"),
+    cashAccountId: uuid("cash_account_id"),
+    journalEntryId: uuid("journal_entry_id"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_notes_id_tenant").on(table.id, table.tenantId),
+    index("ix_notes_tenant_status_maturity").on(table.tenantId, table.status, table.maturityDate),
+    index("ix_notes_tenant_direction_status").on(table.tenantId, table.direction, table.status),
+    index("ix_notes_tenant_partner").on(table.tenantId, table.partnerId),
+    index("ix_notes_tenant_source").on(table.tenantId, table.sourceType, table.sourceId),
+  ],
+);
+
+/** Append-only 🔒 custody log (T2 — INV-003 pattern, the INV-024 audit
+ * substrate): ENDORSE/DEPOSIT/RECLASSIFY carry NO journal (BR-047 — the
+ * shape CHECK enforces it); money events carry their entry id. UPDATE
+ * never; DELETE only under erp.purge_mode (guard trigger). */
+export const noteEvents = pgTable(
+  "note_events",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    noteId: uuid("note_id").notNull(),
+    eventKind: text("event_kind").notNull(),
+    eventDate: date("event_date").notNull(),
+    refs: jsonb("refs"),
+    journalEntryId: uuid("journal_entry_id"),
+    memo: text("memo"),
+    memoAr: text("memo_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_note_events_id_tenant").on(table.id, table.tenantId),
+    index("ix_note_events_tenant_note").on(table.tenantId, table.noteId, table.eventDate),
+  ],
+);
+
+/** Installment plans (T8 — BR-048): a collection overlay over a credit
+ * invoice/service contract (the AR open item remains the invoice). status
+ * NULL = draft (the §9 enum lists the activated states); activation is the
+ * BR-048 gate (plan total = source total) and the schedule is immutable
+ * after. late_fee_policy jsonb per plan (PLACEHOLDER defaults, OQ-002
+ * family) — flat fees only (DR-003: no interest, no compounding). */
+export const installmentPlans = pgTable(
+  "installment_plans",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    partnerId: uuid("partner_id").notNull(),
+    sourceType: text("source_type").notNull(),
+    sourceId: uuid("source_id").notNull(),
+    sourceNo: text("source_no"),
+    totalAmount: numeric("total_amount", { precision: 19, scale: 4 }).notNull(),
+    downPayment: numeric("down_payment", { precision: 19, scale: 4 }).notNull(),
+    lineCount: integer("line_count").notNull(),
+    startDate: date("start_date").notNull(),
+    frequency: text("frequency").notNull(),
+    lateFeePolicy: jsonb("late_fee_policy").notNull(),
+    status: text("status"),
+    activatedAt: timestamp("activated_at", { withTimezone: true, mode: "string" }),
+    activatedBy: uuid("activated_by"),
+    closedAt: timestamp("closed_at", { withTimezone: true, mode: "string" }),
+    defaultedAt: timestamp("defaulted_at", { withTimezone: true, mode: "string" }),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_installment_plans_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_installment_plans_tenant_source").on(
+      table.tenantId,
+      table.sourceType,
+      table.sourceId,
+    ),
+    index("ix_installment_plans_tenant_partner").on(table.tenantId, table.partnerId, table.status),
+  ],
+);
+
+/** Plan lines (T9/T10): seq/due_date/amount immutable after activation;
+ * status job-derived only (the daily sweep — no manual path exists) except
+ * WAIVED (sole manual transition, permission + reason + audit). receipt_refs
+ * jsonb accumulates attributed receipt slices; late_fee_* = the G-28 charge
+ * (once per line, INV-013). */
+export const installmentLines = pgTable(
+  "installment_lines",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    planId: uuid("plan_id").notNull(),
+    seq: integer("seq").notNull(),
+    dueDate: date("due_date").notNull(),
+    amount: numeric("amount", { precision: 19, scale: 4 }).notNull(),
+    status: text("status").notNull(),
+    receiptRefs: jsonb("receipt_refs").notNull(),
+    collectedAmount: numeric("collected_amount", { precision: 19, scale: 4 }).notNull(),
+    waivedAt: timestamp("waived_at", { withTimezone: true, mode: "string" }),
+    waivedBy: uuid("waived_by"),
+    waiveReason: text("waive_reason"),
+    lateFeeAmount: numeric("late_fee_amount", { precision: 19, scale: 4 }),
+    lateFeeEntryId: uuid("late_fee_entry_id"),
+    lateFeeChargedAt: timestamp("late_fee_charged_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    uniqueIndex("uq_installment_lines_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_installment_lines_plan_seq").on(table.planId, table.seq),
+    index("ix_installment_lines_tenant_plan_due").on(table.tenantId, table.planId, table.dueDate),
+    index("ix_installment_lines_tenant_status_due").on(table.tenantId, table.status, table.dueDate),
   ],
 );

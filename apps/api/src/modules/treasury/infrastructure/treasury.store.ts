@@ -533,7 +533,12 @@ export async function lockOpenItemAndSumPostedAllocations(openItemId: string): P
       AND ((a.receipt_id IS NOT NULL AND EXISTS (SELECT 1 FROM receipts r
              WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
         OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
-             WHERE p.id = a.payment_id AND p.status = 'POSTED')))
+             WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+        -- PHASE-027 (0038): note-owned allocations are effective by
+        -- PRESENCE — rows only exist while the note create posted
+        -- atomically with its G-24/G-27 entry, and dishonor/return
+        -- repoints them (never leaves a stale effective row).
+        OR (a.note_id IS NOT NULL))
   `);
   const row = (rows.rows as unknown as { total: string }[])[0]!;
   return row.total;
@@ -579,6 +584,9 @@ export async function findOpenItemById(id: string): Promise<OpenItemRow | undefi
                WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
          OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
                WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+         -- PHASE-027 (0038): note-owned allocations are effective by
+         -- presence (see lockOpenItemAndSumPostedAllocations).
+         OR (a.note_id IS NOT NULL)
       GROUP BY a.open_item_id
     ) settled ON settled.open_item_id = s.id
     WHERE s.id = ${id}
@@ -608,6 +616,9 @@ export async function listOpenItems(filter: {
                WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
          OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
                WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+         -- PHASE-027 (0038): note-owned allocations are effective by
+         -- presence (see lockOpenItemAndSumPostedAllocations).
+         OR (a.note_id IS NOT NULL)
       GROUP BY a.open_item_id
     ) settled ON settled.open_item_id = s.id
     WHERE (${filter.partnerId ?? null}::uuid IS NULL OR s.partner_id = ${filter.partnerId ?? null})
@@ -617,7 +628,13 @@ export async function listOpenItems(filter: {
   `);
   const all = rows.rows as unknown as OpenItemRow[];
   if (filter.openOnly === false) return all;
-  return all.filter((row) => row.outstanding !== "0" && !row.outstanding.startsWith("-"));
+  // The SQL casts outstanding to numeric(19,4)::text, so a fully settled row
+  // reads "0.0000" — never "0" (the pre-PHASE-027 filter compared the wrong
+  // literal and leaked settled rows into every openOnly consumer: the FIFO
+  // suggestion, the notes/installments settle-target lookups, and the aging).
+  // P27-G fix: compare the canonical 4dp zero; negatives (over-settled) stay
+  // excluded exactly like before.
+  return all.filter((row) => row.outstanding !== "0.0000" && !row.outstanding.startsWith("-"));
 }
 
 /** FIFO suggestion (§2.3): allocate up to `amount` across the partner's open items, oldest first. */

@@ -3854,6 +3854,240 @@ export interface Dictionary {
   faErrRevalState: string;
   faErrCapitalizeState: string;
   faErrAssetDisposedReuse: string;
+
+  // -- PHASE-027 (wave F): cheques & notes + installment plans ---------------
+  // (the notes register + custody lifecycle + the PDC maturity calendar +
+  // the module report pages + the installments wizard/schedule; every
+  // string in BOTH locales. Nav labels ride the registry (contracts
+  // NAV_ITEMS); the nav* keys below are the app-shell breadcrumb fallbacks,
+  // the navFixedAssets precedent.)
+
+  navChequesNotes: string;
+  navPdcCalendar: string;
+  navInstallmentPlans: string;
+
+  // notes kinds/directions/statuses (register §C enums)
+  notesKindCheque: string;
+  notesKindPromissoryNote: string;
+  notesDirectionReceived: string;
+  notesDirectionIssued: string;
+  notesStatusInCustody: string;
+  notesStatusEndorsedOut: string;
+  notesStatusDeposited: string;
+  notesStatusCollected: string;
+  notesStatusDishonored: string;
+  notesStatusDiscounted: string;
+  notesStatusReturned: string;
+
+  // notes register (§2) + module tabs/reports
+  notesTitle: string;
+  notesNewTitle: string;
+  notesCalendarTitle: string;
+  notesReportsTitle: string;
+  notesReportsHint: string;
+  notesReportsEmpty: string;
+  notesEmpty: string;
+  notesNewButton: string;
+  notesSearchPlaceholder: string;
+  notesAllStatuses: string;
+  notesFilterKind: string;
+  notesFilterDirection: string;
+  notesFilterPartner: string;
+  notesFilterMaturityRange: string;
+
+  // note create (§3) — receive-against-invoice / issue-against-supplier-invoice
+  notesFormDirection: string;
+  notesFormDirectionHint: string;
+  notesFormPartner: string;
+  notesFormNumber: string;
+  notesFormNumberHint: string;
+  notesFormBank: string;
+  notesFormBankHint: string;
+  notesFormAmount: string;
+  notesFormCurrency: string;
+  notesFormRate: string;
+  notesFormRateHint: string;
+  notesFormIssueDate: string;
+  notesFormMaturityDate: string;
+  notesFormSourceInvoice: string;
+  notesFormSourceInvoiceHint: string;
+  notesFormSourceNone: string;
+  notesFormNote: string;
+  notesFormNoteAr: string;
+  notesFormSubmit: string;
+  notesFormInvalid: string;
+  notesFormCreatedToast: string;
+
+  // note document detail (§5)
+  notesOverviewTitle: string;
+  notesCustodyTitle: string;
+  notesCustodyEmpty: string;
+  notesJournalEntry: string;
+  notesCashAccountLabel: string;
+  notesSourceLabel: string;
+  notesTerminalHint: string;
+  notesActionsTitle: string;
+
+  // custody event kinds (the append-only log)
+  notesEventReceive: string;
+  notesEventIssue: string;
+  notesEventEndorse: string;
+  notesEventDeposit: string;
+  notesEventCollect: string;
+  notesEventDishonor: string;
+  notesEventDiscount: string;
+  notesEventReturn: string;
+  notesEventReclassify: string;
+
+  // custody actions + dialogs + toasts
+  notesActionEndorse: string;
+  notesActionDeposit: string;
+  notesActionCollect: string;
+  notesActionDishonor: string;
+  notesActionDiscount: string;
+  notesActionReturn: string;
+  notesActionEndorsee: string;
+  notesActionDate: string;
+  notesActionReason: string;
+  notesActionReasonHint: string;
+  notesActionBankFee: string;
+  notesActionFee: string;
+  notesActionAccount: string;
+  notesActionRate: string;
+  notesEndorseToast: string;
+  notesDepositToast: string;
+  notesCollectToast: string;
+  notesDishonorToast: string;
+  notesDiscountToast: string;
+  notesReturnToast: string;
+
+  // PDC maturity calendar (§1 dashboard)
+  pdcAsOfLabel: string;
+  pdcComputedAtLabel: string;
+  pdcStaleWarning: string;
+  pdcStaleHint: string;
+  pdcBucketOverdue: string;
+  pdcBucketThisWeek: string;
+  pdcBucket30: string;
+  pdcBucket60: string;
+  pdcBucket90: string;
+  pdcBucketBeyond: string;
+  pdcCountLabel: string;
+  pdcAmountBaseLabel: string;
+  pdcReceivedSide: string;
+  pdcIssuedSide: string;
+  pdcByPartnerTitle: string;
+  pdcByBankTitle: string;
+  pdcNotesTitle: string;
+  pdcBankUnspecified: string;
+  pdcDrillLink: string;
+  pdcEmpty: string;
+
+  // notes error pack (§6 failure codes → bilingual messages)
+  notesErrSourceInvalid: string;
+  notesErrAlreadyPosted: string;
+  notesErrCustodyTransition: string;
+  notesErrDishonorReason: string;
+  notesErrRateMismatch: string;
+  notesErrCurrencyMismatch: string;
+  notesErrAccountRequired: string;
+  notesErrFeeInvalid: string;
+  notesErrDiscountCurrency: string;
+  notesErrFieldsImmutable: string;
+  notesErrAccountCurrency: string;
+
+  // installment plans list (§2) + module tabs/reports
+  instTitle: string;
+  instNewTitle: string;
+  instReportsTitle: string;
+  instReportsHint: string;
+  instReportsEmpty: string;
+  instEmpty: string;
+  instNewButton: string;
+  instSearchPlaceholder: string;
+  instAllStatuses: string;
+  instStatusDraft: string;
+  instStatusActive: string;
+  instStatusClosed: string;
+  instStatusDefaulted: string;
+  instFilterPartner: string;
+  instFilterStatus: string;
+  instFilterSource: string;
+  instSourceSalesInvoice: string;
+  instSourceServiceContract: string;
+  instColSource: string;
+  instColTotal: string;
+  instColSeq: string;
+  instColAmount: string;
+  instColReceipts: string;
+  instColCollected: string;
+  instColLateFee: string;
+
+  // frequencies (§9 wizard vocabulary)
+  instFreqWeekly: string;
+  instFreqBiweekly: string;
+  instFreqMonthly: string;
+  instFreqQuarterly: string;
+
+  // plan detail + schedule lines (§5)
+  instDetailOverview: string;
+  instDetailSchedule: string;
+  instDetailScheduleEmpty: string;
+  instDetailPolicy: string;
+  instLineStatusPending: string;
+  instLineStatusDue: string;
+  instLineStatusPaid: string;
+  instLineStatusOverdue: string;
+  instLineStatusWaived: string;
+  instWaiveAction: string;
+  instWaiveReason: string;
+  instWaiveToast: string;
+  instChargeLateFeeAction: string;
+  instChargeLateFeeToast: string;
+
+  // plan wizard (§9)
+  instWizStepSource: string;
+  instWizStepSchedule: string;
+  instWizStepPolicy: string;
+  instWizStepOf: string;
+  instWizBack: string;
+  instWizNext: string;
+  instWizSourceType: string;
+  instWizSourceInvoice: string;
+  instWizSourceContract: string;
+  instWizSourceTotal: string;
+  instWizEstimateChip: string;
+  instWizDownPayment: string;
+  instWizCount: string;
+  instWizStartDate: string;
+  instWizFrequency: string;
+  instWizPreviewTitle: string;
+  instWizPreviewInvalid: string;
+  instWizPolicyTitle: string;
+  instWizPolicyHint: string;
+  instWizPolicyRate: string;
+  instWizPolicyCap: string;
+  instWizPolicyGrace: string;
+  instWizPolicyAuto: string;
+  instWizPolicyDefaulted: string;
+  instWizPlaceholderChip: string;
+  instWizCreate: string;
+  instWizActivate: string;
+  instWizActivateHint: string;
+  instWizCreatedToast: string;
+  instWizActivatedToast: string;
+  instWizBrTotal: string;
+
+  // installments error pack
+  instErrSourceInvalid: string;
+  instErrScheduleImmutable: string;
+  instErrSourceTaken: string;
+  instErrTotalMismatch: string;
+  instErrScheduleInvalid: string;
+  instErrSourceCurrency: string;
+  instErrPolicyInvalid: string;
+  instErrLateFeeNotChargeable: string;
+  instErrWaiveReason: string;
 }
 
 const ar: Dictionary = {
@@ -7744,6 +7978,223 @@ const ar: Dictionary = {
   faErrRevalState: "حالة إعادة التقييم لا تسمح بهذه العملية.",
   faErrCapitalizeState: "الأصل مرسمل مسبقًا أو حالته لا تسمح بالرسملة.",
   faErrAssetDisposedReuse: "الاستبعاد مرة واحدة فقط ومن حالة نشط/مستهلك بالكامل (INV-023).",
+
+  // -- PHASE-027 (wave F): cheques & notes + installment plans ----------------
+  navChequesNotes: "الشيكات والأوراق التجارية",
+  navPdcCalendar: "تقويم الاستحقاق",
+  navInstallmentPlans: "خطة الأقساط",
+
+  notesKindCheque: "شيك",
+  notesKindPromissoryNote: "سند لأمر",
+  notesDirectionReceived: "مستلمة",
+  notesDirectionIssued: "مصدَّرة",
+  notesStatusInCustody: "في الحيازة",
+  notesStatusEndorsedOut: "مظهَّرة للغير",
+  notesStatusDeposited: "مودعة لدى البنك",
+  notesStatusCollected: "محصَّلة",
+  notesStatusDishonored: "مرفوضة الدفع",
+  notesStatusDiscounted: "مخصومة",
+  notesStatusReturned: "معادة",
+
+  notesTitle: "الشيكات والأوراق التجارية",
+  notesNewTitle: "تسجيل ورقة تجارية",
+  notesCalendarTitle: "تقويم الاستحقاق",
+  notesReportsTitle: "تقارير الأوراق التجارية",
+  notesReportsHint: "تقارير سجل الأوراق التجارية وحيازتها (نطاق notes.*).",
+  notesReportsEmpty: "لم تُسجَّل عقود تقارير لهذه الوحدة بعد — لن تُعرض قوائم مفبركة.",
+  notesEmpty: "لا أوراق تجارية مطابقة.",
+  notesNewButton: "تسجيل ورقة",
+  notesSearchPlaceholder: "ابحث برقم الورقة أو البنك…",
+  notesAllStatuses: "كل الحالات",
+  notesFilterKind: "النوع",
+  notesFilterDirection: "الاتجاه",
+  notesFilterPartner: "الشريك",
+  notesFilterMaturityRange: "نطاق تاريخ الاستحقاق",
+
+  notesFormDirection: "الاتجاه",
+  notesFormDirectionHint:
+    "مستلمة = قبول شيك/سند من عميل مقابل فاتورة بيع (G-24). مصدَّرة = إصدار شيك/سند لمورد مقابل فاتورة شراء (G-27).",
+  notesFormPartner: "الشريك",
+  notesFormNumber: "رقم الورقة",
+  notesFormNumberHint: "رقم الشيك أو السند كما هو مطبوع (اختياري).",
+  notesFormBank: "البنك المصدر",
+  notesFormBankHint: "البنك المسحوب عليه (اختياري).",
+  notesFormAmount: "المبلغ",
+  notesFormCurrency: "العملة",
+  notesFormRate: "سعر الصرف",
+  notesFormRateHint: "مطلوب للعملات الأجنبية — يجب أن يطابق سعر البند الأصلي (INV-008).",
+  notesFormIssueDate: "تاريخ الإصدار",
+  notesFormMaturityDate: "تاريخ الاستحقاق",
+  notesFormSourceInvoice: "المستند المصدر",
+  notesFormSourceInvoiceHint:
+    "فواتير مرحَّلة فقط: بيع آجل بفاتورة (للمستلمة) أو فاتورة مورد مرحَّلة (للمصدَّرة). الترك بدون مصدر يقيَّد على الحساب.",
+  notesFormSourceNone: "بدون مستند مصدر (على الحساب)",
+  notesFormNote: "ملاحظة (EN)",
+  notesFormNoteAr: "ملاحظة (AR)",
+  notesFormSubmit: "تسجيل الورقة",
+  notesFormInvalid: "بيانات غير صالحة — أكمل الحقول المطلوبة.",
+  notesFormCreatedToast: "تم تسجيل الورقة {number} — في الحيازة.",
+
+  notesOverviewTitle: "بيانات الورقة",
+  notesCustodyTitle: "سجل الحيازة",
+  notesCustodyEmpty: "لا أحداث حيازة مسجلة بعد.",
+  notesJournalEntry: "القيد المحاسبي",
+  notesCashAccountLabel: "الحساب النقدي",
+  notesSourceLabel: "المستند المصدر",
+  notesTerminalHint: "هذه الحالة نهائية — لا مزيد من أحداث الحيازة (INV-024).",
+  notesActionsTitle: "إجراءات الحيازة",
+
+  notesEventReceive: "استلام ورقة تجارية",
+  notesEventIssue: "إصدار ورقة تجارية",
+  notesEventEndorse: "تظهير للغير",
+  notesEventDeposit: "إيداع لدى البنك",
+  notesEventCollect: "تحصيل عند الاستحقاق",
+  notesEventDishonor: "رفض الدفع",
+  notesEventDiscount: "خصم لدى البنك",
+  notesEventReturn: "إرجاع للشريك",
+  notesEventReclassify: "إعادة تصنيف (تصحيح بيانات)",
+
+  notesActionEndorse: "تظهير",
+  notesActionDeposit: "إيداع",
+  notesActionCollect: "تحصيل",
+  notesActionDishonor: "رفض دفع",
+  notesActionDiscount: "خصم",
+  notesActionReturn: "إرجاع",
+  notesActionEndorsee: "المستفيد (المظهَّر له)",
+  notesActionDate: "تاريخ الحدث",
+  notesActionReason: "سبب الرفض",
+  notesActionReasonHint: "السبب إلزامي (BR-046).",
+  notesActionBankFee: "رسوم بنكية",
+  notesActionFee: "رسوم الخصم",
+  notesActionAccount: "الحساب النقدي",
+  notesActionRate: "سعر الصرف",
+  notesEndorseToast: "تم التظهير — الورقة لدى الغير (بدون قيد).",
+  notesDepositToast: "تم الإيداع — خُزّن الحساب النقدي (بدون قيد).",
+  notesCollectToast: "تم التحصيل — القيد {entry}.",
+  notesDishonorToast: "سُجل الرفض — القيد {entry}.",
+  notesDiscountToast: "تم الخصم — المتحصلات {proceeds} عبر القيد {entry}.",
+  notesReturnToast: "تم الإرجاع — القيد {entry}.",
+
+  pdcAsOfLabel: "كما في",
+  pdcComputedAtLabel: "آخر احتساب",
+  pdcStaleWarning: "قد تكون البيانات قديمة",
+  pdcStaleHint: "التقويم يُحدَّث يوميًا؛ تجاوز عمره {hours} ساعة.",
+  pdcBucketOverdue: "متأخر الاستحقاق",
+  pdcBucketThisWeek: "هذا الأسبوع",
+  pdcBucket30: "7–30 يومًا",
+  pdcBucket60: "30–60 يومًا",
+  pdcBucket90: "60–90 يومًا",
+  pdcBucketBeyond: "أبعد من 90 يومًا",
+  pdcCountLabel: "العدد",
+  pdcAmountBaseLabel: "القيمة بالعملة الأساسية",
+  pdcReceivedSide: "أوراق مستلمة",
+  pdcIssuedSide: "أوراق مصدَّرة",
+  pdcByPartnerTitle: "حسب الشريك",
+  pdcByBankTitle: "حسب البنك المصدر",
+  pdcNotesTitle: "الأوراق الحية",
+  pdcBankUnspecified: "غير محدد",
+  pdcDrillLink: "عرض في السجل",
+  pdcEmpty: "لا أوراق حية (حيازة غير محسومة).",
+
+  notesErrSourceInvalid: "المستند المصدر غير صالح — يجب أن يكون فاتورة مرحَّلة قابلة للتسوية لنفس الشريك وبنفس العملة.",
+  notesErrAlreadyPosted: "الورقة محسومة مسبقًا بهذا الحدث — لا تكرار لنفس الحدث المالي (INV-013).",
+  notesErrCustodyTransition: "هذا الانتقال غير قانوني من الحالة الحالية (آلة الحيازة BR-047).",
+  notesErrDishonorReason: "سبب رفض الدفع إلزامي (BR-046).",
+  notesErrRateMismatch: "سعر الصرف يجب أن يطابق السعر الأصلي المخزن للبند (INV-008).",
+  notesErrCurrencyMismatch: "عملة الورقة يجب أن تطابق عملة المستند المصدر.",
+  notesErrAccountRequired: "هذا الإجراء يتطلب حسابًا نقديًا (مرر الحساب أو أودع الورقة أولًا).",
+  notesErrFeeInvalid: "الرسوم غير صالحة — يجب أن تكون بين صفر ومبلغ الورقة.",
+  notesErrDiscountCurrency: "خصم الأوراق بغير العملة الأساسية غير مدعوم في هذه المرحلة — حصّل عند الاستحقاق أو أرجِع.",
+  notesErrFieldsImmutable: "الحقول الجوهرية غير قابلة للتعديل بعد الإنشاء — إعادة التصنيف للبيانات الوصفية فقط.",
+  notesErrAccountCurrency: "عملة الحساب النقدي يجب أن تطابق عملة الورقة.",
+
+  instTitle: "خطط الأقساط",
+  instNewTitle: "معالج خطة أقساط",
+  instReportsTitle: "تقارير الأقساط",
+  instReportsHint: "تقارير الخطط والجدولة والتحصيل (نطاق installments.*).",
+  instReportsEmpty: "لم تُسجَّل عقود تقارير لهذه الوحدة بعد — لن تُعرض قوائم مفبركة.",
+  instEmpty: "لا خطط أقساط مطابقة.",
+  instNewButton: "خطة جديدة",
+  instSearchPlaceholder: "ابحث برقم المستند…",
+  instAllStatuses: "كل الحالات",
+  instStatusDraft: "مسودة",
+  instStatusActive: "نشطة",
+  instStatusClosed: "مغلقة",
+  instStatusDefaulted: "متعثرة",
+  instFilterPartner: "الشريك",
+  instFilterStatus: "الحالة",
+  instFilterSource: "نوع المصدر",
+  instSourceSalesInvoice: "فاتورة بيع",
+  instSourceServiceContract: "عقد خدمات",
+  instColSource: "المصدر",
+  instColTotal: "الإجمالي",
+  instColSeq: "#",
+  instColAmount: "المبلغ",
+  instColReceipts: "سندات القبض",
+  instColCollected: "المحصَّل",
+  instColLateFee: "رسوم التأخير",
+
+  instFreqWeekly: "أسبوعيًا",
+  instFreqBiweekly: "كل أسبوعين",
+  instFreqMonthly: "شهريًا",
+  instFreqQuarterly: "ربع سنويًا",
+
+  instDetailOverview: "بيانات الخطة",
+  instDetailSchedule: "جدول الأقساط",
+  instDetailScheduleEmpty: "لا أقساط مسجلة لهذه الخطة.",
+  instDetailPolicy: "سياسة رسوم التأخير",
+  instLineStatusPending: "منتظر",
+  instLineStatusDue: "مستحق",
+  instLineStatusPaid: "مسدد",
+  instLineStatusOverdue: "متأخر",
+  instLineStatusWaived: "معفى",
+  instWaiveAction: "إعفاء القسط",
+  instWaiveReason: "سبب الإعفاء",
+  instWaiveToast: "أُعفي القسط {seq} — السبب مسجل.",
+  instChargeLateFeeAction: "احتساب رسوم تأخير",
+  instChargeLateFeeToast: "احتُسبت رسوم تأخير {fee} — القيد {entry}.",
+
+  instWizStepSource: "المستند المصدر",
+  instWizStepSchedule: "معاملات الجدولة",
+  instWizStepPolicy: "سياسة رسوم التأخير",
+  instWizStepOf: "الخطوة {current} من {total}",
+  instWizBack: "السابق",
+  instWizNext: "التالي",
+  instWizSourceType: "نوع المصدر",
+  instWizSourceInvoice: "فاتورة بيع مرحَّلة",
+  instWizSourceContract: "عقد خدمات نشط",
+  instWizSourceTotal: "إجمالي المستند المصدر",
+  instWizEstimateChip: "تقديري — للمعاينة فقط",
+  instWizDownPayment: "الدفعة المقدمة",
+  instWizCount: "عدد الأقساط",
+  instWizStartDate: "تاريخ أول قسط",
+  instWizFrequency: "التكرار",
+  instWizPreviewTitle: "معاينة الجدول (مباشرة)",
+  instWizPreviewInvalid: "الجدولة غير صالحة — عدّل الدفعة المقدمة أو عدد الأقساط.",
+  instWizPolicyTitle: "سياسة رسوم التأخير (BR-049)",
+  instWizPolicyHint: "القيم أدناه مبدئية (PLACEHOLDER) بانتظار قرار السياسة النهائي.",
+  instWizPolicyRate: "النسبة (لكل قسط متأخر)",
+  instWizPolicyCap: "الحد الأقصى للرسوم",
+  instWizPolicyGrace: "أيام السماح",
+  instWizPolicyAuto: "احتساب تلقائي للرسوم",
+  instWizPolicyDefaulted: "التعثر بعد (أقساط غير مسددة)",
+  instWizPlaceholderChip: "PLACEHOLDER (OQ-002)",
+  instWizCreate: "إنشاء الخطة (مسودة)",
+  instWizActivate: "تنشيط الخطة",
+  instWizActivateHint: "التنشيط يتحقق أن إجمالي الخطة يساوي إجمالي المستند المصدر بالضبط (BR-048)، وبعده يصبح الجدول غير قابل للتعديل.",
+  instWizCreatedToast: "أُنشئت الخطة كمسودة — راجع الجدول ثم نشِّطها.",
+  instWizActivatedToast: "نُشِّطت الخطة — الجدول نهائي (BR-048).",
+  instWizBrTotal: "إجمالي الخطة (BR-048)",
+
+  instErrSourceInvalid: "المستند المصدر غير قابل للتقسيط — فاتورة بيع مرحَّلة (آجلة) أو عقد خدمات نشط بالعملة الأساسية فقط.",
+  instErrScheduleImmutable: "الخطة منشَّطة — الجدول غير قابل للتعديل (BR-048)؛ التصحيح بالإعفاء أو الإغلاق الموثق.",
+  instErrSourceTaken: "توجد خطة قائمة لهذا المستند مسبقًا — خطة واحدة لكل مستند.",
+  instErrTotalMismatch: "إجمالي الخطة لا يساوي إجمالي المستند المصدر (BR-048) — أعد بناء المسودة.",
+  instErrScheduleInvalid: "الجدولة المحسوبة غير صالحة — عدّل الدفعة المقدمة أو عدد الأقساط.",
+  instErrSourceCurrency: "الخطط على مستندات بغير العملة الأساسية غير مدعومة في هذه المرحلة.",
+  instErrPolicyInvalid: "سياسة رسوم التأخير غير صالحة — راجع النسبة والحد وأيام السماح.",
+  instErrLateFeeNotChargeable: "رسوم التأخير تُحتسب فقط على أقساط متأخرة غير محتسبة مسبقًا (G-28).",
+  instErrWaiveReason: "سبب الإعفاء إلزامي (BR-049).",
 };
 
 const en: Dictionary = {
@@ -11643,6 +12094,223 @@ const en: Dictionary = {
   faErrRevalState: "The revaluation state does not allow this operation.",
   faErrCapitalizeState: "The asset is already capitalized or not in a capitalizable state.",
   faErrAssetDisposedReuse: "Disposal happens exactly once, only from active/fully depreciated (INV-023).",
+
+  // -- PHASE-027 (wave F): cheques & notes + installment plans ----------------
+  navChequesNotes: "Cheques & notes",
+  navPdcCalendar: "Maturity calendar",
+  navInstallmentPlans: "Installment plans",
+
+  notesKindCheque: "Cheque",
+  notesKindPromissoryNote: "Promissory note",
+  notesDirectionReceived: "Received",
+  notesDirectionIssued: "Issued",
+  notesStatusInCustody: "In custody",
+  notesStatusEndorsedOut: "Endorsed out",
+  notesStatusDeposited: "Deposited",
+  notesStatusCollected: "Collected",
+  notesStatusDishonored: "Dishonored",
+  notesStatusDiscounted: "Discounted",
+  notesStatusReturned: "Returned",
+
+  notesTitle: "Cheques & notes",
+  notesNewTitle: "Register a note",
+  notesCalendarTitle: "Maturity calendar",
+  notesReportsTitle: "Notes reports",
+  notesReportsHint: "The notes register + custody report family (the notes.* scope).",
+  notesReportsEmpty: "No report contracts registered for this module yet — no fabricated catalogs.",
+  notesEmpty: "No matching notes.",
+  notesNewButton: "Register note",
+  notesSearchPlaceholder: "Search by note number or bank…",
+  notesAllStatuses: "All statuses",
+  notesFilterKind: "Kind",
+  notesFilterDirection: "Direction",
+  notesFilterPartner: "Partner",
+  notesFilterMaturityRange: "Maturity date range",
+
+  notesFormDirection: "Direction",
+  notesFormDirectionHint:
+    "Received = take a cheque/promissory note from a customer against a sales invoice (G-24). Issued = issue one to a supplier against a supplier invoice (G-27).",
+  notesFormPartner: "Partner",
+  notesFormNumber: "Note number",
+  notesFormNumberHint: "The cheque/note number as printed (optional).",
+  notesFormBank: "Issuing bank",
+  notesFormBankHint: "The drawee bank (optional).",
+  notesFormAmount: "Amount",
+  notesFormCurrency: "Currency",
+  notesFormRate: "Exchange rate",
+  notesFormRateHint: "Required for foreign currency — must match the open item's original rate (INV-008).",
+  notesFormIssueDate: "Issue date",
+  notesFormMaturityDate: "Maturity date",
+  notesFormSourceInvoice: "Source document",
+  notesFormSourceInvoiceHint:
+    "Posted documents only: a posted CREDIT sales invoice (received) or a posted supplier invoice (issued). Leaving it empty posts on-account.",
+  notesFormSourceNone: "No source document (on account)",
+  notesFormNote: "Note (EN)",
+  notesFormNoteAr: "Note (AR)",
+  notesFormSubmit: "Register the note",
+  notesFormInvalid: "Invalid input — complete the required fields.",
+  notesFormCreatedToast: "Note {number} registered — in custody.",
+
+  notesOverviewTitle: "Note details",
+  notesCustodyTitle: "Custody log",
+  notesCustodyEmpty: "No custody events recorded yet.",
+  notesJournalEntry: "Journal entry",
+  notesCashAccountLabel: "Cash account",
+  notesSourceLabel: "Source document",
+  notesTerminalHint: "This status is terminal — no further custody events (INV-024).",
+  notesActionsTitle: "Custody actions",
+
+  notesEventReceive: "Note received",
+  notesEventIssue: "Note issued",
+  notesEventEndorse: "Endorsed out",
+  notesEventDeposit: "Deposited at bank",
+  notesEventCollect: "Collected at maturity",
+  notesEventDishonor: "Dishonored",
+  notesEventDiscount: "Discounted at bank",
+  notesEventReturn: "Returned to partner",
+  notesEventReclassify: "Reclassified (metadata correction)",
+
+  notesActionEndorse: "Endorse",
+  notesActionDeposit: "Deposit",
+  notesActionCollect: "Collect",
+  notesActionDishonor: "Dishonor",
+  notesActionDiscount: "Discount",
+  notesActionReturn: "Return",
+  notesActionEndorsee: "Endorsee",
+  notesActionDate: "Event date",
+  notesActionReason: "Dishonor reason",
+  notesActionReasonHint: "The reason is required (BR-046).",
+  notesActionBankFee: "Bank fee",
+  notesActionFee: "Discount fee",
+  notesActionAccount: "Cash account",
+  notesActionRate: "Exchange rate",
+  notesEndorseToast: "Endorsed — the note is with the endorsee (no journal).",
+  notesDepositToast: "Deposited — the cash account is stored (no journal).",
+  notesCollectToast: "Collected — journal {entry}.",
+  notesDishonorToast: "Dishonor recorded — journal {entry}.",
+  notesDiscountToast: "Discounted — proceeds {proceeds} via journal {entry}.",
+  notesReturnToast: "Returned — journal {entry}.",
+
+  pdcAsOfLabel: "As of",
+  pdcComputedAtLabel: "Last computed",
+  pdcStaleWarning: "Data may be stale",
+  pdcStaleHint: "The calendar refreshes daily; its age exceeded {hours} hours.",
+  pdcBucketOverdue: "Overdue",
+  pdcBucketThisWeek: "This week",
+  pdcBucket30: "7–30 days",
+  pdcBucket60: "30–60 days",
+  pdcBucket90: "60–90 days",
+  pdcBucketBeyond: "Beyond 90 days",
+  pdcCountLabel: "Count",
+  pdcAmountBaseLabel: "Base-currency amount",
+  pdcReceivedSide: "Received notes",
+  pdcIssuedSide: "Issued notes",
+  pdcByPartnerTitle: "By partner",
+  pdcByBankTitle: "By issuing bank",
+  pdcNotesTitle: "Live notes",
+  pdcBankUnspecified: "Unspecified",
+  pdcDrillLink: "Open in register",
+  pdcEmpty: "No live notes (unresolved custody).",
+
+  notesErrSourceInvalid: "The source document is invalid — it must be a posted settleable invoice for the same partner and currency.",
+  notesErrAlreadyPosted: "The note is already resolved by this event — the same money event cannot run twice (INV-013).",
+  notesErrCustodyTransition: "This transition is not legal from the current status (the BR-047 custody machine).",
+  notesErrDishonorReason: "A dishonor reason is required (BR-046).",
+  notesErrRateMismatch: "The exchange rate must match the open item's original stored rate (INV-008).",
+  notesErrCurrencyMismatch: "The note currency must match the source document currency.",
+  notesErrAccountRequired: "This action requires a treasury cash account (pass one or deposit the note first).",
+  notesErrFeeInvalid: "The fee is invalid — it must be between zero and the note amount.",
+  notesErrDiscountCurrency: "Discounting non-base-currency notes is not supported in this phase — collect at maturity or return it.",
+  notesErrFieldsImmutable: "Substantive fields are immutable after create — reclassify covers metadata only.",
+  notesErrAccountCurrency: "The cash account currency must match the note currency.",
+
+  instTitle: "Installment plans",
+  instNewTitle: "Installment plan wizard",
+  instReportsTitle: "Installments reports",
+  instReportsHint: "The plan/schedule/collection report family (the installments.* scope).",
+  instReportsEmpty: "No report contracts registered for this module yet — no fabricated catalogs.",
+  instEmpty: "No matching installment plans.",
+  instNewButton: "New plan",
+  instSearchPlaceholder: "Search by source number…",
+  instAllStatuses: "All statuses",
+  instStatusDraft: "Draft",
+  instStatusActive: "Active",
+  instStatusClosed: "Closed",
+  instStatusDefaulted: "Defaulted",
+  instFilterPartner: "Partner",
+  instFilterStatus: "Status",
+  instFilterSource: "Source type",
+  instSourceSalesInvoice: "Sales invoice",
+  instSourceServiceContract: "Service contract",
+  instColSource: "Source",
+  instColTotal: "Total",
+  instColSeq: "#",
+  instColAmount: "Amount",
+  instColReceipts: "Receipts",
+  instColCollected: "Collected",
+  instColLateFee: "Late fee",
+
+  instFreqWeekly: "Weekly",
+  instFreqBiweekly: "Biweekly",
+  instFreqMonthly: "Monthly",
+  instFreqQuarterly: "Quarterly",
+
+  instDetailOverview: "Plan details",
+  instDetailSchedule: "Installment schedule",
+  instDetailScheduleEmpty: "No lines recorded for this plan.",
+  instDetailPolicy: "Late-fee policy",
+  instLineStatusPending: "Pending",
+  instLineStatusDue: "Due",
+  instLineStatusPaid: "Paid",
+  instLineStatusOverdue: "Overdue",
+  instLineStatusWaived: "Waived",
+  instWaiveAction: "Waive line",
+  instWaiveReason: "Waive reason",
+  instWaiveToast: "Line {seq} waived — reason recorded.",
+  instChargeLateFeeAction: "Charge late fee",
+  instChargeLateFeeToast: "Late fee {fee} charged — journal {entry}.",
+
+  instWizStepSource: "Source document",
+  instWizStepSchedule: "Schedule parameters",
+  instWizStepPolicy: "Late-fee policy",
+  instWizStepOf: "Step {current} of {total}",
+  instWizBack: "Back",
+  instWizNext: "Next",
+  instWizSourceType: "Source type",
+  instWizSourceInvoice: "Posted credit sales invoice",
+  instWizSourceContract: "Active service contract",
+  instWizSourceTotal: "Source document total",
+  instWizEstimateChip: "Estimate — preview only",
+  instWizDownPayment: "Down payment",
+  instWizCount: "Installment count",
+  instWizStartDate: "First due date",
+  instWizFrequency: "Frequency",
+  instWizPreviewTitle: "Live schedule preview",
+  instWizPreviewInvalid: "The computed schedule is invalid — adjust the down payment or the count.",
+  instWizPolicyTitle: "Late-fee policy (BR-049)",
+  instWizPolicyHint: "The values below are PLACEHOLDER defaults pending the final policy decision.",
+  instWizPolicyRate: "Rate (per overdue line)",
+  instWizPolicyCap: "Fee cap",
+  instWizPolicyGrace: "Grace days",
+  instWizPolicyAuto: "Auto-charge fees",
+  instWizPolicyDefaulted: "Default after (unpaid lines)",
+  instWizPlaceholderChip: "PLACEHOLDER (OQ-002)",
+  instWizCreate: "Create plan (draft)",
+  instWizActivate: "Activate plan",
+  instWizActivateHint: "Activation verifies the plan total equals the live source document total EXACTLY (BR-048); the schedule is immutable afterwards.",
+  instWizCreatedToast: "Plan created as a draft — review the schedule then activate.",
+  instWizActivatedToast: "Plan activated — the schedule is final (BR-048).",
+  instWizBrTotal: "Plan total (BR-048)",
+
+  instErrSourceInvalid: "The source document is not plannable — a posted CREDIT sales invoice or an ACTIVE base-currency service contract.",
+  instErrScheduleImmutable: "The plan is activated — the schedule is immutable (BR-048); corrections are waivers/audited close.",
+  instErrSourceTaken: "A live plan already exists for this source document — one plan per source.",
+  instErrTotalMismatch: "The plan total does not equal the source document total (BR-048) — rebuild the draft.",
+  instErrScheduleInvalid: "The computed schedule is invalid — adjust the down payment or the count.",
+  instErrSourceCurrency: "Plans over non-base-currency documents are not supported in this phase.",
+  instErrPolicyInvalid: "The late-fee policy is invalid — check the rate, cap and grace days.",
+  instErrLateFeeNotChargeable: "Late fees post only on OVERDUE lines not already charged (G-28).",
+  instErrWaiveReason: "A waive reason is required (BR-049).",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

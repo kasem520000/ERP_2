@@ -1098,7 +1098,7 @@ describe("registry integration (the shared contract)", () => {
       expect(contract!.executionClass).toBe("inline");
       expect(ALL_KNOWN_PERMISSIONS.has(permission), permission).toBe(true);
     }
-    expect(snapshot).toHaveLength(71);
+    expect(snapshot).toHaveLength(76);
   });
 
   it("exports flow through the shared contract (CSV renderer over the stored envelope)", async () => {

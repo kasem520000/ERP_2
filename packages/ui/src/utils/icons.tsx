@@ -19,6 +19,7 @@ import {
   Boxes,
   Building2,
   Calendar,
+  CalendarClock,
   ChartColumn,
   Check,
   ChevronDown,
@@ -68,6 +69,7 @@ import {
   Plus,
   QrCode,
   Receipt,
+  ReceiptText,
   Redo2,
   Reply,
   Search,
@@ -82,6 +84,7 @@ import {
   UserPlus,
   Users,
   UsersRound,
+  WalletCards,
   X,
 } from "lucide-react";
 
@@ -165,6 +168,12 @@ export const ICON_REGISTRY = {
   // nav groups + non-directional
   "home": Home,
   "receipt": Receipt,
+  // PHASE-027 nav icons (non-directional — documents/calendars/wallets
+  // never mirror; the one-line registry review entry): cheques & notes,
+  // maturity calendar, installment plans.
+  "receipt-text": ReceiptText,
+  "calendar-clock": CalendarClock,
+  "wallet-cards": WalletCards,
   "truck": Truck,
   "boxes": Boxes,
   "ledger": Landmark,

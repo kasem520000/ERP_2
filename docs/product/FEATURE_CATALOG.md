@@ -1,6 +1,6 @@
 # Feature Catalog
 
-> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-05
+> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-07
 
 The canonical, exhaustive registry of product features. Every feature has exactly one
 **feature key** (`module.feature_name`). This file is the single source of truth referenced by:
@@ -230,7 +230,7 @@ Cash, banking, expenses, shifts.
 | `treasury.cashier_shifts` | Cashier shifts · وردية الصندوق | Opening float, sales capture, closing count, difference posting (BR-021); POS-grade shift UX at PHASE-016 | MVP | 008 | `treasury.shifts.manage` | `treasury.accounts` |
 | `treasury.bank_reconciliation` | Bank reconciliation · التسوية البنكية | Statement import (per-bank format adapters), auto-match + manual match, unmatched aging, per-account period lock | MVP | 008 | `treasury.bank_reconciliation.manage` | `treasury.accounts` |
 | `treasury.bank_statement_parking` | Parked statement lines · الصفوف المتوقفة من كشف الحساب | **SHIPPED PHASE-023** (migration 0035): unparseable statement rows park for manual mapping — raw cells verbatim, amounts NEVER guessed; resolution writes + links the mapped line, discard records why; two new format families (`csv-debit-credit`, `csv-with-balances` with advisory balance-drift warnings — never silent corrections) + the seeded format-family registry (no bank-specific attribution without verified documentation) | 3 | 023 | `treasury.bank_reconciliation.manage` | `treasury.bank_reconciliation` |
-| `treasury.cheques` | Cheques · الشيكات | Cheque payment method with status tracking (received/deposited/cleared/bounced) — no bank integration (A-014); **PHASE-008 deferred the full lifecycle (the `method` enum reserves the CHEQUE value; no half lifecycle inside receipts — phase doc §2 out-of-scope note) and the v2.0 reconciliation delivers it via the `notes` module (accounting DR-003, [../EXPANSION_REGISTER.md](../EXPANSION_REGISTER.md) ED-03)** | 4 | 027 | `treasury.cheques.manage` | `treasury.receipts_disbursements` |
+| `treasury.cheques` | Cheques · الشيكات | Cheque payment method with status tracking (received/deposited/cleared/bounced) — no bank integration (A-014); **PHASE-008 deferred the full lifecycle (the `method` enum reserves the CHEQUE value; no half lifecycle inside receipts — phase doc §2 out-of-scope note) and the chain TERMINATES at PHASE-027: cheques are delivered by the `notes` module (accounting DR-003, [../EXPANSION_REGISTER.md](../EXPANSION_REGISTER.md) ED-03 — register §D re-points this key with exactly that note; the receipts `method` value stays a payment-method flag with no custody semantics)** | 4 | 027 (delivered by `notes`) | `treasury.cheques.manage` | `treasury.receipts_disbursements` |
 
 ## 11. Module: tax
 
@@ -364,31 +364,36 @@ centralized engine with INV-013 idempotency.
 ## 20. Module: notes
 
 Cheques & promissory notes: received/issued custody, PDC maturity calendar, endorsement,
-dishonor, discounting (PHASE-027; INV-024, goldens G-24…G-27). This module terminates the
+dishonor, discounting — **DELIVERED PHASE-027** (migration `0038_notes_installments.sql`,
+shipped 2026-11-07; INV-024, goldens G-24…G-27). This module terminates the
 v1.1 `treasury.cheques` deferral chain — the full PDC lifecycle is delivered here
-([../EXPANSION_REGISTER.md](../EXPANSION_REGISTER.md) ED-03).
+([../EXPANSION_REGISTER.md](../EXPANSION_REGISTER.md) ED-03). Plan grants: the seven keys
+join **business + enterprise** (the tier-4 financial-depth precedent — starter does NOT
+get them).
 
 | Feature key | Name (EN · AR) | Description | Priority | Phase | Permission key | Depends on |
 |---|---|---|---|---|---|---|
-| `notes.received` | Received notes · الأوراق التجارية المستلمة | Cheques/promissory notes received into custody against invoices (golden G-24 settles the open item); partner + maturity mandatory (BR-045) | 4 | 027 | `notes.notes.view/create` | `treasury.receipts_disbursements`, `sales.invoices` |
-| `notes.issued` | Issued notes · الأوراق التجارية الصادرة | Notes issued to suppliers clearing AP (golden G-27) with the paid-at-maturity mirror | 4 | 027 | `notes.notes.view/create` | `treasury.receipts_disbursements`, `purchasing.supplier_invoices` |
-| `notes.pdc_calendar` | PDC maturity calendar · تقويم الاستحقاق | Auto-derived post-dated calendar of all in-custody notes by maturity date (BR-045) | 4 | 027 | (reads under `notes.notes.view`) | `notes.received`, `notes.issued` |
-| `notes.endorsement` | Endorsement · التظهير | Custody transfer without journal effect — journals only on collect/dishonor/return/discount (BR-047) | 4 | 027 | `notes.notes.endorse` | `notes.received` |
-| `notes.dishonor` | Dishonor handling · معالجة ارتجاع الأوراق التجارية | Reason-required dishonor restoring the AR open item exactly; optional bank fee via `BANK_CHARGES` (golden G-26, BR-046) | 4 | 027 | `notes.notes.record_dishonor` | `notes.received` |
-| `notes.discounting` | Note discounting · خصم الأوراق التجارية | Bank discounting before maturity; the discount charge posts to `NOTES_DISCOUNT_EXPENSE` | 4 | 027 | (note event under `notes.notes.view/create/endorse/deposit/record_dishonor`) | `notes.received` |
-| `notes.reports` | Notes reports · تقارير الأوراق التجارية | Maturity calendar, aging, dishonored-register reports (`notes.maturity-calendar`, `notes.aging`, `notes.dishonored-register`) | 4 | 027 | (reads under `notes.notes.view`) | `notes.pdc_calendar` |
+| `notes.received` | Received notes · الأوراق التجارية المستلمة | Cheques/promissory notes received into custody against invoices (golden G-24 settles the open item via the `treasury_allocations.note_id` substrate); partner + maturity mandatory (BR-045) | 4 | 027 (shipped 2026-11-07) | `notes.notes.view/create` | `treasury.receipts_disbursements`, `sales.invoices` |
+| `notes.issued` | Issued notes · الأوراق التجارية الصادرة | Notes issued to suppliers clearing AP (golden G-27) with the paid-at-maturity mirror | 4 | 027 (shipped 2026-11-07) | `notes.notes.view/create` | `treasury.receipts_disbursements`, `purchasing.supplier_invoices` |
+| `notes.pdc_calendar` | PDC maturity calendar · تقويم الاستحقاق | Auto-derived post-dated calendar of all in-custody notes by maturity date (BR-045) — job-derived cached read model (daily sweep 2:20 UTC + on-event invalidation; staleness labeled >26 h, never silent); no new canonical entity | 4 | 027 (shipped 2026-11-07) | (reads under `notes.notes.view`) | `notes.received`, `notes.issued` |
+| `notes.endorsement` | Endorsement · التظهير | Custody transfer without journal effect — journals only on collect/dishonor/return/discount (BR-047; `ck_note_events_journal_shape` enforces the no-journal shape) | 4 | 027 (shipped 2026-11-07) | `notes.notes.endorse` | `notes.received` |
+| `notes.dishonor` | Dishonor handling · معالجة ارتجاع الأوراق التجارية | Reason-required dishonor restoring the AR open item exactly (the repoint-restore algebra); optional bank fee via `BANK_CHARGES` (golden G-26, BR-046); RETURN hands the note back pre-resolution — same restore, no reason/fee (`notes.notes.return`) | 4 | 027 (shipped 2026-11-07) | `notes.notes.record_dishonor` (+ `notes.notes.return`) | `notes.received` |
+| `notes.discounting` | Note discounting · خصم الأوراق التجارية | Bank discounting before maturity; the discount charge posts to `NOTES_DISCOUNT_EXPENSE` (fee explicit, never netted) — base-currency notes only this phase (typed `NOTE_DISCOUNT_CURRENCY_UNSUPPORTED`, the honest deferral: collect or return instead) | 4 | 027 (shipped 2026-11-07) | `notes.notes.discount` | `notes.received` |
+| `notes.reports` | Notes reports · تقارير الأوراق التجارية | Maturity calendar, aging, dishonored-register reports (`notes.maturity-calendar`, `notes.aging`, `notes.dishonored-register` — registry 71→76, as-of determinism via the custody-log reconstruction, block-on-fail RC-11 ties) | 4 | 027 (shipped 2026-11-07) | (reads under `notes.notes.view`) | `notes.pdc_calendar` |
 
 ## 21. Module: installments
 
-Payment plans and due schedules over credit source documents (PHASE-027; golden G-28).
+Payment plans and due schedules over credit source documents — **DELIVERED PHASE-027**
+(migration `0038_notes_installments.sql`, shipped 2026-11-07; golden G-28). Plan grants:
+the five keys join **business + enterprise** (starter does NOT get them).
 
 | Feature key | Name (EN · AR) | Description | Priority | Phase | Permission key | Depends on |
 |---|---|---|---|---|---|---|
-| `installments.plans` | Installment plans · خطط الأقساط | Plans over a source document — plan total must equal source total; per-plan late-fee policy (BR-048/BR-049) | 4 | 027 | `installments.plans.manage` | `sales.invoices`, `partners.credit_terms` |
-| `installments.schedules` | Installment schedules · جداول الأقساط | Generated dues (WEEKLY…QUARTERLY) immutable after activation (BR-048) | 4 | 027 | (under `installments.plans.manage`) | `installments.plans` |
-| `installments.collections` | Installment collections · تحصيل الأقساط | Collection of due installments through receipts/allocations; waivers gated explicitly | 4 | 027 | `installments.lines.waive` (waiver); collections via `sales.receipts.post` | `installments.schedules`, `sales.receipts` |
-| `installments.late_fees` | Late fees · رسوم التأخير | Per-plan policy (rate + cap + grace) posting `LATE_FEE_INCOME` via the engine only (golden G-28); defaults PLACEHOLDER — OQ-002 family (BR-049) | 4 | 027 | (policy under `installments.plans.manage`; posting engine-only) | `installments.schedules` |
-| `installments.reports` | Installment reports · تقارير الأقساط | Schedule and aging reports (`installments.schedule`, `installments.aging`) | 4 | 027 | (reads under `installments.plans.manage`) | `installments.schedules` |
+| `installments.plans` | Installment plans · خطط الأقساط | Plans over a source document (credit sales invoice or service contract) — plan total must equal source total (BR-048; status NULL = draft pre-activation); per-plan late-fee policy (BR-049) | 4 | 027 (shipped 2026-11-07) | `installments.plans.manage` | `sales.invoices`, `partners.credit_terms` |
+| `installments.schedules` | Installment schedules · جداول الأقساط | Generated dues (WEEKLY…QUARTERLY) immutable after activation (BR-048); line statuses job-derived only by the daily sweep (WAIVED the sole manual transition) | 4 | 027 (shipped 2026-11-07) | (reads under `installments.plans.view`) | `installments.plans` |
+| `installments.collections` | Installment collections · تحصيل الأقساط | Collection of due installments through receipts/allocations (`receipt_refs` attribution — plans never duplicate AR); waivers gated explicitly | 4 | 027 (shipped 2026-11-07) | `installments.lines.waive` (waiver); collections via `sales.receipts.post` | `installments.schedules`, `sales.receipts` |
+| `installments.late_fees` | Late fees · رسوم التأخير | Per-plan policy (rate + cap + grace — PLACEHOLDER defaults, OQ-002 family) posting `LATE_FEE_INCOME` via the engine only (golden G-28); flat fees only — no interest computation or compounding path exists (DR-003) | 4 | 027 (shipped 2026-11-07) | (charge under `installments.plans.manage`; posting engine-only) | `installments.schedules` |
+| `installments.reports` | Installment reports · تقارير الأقساط | Schedule and aging reports (`installments.schedule`, `installments.aging`) | 4 | 027 (shipped 2026-11-07) | (reads under `installments.plans.view`) | `installments.schedules` |
 
 ## 22. Module: budgeting
 

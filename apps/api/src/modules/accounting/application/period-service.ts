@@ -169,7 +169,8 @@ export class PeriodService {
       // + GRNI (PHASE-011 RC-09 — the purchasing module registers its check
       // here) + WIP (PHASE-018 §11 — the manufacturing module registers its
       // INV-010 extension here) + FIXED_ASSETS (PHASE-026 RC-10 — the
-      // fixed-assets register reconciliation registers here).
+      // fixed-assets register reconciliation registers here) + NOTES
+      // (PHASE-027 RC-11 — the notes register reconciliation registers here).
       if (
         run.status === "BROKEN" &&
         (run.kind === "AR" ||
@@ -179,7 +180,8 @@ export class PeriodService {
           run.kind === "INVENTORY" ||
           run.kind === "GRNI" ||
           run.kind === "WIP" ||
-          run.kind === "FIXED_ASSETS")
+          run.kind === "FIXED_ASSETS" ||
+          run.kind === "NOTES")
       ) {
         throw new ReconciliationBrokenError({ kind: run.kind, diffCount: run.diffCount });
       }

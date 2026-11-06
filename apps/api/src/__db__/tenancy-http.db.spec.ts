@@ -211,9 +211,10 @@ describe("owner journey: login → onboarding → branches → settings", () => 
     // fixed-assets set — the 1220 ACCUM_DEPRECIATION / 3210
     // REVALUATION_RESERVE / 4910 ASSET_DISPOSAL_GAIN / 5910
     // ASSET_DISPOSAL_LOSS rows + the 1210 FIXED_ASSET / 5300
-    // DEPRECIATION_EXPENSE in-place markers (54 accounts / 31 purposes).
-    expect(diff.accounts.created).toBe(54);
-    expect(diff.purposes.created).toBe(31);
+    // DEPRECIATION_EXPENSE in-place markers + the 027 notes rows (58 accounts /
+    // 35 purposes after 0038: 1170/2160/4920/5260).
+    expect(diff.accounts.created).toBe(58);
+    expect(diff.purposes.created).toBe(35);
 
     const reRun = await request(
       "POST",

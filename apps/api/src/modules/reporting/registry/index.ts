@@ -104,6 +104,11 @@ import {
 import { fixedAssetsAssetRegisterContract } from "./fixed-assets/asset-register.contract";
 import { fixedAssetsDepreciationScheduleContract } from "./fixed-assets/depreciation-schedule.contract";
 import { fixedAssetsMovementsContract } from "./fixed-assets/movements.contract";
+import { notesMaturityCalendarContract } from "./notes/maturity-calendar.contract";
+import { notesAgingContract } from "./notes/aging.contract";
+import { notesDishonoredRegisterContract } from "./notes/dishonored-register.contract";
+import { installmentsScheduleContract } from "./installments/schedule.contract";
+import { installmentsAgingContract } from "./installments/aging.contract";
 
 export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   // §1 financial statements
@@ -199,6 +204,18 @@ export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   fixedAssetsAssetRegisterContract,
   fixedAssetsDepreciationScheduleContract,
   fixedAssetsMovementsContract,
+  // §9 financial depth — PHASE-027 rows (REPORT_CATALOG §9): the
+  // notes/installments set — the as-of maturity calendar with the
+  // inv024-custody-tie block-on-fail check, the notes aging with the
+  // notes-open-tie/notes-payable-tie footer ties, the dishonored register
+  // with its G-26 provenance check, one plan's installment schedule with
+  // the schedule-sum-tie/lines-count-tie checks, and the installments aging
+  // with the installments-inv016-tie sanity
+  notesMaturityCalendarContract,
+  notesAgingContract,
+  notesDishonoredRegisterContract,
+  installmentsScheduleContract,
+  installmentsAgingContract,
 ]);
 
 export { validateRegistry, registrySnapshot } from "./runtime";

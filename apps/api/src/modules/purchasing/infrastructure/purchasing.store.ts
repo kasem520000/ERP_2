@@ -1316,7 +1316,10 @@ export async function apOpenItemsAsOf(input: {
         AND ((a.receipt_id IS NOT NULL AND EXISTS (SELECT 1 FROM receipts r
                  WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
           OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
-                 WHERE p.id = a.payment_id AND p.status = 'POSTED')))
+                 WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+          -- PHASE-027 (0038): note-owned allocations are effective by
+          -- presence (see lockOpenItemAndSumPostedAllocations).
+          OR (a.note_id IS NOT NULL))
     ) settled ON true
     WHERE s.entry_date <= ${input.asOf}
       AND (${input.supplierId ?? null}::uuid IS NULL OR s.partner_id = ${input.supplierId ?? null})
@@ -1400,7 +1403,10 @@ export async function partnerApStatementEntries(input: {
         AND ((a.receipt_id IS NOT NULL AND EXISTS (SELECT 1 FROM receipts r
                  WHERE r.id = a.receipt_id AND r.status = 'POSTED'))
           OR (a.payment_id IS NOT NULL AND EXISTS (SELECT 1 FROM payments p
-                 WHERE p.id = a.payment_id AND p.status = 'POSTED')))
+                 WHERE p.id = a.payment_id AND p.status = 'POSTED'))
+          -- PHASE-027 (0038): note-owned allocations are effective by
+          -- presence (see lockOpenItemAndSumPostedAllocations).
+          OR (a.note_id IS NOT NULL))
     ) settled ON true
     WHERE s.partner_id = ${input.supplierId}
       AND s.entry_date <= ${input.asOf}

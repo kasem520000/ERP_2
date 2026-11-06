@@ -1,6 +1,6 @@
 # Entity Catalog
 
-> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-05
+> **Status:** STABLE · **Owner:** Database Architecture · **Updated:** 2026-11-07
 
 All planned entities grouped by owning module, with the phase that introduces them and
 key relationships. This is the catalog-level map; column-level specifications for core
@@ -328,19 +328,31 @@ post + COGS journals carries the project stamp.
 | `asset_disposals` | Sale/scrap disposals | asset_id, disposal_date, kind SALE/SCRAP, proceeds, net_book_value, gain_loss, status DRAFT/POSTED, journal_entry_id | 026 | no |
 | `asset_revaluations` | Audited revaluations | asset_id, revaluation_date, new_gross_value, new_accumulated, delta, status, journal_entry_id | 026 | no |
 
-## notes (PHASE-027)
+## notes (PHASE-027 — DELIVERED by migration `0038_notes_installments.sql`, schema_version 38)
+
+Blueprint rows per [../EXPANSION_REGISTER.md](../EXPANSION_REGISTER.md) §C (ED-19); column-level
+truth: [TABLES/notes-installments.md](TABLES/notes-installments.md) (authored in-phase per the
+grow-per-phase rule).
 
 | Entity | Purpose | Key fields | Phase | OC |
 |--------|---------|-----------|-------|----|
-| `notes` | Cheques & promissory notes in custody | kind CHEQUE/PROMISSORY_NOTE, direction RECEIVED/ISSUED, partner_id, number, issuing_bank, amount, currency, exchange_rate, issue_date, maturity_date, status, source_type/source_id | 027 | no |
-| `note_events` 🔒 | Custody/lifecycle events | note_id, event_kind, event_date, refs, journal_entry_id, created_by | 027 | no |
+| `notes` | Cheques & promissory notes in custody (delivered 0038) | kind CHEQUE/PROMISSORY_NOTE, direction RECEIVED/ISSUED, partner_id, number, issuing_bank, amount, currency, exchange_rate, issue_date, maturity_date, status, source_type/source_id + the delivered additions: `cash_account_id` (treasury cash account stored at DEPOSIT — the G-25/G-27/discount/dishonor-fee money legs), `journal_entry_id` (the G-24/G-27 entry), `note`/`note_ar` memos | 027 | no |
+| `note_events` 🔒 | Custody/lifecycle events (delivered 0038 — append-only by grants + the `erp.note_events_guard` trigger: UPDATE never, DELETE only under `erp.purge_mode`) | note_id, event_kind, event_date, refs, journal_entry_id (NULL exactly for ENDORSE/DEPOSIT/RECLASSIFY — `ck_note_events_journal_shape`), created_by, memo/memo_ar | 027 | no |
 
-## installments (PHASE-027)
+The PDC maturity calendar is a job-derived cached read model over these two tables —
+deliberately **no** new canonical entity (register §C). `treasury_allocations` gained
+`note_id` (exactly-one-of-three owner CHECK) as the settle/restore substrate — see the
+TABLES spec for the repoint algebra.
+
+## installments (PHASE-027 — DELIVERED by migration `0038_notes_installments.sql`, schema_version 38)
+
+Blueprint rows per [../EXPANSION_REGISTER.md](../EXPANSION_REGISTER.md) §C (ED-19); column-level
+truth: [TABLES/notes-installments.md](TABLES/notes-installments.md).
 
 | Entity | Purpose | Key fields | Phase | OC |
 |--------|---------|-----------|-------|----|
-| `installment_plans` | Payment plans over source documents | partner_id, source_type/source_id, total_amount, down_payment, count, start_date, frequency, late_fee_policy jsonb, status ACTIVE/CLOSED/DEFAULTED | 027 | no |
-| `installment_lines` | Generated dues schedule | plan_id, seq, due_date, amount, status PENDING/DUE/PAID/OVERDUE/WAIVED, receipt_refs | 027 | no |
+| `installment_plans` | Payment plans over source documents (delivered 0038) | partner_id, source_type/source_id (sales_invoice / crm service_contract) + source_no, total_amount, down_payment, line_count, start_date, frequency, late_fee_policy jsonb, status ACTIVE/CLOSED/DEFAULTED — **NULL = draft pre-activation** (the §9 enum lists the activated lifecycle states only; `ck_installment_plans_activated_shape` ties status to `activated_at`), activated_at/activated_by, closed_at, defaulted_at, note/note_ar | 027 | no |
+| `installment_lines` | Generated dues schedule (delivered 0038) | plan_id, seq, due_date, amount, status PENDING/DUE/PAID/OVERDUE/WAIVED, receipt_refs jsonb (attributed receipt slices), collected_amount + the delivered late-fee stamps `late_fee_amount`/`late_fee_entry_id`/`late_fee_charged_at` (G-28 once per line, INV-013) and the waiver trio `waived_at`/`waived_by`/`waive_reason` | 027 | no |
 
 ## budgeting (PHASE-028)
 

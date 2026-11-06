@@ -99,7 +99,7 @@ FROM "roles" r JOIN "permissions" p ON p."key" IN (
   'reports.treasury.fx.read', 'reports.tax.vat-return.read', 'reports.tax.summary.read',
   'files.upload', 'files.view', 'audit.view',
   'notes.notes.view', 'notes.notes.create', 'notes.notes.endorse',
-  'notes.notes.deposit', 'notes.notes.record_dishonor', 'notes.notes.discount',
+  'notes.notes.deposit', 'notes.notes.record_dishonor', 'notes.notes.discount', 'notes.notes.return',
   'installments.plans.view',
   'budgeting.budgets.view', 'budgeting.budgets.create', 'budgeting.reports.view',
   'payroll.runs.post', 'payroll.reports.view',

@@ -1,6 +1,6 @@
 # Navigation Model
 
-> **Status:** STABLE · **Owner:** Design System Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Design System Architecture · **Updated:** 2026-11-07
 
 How users move through the platform: the information architecture, the entitlement-driven
 navigation registry, the command menu as universal navigation, back/deep-link behavior,
@@ -42,15 +42,19 @@ Added by [../EXPANSION_REGISTER.md](../EXPANSION_REGISTER.md) §K (ED-12). Same
 resolution rule as every item — `entitlement(featureKey)` AND `permission(user, branch)`;
 feature keys per [../product/FEATURE_CATALOG.md](../product/FEATURE_CATALOG.md),
 permissions per [../security/AUTHORIZATION_MATRIX.md](../security/AUTHORIZATION_MATRIX.md)
-§3.11–§3.15, archetypes per [PAGE_ARCHETYPES.md](PAGE_ARCHETYPES.md).
+§3.11–§3.15, archetypes per [PAGE_ARCHETYPES.md](PAGE_ARCHETYPES.md). The PHASE-027
+rows (الخزينة ×2 + المبيعات ×1) shipped with migration `0038_notes_installments.sql` —
+routes `/notes`, `/notes/calendar`, `/installments`; register/detail/calendar/reports
+surfaces navigate through the in-page tab strip (one-item-many-screens, the fixed-assets
+precedent).
 
 | id | Group | Label (AR / EN) | featureKey | permission | archetype |
 |----|-------|-----------------|------------|------------|-----------|
-| `sales.installment-plans` | 2 المبيعات | خطة الأقساط / Installment plans | `installments.plans` | `installments.plans.view` | List + Search (§2); plan creation runs as Wizard (§9) |
+| `sales.installment-plans` | 2 المبيعات | خطة الأقساط / Installment plans | `installments.plans` | `installments.plans.view` | List + Search (§2) — route `/installments`; plan creation runs as Wizard (§9) |
 | `accounting.fixed-assets` | 5 المحاسبة | الأصول الثابتة / Fixed assets | `fixed_assets.register` | `fixed_assets.assets.view` | List + Search (§2); asset cards on Document Detail (§5) |
 | `accounting.budgets` | 5 المحاسبة | الموازنات / Budgets | `budgeting.budgets` | `budgeting.budgets.view` | List + Search (§2) + Create/Edit Form (§3) for budget lines |
-| `treasury.cheques-notes` | 6 الخزينة | الشيكات والأوراق التجارية / Cheques & notes | `notes.received` | `notes.notes.view` | List + Search (§2); note lifecycle on Document Detail (§5) |
-| `treasury.pdc-calendar` | 6 الخزينة | تقويم الاستحقاق / Maturity calendar | `notes.pdc_calendar` | `notes.notes.view` | List + Search (§2) grouped by maturity date |
+| `treasury.cheques-notes` | 6 الخزينة | الشيكات والأوراق التجارية / Cheques & notes | `notes.received` | `notes.notes.view` | List + Search (§2) — route `/notes`; note lifecycle on Document Detail (§5) with the `note_events` custody timeline (`TimelinePanel`) |
+| `treasury.pdc-calendar` | 6 الخزينة | تقويم الاستحقاق / Maturity calendar | `notes.pdc_calendar` | `notes.notes.view` | Dashboard (§1 — the maturity workspace) — route `/notes/calendar`, with list drill (§2) |
 | `reports.consolidated` | 7 التقارير | القوائم الموحدة / Consolidated statements | `consolidation.reports` | `consolidation.reports.view` | Report Page (§7) |
 | `payroll.employees` | 10 الموظفون والرواتب | الموظفون / Employees | `payroll.employees` | `payroll.employees.view` | List + Search (§2) |
 | `payroll.salary-structures` | 10 الموظفون والرواتب | هياكل الرواتب / Salary structures | `payroll.salary_structures` | `payroll.salary_structures.manage` (view implied) | List + Search (§2) + Create/Edit Form (§3) |

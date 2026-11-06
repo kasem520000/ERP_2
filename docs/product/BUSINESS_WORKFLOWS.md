@@ -1,6 +1,6 @@
 # Business Workflows
 
-> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Product & Platform Architecture · **Updated:** 2026-11-07
 
 The canonical operational workflows, drawn as executable design references. Every workflow
 states its **entry conditions**, the **document states traversed** (per
@@ -315,27 +315,34 @@ flowchart TD
   DISP -- "endorse" --> ENDOR["ENDORSED_OUT — custody moves, no journal (BR-047)"]
   ENDOR --> OUT{"Outcome"}
   OUT -- "collected by endorsee" --> COLL["COLLECTED<br/>G-25: DR CASH/BANK · CR NOTES_RECEIVABLE"]
-  OUT -- "returned" --> RT["RETURNED — back to IN_CUSTODY"]
-  RT --> DISP
-  DISP -- "deposit" --> DEP["DEPOSITED at bank"]
+  OUT -- "returned" --> RT["RETURNED — terminal<br/>the restore side of G-26 without reason/fee:<br/>AR/AP open item restored exactly (INV-024)"]
+  DISP -- "deposit" --> DEP["DEPOSITED at bank<br/>(stores cash_account_id; no journal)"]
   DEP --> COLL
-  DEP -. "bounced" .-> DH["DISHONORED<br/>G-26: DR AR_CONTROL · CR NOTES_RECEIVABLE<br/>reason required (BR-046); optional fee via BANK_CHARGES"]
-  DISP -- "discount" --> DC["DISCOUNTED<br/>DR CASH/BANK + DR NOTES_DISCOUNT_EXPENSE · CR NOTES_RECEIVABLE"]
+  DEP -. "bounced" .-> DH["DISHONORED — terminal<br/>G-26: DR AR_CONTROL · CR NOTES_RECEIVABLE<br/>reason required (BR-046); optional fee via BANK_CHARGES<br/>the repoint-restore: allocations re-anchored, original item byte-equal"]
+  DISP -- "discount" --> DC["DISCOUNTED — terminal<br/>DR CASH/BANK + DR NOTES_DISCOUNT_EXPENSE · CR NOTES_RECEIVABLE"]
   COLL --> Z["End: zero NOTES_RECEIVABLE balance (INV-024)"]
   DH --> RST["Open item restored exactly (INV-024)"]
+  RT --> RST
   ISSM --> Z2["End: zero NOTES_PAYABLE balance"]
 ```
 
 **Postings.** Receive: G-24 (DR `NOTES_RECEIVABLE` · CR `AR_CONTROL` — settles the open
-item). Collect: G-25 (DR cash/bank · CR `NOTES_RECEIVABLE`). Dishonor: G-26 (DR
-`AR_CONTROL` · CR `NOTES_RECEIVABLE`; optional bank fee via `BANK_CHARGES`). Issue: G-27
-(DR `AP_CONTROL` · CR `NOTES_PAYABLE`) with its paid-at-maturity mirror. Discount posts
-`NOTES_DISCOUNT_EXPENSE`. Endorsement moves custody with **no journal** (BR-047) —
-journals fire only on collect/dishonor/return/discount, always via the posting engine
-(INV-013 idempotency).
+item). Collect: G-25 (DR cash/bank · CR `NOTES_RECEIVABLE`; foreign notes settle the cash
+leg at the collection-day rate against the note leg at the original stored rate — the
+residual is an explicit `FX_GAIN`/`FX_LOSS` line, the receipt G-06 mirror). Dishonor: G-26
+(DR `AR_CONTROL` · CR `NOTES_RECEIVABLE`; optional bank fee posts `DR BANK_CHARGES` ·
+CR cash with a treasury movement OUT). Issue: G-27 (DR `AP_CONTROL` · CR `NOTES_PAYABLE`)
+with its paid-at-maturity mirror. Discount posts `NOTES_DISCOUNT_EXPENSE` (base-currency
+notes only this phase — typed `NOTE_DISCOUNT_CURRENCY_UNSUPPORTED`). Endorsement and
+deposit move custody with **no journal** (BR-047) — journals fire only on
+collect/dishonor/return/discount, always via the posting engine (INV-013 idempotency,
+sources `note/post|collect|dishonor|discount|return`); RETURN hands the instrument back
+pre-resolution and restores the AR/AP open item exactly (the G-26 restore side, no
+reason/fee) — the resolved statuses are terminal per the custody machine.
 
 **Failure exits.** Dishonor without a reason is rejected (BR-046); the restored open item
-must match the original settlement exactly — amount + references (INV-024); period lock
+must match the original settlement exactly — amount + references (INV-024); illegal
+custody transitions are rejected (`INVALID_CUSTODY_TRANSITION`); period lock
 rejects journal events (INV-011); PDC calendar entries are derived, never hand-edited
 (BR-045).
 
@@ -384,15 +391,16 @@ WAIVED.
 
 ```mermaid
 flowchart TD
-  INV["Credit invoice POSTED<br/>AR open item"] --> PLAN["Plan DRAFT<br/>total must equal source document (BR-048)"]
+  INV["Credit invoice POSTED<br/>AR open item"] --> PLAN["Plan DRAFT (status NULL)<br/>total must equal source document (BR-048)"]
   PLAN --> ACTP["Plan ACTIVE<br/>schedule immutable"]
-  ACTP --> DUE["Lines PENDING → DUE by calendar"]
-  DUE --> COLL["Collection: sales receipt allocated to the line<br/>existing receipt posting"]
+  ACTP --> DUE["Lines PENDING → DUE by calendar<br/>(daily sweep 2:40 UTC — job-derived only)"]
+  DUE --> COLL["Collection: sales receipt allocated to the line<br/>existing receipt posting (receipt_refs attribution)"]
   COLL --> PAID["Line PAID"]
-  DUE -. "past due" .-> OD["Line OVERDUE"]
+  DUE -. "past due + grace elapsed" .-> OD["Line OVERDUE"]
   OD --> FEE["Late-fee posting (G-28)<br/>DR AR_CONTROL · CR LATE_FEE_INCOME<br/>per plan policy, only via the engine"]
   OD --> WV{"Waiver requested?"}
-  WV -- "approved (approval-gated)" --> WVD["Line WAIVED"]
+  WV -- "approved (approval-gated)" --> WVD["Line WAIVED — the sole manual transition,<br/>sticky under the sweep"]
+  OD -. "N consecutive overdue (policy)" .-> DFT["Plan DEFAULTED<br/>dunning notification"]
   PAID --> FIN{"All lines settled?"}
   FIN -- "yes" --> CLOSED["Plan CLOSED"]
   FIN -- "no" --> DUE
@@ -400,8 +408,11 @@ flowchart TD
 
 **Postings.** Collections are ordinary sales receipts with allocation (existing receipt
 posting, INV-016) — money-in documents stay owned by sales; late fees post G-28 per the
-plan's policy and **only via the engine**; waivers are approval-gated, documented, and
-audited — never silent edits.
+plan's policy (`{rate, cap, grace_days, auto_charge, defaulted_after_lines}` — PLACEHOLDER
+defaults, OQ-002 family) and **only via the engine** (source `installment_line/late_fee`,
+once per line — INV-013); waivers are approval-gated, documented, and
+audited — never silent edits; the plan never creates a second AR obligation (the invoice
+stays the open item; Σ line collections ≤ invoice outstanding).
 
 **Failure exits.** Plan total ≠ source document total is rejected (BR-048); schedule edits
 after activation are rejected — the correction is a superseding arrangement; late fees

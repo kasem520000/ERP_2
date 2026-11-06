@@ -233,6 +233,7 @@ INSERT INTO "permissions" ("key", "module", "description") VALUES
 ('notes.notes.deposit', 'notes', 'Deposit a note at the bank / إيداع الشيك لدى البنك'),
 ('notes.notes.record_dishonor', 'notes', 'Record dishonor — restores the open item exactly (G-26, BR-046) / تسجيل ارتداد الشيك (إعادة فتح الذمة)'),
 ('notes.notes.discount', 'notes', 'Discount a note at the bank (posts NOTES_DISCOUNT_EXPENSE) / خصم الورقة التجارية لدى البنك'),
+('notes.notes.return', 'notes', 'Hand a note back pre-resolution — restores the open item exactly, no bounce reason/fee / إعادة الورقة قبل التحصيل (إعادة فتح الذمة دون سبب ارتداد أو رسوم)'),
 ('installments.plans.view', 'installments', 'View installment plans and schedules / عرض خطط الأقساط'),
 ('installments.plans.manage', 'installments', 'Create/activate installment plans (BR-048) / إدارة خطط الأقساط'),
 ('installments.lines.waive', 'installments', 'Waive an installment line (approval-gated) / إعفاء قسط (معتمد)'),

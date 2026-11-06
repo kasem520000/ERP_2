@@ -12,6 +12,8 @@ import { DistributionQueriesService } from "./industry/distribution-queries";
 import { ManufacturingQueriesService } from "./industry/manufacturing-queries";
 import { CrmQueriesService } from "./industry/crm-queries";
 import { FixedAssetsQueriesService } from "./fixed-assets/fixed-assets-queries";
+import { NotesQueriesService } from "./notes/notes-queries";
+import { InstallmentsQueriesService } from "./installments/installments-queries";
 import { TreasuryQueriesService } from "../../treasury/application/treasury-queries";
 import { PartnerQueriesService } from "../../partners/application/partner-queries";
 import { TaxQueriesService } from "../../tax/application/tax-queries";
@@ -49,6 +51,10 @@ export interface ReportingServices {
   crm: CrmQueriesService;
   /** PHASE-026 · the fixed_assets query surface (as-of asset register + fa-cost-tie/fa-accum-tie, depreciation schedule, movements with journal provenance). */
   fixedAssets: FixedAssetsQueriesService;
+  /** PHASE-027 · the notes query surface (as-of maturity calendar + inv024-custody-tie, aging + notes-open-tie/notes-payable-tie, the dishonored register with G-26 provenance). */
+  notes: NotesQueriesService;
+  /** PHASE-027 · the installments query surface (one plan's schedule + schedule-sum-tie/lines-count-tie, the aging with the installments-inv016-tie sanity). */
+  installments: InstallmentsQueriesService;
   treasury: TreasuryQueriesService;
   partners: PartnerQueriesService;
   tax: TaxQueriesService;
@@ -75,6 +81,8 @@ export function reportingServices(): ReportingServices {
       manufacturing: new ManufacturingQueriesService(),
       crm: new CrmQueriesService(),
       fixedAssets: new FixedAssetsQueriesService(),
+      notes: new NotesQueriesService(),
+      installments: new InstallmentsQueriesService(),
       treasury: new TreasuryQueriesService(),
       partners: new PartnerQueriesService(),
       tax: new TaxQueriesService(),

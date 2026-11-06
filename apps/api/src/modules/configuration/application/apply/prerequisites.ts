@@ -76,7 +76,7 @@ import {
 // + the in-process SLO substrate — GA hardening only, zero new plan keys or
 // template capabilities (the 024→025 bump is bookkeeping only; the roadmap
 // notes PHASE-026+ fixed-assets keys arrive with their own phase).
-export const CURRENT_SHIPPED_PHASE = "PHASE-026";
+export const CURRENT_SHIPPED_PHASE = "PHASE-027";
 
 /** "PHASE-0NN" → the numeric phase (for ordering). */
 export function phaseNumber(phase: string): number {

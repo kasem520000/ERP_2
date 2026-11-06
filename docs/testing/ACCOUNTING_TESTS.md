@@ -22,7 +22,14 @@ below are exact.
   run-only/period-locked depreciation, BR-043 salvage floor + disposal lock, BR-044
   audited revaluation to `REVALUATION_RESERVE`) alongside the fixed-assets S-04 spoof
   battery (foreign category/branch/custodian/asset/period references → typed 404s,
-  zero partial creation).
+  zero partial creation). PHASE-027 adds the notes + installments suites
+  (`notes/notes-rules.spec` 27 — BR-045…BR-047 + G-24…G-27 line-level asserts with the
+  BASE-denominated base-amount + FX-residual conventions; `installments/installments-rules.spec`
+  7 — BR-048/BR-049 + G-28; `notes/inv-024.spec` — custody equals ledger across the
+  state graph; `notes/rc-11.spec`; `notes/pdc-calendar.spec` + the 100k-note perf spec;
+  `installments/overdue-job.spec` — job-derived-only statuses, grace, DEFAULTED flip)
+  alongside the two S-04 spoof batteries (notes ×5, installments ×5) and the four-table
+  isolation-registry extension.
 - Harness: real PostgreSQL via Testcontainers (`erp_app` role, RLS on); posting through
   module services exactly as production code paths do — **no direct journal inserts**.
 - Amounts: `NUMERIC(19,4)`; assertions compare exact decimals, tolerance **0.00**
@@ -236,7 +243,8 @@ INV-006).
 | RC-08 (INV-019) | treasury ops incl. transfers, fees, shift differences | every cash/bank balance = Σ movements |
 | RC-09 (GRNI) | GRN without supplier invoice → invoice → partial | GRNI register = GRNI account at each step |
 | RC-10 (determinism) | run statement/aging twice as-of same date | byte-identical results (no caching drift) |
-| RC-11 (fixed assets — [../accounting/RECONCILIATION.md](../accounting/RECONCILIATION.md) §1 row 10, kind `FIXED_ASSETS`, PHASE-026) | capitalization ×2 paths (direct G-21 + purchase) → run G-22 → revaluation → disposal, then the register check after each op set | per category account Σ gross current value = `FIXED_ASSET` balance and Σ accumulated = `ACCUM_DEPRECIATION` balance, exact 0.00; seeded drift (register row without ledger effect) → `BROKEN` with the offending id + notification + period-close block (PC-04) |
+| RC-10 (fixed assets — [../accounting/RECONCILIATION.md](../accounting/RECONCILIATION.md) §1 row 10, kind `FIXED_ASSETS`, PHASE-026) | capitalization ×2 paths (direct G-21 + purchase) → run G-22 → revaluation → disposal, then the register check after each op set | per category account Σ gross current value = `FIXED_ASSET` balance and Σ accumulated = `ACCUM_DEPRECIATION` balance, exact 0.00; seeded drift (register row without ledger effect) → `BROKEN` with the offending id + notification + period-close block (PC-04) |
+| RC-11 (notes — [../accounting/RECONCILIATION.md](../accounting/RECONCILIATION.md) §1 row 11, kind `NOTES`, PHASE-027 — `notes/rc-11.spec`) | receive (G-24) → endorse/deposit → collect (G-25) / dishonor (G-26) / return / discount, then the register check after each event set; the issued mirror (G-27 pair) | per purpose side Σ live notes (amount × the stored rate, INV-008) = `NOTES_RECEIVABLE` / `NOTES_PAYABLE` balance (issued side read credit-positive — the GRNI convention), exact 0.00; resolved notes contribute zero (INV-024); seeded drift (a note row without its journal, or an external journal on a notes-purpose account) → `BROKEN` with the offending note + critical notification + period-close block (PC-04) |
 
 ## 6. Concurrency tests
 

@@ -194,6 +194,44 @@ import {
   TREASURY_NOT_FOUND_ERRORS,
   TreasuryDocumentStateError,
 } from "../../modules/treasury/domain/treasury-errors";
+// PHASE-027 (in-phase): the notes error taxonomy (T2 — the phase's doc-sync
+// step completes the action keys for discount/return; the HTTP mapping
+// registers here per the fixed_assets-intended-but-skipped pattern — see
+// the SF-027 finding: the 026 fixed_assets classes were never registered,
+// fixed below as the honest in-phase repair).
+import {
+  NoteAlreadyResolvedError,
+  NoteCashAccountNotFoundError,
+  NoteNotFoundError,
+  NotePartnerNotFoundError,
+  NoteSourceInvalidError,
+} from "../../modules/notes/domain/notes-errors";
+// SF-027-001 (the honest 026 gap repair): the fixed_assets error classes
+// were never registered in domainStatus (verified at 027 HEAD — they
+// surfaced over HTTP with the 422 fallback while the codes stayed typed at
+// the service level). Registered here exactly as the depreciation-errors
+// header's status map documents them (404 not-founds, 409 lifecycle
+// conflicts, 422 fall-through for the policy/validation family).
+import {
+  AlreadyCapitalizedError,
+  AssetCategoryCodeConflictError,
+  AssetCategoryNotFoundError,
+  AssetCodeConflictError,
+  AssetNotFoundError,
+} from "../../modules/fixed_assets/domain/fixed-assets-errors";
+import {
+  DepreciationRunNotFoundError,
+  RunAlreadyExistsError,
+  RunNotPostableError,
+} from "../../modules/fixed_assets/application/depreciation-errors";
+import {
+  DisposalNotApprovedError,
+  DisposalNotFoundError,
+  DisposedAssetReuseError,
+  LiveDraftConflictError,
+  RevaluationNotFoundError,
+  RevaluationNotPostableError,
+} from "../../modules/fixed_assets/application/lifecycle-errors";
 import {
   AccountNotFoundError,
   FiscalYearNotFoundError,
@@ -484,6 +522,47 @@ function domainStatus(error: DomainError): number {
   // PHASE-017 commission runs (404; state/rule rejections stay 422).
   if (error instanceof CommissionRunNotFoundError) {
     return HttpStatus.NOT_FOUND;
+  }
+  // PHASE-027 notes (T2 — 404/409; A7 parity: unknown == foreign ids, never
+  // an existence disclosure). The 422 family (custody transitions, reason
+  // required, rate/currency/account validation, immutability) falls through
+  // to the 422 default by design.
+  if (
+    error instanceof NoteNotFoundError ||
+    error instanceof NotePartnerNotFoundError ||
+    error instanceof NoteSourceInvalidError ||
+    error instanceof NoteCashAccountNotFoundError
+  ) {
+    return HttpStatus.NOT_FOUND;
+  }
+  if (error instanceof NoteAlreadyResolvedError) {
+    return HttpStatus.CONFLICT;
+  }
+  // SF-027-001: the fixed_assets 404s + 409s (the policy/validation family
+  // falls through to the 422 default — PERIOD_LOCKED, CATEGORY_NOT_USABLE,
+  // NBV_FLOOR_VIOLATION, SELF_APPROVAL_BLOCKED, … exactly as the 026
+  // depreciation-errors header documents them).
+  if (
+    error instanceof AssetCategoryNotFoundError ||
+    error instanceof AssetNotFoundError ||
+    error instanceof DepreciationRunNotFoundError ||
+    error instanceof RevaluationNotFoundError ||
+    error instanceof DisposalNotFoundError
+  ) {
+    return HttpStatus.NOT_FOUND;
+  }
+  if (
+    error instanceof AssetCategoryCodeConflictError ||
+    error instanceof AssetCodeConflictError ||
+    error instanceof AlreadyCapitalizedError ||
+    error instanceof LiveDraftConflictError ||
+    error instanceof RevaluationNotPostableError ||
+    error instanceof DisposalNotApprovedError ||
+    error instanceof DisposedAssetReuseError ||
+    error instanceof RunAlreadyExistsError ||
+    error instanceof RunNotPostableError
+  ) {
+    return HttpStatus.CONFLICT;
   }
   // PHASE-017 customer tiers + free-goods rules (T11; 404/409; same A7
   // parity): unknown vs foreign ids, and the tenant-unique natural keys

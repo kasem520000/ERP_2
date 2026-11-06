@@ -59,6 +59,8 @@ const SOURCE_MODULES: readonly DataSourceModule[] = [
   "manufacturing", // PHASE-018: the manufacturing query surface (production cost/genealogy/QC)
   "crm", // PHASE-019: the CRM query surface (contract revenue schedule / time billing)
   "fixed_assets", // PHASE-026: the fixed_assets query surface (asset register/schedule/movements)
+  "notes", // PHASE-027: the notes query surface (maturity calendar / aging / dishonored register)
+  "installments", // PHASE-027: the installments query surface (schedule / aging)
 ];
 
 const dataSourceSchema = z.object({
@@ -186,12 +188,15 @@ const MODULE_DATA_PHASE: Readonly<Record<DataSourceModule, number>> = Object.fre
   manufacturing: 18, // PHASE-018: production cost / batch genealogy / QC query surfaces
   crm: 19, // PHASE-019: contract revenue schedule / time billing query surfaces
   fixed_assets: 26, // PHASE-026: asset register / depreciation schedule / movements query surfaces
+  notes: 27, // PHASE-027: maturity calendar / aging / dishonored register query surfaces
+  installments: 27, // PHASE-027: installment schedule / aging query surfaces
 });
 
-const REGISTERED_PHASE_WINDOW = 26; // PHASE-013 window, widened by the
+const REGISTERED_PHASE_WINDOW = 27; // PHASE-013 window, widened by the
 // delivering phases that registered contracts over real query surfaces:
 // 15 (industry reports) + 16 (the POS set) + 17 (distribution) + 18
-// (manufacturing) + 19 (CRM) + 26 (fixed assets — see MODULE_DATA_PHASE).
+// (manufacturing) + 19 (CRM) + 26 (fixed assets) + 27 (notes/installments —
+// see MODULE_DATA_PHASE).
 
 /** Financial reports must carry the §11 minimum assertion set (§16 checklist). */
 const FINANCIAL_MINIMUM_ASSERTIONS: Readonly<Record<string, readonly string[]>> = Object.freeze({

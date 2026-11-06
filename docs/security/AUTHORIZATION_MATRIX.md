@@ -1,6 +1,6 @@
 # Authorization Matrix
 
-> **Status:** STABLE · **Owner:** Security Architecture · **Updated:** 2026-11-02
+> **Status:** STABLE · **Owner:** Security Architecture · **Updated:** 2026-11-07
 
 The normative permission catalog: every permission key, its description (EN + AR), the
 minimal role template(s) that carry it, its scope, and whether it is approval-separated
@@ -317,6 +317,7 @@ mint around it.
 | `notes.notes.deposit` | Deposit a note at the bank / إيداع الشيك لدى البنك | accountant, owner | tenant | no |
 | `notes.notes.record_dishonor` | Record dishonor — restores the open item exactly (G-26, BR-046) / تسجيل ارتداد الشيك (إعادة فتح الذمة) | accountant, owner | tenant | **yes** |
 | `notes.notes.discount` | Discount a note at the bank (posts `NOTES_DISCOUNT_EXPENSE`) / خصم الورقة التجارية لدى البنك | accountant, owner | tenant | **yes** |
+| `notes.notes.return` | Hand a note back pre-resolution — restores the open item exactly, no bounce reason/fee / إعادة الورقة قبل التحصيل (إعادة فتح الذمة دون سبب ارتداد أو رسوم) | accountant, owner | tenant | **yes** |
 | `installments.plans.view` | View installment plans and schedules / عرض خطط الأقساط | sales, accountant, viewer, owner | branch | no |
 | `installments.plans.manage` | Create/activate installment plans (BR-048) / إدارة خطط الأقساط | sales, owner | branch | no |
 | `installments.lines.waive` | Waive an installment line (approval-gated) / إعفاء قسط (معتمد) | owner | branch | **yes** |
@@ -386,7 +387,8 @@ default), and runs keep the three-way SoD split — create ≠ approve ≠ post.
    `consolidation.eliminations.post` — creator ≠ approver applies to each and none is
    grantable to `viewer`-derived templates. Every other key marked **yes** in §3.11–§3.15
    (e.g. `fixed_assets.depreciation_runs.post`, `notes.notes.record_dishonor`,
-   `installments.lines.waive`, `payroll.runs.post`) follows the same separation and audit
+   `notes.notes.discount`, `notes.notes.return`, `installments.lines.waive`,
+   `payroll.runs.post`) follows the same separation and audit
    rules; payroll keeps the full three-way split (`payroll.runs.create` ≠ `.approve` ≠
    `.post`) and payroll audit events record the acting user, run id, and totals.
 

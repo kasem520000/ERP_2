@@ -155,4 +155,12 @@ export {
   type ShiftCloseDraft,
   type ShiftPanelStatus,
 } from "./patterns/shift-panel";
+// PHASE-027 pattern (COMPONENT_CATALOG §3 TimelinePanel row) — the
+// append-only event-log reader (custody/audit trails; RTL-aware markers).
+export {
+  TimelinePanel,
+  type TimelineItem,
+  type TimelinePanelProps,
+  type TimelineTone,
+} from "./patterns/timeline-panel";
 export { useStockAvailability, type StockAvailabilityState } from "./hooks/use-stock-availability";

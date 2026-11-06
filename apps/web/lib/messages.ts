@@ -1947,3 +1947,173 @@ export function localizedFixedAssetsError(
       return localizedApiError(d, error, retryAfterSeconds);
   }
 }
+
+// ---------------------------------------------------------------------------
+// PHASE-027 (wave F) — cheques & notes + installment plans vocabulary and
+// the two module error registries (the fixed_assets precedent: known
+// contract codes get a localized message; unknown codes fall back to
+// localizedApiError).
+// ---------------------------------------------------------------------------
+
+/** Note kinds (register §C note_kind enum — two, no more). */
+export function localizedNoteKind(d: Dictionary, kind: string): string {
+  const map: Record<string, string> = {
+    CHEQUE: d.notesKindCheque,
+    PROMISSORY_NOTE: d.notesKindPromissoryNote,
+  };
+  return map[kind] ?? kind;
+}
+
+/** Note directions (received = our AR paper; issued = our AP paper). */
+export function localizedNoteDirection(d: Dictionary, direction: string): string {
+  const map: Record<string, string> = {
+    RECEIVED: d.notesDirectionReceived,
+    ISSUED: d.notesDirectionIssued,
+  };
+  return map[direction] ?? direction;
+}
+
+/** Note custody statuses (register §C note_status; the BR-047 machine states). */
+export function localizedNoteStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    IN_CUSTODY: d.notesStatusInCustody,
+    ENDORSED_OUT: d.notesStatusEndorsedOut,
+    DEPOSITED: d.notesStatusDeposited,
+    COLLECTED: d.notesStatusCollected,
+    DISHONORED: d.notesStatusDishonored,
+    DISCOUNTED: d.notesStatusDiscounted,
+    RETURNED: d.notesStatusReturned,
+  };
+  return map[status] ?? status;
+}
+
+/** Custody event kinds (the note_events vocabulary, RECEIVE..RECLASSIFY). */
+export function localizedNoteEvent(d: Dictionary, eventKind: string): string {
+  const map: Record<string, string> = {
+    RECEIVE: d.notesEventReceive,
+    ISSUE: d.notesEventIssue,
+    ENDORSE: d.notesEventEndorse,
+    DEPOSIT: d.notesEventDeposit,
+    COLLECT: d.notesEventCollect,
+    DISHONOR: d.notesEventDishonor,
+    DISCOUNT: d.notesEventDiscount,
+    RETURN: d.notesEventReturn,
+    RECLASSIFY: d.notesEventReclassify,
+  };
+  return map[eventKind] ?? eventKind;
+}
+
+/** Notes module error mapping (BR-046/047 + the G-24..G-28 failure pack). */
+export function localizedNotesError(
+  d: Dictionary,
+  error: ApiErrorBody,
+  retryAfterSeconds?: number,
+): string {
+  switch (error.code) {
+    case "NOTE_NOT_FOUND":
+    case "PARTNER_NOT_FOUND":
+    case "NOTE_SOURCE_INVALID":
+    case "CASH_ACCOUNT_NOT_FOUND":
+      return d.errorsNotFound;
+    case "ALREADY_POSTED":
+      return d.notesErrAlreadyPosted;
+    case "INVALID_CUSTODY_TRANSITION":
+      return d.notesErrCustodyTransition;
+    case "DISHONOR_REASON_REQUIRED":
+      return d.notesErrDishonorReason;
+    case "NOTE_RATE_MISMATCH":
+      return d.notesErrRateMismatch;
+    case "NOTE_CURRENCY_MISMATCH":
+      return d.notesErrCurrencyMismatch;
+    case "NOTE_ACCOUNT_REQUIRED":
+      return d.notesErrAccountRequired;
+    case "NOTE_ACCOUNT_CURRENCY_MISMATCH":
+      return d.notesErrAccountCurrency;
+    case "NOTE_FEE_INVALID":
+      return d.notesErrFeeInvalid;
+    case "NOTE_DISCOUNT_CURRENCY_UNSUPPORTED":
+      return d.notesErrDiscountCurrency;
+    case "NOTE_FIELDS_IMMUTABLE":
+      return d.notesErrFieldsImmutable;
+    default:
+      return localizedApiError(d, error, retryAfterSeconds);
+  }
+}
+
+/** Plan statuses (NULL status = DRAFT — the wizard's pre-activation state). */
+export function localizedInstallmentStatus(d: Dictionary, status: string | null): string {
+  if (status === null) {
+    return d.instStatusDraft;
+  }
+  const map: Record<string, string> = {
+    ACTIVE: d.instStatusActive,
+    CLOSED: d.instStatusClosed,
+    DEFAULTED: d.instStatusDefaulted,
+  };
+  return map[status] ?? status;
+}
+
+/** Schedule line statuses (PENDING/DUE/PAID/OVERDUE/WAIVED). */
+export function localizedInstallmentLineStatus(d: Dictionary, status: string): string {
+  const map: Record<string, string> = {
+    PENDING: d.instLineStatusPending,
+    DUE: d.instLineStatusDue,
+    PAID: d.instLineStatusPaid,
+    OVERDUE: d.instLineStatusOverdue,
+    WAIVED: d.instLineStatusWaived,
+  };
+  return map[status] ?? status;
+}
+
+/** Schedule frequencies (the §9 wizard vocabulary). */
+export function localizedInstallmentFrequency(d: Dictionary, frequency: string): string {
+  const map: Record<string, string> = {
+    WEEKLY: d.instFreqWeekly,
+    BIWEEKLY: d.instFreqBiweekly,
+    MONTHLY: d.instFreqMonthly,
+    QUARTERLY: d.instFreqQuarterly,
+  };
+  return map[frequency] ?? frequency;
+}
+
+/** Plan source types (sales_invoice | service_contract). */
+export function localizedInstallmentSource(d: Dictionary, sourceType: string): string {
+  const map: Record<string, string> = {
+    sales_invoice: d.instSourceSalesInvoice,
+    service_contract: d.instSourceServiceContract,
+  };
+  return map[sourceType] ?? sourceType;
+}
+
+/** Installments module error mapping (BR-048/049 failure packs). */
+export function localizedInstallmentsError(
+  d: Dictionary,
+  error: ApiErrorBody,
+  retryAfterSeconds?: number,
+): string {
+  switch (error.code) {
+    case "PLAN_NOT_FOUND":
+    case "LINE_NOT_FOUND":
+      return d.errorsNotFound;
+    case "PLAN_SOURCE_INVALID":
+      return d.instErrSourceInvalid;
+    case "PLAN_SOURCE_CURRENCY_UNSUPPORTED":
+      return d.instErrSourceCurrency;
+    case "PLAN_SOURCE_TAKEN":
+      return d.instErrSourceTaken;
+    case "SCHEDULE_IMMUTABLE":
+      return d.instErrScheduleImmutable;
+    case "PLAN_TOTAL_MISMATCH":
+      return d.instErrTotalMismatch;
+    case "SCHEDULE_INVALID":
+      return d.instErrScheduleInvalid;
+    case "LATE_FEE_POLICY_INVALID":
+      return d.instErrPolicyInvalid;
+    case "LATE_FEE_NOT_CHARGEABLE":
+      return d.instErrLateFeeNotChargeable;
+    case "WAIVE_REASON_REQUIRED":
+      return d.instErrWaiveReason;
+    default:
+      return localizedApiError(d, error, retryAfterSeconds);
+  }
+}

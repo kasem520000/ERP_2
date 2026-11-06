@@ -131,8 +131,9 @@ export class ReconciliationService {
       // the tax module's RC-06 check) + GRNI (PHASE-011 RC-09) + WIP
       // (PHASE-018 §11 — the manufacturing module's INV-010 extension) +
       // FIXED_ASSETS (PHASE-026 RC-10 — the fixed-assets register ties to
-      // the FIXED_ASSET/ACCUM_DEPRECIATION GL accounts); BROKEN blocks the
-      // lock.
+      // the FIXED_ASSET/ACCUM_DEPRECIATION GL accounts) + NOTES (PHASE-027
+      // RC-11 — the notes register ties to NOTES_RECEIVABLE/NOTES_PAYABLE);
+      // BROKEN blocks the lock.
       if (
         run.status === "BROKEN" &&
         (run.kind === "AR" ||
@@ -142,7 +143,8 @@ export class ReconciliationService {
           run.kind === "INVENTORY" ||
           run.kind === "GRNI" ||
           run.kind === "WIP" ||
-          run.kind === "FIXED_ASSETS")
+          run.kind === "FIXED_ASSETS" ||
+          run.kind === "NOTES")
       ) {
         throw new ReconciliationBrokenError({ kind: run.kind, diffCount: run.diffCount });
       }

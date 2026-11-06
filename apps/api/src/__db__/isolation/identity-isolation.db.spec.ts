@@ -80,6 +80,11 @@ const NO_UPDATE_GRANT = new Set([
   // resets). The column fallback below (updated_at) exists on the table,
   // so the A4 denial proves the grant shape directly.
   "depreciation_lines",
+  // PHASE-027 (migration 0038): the append-only 🔒 custody log (INV-003/
+  // INV-024 pattern): UPDATE is grant-denied outright (proven here); DELETE
+  // is grant-CAPABLE but policy-owned by the erp.note_events_guard trigger
+  // (custody history is immutable — DELETE passes only under purge_mode).
+  "note_events",
 ]);
 
 /** Fixture rows seeded per tenant (A2's total-count expectation). The
@@ -1901,6 +1906,119 @@ async function seedFixtures(superuser: {
      ON CONFLICT (id) DO NOTHING`,
     [TENANT_A, TENANT_B],
   );
+  // PHASE-027 (migration 0038) — notes & installments cluster: the 027-marked
+  // id block (a027027N notes / b027027N events / c027027N plans / d027027N
+  // lines × tenant 1/2). Partner refs use the own-tenant partners fixture
+  // (b5b5b5b5) so the composite tenant FKs stay satisfied; note_events points
+  // at the own-tenant notes fixture; lines at the own-tenant plans fixture.
+  // The plan's late_fee_policy carries the PLACEHOLDER default shape.
+  await superuser.query(
+    `INSERT INTO notes (id, tenant_id, kind, direction, partner_id, number,
+        issuing_bank, amount, currency, exchange_rate, issue_date, maturity_date, status)
+     VALUES
+       ('a0270271-0000-4000-8000-000000000001', $1, 'CHEQUE', 'RECEIVED',
+        'b5b5b5b5-0000-4000-8000-000000000001', 'ISO-CHK-1', 'Attack-free Bank',
+        1000, 'SAR', 1, '2026-06-01', '2026-07-01', 'IN_CUSTODY'),
+       ('a0270271-0000-4000-8000-000000000002', $2, 'CHEQUE', 'RECEIVED',
+        'b5b5b5b5-0000-4000-8000-000000000002', 'ISO-CHK-1', 'Attack-free Bank',
+        1000, 'SAR', 1, '2026-06-01', '2026-07-01', 'IN_CUSTODY')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO note_events (id, tenant_id, note_id, event_kind, event_date)
+     VALUES
+       ('b0270271-0000-4000-8000-000000000001', $1,
+        'a0270271-0000-4000-8000-000000000001', 'DEPOSIT', '2026-06-20'),
+       ('b0270271-0000-4000-8000-000000000002', $2,
+        'a0270271-0000-4000-8000-000000000002', 'DEPOSIT', '2026-06-20')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO installment_plans (id, tenant_id, partner_id, source_type, source_id,
+        source_no, total_amount, down_payment, line_count, start_date, frequency,
+        late_fee_policy, status)
+     VALUES
+       ('c0270271-0000-4000-8000-000000000001', $1,
+        'b5b5b5b5-0000-4000-8000-000000000001', 'sales_invoice',
+        'a0270271-0000-4000-8000-000000000001', 'ISO-INV-1',
+        12000, 2000, 10, '2026-07-01', 'MONTHLY',
+        '{"rate":"0.0200","cap":"500.0000","grace_days":7,"auto_charge":false,"defaulted_after_lines":3}', NULL),
+       ('c0270271-0000-4000-8000-000000000002', $2,
+        'b5b5b5b5-0000-4000-8000-000000000002', 'sales_invoice',
+        'a0270271-0000-4000-8000-000000000002', 'ISO-INV-1',
+        12000, 2000, 10, '2026-07-01', 'MONTHLY',
+        '{"rate":"0.0200","cap":"500.0000","grace_days":7,"auto_charge":false,"defaulted_after_lines":3}', NULL)
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO installment_lines (id, tenant_id, plan_id, seq, due_date, amount, status)
+     VALUES
+       ('d0270271-0000-4000-8000-000000000001', $1,
+        'c0270271-0000-4000-8000-000000000001', 1, '2026-08-01', 1000, 'PENDING'),
+       ('d0270271-0000-4000-8000-000000000002', $2,
+        'c0270271-0000-4000-8000-000000000002', 1, '2026-08-01', 1000, 'PENDING')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  // PHASE-027 (migration 0038) — notes & installments cluster: the 027-marked
+  // id block (a027027N notes / b027027N events / c027027N plans / d027027N
+  // lines × tenant 1/2). partner refs use the own-tenant partners fixture
+  // (b5b5b5b5) so the composite tenant FKs stay satisfied; note_events points
+  // at the own-tenant notes fixture; lines at the own-tenant plans fixture.
+  await superuser.query(
+    `INSERT INTO notes (id, tenant_id, kind, direction, partner_id, number,
+        issuing_bank, amount, currency, exchange_rate, issue_date, maturity_date, status)
+     VALUES
+       ('a0270271-0000-4000-8000-000000000001', $1, 'CHEQUE', 'RECEIVED',
+        'b5b5b5b5-0000-4000-8000-000000000001', 'ISO-CHK-1', 'Attack-free Bank',
+        1000, 'SAR', 1, '2026-06-01', '2026-07-01', 'IN_CUSTODY'),
+       ('a0270271-0000-4000-8000-000000000002', $2, 'CHEQUE', 'RECEIVED',
+        'b5b5b5b5-0000-4000-8000-000000000002', 'ISO-CHK-1', 'Attack-free Bank',
+        1000, 'SAR', 1, '2026-06-01', '2026-07-01', 'IN_CUSTODY')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO note_events (id, tenant_id, note_id, event_kind, event_date)
+     VALUES
+       ('b0270271-0000-4000-8000-000000000001', $1,
+        'a0270271-0000-4000-8000-000000000001', 'DEPOSIT', '2026-06-20'),
+       ('b0270271-0000-4000-8000-000000000002', $2,
+        'a0270271-0000-4000-8000-000000000002', 'DEPOSIT', '2026-06-20')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO installment_plans (id, tenant_id, partner_id, source_type, source_id,
+        source_no, total_amount, down_payment, line_count, start_date, frequency,
+        late_fee_policy, status)
+     VALUES
+       ('c0270271-0000-4000-8000-000000000001', $1,
+        'b5b5b5b5-0000-4000-8000-000000000001', 'sales_invoice',
+        'a0270271-0000-4000-8000-000000000001', 'ISO-INV-1',
+        12000, 2000, 10, '2026-07-01', 'MONTHLY',
+        '{"rate":"0.0200","cap":"500.0000","grace_days":7,"auto_charge":false,"defaulted_after_lines":3}', NULL),
+       ('c0270271-0000-4000-8000-000000000002', $2,
+        'b5b5b5b5-0000-4000-8000-000000000002', 'sales_invoice',
+        'a0270271-0000-4000-8000-000000000002', 'ISO-INV-1',
+        12000, 2000, 10, '2026-07-01', 'MONTHLY',
+        '{"rate":"0.0200","cap":"500.0000","grace_days":7,"auto_charge":false,"defaulted_after_lines":3}', NULL)
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
+  await superuser.query(
+    `INSERT INTO installment_lines (id, tenant_id, plan_id, seq, due_date, amount, status)
+     VALUES
+       ('d0270271-0000-4000-8000-000000000001', $1,
+        'c0270271-0000-4000-8000-000000000001', 1, '2026-08-01', 1000, 'PENDING'),
+       ('d0270271-0000-4000-8000-000000000002', $2,
+        'c0270271-0000-4000-8000-000000000002', 1, '2026-08-01', 1000, 'PENDING')
+     ON CONFLICT (id) DO NOTHING`,
+    [TENANT_A, TENANT_B],
+  );
 
   // -- seedFixtures end --
 
@@ -2303,6 +2421,21 @@ const OWN_ROW: Record<string, [string, string]> = {
   asset_revaluations: [
     "fa5a5a5a-0000-4000-8000-000000000001",
     "fa5a5a5a-0000-4000-8000-000000000002",
+  ],
+  // PHASE-027 (0038): the notes & installments cluster — the B row doubles
+  // as the A4/A7 foreign probe target.
+  notes: ["a0270271-0000-4000-8000-000000000001", "a0270271-0000-4000-8000-000000000002"],
+  note_events: [
+    "b0270271-0000-4000-8000-000000000001",
+    "b0270271-0000-4000-8000-000000000002",
+  ],
+  installment_plans: [
+    "c0270271-0000-4000-8000-000000000001",
+    "c0270271-0000-4000-8000-000000000002",
+  ],
+  installment_lines: [
+    "d0270271-0000-4000-8000-000000000001",
+    "d0270271-0000-4000-8000-000000000002",
   ],
 };
 
@@ -2862,6 +2995,27 @@ const MISMATCHED_INSERT: Record<string, string> = {
      VALUES ('fa5a5a5a-3000-4000-8000-000000000003', $1,
        'fa1a1a1a-0000-4000-8000-000000000002', '2026-06-15',
        13000, 200, 1000, 'DRAFT', 'attack fixture')`,
+  // PHASE-027 (0038): FKs (partner/note/plan) point at the ATTACKER
+  // tenant's (B's) own fixtures so the composite tenant FKs stay satisfied
+  // and the RLS WITH CHECK is the isolated rejection.
+  notes: `INSERT INTO notes (id, tenant_id, kind, direction, partner_id, number,
+        issuing_bank, amount, currency, exchange_rate, issue_date, maturity_date, status)
+     VALUES ('a0270271-3000-4000-8000-000000000003', $1, 'CHEQUE', 'RECEIVED',
+       'b5b5b5b5-0000-4000-8000-000000000002', 'ATK-CHK', 'Attack Bank',
+       500, 'SAR', 1, '2026-06-01', '2026-07-01', 'IN_CUSTODY')`,
+  note_events: `INSERT INTO note_events (id, tenant_id, note_id, event_kind, event_date)
+     VALUES ('b0270271-3000-4000-8000-000000000003', $1,
+       'a0270271-0000-4000-8000-000000000002', 'DEPOSIT', '2026-06-20')`,
+  installment_plans: `INSERT INTO installment_plans (id, tenant_id, partner_id, source_type,
+        source_id, source_no, total_amount, down_payment, line_count, start_date, frequency,
+        late_fee_policy, status)
+     VALUES ('c0270271-3000-4000-8000-000000000003', $1,
+       'b5b5b5b5-0000-4000-8000-000000000002', 'sales_invoice',
+       'a0270271-0000-4000-8000-000000000002', 'ATK-INV', 12000, 2000, 10, '2026-07-01',
+       'MONTHLY', '{"rate":"0.0200","cap":"500.0000","grace_days":7,"auto_charge":false,"defaulted_after_lines":3}', NULL)`,
+  installment_lines: `INSERT INTO installment_lines (id, tenant_id, plan_id, seq, due_date, amount, status)
+     VALUES ('d0270271-3000-4000-8000-000000000003', $1,
+       'c0270271-0000-4000-8000-000000000002', 1, '2026-08-01', 1000, 'PENDING')`,
 };
 
 beforeAll(async () => {
@@ -3025,7 +3179,14 @@ describe("generated attack suite A1–A10 — as erp_app", () => {
                                   ? "result"
                                   : table === "e_invoicing_certificate_usage"
                                     ? "key_version"
-                                    : "updated_at";
+                                    // PHASE-027 (0038): the append-only 🔒 custody log
+                                    // carries NO UPDATE grant by design (the
+                                    // erp.note_events_guard trigger owns the
+                                    // policy below the grants) — any UPDATE is
+                                    // grant-denied outright.
+                                    : table === "note_events"
+                                      ? "updated_at"
+                                      : "updated_at";
         await expect(
           app.query(`UPDATE ${table} SET ${column} = ${column} WHERE ${idColumn} = $1`, [
             foreignRow,

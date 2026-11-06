@@ -289,6 +289,15 @@ export const TENANT_TABLES_REGISTRY: readonly RegisteredTenantTable[] = [
   { table: "depreciation_lines", deleteGranted: true },
   { table: "asset_disposals" },
   { table: "asset_revaluations" },
+  // PHASE-027 notes & installments cluster (migration 0038): the notes
+  // register + the append-only 🔒 custody log (DELETE granted for the purge
+  // trigger policy — UPDATE is grant-denied outright, the
+  // erp.note_events_guard trigger owns the DELETE policy) + installment
+  // plans/lines. Four tables — the auto-generated A-suite extends by +24.
+  { table: "notes" },
+  { table: "note_events", deleteGranted: true },
+  { table: "installment_plans" },
+  { table: "installment_lines", deleteGranted: true },
 ];
 
 export const TENANT_TABLE_NAMES: readonly string[] = TENANT_TABLES_REGISTRY.map(

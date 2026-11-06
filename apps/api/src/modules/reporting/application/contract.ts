@@ -38,7 +38,9 @@ export type DataSourceModule =
   | "distribution" // PHASE-017: the distribution query surface (settlements/van/routes)
   | "manufacturing" // PHASE-018: the manufacturing query surface (production cost/genealogy/QC)
   | "crm" // PHASE-019: the CRM query surface (contract revenue schedule / time billing)
-  | "fixed_assets"; // PHASE-026: the fixed_assets query surface (asset register/schedule/movements)
+  | "fixed_assets" // PHASE-026: the fixed_assets query surface (asset register/schedule/movements)
+  | "notes" // PHASE-027: the notes query surface (maturity calendar / aging / dishonored register)
+  | "installments"; // PHASE-027: the installments query surface (schedule / aging)
 
 export interface DataSourceDecl {
   readonly module: DataSourceModule;
@@ -173,6 +175,12 @@ export interface ReportParams {
   readonly movementKind?: string;
   /** PHASE-026 (fixed assets): the projection fiscal period (schedule). */
   readonly fiscalPeriodId?: string;
+  /** PHASE-027 (notes): the issuing-bank filter of the maturity calendar. */
+  readonly bank?: string;
+  /** PHASE-027 (notes): the free-text reason filter of the dishonored register. */
+  readonly reason?: string;
+  /** PHASE-027 (installments): the plan of `installments.schedule`. */
+  readonly planId?: string;
   readonly customerId?: string;
   readonly supplierId?: string;
   readonly itemId?: string;
@@ -198,7 +206,7 @@ export interface ReportParams {
   readonly varianceThreshold?: string;
   readonly countSessionId?: string;
   readonly serial?: string;
-  readonly direction?: "sales" | "purchases";
+  readonly direction?: "sales" | "purchases" | "RECEIVED" | "ISSUED";
   readonly role?: "CUSTOMER" | "SUPPLIER";
   readonly dimension?: string;
   readonly action?: string;

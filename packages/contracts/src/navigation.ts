@@ -238,6 +238,23 @@ export const NAV_ITEMS: readonly NavItem[] = [
     archetype: "list-search",
     order: 50,
   },
+  // PHASE-027 (wave F): installment plans — the v2.0 registry row
+  // `sales.installment-plans` (NAVIGATION_MODEL §1.1): featureKey the
+  // FEATURE_CATALOG `installments.plans` string; permission the exact
+  // seeded §3.13 viewer key. Plan creation runs as the §9 wizard under the
+  // module route (the fixed-assets one-item-many-screens shape).
+  {
+    id: "sales.installment-plans",
+    parentGroup: "sales",
+    label: { ar: "خطة الأقساط", en: "Installment plans" },
+    icon: "wallet-cards",
+    route: "/installments",
+    featureKey: "installments.plans",
+    permission: "installments.plans.view",
+    branchScoped: false,
+    archetype: "list-search",
+    order: 40,
+  },
   // PHASE-017 (T6): the workshop job-card workspace — a sales-module
   // document (بطاقة عمل); pruned for tenants without the feature key.
   {
@@ -750,6 +767,37 @@ export const NAV_ITEMS: readonly NavItem[] = [
     branchScoped: false,
     archetype: "wizard",
     order: 70,
+  },
+  // PHASE-027 (wave F): cheques & notes + the PDC maturity calendar — the
+  // v2.0 registry rows `treasury.cheques-notes` / `treasury.pdc-calendar`
+  // (NAVIGATION_MODEL §1.1): featureKeys the exact FEATURE_CATALOG
+  // `notes.received` / `notes.pdc_calendar` strings; permissions the exact
+  // seeded §3.12 viewer key. The register/detail/calendar/reports surfaces
+  // navigate through the in-page tab strip (one-item-many-screens, the
+  // fixed-assets decision-8 precedent).
+  {
+    id: "treasury.cheques-notes",
+    parentGroup: "treasury",
+    label: { ar: "الشيكات والأوراق التجارية", en: "Cheques & notes" },
+    icon: "receipt-text",
+    route: "/notes",
+    featureKey: "notes.received",
+    permission: "notes.notes.view",
+    branchScoped: false,
+    archetype: "list-search",
+    order: 45,
+  },
+  {
+    id: "treasury.pdc-calendar",
+    parentGroup: "treasury",
+    label: { ar: "تقويم الاستحقاق", en: "Maturity calendar" },
+    icon: "calendar-clock",
+    route: "/notes/calendar",
+    featureKey: "notes.pdc_calendar",
+    permission: "notes.notes.view",
+    branchScoped: false,
+    archetype: "dashboard",
+    order: 46,
   },
   // settings group — PHASE-009 tax surfaces (T15-UI): the tax engine's
   // admin screens. Permission-gated only (no featureKey — the tax engine is

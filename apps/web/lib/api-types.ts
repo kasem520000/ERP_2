@@ -3950,3 +3950,185 @@ export interface FixedAssetListRow extends FixedAssetRow {
   accumulatedToDate: string;
   nbv: string;
 }
+
+// ---------------------------------------------------------------------------
+// PHASE-027 wire types (GET/POST /notes + /installment-plans). Field names
+// mirror the modules' store rows EXACTLY (camelCase as the API returns);
+// money values are canonical decimal strings (ADR-0009).
+
+/** GET /notes → rows (the register §C note row; notes.store NoteRow). */
+export interface NoteListRow {
+  id: string;
+  kind: "CHEQUE" | "PROMISSORY_NOTE";
+  direction: "RECEIVED" | "ISSUED";
+  partnerId: string;
+  number: string | null;
+  issuingBank: string | null;
+  amount: string;
+  currency: string;
+  exchangeRate: string;
+  issueDate: string | null;
+  maturityDate: string;
+  status: string;
+  sourceType: string | null;
+  sourceId: string | null;
+  cashAccountId: string | null;
+  journalEntryId: string | null;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/** GET /notes/:id → events (the append-only custody log; NoteEventRow). */
+export interface NoteEventRow {
+  id: string;
+  noteId: string;
+  eventKind: string;
+  eventDate: string;
+  refs: unknown;
+  journalEntryId: string | null;
+  memo: string | null;
+  memoAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+/** GET /notes/:id → data (the register row + its custody timeline). */
+export interface NoteDetailRow {
+  note: NoteListRow;
+  events: readonly NoteEventRow[];
+}
+
+/** POST /notes/:id/endorse|deposit → data ({note, event}). */
+export interface NoteEventActionResult {
+  note: NoteListRow;
+  event: NoteEventRow;
+}
+
+/** POST /notes/:id/collect → data (adds the collection journal id). */
+export interface NoteCollectResult extends NoteEventActionResult {
+  journalEntryId: string;
+}
+
+/** POST /notes/:id/dishonor|return → data (the repoint-restore outcome). */
+export interface NoteRestoreResult {
+  note: NoteListRow;
+  journalEntryId: string;
+  anchored: boolean;
+}
+
+/** POST /notes/:id/discount → data (proceeds + the explicit fee). */
+export interface NoteDiscountResult {
+  journalEntryId: string;
+  proceeds: string;
+  fee: string;
+}
+
+/** One live note in the calendar drill list (CalendarNoteView). */
+export interface PdcCalendarNoteRow {
+  id: string;
+  direction: "RECEIVED" | "ISSUED";
+  partnerId: string;
+  partnerName: string | null;
+  number: string | null;
+  issuingBank: string | null;
+  amount: string;
+  currency: string;
+  exchangeRate: string;
+  maturityDate: string;
+  status: string;
+}
+
+/** One maturity bucket side (received vs issued; BR-045 fold). */
+export interface PdcDirectionBuckets {
+  overdue: { count: number; amountBase: string };
+  thisWeek: { count: number; amountBase: string };
+  d30: { count: number; amountBase: string };
+  d60: { count: number; amountBase: string };
+  d90: { count: number; amountBase: string };
+  beyond: { count: number; amountBase: string };
+}
+
+/** GET /notes/pdc-calendar → data (the cached read model + freshness stamps). */
+export interface PdcCalendarSnapshot {
+  tenantId: string;
+  asOf: string;
+  computedAt: string;
+  buckets: {
+    received: PdcDirectionBuckets;
+    issued: PdcDirectionBuckets;
+  };
+  drill: {
+    byPartner: { partnerId: string; partnerName: string | null; count: number; amountBase: string }[];
+    byBank: { bank: string | null; count: number }[];
+    notes: PdcCalendarNoteRow[];
+  };
+  /** true when the daily job is overdue (age > staleAfterHours — labeled, never silent). */
+  stale: boolean;
+  staleAfterHours: number;
+}
+
+/** GET /installment-plans → rows (BR-048 plan; status null = DRAFT). */
+export interface InstallmentPlanRow {
+  id: string;
+  partnerId: string;
+  sourceType: "sales_invoice" | "service_contract";
+  sourceId: string;
+  sourceNo: string | null;
+  totalAmount: string;
+  downPayment: string;
+  lineCount: number;
+  startDate: string;
+  frequency: string;
+  lateFeePolicy: {
+    rate: string;
+    cap: string;
+    grace_days: number;
+    auto_charge: boolean;
+    defaulted_after_lines: number;
+  };
+  status: string | null;
+  activatedAt: string | null;
+  activatedBy: string | null;
+  closedAt: string | null;
+  defaultedAt: string | null;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+/** GET /installment-plans/:id → lines (the flat DR-003 schedule). */
+export interface InstallmentLineRow {
+  id: string;
+  planId: string;
+  seq: number;
+  dueDate: string;
+  amount: string;
+  status: "PENDING" | "DUE" | "PAID" | "OVERDUE" | "WAIVED";
+  receiptRefs: { receiptId: string; receiptNo: string | null; amount: string; valueDate: string }[] | null;
+  collectedAmount: string;
+  waivedAt: string | null;
+  waivedBy: string | null;
+  waiveReason: string | null;
+  lateFeeAmount: string | null;
+  lateFeeEntryId: string | null;
+  lateFeeChargedAt: string | null;
+}
+
+/** GET/POST /installment-plans[/:id] → data (the plan + its lines). */
+export interface InstallmentPlanDetailRow {
+  plan: InstallmentPlanRow;
+  lines: readonly InstallmentLineRow[];
+}
+
+/** POST /installment-plans/:id/lines/:lineId/charge-late-fee → data. */
+export interface LateFeeChargeResult {
+  line: InstallmentLineRow;
+  journalEntryId: string;
+  fee: string;
+}
+

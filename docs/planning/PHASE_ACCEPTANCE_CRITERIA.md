@@ -1,6 +1,6 @@
 # Phase Acceptance Criteria
 
-> **Status:** STABLE · **Owner:** Platform Architecture · **Updated:** 2026-11-05
+> **Status:** STABLE · **Owner:** Platform Architecture · **Updated:** 2026-11-07
 
 Consolidated, objective acceptance criteria and exit gates per phase. The authoritative,
 expanded version lives in each phase document's sections 6–8 ("Verification",
@@ -93,6 +93,44 @@ fabricated. Canonical identifiers per [../EXPANSION_REGISTER.md](../EXPANSION_RE
 - `notes`, `note_events` 🔒, `installment_plans`, `installment_lines` tenant-owned + RLS +
   isolation attack tests; existing `treasury.cheques` feature key re-pointed to the
   `notes` module (ED-03).
+
+**Acceptance criteria (objective) — copied at completion, 2026-11-07 (verbatim from
+[../implementation/phases/PHASE-027.md](../implementation/phases/PHASE-027.md) §6; the
+verdict rows live in
+[PHASE-027-COMPLETION.md](../implementation/phases/reports/PHASE-027-COMPLETION.md)):**
+
+1. Every notes/installments posting goes through the engine with its canonical
+   G-row shape (G-24/G-25/G-26/G-27 both legs/G-28 green with line-level asserts),
+   INV-013 idempotency per source/operation, and zero journal rows for
+   endorsement/DEPOSIT/RECLASSIFY events.
+2. INV-024 is enforced and tested: custody equals ledger effect across the full
+   state graph; COLLECTED/DISHONORED/DISCOUNTED/RETURNED notes carry zero
+   `NOTES_RECEIVABLE` balance; dishonor restores the AR open item exactly
+   (amount, partner, references).
+3. BR-046 enforced: dishonor requires a reason; the optional fee posts via
+   `BANK_CHARGES`; the restored item appears in AR aging and the customer
+   statement with its original references.
+4. The PDC calendar is job-derived from `maturity_date` only, correct after every
+   event, idempotent under re-runs, freshness-labeled — never stale-silent; no
+   posting can originate from the calendar.
+5. Installment plans enforce BR-048 (total = source document total, activation
+   blocked otherwise) and schedule immutability after activation; plans never
+   duplicate AR (Σ line collections ≤ invoice outstanding, INV-016 tie).
+6. Line statuses are job-derived only (OVERDUE via the daily job honoring
+   grace); WAIVED is the sole manual transition — permission-gated,
+   reason-required, audited.
+7. Late fees post only via the engine (G-28) per the plan's policy (rate + cap +
+   grace with documented PLACEHOLDER defaults, OQ-002 family); flat fees only —
+   no interest computation or compounding code path exists (negative test green).
+8. RC-11 is green in the permanently-blocking CI set; seeded drift is detected as
+   `BROKEN` with the offending note and blocks period LOCK (PC-04).
+9. All four tables are in the isolation registry with A1–A10 green; foreign
+   references are rejected with typed 404s and zero partial creation; the §3.12
+   permission checklist is green with audit on risky actions.
+10. The five report contracts are registered with block-on-fail ledger ties and
+    as-of determinism; nav additions (الخزينة ×2, المبيعات ×1) carry bilingual
+    labels + featureKeys; the `treasury.cheques` re-point and the PHASE-008/012
+    pointers are in place (ED-03 chain closed).
 
 ### PHASE-028 — Budgeting & Variance Control
 

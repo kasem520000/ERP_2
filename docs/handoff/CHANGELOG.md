@@ -4,6 +4,78 @@
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
 
+- 2026-11-07 — **PHASE-027 — Cheques, Promissory Notes & Installments (IN PROGRESS —
+  the build waves + the docs sync landed; the serial orchestrator gate — full DB suite
+  re-run + completion report + commit — closes the phase; status flips COMPLETE only on
+  its evidence)**: migration `0038_notes_installments.sql` (schema_version 38; catalog
+  199 rows — the four new tables were pre-catalogued at blueprint level ED-19) — four
+  RLS'd tenant tables (`notes` with `cash_account_id` stored at DEPOSIT +
+  `journal_entry_id` the G-24/G-27 entry + `note`/`note_ar`; `note_events` 🔒 append-only
+  by grants + `erp.note_events_guard` (UPDATE never, DELETE only under `erp.purge_mode`);
+  `installment_plans` with status NULL = draft + `late_fee_policy` jsonb;
+  `installment_lines` with `receipt_refs` + `late_fee_*` stamps), the 0036-discipline
+  purge_path policies ×4, 7 §9 enum CHECKs, **the `treasury_allocations.note_id`
+  widening** (exactly-one-of-three + partial unique + composite FK — the
+  settle/restore substrate), the `cash_movements` source widening (`'note'`, ADDITIVE —
+  the 0025 kinds preserved; the first draft's non-additive CHECK broke every cash
+  invoice G-02, caught by re-running the sales suite), the RC-11
+  `reconciliation_runs.kind` widening (`NOTES`), the notifications categories
+  (`notes`,`installments`), and the four CoA template purposes (1160/2150/4920/5260);
+  the NEW permission key `notes.notes.return` (0004 edited in-phase + 0005 accountant
+  grant — drift 244→245) + plan grants (12 feature keys → business+enterprise; starter
+  NOT). The `notes` module: the custody machine (legal transitions per direction,
+  resolved statuses terminal, `INVALID_CUSTODY_TRANSITION`), G-24/G-27 BASE-denominated
+  create journals (allocated portion at the items' original stored rates — typed
+  `NOTE_RATE_MISMATCH` on divergence; on-account at the note rate), G-25 collect with
+  the explicit `FX_GAIN`/`FX_LOSS` residual (r₁ cash vs r₀ note leg — the G-06 mirror)
+  + the treasury movement (INV-019, source_type `note`), G-26 dishonor + return with
+  **the repoint-restore algebra** (DELETE the note's allocations, INSERT one
+  consolidated row anchored at the restore journal's control debit entry — original
+  open item byte-equal, anchored entry at outstanding 0, aging never double-counts;
+  on-account notes land a new explicit open item), endorsement/deposit/RECLASSIFY with
+  zero journal rows (`ck_note_events_journal_shape`), discounting
+  (`NOTES_DISCOUNT_EXPENSE` explicit; base-currency only this phase — typed
+  `NOTE_DISCOUNT_CURRENCY_UNSUPPORTED` honest deferral), the PDC calendar (cached read
+  model, no new entity per register §C; daily sweep 2:20 UTC + on-event invalidation;
+  staleness >26 h labeled never silent), RC-11 (register fold vs GL per purpose side,
+  `NOTES_PAYABLE` credit-positive; NIGHTLY 2:30 + ON_DEMAND
+  `POST /api/v1/notes/reconciliation/notes-check`; BROKEN → PC-04 close block). The
+  `installments` module: the plan builder (BR-048 total equality `PLAN_TOTAL_MISMATCH`,
+  schedule immutable `SCHEDULE_IMMUTABLE`, one plan per source), the daily sweep 2:40 UTC
+  (job-derived line states only; WAIVED the sole manual transition, sticky; DEFAULTED
+  flip + dunning), collections via the allocation reuse (`receipt_refs`; plans never
+  duplicate AR), G-28 engine-only flat late fees (cap honored, INV-013 once per line;
+  PLACEHOLDER defaults rate 2%/cap 500/grace 7 d/auto off/defaulted after 3 — OQ-002).
+  P27-E: 5 report contracts (notes.maturity-calendar/aging/dishonored-register +
+  installments.schedule/aging — registry 71→76, as-of via the custody-log
+  reconstruction, block-on-fail RC-11 ties). P27-F: web screens (`/notes` ×4,
+  `/installments` ×3) + the `TimelinePanel` pattern (COMPONENT_CATALOG row + AR+EN
+  baselines) + the 3 NAV_ITEMS + i18n 3,599→3,799/locale. P27-G: the suites —
+  isolation registry +4 (A1–A10; the `note_events` append-only grant proof), spoof ×5+×5
+  (typed 404s `PARTNER_NOT_FOUND`/`NOTE_SOURCE_INVALID`/`NOTE_NOT_FOUND`/
+  `PLAN_SOURCE_INVALID`/`LINE_NOT_FOUND`, zero partial creation, the asymmetric-dishonor
+  probe, A7 parity), `notes-rules` 27, `installments-rules` 7, `inv-024` 3, `rc-11` 2,
+  `pdc-calendar` 8 + perf, `overdue-job` 4 — DB suite 154 files (~2,094 tests).
+  P27-H (this docs sync): IMPLEMENTATION_STATUS PHASE-027 row, the ten §6 acceptance
+  criteria copied into PHASE_ACCEPTANCE_CRITERIA, ENTITY_CATALOG notes/installments
+  sections → delivered (0038) + the new TABLES/notes-installments.md spec (the repoint
+  algebra + the `late_fee_policy` shape + the INDEX list), DATA_DICTIONARY §9
+  `installment_plan_status` NULL = draft + §14 the delivered policy shape, FEATURE_CATALOG
+  §20/§21 DELIVERED (12 keys, plan grants) + the `treasury.cheques` re-point wording per
+  register §D (delivered by the `notes` module — ED-03 chain closed),
+  AUTHORIZATION_MATRIX §3.12 `notes.notes.return` row (drift 245=245) + §4 risky-key
+  list, NAVIGATION_MODEL §1.1 rows verified vs shipped (pdc-calendar archetype corrected
+  to the §1 dashboard), JOURNAL_RULES §7 delivered posting notes (BASE-denominated
+  creates, the FX residual, the fee legs, the discount deferral, the repoint, the
+  source keys), ACCOUNTING_INVARIANTS INV-024 enforced-by update (custody machine +
+  repoint + RC-11), RECONCILIATION §1 row 11 (RC-11) + the §3 close-block list,
+  BUSINESS_WORKFLOWS §10 (RETURNED/DISHONORED/DISCOUNTED terminal per the shipped
+  machine) + §12 (DEFAULTED flip + job-derived notes), ACCOUNTING_TESTS §1 the 027
+  suites + §5 the RC-11 row (and the 026 fixed-assets row's id corrected RC-11→RC-10 to
+  match RECONCILIATION §1 row 10), SECURITY_TEST_PLAN §2 the PHASE-027 attack row;
+  REPORT_CATALOG/BUSINESS_RULES/OFFLINE matrix/industries CAPABILITY_MATRIX verified
+  pre-authored + green (capabilities check PASS). — PHASE-027
+
 - 2026-11-07 — **PHASE-026 — Fixed Assets & Depreciation (IN PROGRESS — the parallel
   build waves landed; the serial orchestrator gate — full DB suite + drift battery +
   completion report — pending; status flips COMPLETE only on its evidence)**: migration

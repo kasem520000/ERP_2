@@ -151,6 +151,17 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   "fixed-assets/depreciation": { group: "navAccounting", label: "faDepTitle" },
   "fixed-assets/disposals": { group: "navAccounting", label: "faDisposalsTitle" },
   "fixed-assets/reports": { group: "navAccounting", label: "faReportsTitle" },
+  // -- PHASE-027 (wave F): cheques & notes + the PDC calendar (treasury)
+  // and installment plans (sales). Registry rows (contracts NAV_ITEMS)
+  // drive the sidebar; these fallbacks cover nav-fetch failure for the
+  // module sub-surfaces (the support-sessions rule — crumbs only).
+  "notes": { group: "navTreasury", label: "navChequesNotes" },
+  "notes/new": { group: "navTreasury", label: "notesNewTitle" },
+  "notes/calendar": { group: "navTreasury", label: "navPdcCalendar" },
+  "notes/reports": { group: "navTreasury", label: "notesReportsTitle" },
+  "installments": { group: "navSales", label: "navInstallmentPlans" },
+  "installments/new": { group: "navSales", label: "instNewTitle" },
+  "installments/reports": { group: "navSales", label: "instReportsTitle" },
 };
 
 /**
@@ -192,6 +203,16 @@ function fallbackCrumbsFor(
     pagePath !== "fixed-assets/reports"
   ) {
     return { groupLabel: d.navAccounting, label: d.navFixedAssets };
+  }
+  // PHASE-027 (wave F) — note detail routes (notes/:id): the module label is
+  // the honest leaf crumb (the inventory/items/:id rule; static module
+  // routes resolve via the exact map above).
+  if (pagePath.startsWith("notes/") && pagePath !== "notes/new" && pagePath !== "notes/calendar" && pagePath !== "notes/reports") {
+    return { groupLabel: d.navTreasury, label: d.navChequesNotes };
+  }
+  // PHASE-027 (wave F) — installment plan detail routes (installments/:id).
+  if (pagePath.startsWith("installments/") && pagePath !== "installments/new" && pagePath !== "installments/reports") {
+    return { groupLabel: d.navSales, label: d.navInstallmentPlans };
   }
   return undefined;
 }

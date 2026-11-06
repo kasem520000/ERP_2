@@ -101,6 +101,9 @@ const KNOWN_PERMISSION_KEYS: ReadonlySet<string> = new Set([
   "crm.contracts.manage",
   // PHASE-026 (0037 seed): the fixed-assets report keys
   "fixed_assets.reports.view",
+  // PHASE-027 (0038 seed): the notes/installments report keys
+  "notes.notes.view",
+  "installments.plans.view",
 ]);
 
 @Module({

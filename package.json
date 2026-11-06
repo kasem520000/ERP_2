@@ -18,6 +18,7 @@
     "boundary:negative-test": "bash scripts/ci/negative-boundary-test.sh",
     "gate:local": "bash scripts/ci/local-gate.sh",
     "check:rls": "tsx scripts/check-rls.ts",
+    "check:observability": "tsx scripts/check-observability.ts",
     "check:deps": "tsx scripts/check-deps.ts",
     "check:history-secrets": "tsx scripts/check-history-secrets.ts",
     "audit:deps": "pnpm audit --prod --audit-level high",

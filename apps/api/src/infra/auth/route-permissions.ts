@@ -187,6 +187,17 @@ export const ROUTE_PERMISSIONS: readonly RoutePermissionRule[] = [
     path: "/api/v1/platform/tenants",
     permission: "platform.tenants.view",
   },
+  // PHASE-025 T9d: the SLO/error-budget dashboard aggregate (MONITORING
+  // §5). Gated by the existing platform read-only observation key — the
+  // plan's "platform.admin.access" is NOT a seeded key (the seed + matrix
+  // §3.10 carry exactly ten platform.* keys; the identity-flows DB spec
+  // pins that set), so the truthful existing key for a cross-tenant
+  // platform-ops read is platform.audit.view (no new keys this phase).
+  {
+    method: "GET",
+    path: "/api/v1/platform/slo",
+    permission: "platform.audit.view",
+  },
   {
     method: "GET",
     path: "/api/v1/platform/tenants/:id",

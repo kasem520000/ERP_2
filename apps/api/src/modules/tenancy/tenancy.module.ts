@@ -22,6 +22,7 @@ import { PublicPlansController } from "./presentation/public/plans.controller";
 import { TenancyController } from "./presentation/tenancy.controller";
 import { PlatformConsoleController } from "./presentation/platform/platform.controller";
 import { PlatformBillingController } from "./presentation/platform/billing.controller";
+import { PlatformSloController } from "./presentation/platform/slo.controller";
 import { BillingWebhookController } from "./presentation/platform/webhook.controller";
 import { SubscriptionService } from "./application/billing/subscription-service";
 import {
@@ -45,6 +46,7 @@ import {
     TenancyController,
     PlatformConsoleController,
     PlatformBillingController,
+    PlatformSloController,
     BillingWebhookController,
     OffboardingPlatformController,
   ],

@@ -1,6 +1,6 @@
 # Technical (Operational) Decision Records
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-06
 
 Operational-technical decisions: **vendor and tooling choices that do not change the
 system's architecture** — which error-tracking SaaS, which log sink, which managed-scan
@@ -13,6 +13,12 @@ tenancy model, job backbone) is decided as an **ADR** in
 | Record | Title | Status | Deadline |
 |--------|-------|--------|----------|
 | [DR-003-observability-vendors.md](DR-003-observability-vendors.md) | Observability vendors: error tracking + log sink | OPEN | Error tracking before staging provisioning (pre-MVP); log sink at staging provisioning; tracing export post-MVP |
+| [DR-P25-06-observability-exporter.md](DR-P25-06-observability-exporter.md) | OTel exporter swap — the metrics pipeline picks up the in-process registry (SF-024-021) | **PROPOSED** (post-GA slot) | Together with DR-003 at staging provisioning |
+| [DR-P25-07-report-quota.md](DR-P25-07-report-quota.md) | Per-tenant report-run quota (the MULTI_TENANCY §5 fairness mechanism PERF-A surfaced at GA) | **PROPOSED** (post-GA slot) | First report-run noisy-neighbor incident, first hosting scale-out step, or the post-GA review closing the §5 gap proactively |
+
+The `DR-P25-NN` rows are **post-GA pointer stubs** (PHASE-025 T14): filed owning slots
+for GA-deliberately-open items — context + options + trigger + owner recorded; not
+decisions yet (see [../README.md](../README.md) §2).
 
 ## Process (differences from the parent process)
 

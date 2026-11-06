@@ -1,6 +1,6 @@
 # Decision Records
 
-> **Status:** STABLE · **Owner:** Product Owner & Platform Architecture · **Updated:** 2026-11-02
+> **Status:** STABLE · **Owner:** Product Owner & Platform Architecture · **Updated:** 2026-11-06
 
 Decision records (DRs) capture **product, accounting, compliance, and operational**
 decisions that require explicit product-owner approval. They are the formal resolution
@@ -31,9 +31,17 @@ follow their own protocol ([../accounting/ACCOUNTING_INVARIANTS.md](../accountin
 | [technical/](technical/README.md) | Operational-technical choices (vendors/tools) that do not change architecture — architecture decisions default to ADRs | DR-003 (observability vendors, OPEN) |
 | [accounting/](accounting/README.md) | Accounting policy defaults (costing, period conventions, financial-depth module policies) | DR-001 (costing method default, ACCEPTED), DR-002 (fixed assets, ACCEPTED), DR-003 (notes & installments, ACCEPTED), DR-004 (budgeting, ACCEPTED), DR-005 (payroll scope, ACCEPTED), DR-006 (consolidation, ACCEPTED) |
 | [compliance/](compliance/README.md) | Jurisdiction scope and timing (e-invoicing, tax reporting) | DR-001 (ZATCA scope/timing, OPEN), DR-002 (Yemen scope, OPEN), DR-003 (Egypt ETA scope, OPEN — draft, DEFERRED recommendation) |
+| [security/](security/README.md) | Security-program commitments (disclosure/bounty programs, assurance cadences) | DR-P25-01 (bug bounty, PROPOSED — post-GA slot) |
 
 Numbering: `DR-NNN` **per folder**; records are referenced folder-qualified
 (`product/DR-001`) to stay unambiguous across folders.
+
+**Post-GA pointer stubs (`DR-P25-NN`, PHASE-025 T14)** live in their subject folders
+(security/product/compliance/technical) — each is a filed, indexed owning slot for a
+deliberately-open GA item (bug bounty, support SLA, personal payments, ETA/UAE
+follow-ups, iOS, the OTel exporter swap, the report-run quota): context + options +
+recommendation lean + **trigger + owner**, status PROPOSED — per the phase's "no vague
+aspirations" rule. Same mandatory format; superseded only by a new record.
 
 Phase-scoped **implementation-deviation records** (`DR-<phase>-NN`) live at this
 directory's root — they record a shipped deviation from a phase's binding constraints
@@ -109,3 +117,14 @@ When a "to be opened" item becomes urgent, copy its context from the OQ table �
 paraphrase from memory.
 - [DR-024-01 — WebAuthn/passkeys: DEFER post-GA](DR-024-01-webauthn-passkeys.md) (PHASE-024 T4; ADR-0015 §4's roadmap decision recorded either way)
 - [DR-024-02 — OQ-009 privacy/retention: BLOCKED-EXTERNAL, working assumption in force](DR-024-02-privacy-retention-oq009.md) (PHASE-024 T10; the 90-day placeholder keeps its named constants until the legal review lands)
+
+**Post-GA pointer stubs (PHASE-025 T14 — filed 2026-11-06 at the GA gate; every open GA
+item has an owning slot, status PROPOSED with trigger + owner):**
+
+- [security/DR-P25-01 — Bug-bounty launch](security/DR-P25-01-bug-bounty.md) (disclosure-policy linkage from PHASE-024 T14; scope tiers + reward model open; trigger: post-GA review)
+- [product/DR-P25-02 — Support SLA (OQ-008)](product/DR-P25-02-support-sla.md) (response/resolution targets per severity vs the MONITORING §4 on-call reality; trigger: post-GA review with staffing known)
+- [product/DR-P25-03 — Personal-account payments (OQ-007)](product/DR-P25-03-personal-payments.md) (read-only posture governs; what changes if personal accounts open; trigger: demand + DR-002 resolution)
+- [compliance/DR-P25-04 — Egypt ETA / UAE adapter follow-ups](compliance/DR-P25-04-eta-uae-followup.md) (DR-003 DEFERRED + RISK-007 + the fake-eta harness state; UAE waits for official specs; triggers: evaluation-pack access / spec publication)
+- [product/DR-P25-05 — iOS client](product/DR-P25-05-ios-client.md) (the ADR-0014 "out of scope until a decision record" slot; the PHASE-022 Android precedent; trigger: demand signal)
+- [technical/DR-P25-06 — OTel exporter swap (SF-024-021)](technical/DR-P25-06-observability-exporter.md) (the names are live, the pipeline picks them up; decided with technical/DR-003; trigger: staging provisioning)
+- [technical/DR-P25-07 — Per-tenant report-run quota](technical/DR-P25-07-report-quota.md) (the MULTI_TENANCY §5 gap the GA report-hammer surfaced — isolation proven, quota mechanism open; trigger: first noisy-neighbor incident or scale-out)

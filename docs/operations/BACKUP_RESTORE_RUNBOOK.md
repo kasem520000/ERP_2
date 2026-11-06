@@ -1,6 +1,6 @@
 # Backup & Restore Runbook
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-06
 
 Operational runbook for [../database/BACKUP_AND_RECOVERY.md](../database/BACKUP_AND_RECOVERY.md)
 (the storage-level design). Targets (NFR-007): **RPO ≤ 15 min, RTO ≤ 4 h — unproven until
@@ -147,8 +147,8 @@ Use when a bad migration or bug corrupted data at scale (decision tree:
      ([DEPLOYMENT.md](DEPLOYMENT.md) §2 steps 3–5) → health + smoke tests.
 8. **Re-post recoverable data** from the evidence dump via normal document flows (never
    raw INSERTs into the ledger — INV-003).
-9. **Tenant notices** (AR/EN templates: [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) §4) +
-   post-incident review.
+9. **Tenant notices** (AR/EN templates: [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) §3)
+   + post-incident review.
 
 ## 6. Restore procedure B — instance loss
 
@@ -178,6 +178,8 @@ For region loss ([DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) §2):
 | Date | Type (nightly-smoke audit / quarterly PITR / cross-region) | Engineer | Restore point | Restore time (vs RTO) | Data window (vs RPO) | Result | Actions |
 |------|------------------------------|----------|---------------|----------------------|---------------------|--------|----------|
 | 2026-11-01 | First recorded restore rehearsal (PHASE-014 T13 — MVP gate item; sandbox tier: embedded PostgreSQL 16, real `pg_dump -Fc` / `pg_restore --no-owner --jobs=4` tooling, `pnpm --filter @erp/api restore:drill`) | AI coding agent (PHASE-014 session; recorded for the second-engineer re-run in staging) | pg_dump custom-format artifact of the fully-migrated (0001–0021) + seeded database (tenant + FY + 2 balanced posted entries + audit trail; 707 KiB) | 0.7 s restore / 0.1 s dump (RTO 4 h — GREEN) | 0 rows lost — dump-restore drill, no writes between dump and drop (RPO 15 min — GREEN; PITR window is the managed tier) | **PASSED** — post-restore invariant smoke: (a) INV-001/002 per-entry balance at tolerance 0 GREEN; (b) RLS guard through a real `erp_app` connection on the restored copy: 0 rows without tenant GUC GREEN; (c) audit trail 3 events, insert-ordered GREEN; (d) posted-doc ↔ journal-entry tie 0 orphans GREEN; (e) INV-013 posting-key uniqueness 0 duplicates GREEN; (f) INV-003 mutation attempt (`UPDATE journal_lines` as `erp_app`) grant-denied GREEN; row-count parity 5/5 tables identical (journal_entries/journal_lines/sales_invoices/stock_moves/audit_events) | Repeat on real staging with the managed-PITR path per §4 when infra is available (follow-up obligation); roles are cluster-level and survived the logical drop — the managed-instance drill must additionally verify the out-of-band role provisioning path |
+| 2026-11-06 | Quarterly cold drill (§4 shape — PHASE-025 T7 second-engineer cold re-proof of the MVP-gate drill; sandbox tier: embedded PostgreSQL 16, `pnpm --filter @erp/api restore:drill` run from this runbook only, no tribal knowledge) | AI coding agent #2 (PHASE-025 session, cold run from this runbook only) | pg_dump custom-format artifact of the fully-migrated + seeded database (tenant + FY2026/01 + 2 balanced posted entries + 3 audit events; 1107 KiB) | 0.2 s dump / 1.3 s restore (RTO 4 h — GREEN) | 0 rows lost — no writes between dump and drop (RPO 15 min — GREEN; drill semantics, PITR window is the managed tier) | **PASSED** — a–f invariant smoke ALL GREEN (INV-001/002 balance, RLS guard via real erp_app connection, audit ordering, posted-doc tie, INV-013 uniqueness, INV-003 mutation grant-denied); row-count parity 5/5 identical | Expectation vs §4: all five §3 step 4 assertions + INV-003 mutation attempt green, row counts ≤ source and explainable, RTO ≤ 4 h / RPO ≤ 15 min measured; any failure = RISK-018 materialized, repeat within 2 weeks (§4 step 9). Actions: record actuals here; the managed-PITR provider invocation (§4 step 3) remains the hosted leg — same follow-up obligation as the 2026-11-01 row |
+| 2026-11-06 | Cross-region restore rehearsal (PHASE-025 T6 — GA gate leg, DISASTER_RECOVERY §5 item 2 / this runbook §7; LOCAL tier: two fresh embedded PostgreSQL 16 instances standing in for primary + recovery regions — the §7 step-2 IaC + `deploy/compose.prod.yml` provisioning and the step-4 DNS/LB cutover are the hosted follow-up obligation; `pnpm --filter @erp/api restore:drill-ga`) | AI coding agent #2 (PHASE-025 session, cold run from this runbook only) | Nightly-shaped pg_dump artifact (--format=custom --compress=9 --no-owner --exclude-schema=boss; 1106 KiB) of the fully-migrated (0001–0036) + seeded source; recovery instance bootstrapped from virgin (full chain re-applied in 2.3 s per DEPLOYMENT §6) | 1.1 s restore leg / 2.3 s recovery bootstrap / 7.0 s total wall (RTO 8 h — GREEN, restore leg measured; provisioning + cutover hosted) | 0 rows lost — no writes between dump and restore (RPO 15 min — GREEN, drill semantics; replication lag is the managed-tier claim) | **PASSED** — invariant smoke a–f ALL GREEN + boss-schema exclusion shape GREEN on the restored recovery copy; row-count parity 5/5 identical (the script printed the complete row + JSON summary; orchestrator-captured 2026-11-06) | Expectation vs §7/DISASTER_RECOVERY §5: timed restore within RTO ≤ 8 h, §3 step 4 smoke green on the restored recovery copy, parity 5/5; the tabletop companion record is [dr-drill-2026-11-06.md](dr-drill-2026-11-06.md) (gap list G1–G11). Actions: hosted-tier re-run of §7 end-to-end (IaC provisioning + cross-region fetch + cutover) when the recovery region exists — the recovery-region wall time remains the infra-gated RTO evidence |
 
 **Attestation (directive §16).** A monthly attestation line is appended here, signed by
 the on-call lead: *"I attest that for <month>: the nightly restore-smoke succeeded ≥ 27/30
@@ -185,6 +187,20 @@ days (every failure has an incident record), the last quarterly drill passed wit
 and RPO, and the WORM configuration on the backup bucket was inspected and intact."*
 A missed attestation blocks the next production release at pre-flight
 ([DEPLOYMENT.md](DEPLOYMENT.md) §1 row 3).
+
+<!-- ORCH-CONFIRM resolved 2026-11-06: the 27/30 evidence basis does NOT hold in this
+     environment (nightly-smoke-as-script, not 30 calendar days of scheduled runs) —
+     the honest first-attestation-due date stands: 2026-12-01, the first full
+     calendar month post-GA, per the paragraph below. -->
+
+**2026-11 (PHASE-025 session) — NOT SIGNED, honestly.** No November attestation is
+recorded: this environment has the §3 nightly-smoke as an executable procedure + the
+drill log above (2026-11-01, 2026-11-06), **not 30 calendar days of scheduled
+restore-smoke runs**, and no WORM bucket to inspect (provider-infra — the DR tabletop
+gap G3). The first attestable month is **2026-12** (the first full calendar month with
+the hosted cadence live): the on-call lead signs on **2026-12-01**, covering December.
+Until the first signed line exists, the GA release checklist carries this gap
+explicitly rather than a fabricated attestation.
 
 ## 9. Failure alerts & escalation
 

@@ -881,6 +881,22 @@ export const NAV_ITEMS: readonly NavItem[] = [
     archetype: "list-search",
     order: 96,
   },
+  // PHASE-025 T9d: the SLO / error-budget dashboard (MONITORING §5 — the
+  // six finalized SLOs + SLOBurn alerts from the in-process substrate).
+  // Platform plane, permission-gated only (no featureKey — the matrix
+  // §3.10 rule): platform.audit.view, the same existing key the
+  // GET /api/v1/platform/slo route requires.
+  {
+    id: "platform.slo",
+    parentGroup: "settings",
+    label: { ar: "مؤشرات مستوى الخدمة", en: "Service SLOs" },
+    icon: "bar-chart",
+    route: "/platform/slo",
+    permission: "platform.audit.view",
+    branchScoped: false,
+    archetype: "report",
+    order: 98,
+  },
 ];
 
 /**

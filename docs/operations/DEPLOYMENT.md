@@ -1,6 +1,6 @@
 # Deployment Runbook
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-05
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-06
 
 How the Platform is deployed to staging and production: pre-flight checks, the deploy
 sequence, migration safety, rollback, and first-deploy bootstrap. Topology and release
@@ -15,9 +15,11 @@ job under the `erp_migrate` role; **failed migration = abort, not rollback**
 
 > Command convention: the runbook uses `deploy/compose.prod.yml` (a compose file whose
 > services `api`, `web`, `worker`, `migrate` reference the single release image with env
-> injected from the secret store). If the hosting layer at MVP provisioning (PHASE-014
-> window) uses instance templates or another orchestrator, only the *restart primitive*
-> changes — the gates, order, and abort criteria below are the contract.
+> injected from the secret store; it is provisioned at hosting setup — **not part of this
+> repository**, where `deploy/` holds the updater channel layout only). If the hosting
+> layer at MVP provisioning (PHASE-014 window) uses instance templates or another
+> orchestrator, only the *restart primitive* changes — the gates, order, and abort
+> criteria below are the contract.
 
 ## 1. Pre-flight checklist
 
@@ -69,17 +71,23 @@ docker compose -f deploy/compose.prod.yml exec postgres psql -U erp_readonly -d 
 Smoke tests (after step 6, before announcing success):
 
 ```bash
-# a. Health endpoints from the LB (public path)
-curl -fsS https://<host>/api/health/live && curl -fsS https://<host>/api/health/ready
+# a. Health endpoints (the api serves /health/live + /health/ready at the service root —
+#    business routes carry /api/v1 in-path; the LB public probe path is a hosting
+#    routing item recorded at provisioning, the node-level path is the verifiable one)
+curl -fsS http://api-node:3001/health/live && curl -fsS http://api-node:3001/health/ready
 
-# b. Login flow (test account from the deploy credentials entry)
-curl -fsS -X POST https://<host>/api/v1/auth/login \
+# b. Login flow (test account from the deploy credentials entry) — the
+#    session-creating route is POST /api/v1/identity/sessions (public route;
+#    the returned session token is presented as x-session-token thereafter)
+curl -fsS -X POST https://<host>/api/v1/identity/sessions \
   -H 'content-type: application/json' -d '{"email":"…","password":"…"}'
 
-# c. Tenant-scoped write path: create an invoice DRAFT (never post in smoke)
-curl -fsS -X POST https://<host>/api/v1/sales/invoices \
-  -H "authorization: Bearer $SMOKE_TOKEN" -H 'x-tenant-id: …' \
-  -d '{"branch_id":"…","kind":"CREDIT"}'   # → id returned; status DRAFT expected
+# c. Tenant-scoped write path: create an invoice DRAFT (never post in smoke).
+#    The API never takes client tenant claims (S-03) — the session carries the
+#    tenant scope; route + minimum body per createInvoiceSchema:
+curl -fsS -X POST https://<host>/api/v1/sales/sales-invoices \
+  -H "x-session-token: $SMOKE_SESSION" -H 'content-type: application/json' \
+  -d '{"branchId":"…","customerId":"…","kind":"CREDIT","invoiceDate":"…","currencyCode":"SAR","exchangeRate":1,"lines":[…]}'   # → id returned; status DRAFT expected
 
 # d. Web renders (locale both directions)
 curl -fsS https://<host>/ | grep -q 'dir="rtl"' || echo "CHECK RTL DEFAULT"
@@ -136,7 +144,7 @@ flowchart TD
   Q1 -- Yes --> APP[Application rollback + forward-fix\nposted documents corrected only via\nreversals/new documents - INV-003]
   Q1 -- No --> Q2{Scale: tenants affected\nand posting volume since event?}
   Q2 --> P[Declare DB restore incident;\nfollow PITR procedure\nBACKUP_RESTORE_RUNBOOK.md §5]
-  P --> CUTOVER[Cutover decision with incident commander:\nrestore point = last clean state before event;\naccept documented data loss window;\ntenants informed per DISASTER_RECOVERY.md §4]
+  P --> CUTOVER[Cutover decision with incident commander:\nrestore point = last clean state before event;\naccept documented data loss window;\ntenants informed per DISASTER_RECOVERY.md §3]
 ```
 
 Rules: a PITR restore is an **incident-level decision** (never a deploy convenience); it
@@ -153,8 +161,12 @@ Run once per environment (staging first, then production at MVP):
    access only ([../database/BACKUP_AND_RECOVERY.md](../database/BACKUP_AND_RECOVERY.md)).
 2. **Bootstrap roles**: run `0001_core_infra.sql` as the instance admin connection
    (recorded here — one-time superuser use), which creates `erp_migrate`, `erp_app`,
-   `erp_readonly` with passwords from the secret store; from migration `0002` on, only
-   `erp_migrate` is used ([../database/TENANT_ISOLATION.md](../database/TENANT_ISOLATION.md) §1).
+   `erp_readonly` — **passwords are deliberately NOT in the SQL** (gitleaks rule; the
+   migration header says so): production assigns them out-of-band from the secret store
+   ([SECRETS_MANAGEMENT.md](../security/SECRETS_MANAGEMENT.md)); dev/test stacks run
+   `scripts/db-dev-credentials.ts` (fail-closed under `NODE_ENV=production`). From
+   migration `0002` on, only `erp_migrate` is used
+   ([../database/TENANT_ISOLATION.md](../database/TENANT_ISOLATION.md) §1).
 3. **Apply all migrations**: `docker compose -f deploy/compose.prod.yml run --rm migrate`.
 4. **Apply seeds** (reference data: currencies, countries, jurisdiction packs, permission
    catalog, plans, industry templates — [../database/SEEDS/README.md](../database/SEEDS/README.md)).
@@ -183,4 +195,4 @@ Run once per environment (staging first, then production at MVP):
 | PHASE-021 (**LIVE 2026-11-04**) | **Server deploys precede client announcements** — never announce a desktop build before the API it talks to is deployed (offline clients lag behind by design; the contract-version gate keeps them read-only, never broken). The desktop release channel is the **updater-hosting runbook**: the [`deploy/updater/`](../../deploy/updater/README.md) static-JSON layout — per channel `stable/latest.json` (the ONLY mutable object, atomically replaced) + immutable versioned dirs `stable/<version>/` (manifest + nsis/msi bundles + the minisign `.sig`) served over HTTPS only (short TTL on `latest.json`, eternal cache on versioned dirs). **Immutability rule:** a versioned directory is written once, never modified, never deleted — a client that verified a version's signature must re-download identical bytes forever (changing bytes under a live version breaks D-06 for every re-verifying device). **Staged rollout 10%→50%→100% with crash gates** reading the client-stability dashboard ([MONITORING.md](MONITORING.md) §1; trailing-24 h crash-free sessions): promote 10→50 at ≥ 99.5% over ≥ 200 sessions; 50→100 at ≥ 99.7% over ≥ 500; **halt below 98.5% ⇒ publish `minVersion` = last-known-good (force-update — DR-P21-05; the remedy publishes at `stagePercent` 100 so every below-minimum device is blocked onto the verified update path)**. Publish/sign with `pnpm tsx scripts/updater-manifest.ts sign\|publish` (keys are S-15, CI-only; `--self-test` runs the real-crypto round-trip and is asserted in CI); signing/rotation dual-trust window per [../security/SECRETS_MANAGEMENT.md](../security/SECRETS_MANAGEMENT.md) S-15 |
 | PHASE-022 (**LIVE 2026-11-05**) | **The Android release channel is the Play Store + the EAS pipeline** — `mobile-release.yml` (tag `v*`) runs every pnpm-level gate (typecheck/lint/test → `check:mobile-shell` → `check:mobile-tokens`/`check:mobile-i18n`), installs `apps/mobile/native` standalone (the only place the expo toolchain enters a node_modules), provisions the **S-15 signing family** (`ANDROID_KEYSTORE_BASE64/ALIAS/PASSWORD/KEY_PASSWORD` → `native/credentials.json` + `native/release.jks`; `FCM_PROJECT_ID/APP_ID/API_KEY` → `native/google-services.json`; `EXPO_TOKEN` — every secret a GitHub secret reference, warn-and-continue placeholders per the signtool precedent: **unsigned = internal channel only, never GA**), runs the EAS build (production AAB), SBOMs, and uploads apk/aab. **Staged rollout 10%→50%→100% with crash gates** reading the client-stability dashboard (trailing-24 h crash-free sessions): promote 10→50 at ≥ 99.5% over ≥ 200 sessions; 50→100 at ≥ 99.7% over ≥ 500; **halt below 98.5% at ANY sample size ⇒ publish `minVersion` = last-known-good (force-update)** — the halt remedy is serialized into the release manifest artifact and enforced client-side by the `ReleasePolicy` module (below-minimum builds are blocked onto the update path; the mobile rollout-config/manifest artifacts are the channel's own, separate from the desktop `deploy/updater/` layout). The client gate: `evaluateReleasePolicy({appVersion, manifest})` → the force-update screen at app entry (the on-device navigation glue is the recorded follow-up; the policy + tests are complete). The `device-farm` job (workflow_dispatch-gated) is the on-device matrix leg — C-06/C-07/C-13 + the D-02 cipher inspection (requires an Android runner with an emulator matrix). Breaking-change windows respect offline clients lagging behind (the 021 rule: server deploys precede client announcements; the contract-version gate keeps lagging clients read-only, never broken) per [../planning/RELEASE_STRATEGY.md](../planning/RELEASE_STRATEGY.md) §Rollout |
 | PHASE-023 (**LIVE 2026-11-05** — pipeline + monitoring; the ZATCA adapter itself is the `UNVERIFIED` refuse-to-submit stub until the verification gate passes — DR-001 OPEN) | E-invoicing certificates provisioned per [../security/SECRETS_MANAGEMENT.md](../security/SECRETS_MANAGEMENT.md) §6 **before** adapter enablement — the service-enforced gate refuses to enable an adapter without an ACTIVE certificate for the jurisdiction; adapter rollout flags are per-tenant rows in `e_invoicing_adapter_settings`, **default OFF** (the global `feature_flags` table stays platform-only; disabling is always allowed — rollback = flag off). New secret: `EINVOICING_SECRET_KEY` — AES-256-GCM, 32 bytes base64, sealing the submission payload/response artifacts at rest; falls back to `IDENTITY_SECRET_KEY`; unset in dev/test derives the local key — **production fails closed**. Deploy watch list ([MONITORING.md](MONITORING.md) §1/§3): e-invoicing DLQ growth (FAILED submissions + the hourly dead-letter inbox alert), `EInvoiceRejectSpike` firings, certificate-expiry countdowns (30/14/7 ladder), parked-lines backlog (`GET /api/v1/treasury/bank-statements/parked-lines`), payout `DRIFT` count (`GET /api/v1/platform/billing/payouts`). Payments remain sandbox depth — DR-002 OPEN, **no production cutover**; runbook: [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing |
-| PHASE-025 (GA) | DR drill evidence + restore test evidence are pre-flight inputs for the GA release; SLO dashboards and error-budget burn alerts active ([MONITORING.md](MONITORING.md) §5) |
+| PHASE-025 (GA — 2026-11-06: tabletop executed; rehearsal runs orchestrator-side in the serial gate) | **DR/restore pre-flight inputs** (T8 addition): §1 pre-flight gains a DR/restore freshness leg reading [BACKUP_RESTORE_RUNBOOK.md](BACKUP_RESTORE_RUNBOOK.md) §8 — (a) the last quarterly drill (§4) is within its window (a drill overdue > 2 weeks is a Sev-3 per §9; §4 step 9: a failed drill repeats within 2 weeks); (b) the monthly attestation line is current (a missed attestation blocks the release at §1 row 3 — the honest 2026-11 state: first attestable month is 2026-12, no fabricated line); (c) the GA release cites its restore-rehearsal evidence: the 2026-11-06 §8 drill-log rows (quarterly cold re-proof `restore:drill` + cross-region local-tier rehearsal `restore:drill-ga` — orchestrator-run, timings ORCH-FILL) + the S1 tabletop record [dr-drill-2026-11-06.md](dr-drill-2026-11-06.md) (gap list G1–G11 with owners; the hosted recovery-region re-run is the follow-up obligation). SLO dashboards and error-budget burn alerts active ([MONITORING.md](MONITORING.md) §5; the `SLOBurn` alert per §3) |

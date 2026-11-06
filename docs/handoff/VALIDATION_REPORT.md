@@ -76,3 +76,19 @@ ED-01…ED-19) was applied on top of the v1.1 baseline and re-validated:
   requires zero cross-tenant writes (ADR-0018).
 - The v2.0 scope remains **designed, not implemented**: every new phase is `PLANNED`
   until executed with evidence per IMPLEMENTATION_STATUS.md.
+
+
+## Re-run — PHASE-025 (GA release) · 2026-11-06
+
+Post-phase validation with the GA tree: **docs:validate 29/29 green** (303 markdown
+documents — the blueprint + the phase reports, the GA checklist, the DR/deployment
+drill records, the seven post-GA decision stubs, and the bilingual release notes all
+link-resolved). The cross-document consistency facts re-verified at the gate:
+permissions seed = AUTHORIZATION_MATRIX (244=244, zero new keys — PHASE-025 §4),
+capabilities matrix vs implemented gates agree (25 PASS rows), the phase tables
+(roadmap + status + dependency graph) reference PHASE-001…025 consistently with
+PHASE-025 COMPLETE — GA RELEASE, and the GA gate criteria are enumerated closed in
+[GA-RELEASE-CHECKLIST.md](../implementation/phases/reports/GA-RELEASE-CHECKLIST.md)
+with gate-run evidence (1 INFRA-GATED / 5 CLOSED-LOCAL-TIER / 5 CLOSED — the honest
+ledger). Entity catalog unchanged (156 tables; no migrations this phase — tuning
+only per §4).

@@ -8,6 +8,7 @@ import { RequestIdMiddleware } from "./infra/observability/request-id.middleware
 import { SessionMiddleware } from "./infra/auth/session.middleware";
 import { SecurityHeadersMiddleware } from "./infra/http/security-headers.middleware";
 import { TenantRateLimitMiddleware } from "./infra/http/tenant-rate-limit.middleware";
+import { MetricsMiddleware } from "./infra/http/metrics.middleware";
 import { PermissionsGuard } from "./infra/auth/permissions.guard";
 import { TenantContextInterceptor } from "./infra/context/tenant-context.interceptor";
 import { ErrorModelFilter } from "./infra/http/error.filter";
@@ -114,6 +115,13 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(RequestIdMiddleware)
+      .forRoutes("*")
+      // PHASE-025 T9b: the API golden-signals source (MONITORING §1) —
+      // request/error counters + latency samples per route group into the
+      // in-process registry (SF-024-021 substrate; the OTel exporter swap
+      // picks the names up). Mounted right after the request-id scope so
+      // both span the same requests; it never short-circuits.
+      .apply(MetricsMiddleware)
       .forRoutes("*")
       // PHASE-024 T9: security headers run BEFORE anything that can
       // short-circuit a response (the session 423 gate, the tenant 429

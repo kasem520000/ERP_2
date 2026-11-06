@@ -1,6 +1,6 @@
 # Monitoring
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-05
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-06
 
 Operationalization of [../architecture/OBSERVABILITY.md](../architecture/OBSERVABILITY.md):
 dashboards, the alert catalog with runbook links, on-call basics, SLO/error-budget
@@ -22,6 +22,7 @@ observability wired from PHASE-001/002 as a phase exit criterion.
 | E-invoicing funnel | PHASE-023 (**LIVE 2026-11-05**) | Submissions by state (PENDING→GENERATED→SIGNED→SUBMITTED→ACCEPTED/REJECTED→REPORTED; FAILED = dead-letters), latency p50/p95, rejection reasons by `last_error_code`, the 15-min rejection-rate gauge, dead-letter count, certificate-expiry countdowns (30/14/7 ladder) | `GET /api/v1/tax/einvoicing/funnel` (per-tenant aggregate, `tax.einvoicing.manage`) renders the `/[locale]/platform/einvoicing-funnel` screen; alerts land in the notifications inbox (category `einvoicing`); feeds [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing |
 | Client stability | PHASE-021 (**LIVE 2026-11-04** — desktop) / 022 (**LIVE 2026-11-05** — Android) | Crash-free sessions per device class, update-channel distribution (`stagePercent` cohorts), min-version enforcement hits, update adoption | Staged-rollout gates (10%→50%→100%) read from this dashboard |
 | Business SLO | PHASE-014+ | Failed-login spike, tenant suspension events, signups/onboarding funnel, entitlement overrides | Suspensions are high-signal: they precede churn or abuse |
+| SLO & error budgets | PHASE-025 (**LIVE 2026-11-06**) | The six §5 SLO cards (target, observed, error-budget bar, burn state), route-group p50/p95/p99 vs NFR-006 budgets, report render tiers, the SLOBurn alert feed | `GET /api/v1/platform/slo` (evaluated on demand; `platform.audit.view`) renders the `/[locale]/platform/slo` screen from the in-process metrics registry (SF-024-021 — §5 note); the metrics pipeline evaluates per scrape when the exporter swap lands |
 
 Metric naming is vendor-agnostic (`erp_<module>_<name>_<unit>`); collection starts as a
 Prometheus-style exporter endpoint with sink choice per
@@ -90,7 +91,7 @@ no alert exists without one.
 | `PoolSaturation` | DB pool wait/queue metrics above threshold 10 min | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §api | Ticket; page if errors result |
 | `SlowQueryRate` | >10 queries > 250 ms per minute, 10 min sustained | Sev-3 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §database | Ticket |
 | `MigrationFailed` | Deploy migration job non-zero exit | **Sev-1** | [DEPLOYMENT.md](DEPLOYMENT.md) §3 (abort criteria) | Page deploy on-call — deploy is aborted |
-| `SLOBurn` | Error-budget burn 2× (Sev-2) / 4× (Sev-1) | Sev-2/1 | §5 + [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §api | Page per severity |
+| `SLOBurn` | Error-budget burn 2× (Sev-2) / 4× (Sev-1) (PHASE-025; **live 2026-11-06** — the in-process evaluator computes burn = observed ÷ allowed error rate per §5 SLO and surfaces the fired alerts at `GET /api/v1/platform/slo`; the metrics pipeline evaluates per scrape) | Sev-2/1 | §5 + [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §api | Page per severity |
 | `CertExpiry` | TLS or e-invoicing certificate < 30 days (Sev-3) / < 7 days (Sev-2); the e-invoicing leg is **live 2026-11-05** — the daily `einvoicing.cert.expiry` sweep walks ACTIVE/EXPIRING_SOON certificates and fires each 30/14/7-day threshold exactly once (`e_invoicing_certificates.expires_alerted_at` per-threshold dedupe; critical inbox severity at 7 days) | Sev-3→Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket → page under 7 days |
 | `EInvoiceRejectSpike` | Rejection rate > 5% of submissions in 15 min (PHASE-023; **live 2026-11-05** — the `einvoicing.reject.spike` sweep evaluates every 5 min from the funnel aggregate, fires at > 5% with ≥ 5 submissions in the 15-min window, deduped per window per tenant) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §e-invoicing | Ticket; page if tenant-wide outage |
 | `SyncPushFailSpike` | Push failure > 5% in 15 min (PHASE-020+; **live 2026-11-04** — the in-product health aggregate fires it at successRate < 90% with ≥ 20 commands over the 7-day window; the metrics pipeline refines to the 15-minute threshold) | Sev-2 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) §sync | Ticket |
@@ -116,22 +117,38 @@ no alert exists without one.
 
 ## 5. SLOs & error budgets
 
-SLOs go live at GA (PHASE-025 — "error budget process live",
+SLOs went live at GA (PHASE-025 — "error budget process live",
 [../planning/RELEASE_STRATEGY.md](../planning/RELEASE_STRATEGY.md)); from MVP the same
-metrics are tracked as budgets-without-teeth so targets have history before they gate.
+metrics were tracked as budgets-without-teeth so targets had history before they gate.
 
-| SLO (candidate, finalized in PHASE-025) | Target | Error budget consequence |
-|------------------------------------------|--------|--------------------------|
-| API availability (non-5xx, LB-level) | 99.9% monthly | Budget exhausted → feature releases pause; fixes only |
-| API latency p95 | Within NFR-006 budget | Burn 4× → page + capacity review |
-| Posting success | ≥ 99.99% of engine attempts; **zero** invariant failures | Any invariant failure is Sev-1 regardless of budget |
-| Backup + restore-smoke | 100% of scheduled runs | Missed smoke blocks next release pre-flight |
-| Sync push success (PHASE-020+) | ≥ 99.5% within 24 h | Budget burn halts staged client rollouts |
-| Report render SLA (PHASE-013) | Per template budget | Sustained breach → worker capacity action |
+The six SLOs below are **finalized (PHASE-025, 2026-11-06)** — measured by the
+in-process registry (SF-024-021 substrate: `apps/api/src/infra/observability/metrics.ts`,
+names `erp_<module>_<name>_<unit>`; the OTel exporter swap picks them up unchanged) and
+evaluated on demand at `GET /api/v1/platform/slo` + the `/[locale]/platform/slo` screen.
+Honest window semantics: the in-process window is the **process lifetime** (restarts
+reset counters — no persistence by design); the 30-day error-budget window is the
+metrics pipeline's concern and is never fabricated. An SLO without samples reports
+**NO_DATA — never green by silence** (the backup leg lives there until the pipeline
+lands: the nightly restore-smoke runs out-of-process; only the
+`recordRestoreSmokeOutcome` seam exists).
 
-Burn alerts (2×/4×) are wired in §3; the error-budget policy (freeze feature deploys when
-a budget is exhausted) follows [../planning/RELEASE_STRATEGY.md](../planning/RELEASE_STRATEGY.md)
-and is recorded in the GA release checklist.
+| SLO (finalized PHASE-025) | Target | Measurement (wiring point) | Error budget consequence |
+|------------------------------------------|--------|----------------------------|--------------------------|
+| API availability | 99.9% monthly (non-5xx; 4xx business rejections excluded per NFR-007/T-07) | `erp_api_requests_total`/`erp_api_errors_total{class}` from the request metrics middleware (all routes, 8 route groups) | Budget exhausted → feature releases pause; fixes only |
+| API latency p95 | Within NFR-006/T budgets per route group (identity 1.5 s T-06; document-plane groups 500 ms T-01; sync 3 s T-05; platform/reporting 2 s T-04) — p95 within budget ⟺ ≤ 5% of requests over budget | `erp_api_request_over_budget_total{route_group}` + `erp_api_request_duration_ms` sampler (the same middleware) | Burn 4× → page + capacity review |
+| Posting success | ≥ 99.99% of engine attempts; **zero** invariant failures (`ENTRY_NOT_BALANCED` — INV-001/002; any occurrence is Sev-1 regardless of budget, `PostingInvariantFail`) | `erp_posting_attempts_total`/`erp_posting_success_total`/`erp_posting_invariant_failures_total` + the `erp_posting_duration_ms` sampler, wrapped around `PostingService.post()/reverse()` (the single engine choke point; idempotent replays count as successes) | Any invariant failure is Sev-1 regardless of budget |
+| Backup + restore-smoke | 100% of scheduled runs (a single miss exhausts the budget; repeated = Sev-1 per the `RestoreSmokeFailed` row) | `erp_backups_restore_smoke_attempts_total`/`erp_backups_restore_smoke_success_total` — **NO_DATA today** (external cadence: the nightly smoke + drills run out-of-process; the seam feeds this SLO when the pipeline lands) | Missed smoke blocks next release pre-flight |
+| Sync push success (PHASE-020+) | ≥ 99.5% within 24 h (terminal outcomes: ACCEPTED/(ACCEPTED+REJECTED); DEFERRED is backpressure, excluded — the health aggregate's definition) | `erp_sync_push_attempts_total`/`erp_sync_push_success_total` recorded at the sync push service's batch completion (in-process window: process lifetime) | Budget burn halts staged client rollouts |
+| Report render SLA (PHASE-013) | p95 within the T-04 tier budget per report class (interactive/inline 2 s; worker/job tier 15 min) — ≤ 5% of renders over budget | `erp_reporting_render_attempts_total`/`erp_reporting_render_over_budget_total{class}` + the per-template `erp_reporting_render_duration_ms` sampler, at the run service's completion point (both execution classes; cache hits excluded) | Sustained breach → worker capacity action |
+
+Burn-rate math: burn = observed error rate ÷ allowed error rate over the window;
+≥ 2× pages Sev-2, ≥ 4× pages Sev-1 (the `SLOBurn` row above, live). The evaluator
+(`apps/api/src/infra/observability/slo.ts`) is exercised by the seeded-burn unit spec
+(`slo.burn.spec.ts`) — 2× and 4× seeded rates fire the right severities; NO_DATA never
+alerts and never shows green. Burn alerts (2×/4×) are wired per §3; the error-budget
+policy (freeze feature deploys when a budget is exhausted) follows
+[../planning/RELEASE_STRATEGY.md](../planning/RELEASE_STRATEGY.md) and is recorded in
+the GA release checklist.
 
 ## 6. Log retention & what logs are *not*
 

@@ -176,6 +176,26 @@ P034 → **Enterprise Depth release** — full expansion dependencies in
   budget process live; ZATCA adapter (if in scope for KSA launch segment) certified per
   official requirements — or the launch segment explicitly excludes e-invoicing-requiring
   taxpayers (documented decision).
+- **Gate close-out (v1.1.0, 2026-11-06):** enumerated clause-by-clause with truthful
+  status markers (CLOSED / CLOSED-LOCAL-TIER / INFRA-GATED) + evidence links in
+  [GA-RELEASE-CHECKLIST.md](../implementation/phases/reports/GA-RELEASE-CHECKLIST.md)
+  (the 11 PHASE-025 §6 acceptance criteria; honest markers decided up front). Load
+  evidence INFRA-GATED per
+  [PERFORMANCE_TEST_PLAN.md](../testing/PERFORMANCE_TEST_PLAN.md) §8 (local-equivalent
+  at the documented 10× volumes; production-class hosted run = the standing waiver);
+  DR drill + restore CLOSED-LOCAL-TIER (drill records + runbook §8 rows); pen-test
+  findings closed per [security-findings.md](../operations/security-findings.md)
+  (0 Critical open; external-firm leg the standing waiver); the e-invoicing clause
+  resolved per the documented decision
+  ([compliance/DR-001](../decisions/compliance/DR-001-zatca-scope-and-timing.md),
+  OPEN option C): the launch segment excludes e-invoicing-requiring taxpayers — the
+  ZATCA adapter ships as the honest `UNVERIFIED` refuse-to-submit stub. Gate-run
+  outputs on the release SHA: **typecheck 8/8 · lint 8/8 · depcruise 0/2209 · DB suite
+  143 files/2035 tests ALL GREEN (incl. the GA load specs: T-01 8ms · T-02 23ms ·
+  T-04 1576ms statements · T-05 122ms · T-06 183ms · T-07 0.000% · T-08 111.3
+  posts/s; spike 429@1001; hammer isolation 14ms; soak retained-heap 0.996) ·
+  drift battery 29/29 + 244=244 + 3399=3399 · restore drills §4 1.3s / §7 1.1s
+  both PASSED · check:observability 19/19 — gate run 2026-11-06**
 
 ### Enterprise Depth gate (end of PHASE-034)
 

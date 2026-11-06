@@ -44,12 +44,17 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   provider, costing default, ZATCA scope, Yemen scope, observability vendors, and the
   v2.0 expansion set: platform expansion, fixed assets, notes & installments,
   budgeting, payroll scope, consolidation), and this handoff set.
-- **Application code: PHASE-001 … PHASE-024 (all COMPLETE) — the MVP v1.0
+- **Application code: PHASE-001 … PHASE-025 (all COMPLETE) — **GA RELEASED
+  (v1.1.0 / CalVer v1.26.11.0, tags real in this repository)** — the MVP v1.0
   release + the industry configuration engine + Point of Sale + the
   automotive/distribution templates + Manufacturing & Production + CRM/Service
   Contracts & Projects + the Offline Synchronization Foundation + the Desktop
   Application (Tauri shell) + the Android Application (Expo/RN) + the External
-  Integrations & E-Invoicing substrate.** The
+  Integrations & E-Invoicing substrate + Security Hardening + the Performance/
+  Reliability/GA-Readiness closing phase (the 10× local load harness T-01…T-08
+  ALL PASS, the DR drills executed with timings, the SLO/error-budget substrate
+  live with SLOBurn, the observability audit green, the GA checklist closed
+  with the honest ledger).** The
   pnpm + Turborepo monorepo with all local gates green (re-verified 2026-11-03):
   - `apps/api` — NestJS with `GET /health/live` + `GET /health/ready` (DB +
     migration state + queue liveness); modules: `audit` (append-only, transactional
@@ -644,8 +649,12 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   Service Contracts & Projects + PHASE-020 Offline Synchronization Foundation +
   PHASE-021 Desktop Application + PHASE-022 Android Application + PHASE-023
   External Integrations & E-Invoicing (the operational substrate — registry,
-  certificates, rollout, monitoring; the ZATCA adapter honestly UNVERIFIED)
-  (migrations 0001–0035; the centralized posting engine with the full
+  certificates, rollout, monitoring; the ZATCA adapter honestly UNVERIFIED) +
+  PHASE-024 Security Hardening & Compliance Review (MFA policy, the offboarding
+  purge, rate limiting, the findings log) + PHASE-025 Performance, Reliability
+  & GA Readiness (the GA release — 10× local load evidence T-01…T-08 ALL PASS,
+  DR drills executed, SLOs/error budgets live, the GA checklist closed)
+  (migrations 0001–0036; the centralized posting engine with the full
   invariant suite is live and proven by its consumers — treasury posts every
   money movement through it, tax stamps every tax-carrying line with frozen
   rate snapshots BR-033, inventory posts every stock movement through it

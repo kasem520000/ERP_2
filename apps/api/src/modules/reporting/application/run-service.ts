@@ -15,6 +15,7 @@ import {
 } from "../domain/reporting-errors";
 import { assertContractPermission } from "./scope";
 import { onLedgerEvent } from "../../accounting/application/ledger-events";
+import { processMetrics } from "../../../infra/observability/metrics";
 import * as store from "../infrastructure/reporting.store";
 import { REPORT_CONTRACTS } from "../registry";
 import { generateUuidV7 } from "@erp/domain-core";
@@ -140,7 +141,14 @@ export class RunService {
     return this.executeInline({ runId, contract, params, ctx: request.ctx, cacheKey });
   }
 
-  /** The inline path (T3): query → aggregate → assert → envelope → store. */
+  /** The inline path (T3): query → aggregate → assert → envelope → store.
+   *
+   * PHASE-025 T9c wiring — the report-render SLO (MONITORING §5 "per
+   * template budget"; PERFORMANCE_TEST_PLAN T-04 tiers): this is the
+   * single completion point for BOTH execution classes (executeJob
+   * delegates here), so the render counters + the per-template duration
+   * sampler record here. Cache hits in run() are not renders and never
+   * reach this method — correctly excluded. */
   async executeInline(input: {
     runId: string;
     contract: ReportContract;
@@ -170,6 +178,12 @@ export class RunService {
         assertionStatus: status,
         durationMs: Date.now() - started,
       });
+      processMetrics.recordReportRender({
+        executionClass: input.contract.executionClass,
+        template: input.contract.id,
+        durationMs: Date.now() - started,
+        ok: true,
+      });
       this.cache.setForTenant(
         input.ctx.tenantId,
         input.cacheKey,
@@ -178,6 +192,12 @@ export class RunService {
       );
       return { runId: input.runId, result: envelope, status: "SUCCEEDED" };
     } catch (error) {
+      processMetrics.recordReportRender({
+        executionClass: input.contract.executionClass,
+        template: input.contract.id,
+        durationMs: Date.now() - started,
+        ok: false,
+      });
       await store.failRun(
         input.runId,
         error instanceof Error ? error.message.slice(0, 120) : "REPORT_RUN_FAILED",

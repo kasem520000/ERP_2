@@ -3,6 +3,8 @@ import { sql } from "drizzle-orm";
 
 import { AuditService } from "../../audit/api/audit";
 import { requireTenantContext, type TenantContext } from "../../../infra/db/tenant-context";
+import { childLogger } from "../../../infra/observability/logger";
+import { processMetrics } from "../../../infra/observability/metrics";
 import { PostingEngine, type PostingReadModel } from "../domain/posting-engine/posting-engine";
 import {
   type JournalSpec,
@@ -31,6 +33,24 @@ import {
  */
 
 const ENGINE = new PostingEngine();
+
+const log = childLogger({ module: "posting-service" });
+
+/**
+ * PHASE-025 T9c wiring — the posting SLO's zero-tolerance leg (MONITORING
+ * §3 PostingInvariantFail; POSTING_ENGINE.md §3): the INV-001/002 balance
+ * failure (ENTRY_NOT_BALANCED) is the engine-internal bug class — "should
+ * never fire". Every other PostingError code is a business-rule rejection
+ * (user-input class), not an invariant breach.
+ */
+function postingFailureClass(
+  error: unknown,
+): { code: string; invariant: boolean } {
+  if (error instanceof PostingError) {
+    return { code: error.code, invariant: error.code === "ENTRY_NOT_BALANCED" };
+  }
+  return { code: "UNKNOWN", invariant: false };
+}
 
 function isUniqueViolation(error: unknown): boolean {
   let candidate: unknown = error;
@@ -125,12 +145,47 @@ export class PostingService {
    * a stored entry for the same source key is returned as a replay —
    * sequential retries AND concurrent duplicates converge on one entry
    * (CC-01: the loser rolls back to the posting savepoint and replays).
+   *
+   * PHASE-025 T9c: the SLO counters wrap this method — every call is one
+   * engine attempt (a replay counts as a SUCCESS: convergence, not
+   * failure); the engine-path duration feeds erp_posting_duration_ms
+   * (T-02 budget) and a thrown posting records erp_posting_failures_total
+   * (+ erp_posting_invariant_failures_total + a fatal log line on the
+   * ENTRY_NOT_BALANCED class — the SF-024-021 triage path).
    */
   async post(
     spec: JournalSpec,
     options: { postedBy: string | null; onPosted?: (entryId: string) => Promise<void> } = {
       postedBy: null,
     },
+  ): Promise<PostingResult> {
+    processMetrics.recordPostingAttempt();
+    // Date.now() is integer-ms by definition: no float rounding involved.
+    const startedAt = Date.now();
+    try {
+      const result = await this.postUnchecked(spec, options);
+      processMetrics.recordPostingSuccess(Date.now() - startedAt);
+      return result;
+    } catch (error) {
+      const failure = postingFailureClass(error);
+      processMetrics.recordPostingFailure(failure.code, failure.invariant);
+      if (failure.invariant) {
+        log.fatal(
+          {
+            metric: "erp_posting_invariant_failures_total",
+            code: failure.code,
+            spec: { docType: spec.source.docType, docId: spec.source.docId, operation: spec.source.operation },
+          },
+          "POSTING INVARIANT FAILURE: the engine rejected an unbalanced entry (INV-001/002, RISK-009 — zero tolerance, auto-SEV-1) — investigate immediately",
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async postUnchecked(
+    spec: JournalSpec,
+    options: { postedBy: string | null; onPosted?: (entryId: string) => Promise<void> },
   ): Promise<PostingResult> {
     const ctx = requireTenantContext();
     // Idempotent replay short-circuit (sequential path).
@@ -293,10 +348,38 @@ export class PostingService {
    * directions, new entry date ≤ today in an open period, same-currency
    * rate = original rate, link reversal_of_id/reversed_by_id, mark the
    * original REVERSED — one transaction.
+   *
+   * PHASE-025 T9c: wrapped with the same SLO counters as post() — a
+   * reversal is an engine attempt too (it runs the same validations +
+   * write phase).
    */
   async reverse(
     input: ReversalInput,
     options: { reversedBy: string | null } = { reversedBy: null },
+  ): Promise<PostingResult> {
+    processMetrics.recordPostingAttempt();
+    // Date.now() is integer-ms by definition: no float rounding involved.
+    const startedAt = Date.now();
+    try {
+      const result = await this.reverseUnchecked(input, options);
+      processMetrics.recordPostingSuccess(Date.now() - startedAt);
+      return result;
+    } catch (error) {
+      const failure = postingFailureClass(error);
+      processMetrics.recordPostingFailure(failure.code, failure.invariant);
+      if (failure.invariant) {
+        log.fatal(
+          { metric: "erp_posting_invariant_failures_total", code: failure.code, originalEntryId: input.originalEntryId },
+          "POSTING INVARIANT FAILURE: the engine rejected an unbalanced reversal (INV-001/002, RISK-009 — zero tolerance, auto-SEV-1) — investigate immediately",
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async reverseUnchecked(
+    input: ReversalInput,
+    options: { reversedBy: string | null },
   ): Promise<PostingResult> {
     const ctx = requireTenantContext();
     const original = await journal.findEntryById(input.originalEntryId);

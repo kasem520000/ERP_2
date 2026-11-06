@@ -1,6 +1,6 @@
 # Disaster Recovery
 
-> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-10-27
+> **Status:** STABLE · **Owner:** Platform Operations · **Updated:** 2026-11-06
 
 Scenario-driven recovery plan for the worst days: region loss, database corruption,
 ransomware, a migration gone wrong at scale, or a multi-service outage. Backup mechanics
@@ -14,10 +14,10 @@ GA gate: the PHASE-025 drill (§5) must pass before GA release
 
 | # | Scenario | Definition / example trigger | Recovery path | RTO target | RPO target | First tested |
 |---|----------|------------------------------|---------------|-----------|-----------|--------------|
-| S1 | Region loss | Cloud region unavailable (network/power/provider incident) | Cross-region restore ([BACKUP_RESTORE_RUNBOOK.md](BACKUP_RESTORE_RUNBOOK.md) §7) | ≤ 8 h | ≤ 15 min (backup replication lag) | PHASE-025 rehearsal |
+| S1 | Region loss | Cloud region unavailable (network/power/provider incident) | Cross-region restore ([BACKUP_RESTORE_RUNBOOK.md](BACKUP_RESTORE_RUNBOOK.md) §7) | ≤ 8 h | ≤ 15 min (backup replication lag) | PHASE-025 rehearsal (2026-11-06 — local tier; the hosted recovery-region re-run is the follow-up obligation) |
 | S2 | DB instance loss | Instance deleted/failed, storage intact elsewhere | Snapshot + WAL recovery on new instance ([BACKUP_RESTORE_RUNBOOK.md](BACKUP_RESTORE_RUNBOOK.md) §6) | ≤ 4 h | ≤ 15 min (WAL archive interval) | First staging drill (MVP gate) |
 | S3 | Logical corruption | Bad migration/bug corrupts ledger data at scale | PITR to timestamp + re-post salvageable work ([BACKUP_RESTORE_RUNBOOK.md](BACKUP_RESTORE_RUNBOOK.md) §5) | ≤ 1 h to read-only recovery; ≤ 4 h full | Point-in-time (minutes before event) | Quarterly drills |
-| S4 | Ransomware / malicious destruction | Backup bucket tampering attempts, encrypted hosts | WORM backups are the lifeline: cross-region restore from locked objects (§6) | ≤ 8 h | ≤ 24 h (last nightly) with PITR option to ≤ 15 min | PHASE-025 tabletop |
+| S4 | Ransomware / malicious destruction | Backup bucket tampering attempts, encrypted hosts | WORM backups are the lifeline: cross-region restore from locked objects (§6) | ≤ 8 h | ≤ 24 h (last nightly) with PITR option to ≤ 15 min | Per-release-tier P-05 tabletop ([../security/INCIDENT_RESPONSE.md](../security/INCIDENT_RESPONSE.md) §8.2); the 2026-11-06 PHASE-025 tabletop walked S1 only |
 | S5 | Erroneous migration at scale | Deploy applied a migration producing wrong data shape/values | Freeze posting → forward-fix vs PITR decision tree ([DEPLOYMENT.md](DEPLOYMENT.md) §5) | Per incident (decision ≤ 1 h) | 0 if forward-fix; PITR window if restore | Quarterly drills |
 | S6 | Multi-service outage | One bad release breaks api + web + worker simultaneously | Application rollback of previous image ([DEPLOYMENT.md](DEPLOYMENT.md) §4; [CI_CD.md](CI_CD.md) §7) | ≤ 30 min | 0 (no data loss) | Every staging deploy exercises gates |
 
@@ -85,6 +85,22 @@ Templates (kept short on purpose; the status page carries the detail):
    completed within RTO; restore-from-backup proven").
 4. **Failure** of either part blocks the GA release until repeated successfully.
 
+**Drill execution (2026-11-06).** The **tabletop is COMPLETE** — the S1 region-loss walk
+executed cold from the written runbooks; record:
+[dr-drill-2026-11-06.md](dr-drill-2026-11-06.md) (decision walk + the gap list G1–G11
+with owners; two doc fixes applied in-flight). The **cross-region restore rehearsal runs
+at local tier via `pnpm --filter @erp/api restore:drill-ga`**
+([`apps/api/scripts/restore-drill-ga.ts`](../../apps/api/scripts/restore-drill-ga.ts))
+in the PHASE-025 serial gate — the orchestrator executes it (embedded-PG exclusivity:
+subagents do not boot instances) and fills the runbook §8 row's timings (the ORCH-FILL
+markers): two fresh embedded PostgreSQL 16 instances standing in for the primary +
+recovery regions, the recovery instance bootstrapped from virgin (full migration chain
+0001→0036), a nightly-shaped dump restored timed, §3 step 4 invariant smoke + row-count
+parity. **The recovery-region wall time (the full RTO ≤ 8 h clock) is infra-gated**: §7
+step 2's recorded IaC + `deploy/compose.prod.yml` provisioning and the step 4 DNS/LB
+cutover are the hosted legs — the hosted-tier re-run is the standing follow-up obligation
+recorded with the drill (gap G4 of the tabletop record).
+
 ## 6. Post-incident review (required for S1–S5; recommended for S6)
 
 - Held within **5 business days** of closure, blameless, run by someone who was not the
@@ -104,9 +120,9 @@ Reviewed quarterly (with the backup drill) and at each phase gate:
 
 | Readiness item | Owner | Verified by |
 |----------------|-------|-------------|
-| WORM backup bucket + cross-region replication current | Ops | [BACKUP_RESTORE_RUNBOOK.md](BACKUP_RESTORE_RUNBOOK.md) §8 attestation |
-| Infrastructure-as-code for re-provisioning LB/nodes/DB (recorded at provisioning) | Ops | Cold re-provision exercise at PHASE-025 rehearsal |
-| Status page + tenant notice templates (AR/EN) reachable and pre-drafted | Product + Ops | §3 templates reviewed each release |
+| WORM backup bucket + cross-region replication current | Ops | [BACKUP_RESTORE_RUNBOOK.md](BACKUP_RESTORE_RUNBOOK.md) §8 attestation — local-tier restore mechanics proven at the 2026-11-01 drill + re-run by the 2026-11-06 drills (§8 log rows — orchestrator-run, timings ORCH-FILL); the WORM/replication inspection itself is the hosted §8-attestation leg (tabletop gap G3) |
+| Infrastructure-as-code for re-provisioning LB/nodes/DB (recorded at provisioning) | Ops | Cold re-provision exercise at PHASE-025 rehearsal — exercised at local tier by `restore:drill-ga` (2026-11-06, orchestrator-run in the serial gate: fresh instance + full migration chain 0001→0036 + nightly-shaped restore); the IaC + `deploy/compose.prod.yml` provisioning leg remains hosted (tabletop gap G4) |
+| Status page + tenant notice templates (AR/EN) reachable and pre-drafted | Product + Ops | §3 templates reviewed each release — exercised in the 2026-11-06 S1 tabletop (AR+EN quoted verbatim); the status-page service itself is a hosted artifact (tabletop gap G6) |
 | On-call roster with escalation contacts current | Ops lead | Rotation handoff notes |
-| Tenant read-only mode flag tested (staging) | Engineering | PHASE-014+ staging exercise |
-| Incident severity ladder rehearsed (tabletop) | All | PHASE-025 GA drill §5 |
+| Tenant read-only mode flag tested (staging) | Engineering | PHASE-014+ staging exercise — tenant-scope enforcement proven in-platform (the PHASE-014 full-route read-only sweep); the ops-controlled platform-wide switch + its activation audit event are the open decision record (tabletop gap G5) |
+| Incident severity ladder rehearsed (tabletop) | All | PHASE-025 GA drill §5 — executed 2026-11-06 ([dr-drill-2026-11-06.md](dr-drill-2026-11-06.md)) |

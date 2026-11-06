@@ -3569,6 +3569,64 @@ export interface Dictionary {
   disclosureTriageBody: string;
   disclosureBountyNote: string;
   loginSecurityLink: string;
+
+  // -- PHASE-025 (T9d): the SLO / error-budget dashboard (/platform/slo) --
+  sloTitle: string;
+  sloSubtitle: string;
+  sloStateOk: string;
+  sloStateBurning2x: string;
+  sloStateBurning4x: string;
+  sloStateNoData: string;
+  sloNoDataNote: string;
+  sloBudgetLabel: string;
+  sloBudgetExhausted: string;
+  sloBurnLabel: string;
+  sloCardApiAvailability: string;
+  sloCardApiLatency: string;
+  sloCardPosting: string;
+  sloCardBackup: string;
+  sloCardSync: string;
+  sloCardReport: string;
+  sloSummaryTitle: string;
+  sloAvailabilityRequests: string;
+  sloAvailabilityErrors: string;
+  sloPostingAttempts: string;
+  sloPostingInvariantFailures: string;
+  sloSyncDeferred: string;
+  sloLatencyColGroup: string;
+  sloLatencyColP50: string;
+  sloLatencyColP95: string;
+  sloLatencyColP99: string;
+  sloLatencyColBudget: string;
+  sloLatencyColOverBudget: string;
+  sloRouteGroupIdentity: string;
+  sloRouteGroupAccounting: string;
+  sloRouteGroupSales: string;
+  sloRouteGroupPurchasing: string;
+  sloRouteGroupTreasury: string;
+  sloRouteGroupInventory: string;
+  sloRouteGroupSync: string;
+  sloRouteGroupPlatform: string;
+  sloReportColClass: string;
+  sloReportColRenders: string;
+  sloReportColBudget: string;
+  sloReportColOverBudget: string;
+  sloReportClassInline: string;
+  sloReportClassJob: string;
+  sloReportTemplatesTitle: string;
+  sloBackupNoteTitle: string;
+  sloBackupExternalCadence: string;
+  sloBackupNoFailuresNote: string;
+  sloBurnAlertsTitle: string;
+  sloBurnAlertsEmpty: string;
+  sloAlertSev1: string;
+  sloAlertSev2: string;
+  sloAlertSloBurn: string;
+  sloAlertPostingInvariant: string;
+  sloDataSourceTitle: string;
+  sloDataSourceNote: string;
+  sloWindowNote: string;
+  sloGeneratedAt: string;
 }
 
 const ar: Dictionary = {
@@ -7176,6 +7234,71 @@ const ar: Dictionary = {
   disclosureBountyNote:
     "برنامج المكافآت المدفوعة قرار منفصل بعد الإطلاق العام؛ وهذه الصفحة هي سياسة الإفصاح نفسها.",
   loginSecurityLink: "سياسة الإفصاح الأمني",
+
+  // -- PHASE-025 (T9d): SLO dashboard — Arabic -------------------------
+  sloTitle: "مؤشرات مستوى الخدمة",
+  sloSubtitle:
+    "لوحة مؤشرات مستوى الخدمة وميزانيات الأخطاء: المؤشرات الستة المعتمدة (التوفر، زمن الاستجابة، نجاح الترحيل، النسخ الاحتياطي وفحص الاستعادة، دفع المزامنة، توليد التقارير) مع معدلات استهلاك الميزانية وتنبيهات الحريق.",
+  sloStateOk: "سليم",
+  sloStateBurning2x: "حرق ٢×",
+  sloStateBurning4x: "حرق ٤×",
+  sloStateNoData: "لا بيانات",
+  sloNoDataNote: "لا توجد عينات في نافذة القياس الحالية.",
+  sloBudgetLabel: "المتبقي من ميزانية الأخطاء",
+  sloBudgetExhausted: "استُهلكت الميزانية كاملة",
+  sloBurnLabel: "معدل الحرق",
+  sloCardApiAvailability: "توفر الواجهة البرمجية",
+  sloCardApiLatency: "زمن الاستجابة (p95)",
+  sloCardPosting: "نجاح الترحيل المحاسبي",
+  sloCardBackup: "النسخ الاحتياطي وفحص الاستعادة",
+  sloCardSync: "نجاح دفع المزامنة",
+  sloCardReport: "مدة توليد التقارير",
+  sloSummaryTitle: "ملخص العدّادات",
+  sloAvailabilityRequests: "الطلبات (النافذة الحالية)",
+  sloAvailabilityErrors: "أخطاء 5xx",
+  sloPostingAttempts: "محاولات الترحيل",
+  sloPostingInvariantFailures: "إخفاقات الثوابت",
+  sloSyncDeferred: "أوامر مؤجلة",
+  sloLatencyColGroup: "المجموعة",
+  sloLatencyColP50: "p50",
+  sloLatencyColP95: "p95",
+  sloLatencyColP99: "p99",
+  sloLatencyColBudget: "الميزانية",
+  sloLatencyColOverBudget: "فوق الميزانية",
+  sloRouteGroupIdentity: "الهوية والمستأجرون",
+  sloRouteGroupAccounting: "المحاسبة",
+  sloRouteGroupSales: "المبيعات",
+  sloRouteGroupPurchasing: "المشتريات",
+  sloRouteGroupTreasury: "الخزينة والضرائب",
+  sloRouteGroupInventory: "المخزون والتصنيع",
+  sloRouteGroupSync: "المزامنة",
+  sloRouteGroupPlatform: "المنصة والتقارير",
+  sloReportColClass: "الفئة",
+  sloReportColRenders: "التوليدات",
+  sloReportColBudget: "الميزانية",
+  sloReportColOverBudget: "فوق الميزانية",
+  sloReportClassInline: "تفاعلي",
+  sloReportClassJob: "مهام خلفية",
+  sloReportTemplatesTitle: "أبطأ القوالب (p95)",
+  sloBackupNoteTitle: "ملاحظة النسخ الاحتياطي وفحص الاستعادة",
+  sloBackupExternalCadence:
+    "لا توجد بيانات في هذه النافذة: فحص الاستعادة الليلي والتمارين تعمل خارج عملية الواجهة — تُغذّى هذه البطاقة عبر مقبس التسجيل عند اكتمال خط المقاييس، ولا تُعرض حالة خضراء بلا بيانات.",
+  sloBackupNoFailuresNote:
+    "جميع عمليات فحص الاستعادة المسجلة في هذه النافذة ناجحة؛ أي إخفاق واحد يستنزف الميزانية فورًا (الهدف ١٠٠٪).",
+  sloBurnAlertsTitle: "تنبيهات حرق الميزانية",
+  sloBurnAlertsEmpty: "لا تنبيهات حرق نشطة في هذه النافذة.",
+  sloAlertSev1: "خطورة ١",
+  sloAlertSev2: "خطورة ٢",
+  sloAlertSloBurn:
+    "استهلاك ميزانية الأخطاء بمعدل {burn}× في «{slo}» — راجع دليل المعالجة (MONITORING §5 + TROUBLESHOOTING §api).",
+  sloAlertPostingInvariant:
+    "رفض محرك الترحيل قيدًا غير متوازن {count} مرة — تسامح صفري (RISK-009)، حقّق فورًا وفق دليل المعالجة (TROUBLESHOOTING §api).",
+  sloDataSourceTitle: "مصدر البيانات",
+  sloDataSourceNote:
+    "تُحسب هذه اللوحة من سجل المقاييس داخل العملية نفسها (نمط SF-024-021): عدّادات تراكمية وعيّنات زمن الاستجابة بأسماء موحّدة erp_، يلتقطها مصدّر OpenTelemetry عند تفعيله دون تغيير الأسماء.",
+  sloWindowNote:
+    "نافذة القياس هي عمر العملية الحالي (تُصفَّر العدّادات عند إعادة التشغيل)؛ نافذة الثلاثين يومًا لميزانية الأخطاء مسؤولية خط المقاييس، ولا تُفبرك هنا. حالة «لا بيانات» صريحة ولا تُعد نجاحًا.",
+  sloGeneratedAt: "آخر تقييم:",
 };
 
 const en: Dictionary = {
@@ -10792,6 +10915,71 @@ const en: Dictionary = {
   disclosureBountyNote:
     "A paid bug-bounty program is a separate post-GA decision; this page is the disclosure policy itself.",
   loginSecurityLink: "Security disclosure policy",
+
+  // -- PHASE-025 (T9d): SLO dashboard — English -----------------------
+  sloTitle: "Service SLOs",
+  sloSubtitle:
+    "The SLO / error-budget dashboard: the six finalized indicators (availability, latency, posting success, backup + restore-smoke, sync push, report rendering) with budget burn rates and burn alerts.",
+  sloStateOk: "OK",
+  sloStateBurning2x: "Burning 2×",
+  sloStateBurning4x: "Burning 4×",
+  sloStateNoData: "No data",
+  sloNoDataNote: "No samples in the current measurement window.",
+  sloBudgetLabel: "Error budget remaining",
+  sloBudgetExhausted: "Budget exhausted",
+  sloBurnLabel: "Burn rate",
+  sloCardApiAvailability: "API availability",
+  sloCardApiLatency: "API latency (p95)",
+  sloCardPosting: "Posting success",
+  sloCardBackup: "Backup + restore-smoke",
+  sloCardSync: "Sync push success",
+  sloCardReport: "Report render SLA",
+  sloSummaryTitle: "Counter summary",
+  sloAvailabilityRequests: "Requests (current window)",
+  sloAvailabilityErrors: "5xx errors",
+  sloPostingAttempts: "Posting attempts",
+  sloPostingInvariantFailures: "Invariant failures",
+  sloSyncDeferred: "Deferred commands",
+  sloLatencyColGroup: "Group",
+  sloLatencyColP50: "p50",
+  sloLatencyColP95: "p95",
+  sloLatencyColP99: "p99",
+  sloLatencyColBudget: "Budget",
+  sloLatencyColOverBudget: "Over budget",
+  sloRouteGroupIdentity: "Identity & tenancy",
+  sloRouteGroupAccounting: "Accounting",
+  sloRouteGroupSales: "Sales",
+  sloRouteGroupPurchasing: "Purchasing",
+  sloRouteGroupTreasury: "Treasury & tax",
+  sloRouteGroupInventory: "Inventory & manufacturing",
+  sloRouteGroupSync: "Sync",
+  sloRouteGroupPlatform: "Platform & reports",
+  sloReportColClass: "Class",
+  sloReportColRenders: "Renders",
+  sloReportColBudget: "Budget",
+  sloReportColOverBudget: "Over budget",
+  sloReportClassInline: "Interactive",
+  sloReportClassJob: "Background job",
+  sloReportTemplatesTitle: "Slowest templates (p95)",
+  sloBackupNoteTitle: "Backup + restore-smoke note",
+  sloBackupExternalCadence:
+    "No data in this window: the nightly restore-smoke and the drills run out-of-process — this card is fed through the recording seam when the metrics pipeline lands, and it is never shown green without data.",
+  sloBackupNoFailuresNote:
+    "Every restore-smoke run recorded in this window succeeded; any single miss exhausts the budget instantly (the 100% target).",
+  sloBurnAlertsTitle: "Budget burn alerts",
+  sloBurnAlertsEmpty: "No active burn alerts in this window.",
+  sloAlertSev1: "Sev-1",
+  sloAlertSev2: "Sev-2",
+  sloAlertSloBurn:
+    "Error-budget burning at {burn}× on “{slo}” — follow the runbook (MONITORING §5 + TROUBLESHOOTING §api).",
+  sloAlertPostingInvariant:
+    "The posting engine rejected an unbalanced entry {count} time(s) — zero tolerance (RISK-009); investigate immediately per the runbook (TROUBLESHOOTING §api).",
+  sloDataSourceTitle: "Data source",
+  sloDataSourceNote:
+    "This dashboard is computed from the in-process metrics registry (the SF-024-021 pattern): cumulative counters and latency samples under unified erp_ names, which the OpenTelemetry exporter swap picks up unchanged once a backend is chosen.",
+  sloWindowNote:
+    "The measurement window is the current process lifetime (counters reset on restart); the 30-day error-budget window is the metrics pipeline's concern and is never fabricated here. A “no data” state is explicit and is never treated as green.",
+  sloGeneratedAt: "Last evaluated:",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

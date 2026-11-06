@@ -63,6 +63,9 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   "platform/devices": { group: "navPlatformSection", label: "syncDevicesTitle" },
   "platform/sync-health": { group: "navPlatformSection", label: "syncHealthTitle" },
   "platform/sync-reconciliation": { group: "navPlatformSection", label: "syncReconciliationTitle" },
+  // -- PHASE-025 (T9d): the SLO / error-budget dashboard (registry-driven;
+  // this fallback covers nav-fetch failure — the support-sessions rule).
+  "platform/slo": { group: "navPlatformSection", label: "sloTitle" },
   // -- P6-T11a master-data routes -------------------------------------------
   partners: { group: "navPartners", label: "navPartnersDirectory" },
   "partners/new": { group: "navPartners", label: "navPartnersNew" },

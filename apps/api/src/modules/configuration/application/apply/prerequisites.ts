@@ -72,7 +72,11 @@ import {
 // substrate, the offboarding purge, the audit review tooling, the rate-limit
 // + headers hardening — no new industry-template capabilities, so no
 // template chain changes (the 023→024 bump is bookkeeping only).
-export const CURRENT_SHIPPED_PHASE = "PHASE-024";
+// PHASE-025 GA readiness shipped (2026-11-06): performance/DR/SLO evidence
+// + the in-process SLO substrate — GA hardening only, zero new plan keys or
+// template capabilities (the 024→025 bump is bookkeeping only; the roadmap
+// notes PHASE-026+ fixed-assets keys arrive with their own phase).
+export const CURRENT_SHIPPED_PHASE = "PHASE-025";
 
 /** "PHASE-0NN" → the numeric phase (for ordering). */
 export function phaseNumber(phase: string): number {

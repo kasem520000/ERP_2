@@ -1,9 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { sql } from "drizzle-orm";
 
 import { generateUuidV7 } from "@erp/domain-core";
 
 import { requireTenantContext } from "../../../infra/db/tenant-context";
+import { processMetrics } from "../../../infra/observability/metrics";
 import { AuditService } from "../../audit/api/audit";
 import { CountService } from "../../inventory/application/count-service";
 import { TransferService as InventoryTransferService } from "../../inventory/application/transfer-service";
@@ -411,30 +412,41 @@ function rejectFromSyncError(
 
 @Injectable()
 export class PushService {
+  // PHASE-025 SF-025-001: explicit @Inject tokens on EVERY constructor
+  // param (the repo's DI convention — journal-service/audit-service
+  // pattern). The bare-type signature relied on design:paramtypes
+  // metadata, which the tsx runtime emits but the vitest/esbuild transform
+  // does not — an app boot under vitest DI-constructed this service with
+  // ALL slots undefined, silently re-wiring the sync handler graph
+  // (configureHandlerServices) with undefined services and breaking every
+  // push (found by the GA full-load T-05 sync round-trip harness — the
+  // first spec to boot the app AND push through the spec-constructed
+  // service after the boot). Explicit tokens make the wiring identical in
+  // both runtimes — the fix the convention existed for.
   constructor(
-    posSales: PosSaleService,
-    shiftFlow: PosShiftFlowService,
-    audit: AuditService,
-    invoices: SalesInvoiceService,
+    @Inject(PosSaleService) posSales: PosSaleService,
+    @Inject(PosShiftFlowService) shiftFlow: PosShiftFlowService,
+    @Inject(AuditService) audit: AuditService,
+    @Inject(SalesInvoiceService) invoices: SalesInvoiceService,
     // PHASE-021 · DR-P21-08: the owning services of the seven desktop
     // write intents (MASTER-PLAN §6 table) — additive constructor slots,
     // same wiring as the 020 four (the Nest container's instances; specs
     // pass spec-constructed ones — the leads.spec pattern).
-    partners: PartnerService,
-    quotations: QuotationService,
-    deliveries: DeliveryNoteService,
-    expenses: ExpenseService,
-    treasuryTransfers: TreasuryTransferService,
-    inventoryTransfers: InventoryTransferService,
-    stockCounts: CountService,
+    @Inject(PartnerService) partners: PartnerService,
+    @Inject(QuotationService) quotations: QuotationService,
+    @Inject(DeliveryNoteService) deliveries: DeliveryNoteService,
+    @Inject(ExpenseService) expenses: ExpenseService,
+    @Inject(TreasuryTransferService) treasuryTransfers: TreasuryTransferService,
+    @Inject(InventoryTransferService) inventoryTransfers: InventoryTransferService,
+    @Inject(CountService) stockCounts: CountService,
     // PHASE-022 · DR-P22-06: the owning services of the three field write
     // intents (MASTER-PLAN §6 + §1) — additive constructor slots, same
     // wiring as the 021 seven (the Nest container's instances; specs pass
     // spec-constructed ones — the leads.spec pattern).
-    receipts: ReceiptService,
-    allocations: AllocationService,
-    vanStock: VanStockService,
-    creditNotes: CreditNoteService,
+    @Inject(ReceiptService) receipts: ReceiptService,
+    @Inject(AllocationService) allocations: AllocationService,
+    @Inject(VanStockService) vanStock: VanStockService,
+    @Inject(CreditNoteService) creditNotes: CreditNoteService,
   ) {
     // The handlers call the DI'd owning-module services (single source of
     // instances; specs instantiate this class directly, which wires the
@@ -806,6 +818,28 @@ export class PushService {
         results.push(finish(rejected));
       }
     }
+    // PHASE-025 T9c wiring — the sync-push SLO (MONITORING §5 ≥ 99.5%
+    // within 24 h; the in-process window is process-lifetime): terminal
+    // outcomes only (ACCEPTED + REJECTED — the health aggregate's
+    // successRate definition; DEFERRED is backpressure, never a terminal
+    // failure, so it lands in its own observability counter).
+    let acceptedCount = 0;
+    let rejectedCount = 0;
+    let deferredCount = 0;
+    for (const item of results) {
+      if (item.status === "ACCEPTED") {
+        acceptedCount += 1;
+      } else if (item.status === "REJECTED") {
+        rejectedCount += 1;
+      } else {
+        deferredCount += 1;
+      }
+    }
+    processMetrics.recordSyncPushOutcomes({
+      accepted: acceptedCount,
+      rejected: rejectedCount,
+      deferred: deferredCount,
+    });
     return { results };
   }
 }

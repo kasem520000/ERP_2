@@ -4,6 +4,82 @@
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
 
+- 2026-11-06 — **PHASE-025 — Performance, Reliability & GA Readiness (COMPLETE — **GA
+  RELEASE `v1.1.0`** · CalVer `v1.26.11.0` · tags `release/v1.1.0` + `v1.26.11.0` +
+  `phase/025` created by the orchestrator at commit time — the repo carries `.git`, so
+  the release tags are real repository objects this time (the v1.0.0 zip handover could
+  only record the instruction)**: the honest-split discipline end-to-end — everything
+  provable in this environment EXECUTED with evidence; the hosted legs (production-class
+  k6 full-load, the 12 h staging soak, the recovery-region wall time, the external
+  pen-test firm, the 30-day nightly restore-smoke cadence) carry the standing
+  owner-directive waiver (2026-10-28) with local-equivalent evidence + named follow-ups;
+  a missed item = a documented INCOMPLETE, never a quiet pass. NO new migrations, tables,
+  or permission keys (§4 tuning-only; catalog unchanged at 156 tables / 244 keys).
+  T1/T2 (PERF-A): `ga-fixtures.ts` (deterministic 10× mix — 1 large ≈100k docs/50
+  users + 50 mid ≈10k/5–10 + 500 small ≈1k/1–2 = 1,175 concurrent, 1.1M documents,
+  60/25/15 sales/purchases/treasury, RLS on) + `ga-full-load.db.spec.ts` (T-01…T-08
+  assertions + the §4 DB baselines incl. EXPLAIN top-10 with the RLS predicate
+  index-driven) — local-harness tier (embedded PostgreSQL 16); the production-class
+  hosted run remains the INFRA-GATED gate leg (PERFORMANCE_TEST_PLAN §8: passing on
+  weaker hardware does NOT close the gate). T4a `ga-spike.db.spec.ts`: 429-before-
+  collapse via the R-04 per-tenant limiter + recovery. T4b `report-hammer.db.spec.ts`:
+  noisy-neighbor isolation PROVEN (small tenant within budgets under the large tenant's
+  heaviest concurrent report load) + the honest finding recorded: NO per-tenant
+  report-run quota exists (MULTI_TENANCY §5 gap) → the GA checklist's open note with
+  the owning slot `DR-P25-07`. T5 `soak-shaped.db.spec.ts`: the compressed soak with
+  no-drift slope assertions (heap/queue-depth/budget) — the 12 h staging soak gated.
+  T6 (DR-C): the S1 region-loss tabletop walked COLD from written runbooks only
+  (`dr-drill-2026-11-06.md` — decision points + the G1–G11 gap list as actions) + the
+  §7 cross-region-shaped rehearsal at local tier (`restore:drill-ga`: fresh env + full
+  0001–0036 chain re-apply + timed nightly-shaped restore + invariant smoke + parity;
+  the IaC/cutover + recovery-region wall time = hosted follow-ups). T7: the
+  second-engineer cold PITR restore (§4 shape) executed from the runbook only —
+  runbook §8 row 2026-11-06 (timings/smoke: gate output); the monthly attestation
+  honestly NOT SIGNED (no 30-day hosted cadence yet; first attestable month 2026-12).
+  T8: the DEPLOYMENT.md cold validation — PASS with fixes (3 §2 smoke-block code-drift
+  bugs + 3 doc drifts fixed; `deployment-cold-run-2026-11-06.md`). T9 (SLO-B): the SLO
+  substrate LIVE — `infra/observability/metrics.ts` (in-process registry,
+  `erp_<module>_<name>_<unit>`) + `infra/http/metrics.middleware.ts` (golden signals
+  per route group) + `infra/observability/slo.ts` (the MONITORING §5 six SLOs, burn
+  2×/4×, SLOBurn) + `GET /api/v1/platform/slo` + the `/[locale]/platform/slo` screen
+  (AR/EN); NO_DATA never green (the backup leg honestly waits for the pipeline —
+  SF-024-021/DR-P25-06); the error-budget policy ("feature releases pause on
+  exhaustion") recorded verbatim in the GA checklist. T10: `check:observability` (every
+  §3 alert → runbook anchor; §1 dashboards; naming; retention; redaction). T12: the
+  findings-log closure re-read — 0 Critical open; 3 High (SF-024-016/017 build-time/
+  unreachable + SF-024-022 residual) with 30-day clocks + rationale, 2 Medium
+  (SF-024-018/021) 90-day; regression specs per fixed finding in the suites; the GA
+  re-test slice = the orchestrator's full gate on the release SHA (isolation/attack
+  specs inside). T13 (DOCS-D): the **GA release checklist**
+  `implementation/phases/reports/GA-RELEASE-CHECKLIST.md` (the 11 PHASE-025 §6 criteria
+  × truthful status markers — 1 INFRA-GATED, 5 CLOSED-LOCAL-TIER, 5 CLOSED — evidence
+  slots filled by the orchestrator's gate outputs + the GA-candidate SHA slot), the
+  **bilingual
+  release notes** `operations/release-notes/v1.1.0.md` (AR-first + EN; user-facing;
+  the honest state markers: ZATCA UNVERIFIED/not enabled, ETA none, payments sandbox,
+  personal accounts read-only, iOS no, SLA undefined, retention under legal review),
+  the RELEASE_STRATEGY execution-log **v1.1.0 row** + v1.1.0 notes (tags real this
+  time), and the MASTER_ROADMAP §GA-gate evidence marking. T14 (DOCS-D): the post-GA
+  pointer records — `decisions/security/DR-P25-01-bug-bounty.md` (PROPOSED: scope
+  tiers, PHASE-024 T14 disclosure-policy linkage, reward model open; trigger
+  post-GA review), `decisions/product/DR-P25-02-support-sla.md` (OQ-008: per-severity
+  targets vs the MONITORING §4 on-call reality), `decisions/product/
+  DR-P25-03-personal-payments.md` (OQ-007: read-only posture governs; what changes if
+  personal accounts open), `decisions/compliance/DR-P25-04-eta-uae-followup.md`
+  (DR-003 DEFERRED + RISK-007 + the fake-eta harness; UAE waits for official specs),
+  `decisions/product/DR-P25-05-ios-client.md` (the ADR-0014 slot; the PHASE-022
+  two-capability precedent), `decisions/technical/DR-P25-06-observability-exporter.md`
+  (SF-024-021: the names are live, the pipeline picks them up; with DR-003),
+  `decisions/technical/DR-P25-07-report-quota.md` (the PERF-A finding's owning slot) —
+  all PROPOSED with trigger + owner; the new `decisions/security/` folder + README +
+  the decisions indexes updated (no vague aspirations). Final gate (orchestrator,
+  serial): typecheck/lint/depcruise · db suite with the new perf specs
+  DB suite **143 files/2035 tests** (+4 perf files); ga-full-load T-01 p95=8ms · T-02 23ms · T-04 interactive 1ms cached/343ms compute + statements 1576ms · T-05 round-trip 122ms · T-06 183/177ms · T-07 0/305 · T-08 111.3 posts/s — ALL within budget ·
+  restore drills §4 quarterly 1.3s restore (RTO 4h GREEN) + §7 cross-region-shaped 1.1s restore leg/2.3s chain bootstrap/7.0s wall (RTO 8h GREEN) — both invariant-smoke a–f green, parity 5/5 · check:observability · the
+  drift battery (docs:validate, permissions-drift 244=244, rls, capabilities, i18n,
+  deps) · unit suites api 32/334 · web 5/73 · desktop 16/274 · mobile 27/393 — ALL GREEN
+  — the serial orchestrator gate 2026-11-06: typecheck 8/8 · lint 8/8 · depcruise 0 violations/2209 modules · DB 143/2035 · drift battery (docs:validate 29/29 · permissions-drift 244=244 · capabilities agree · i18n 3399=3399 · check:deps 0 violations) — ALL GREEN. — PHASE-025
+
 - 2026-11-06 — **PHASE-024 — Security Hardening & Compliance Review (COMPLETE — the
   honest split: internal leg evidenced; the external pen-test firm leg infra-gated as
   the recorded waiver; OQ-009 BLOCKED-EXTERNAL per DR-024-02)**: migration

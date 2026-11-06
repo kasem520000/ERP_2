@@ -1,6 +1,6 @@
 # Release Strategy
 
-> **Status:** STABLE · **Owner:** Platform Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Platform Architecture · **Updated:** 2026-11-06
 
 ## Release tiers and definitions
 
@@ -83,6 +83,7 @@ and is tagged per the CalVer scheme like every other release.
 | Release | Date | Tier | Quality gates | Evidence |
 |---------|------|------|---------------|----------|
 | **v1.0.0 (MVP)** — CalVer `v1.26.10.0` per §Branching & versioning | 2026-11-01 | MVP (PHASE-001…014) | CI-equivalent local gate: **ALL 17 steps green** (typecheck, lint + module boundaries, depcruise, permissions-drift 224=224, unit 244 tests, db suite 69 files/1153 tests on embedded PostgreSQL 16, build, token contrast, i18n parity 1723/1723, ui-catalog 37↔60, visual harness 16/16 + axe, web CSP/security probe, docs validation 29/29, negative meta-tests ×3). Migration rehearsal: fresh-apply of 0001–0021 proven by every db-suite boot + the restore drill's clean chain apply. Security checklist: [MVP_SECURITY_REVIEW.md](../security/MVP_SECURITY_REVIEW.md) — 0 prod criticals, findings triaged, zero open blockers (pen-test PHASE-024 per §Scope split). Performance smoke vs NFR-006: T-01 33 ms p95 @100k docs / T-02 10 ms / T-04 14 ms compute / T-06 156 ms AR + 160 ms EN / T-07 0.000% 5xx (local harness; hosted k6 staged). Docs freeze: IMPLEMENTATION_STATUS (001–014 COMPLETE), CHANGELOG, handoff set updated; docs validation green. Restore rehearsal: PASSED (runbook §8 drill record, 2026-11-01). | [PHASE-014-COMPLETION.md](../implementation/phases/reports/PHASE-014-COMPLETION.md) |
+| **v1.1.0 (GA)** — CalVer `v1.26.11.0` per §Branching & versioning | 2026-11-06 | GA (PHASE-023…025) | CI-equivalent local gate (the PHASE-025 serial gate, all steps): **typecheck 8/8 · lint 8/8 · depcruise 0 violations/2209 modules · DB suite 143 files/2035 tests (ga-full-load 13/13: T-01 8ms · T-02 23ms · T-04 1ms/1576ms · T-05 122ms · T-06 183/177ms · T-07 0.000% · T-08 111.3 posts/s; ga-spike 1/1: 429@1001 + A/B isolation + window recovery; report-hammer 1/1; soak-shaped 1/1: retained-heap ratio 0.996) · unit api 32/334 · web 5/73 · desktop 16/274 · mobile 27/393 · docs:validate 29/29 · permissions-drift 244=244 · check:rls in-suite green · capabilities-matrix agree · i18n 3399=3399 · check:deps 0 violations · check:observability 19 alerts/11 dashboards/35 metrics GREEN** Migration rehearsal: **no new migrations this phase** (tuning only, PHASE-025 §4); the 0001–0036 chain fresh-applies on every db-suite boot + both restore drills (§4 quarterly + §7 cross-region-shaped) — **§4 quarterly: 0.2s dump/1.3s restore (RTO 4h GREEN), a–f green, parity 5/5; §7 cross-region-shaped: 2.3s chain bootstrap + 1.1s restore (RTO 8h GREEN, restore leg), a–f + boss-exclusion green, parity 5/5, wall 7.0s — both PASSED 2026-11-06 (runbook §8 rows)**. Security checklist: [security-findings.md](../operations/security-findings.md) re-read at the gate — **0 Critical open**; 3 High open with rationale + 30-day SLA clocks (build-time-only/unreachable/residual); regression tests per fixed finding in the suite (gate re-run green: DB suite 143/2035 incl. isolation/attack specs); external pen-test firm leg the standing infra-gated waiver, internal §11 re-verification green; scoped GA re-test = the full suite incl. isolation/attack specs on the release SHA: **143 files/2035 tests ALL PASS 2026-11-06**. Performance: the GA load specs at the documented 10× mix (1,175 concurrent users, 1.1M docs, RLS on) — **T-01 p95 8ms (p50 6/p99 8) @100k · T-02 23ms (5/30) · T-04 interactive 1ms cached, compute tb 343ms; statements 1576ms (922/1576) · T-05 122ms (46/119) · T-06 183ms AR/177ms EN · T-07 0/305 · T-08 111.3 posts/s; DB baselines: pool 40% (8/20, 0 waiters), EXPLAIN 10/10 RLS-predicate-present index-driven, slow-queries interactive 0/62, queue drain-stable (failed-delta 0), cross-tenant locks: concurrent 86ms vs sequential 664ms (overlap proven); spike: 429-before-collapse at ceiling 1000/10s + A/B isolation + ≤15s recovery; hammer: small tenant 14/15ms under concurrent large-tenant TB storm; soak: retained-heap 0.996 ratio, 0 5xx** (local harness tier — embedded PostgreSQL 16; the hosted production-class re-run carries the gate); production-class hosted k6 + 12 h staging soak remain the infra-gated legs (standing waiver; PERFORMANCE_TEST_PLAN §8 weaker-hardware rule). Docs freeze: IMPLEMENTATION_STATUS (001–025 COMPLETE, GA RELEASE recorded), CHANGELOG GA entry, bilingual release notes ([release-notes/v1.1.0.md](../operations/release-notes/v1.1.0.md)); docs validation green: **29/29** (2026-11-06). Restore rehearsals: quarterly §4 cold drill + §7 cross-region-shaped, both executed 2026-11-06 (runbook §8 rows). **Tags created by the orchestrator at commit time — the repo carries `.git` (unlike the MVP zip handover, these are real repository objects): `release/v1.1.0` + CalVer alias `v1.26.11.0` + `phase/025`.** | [GA-RELEASE-CHECKLIST.md](../implementation/phases/reports/GA-RELEASE-CHECKLIST.md) |
 
 ### v1.0.0 notes
 
@@ -96,3 +97,32 @@ and is tagged per the CalVer scheme like every other release.
   completion report records this instruction as the release record.
 - Rollback posture: expand-contract migrations (0001–0021 additive), entitlement-gated
   feature surface, no data rollback paths — per §Rollback above.
+
+### v1.1.0 notes
+
+- **Gate record**: the enumerated close-out of every GA-gate clause with status markers
+  (CLOSED / CLOSED-LOCAL-TIER / INFRA-GATED / OPEN) is
+  [GA-RELEASE-CHECKLIST.md](../implementation/phases/reports/GA-RELEASE-CHECKLIST.md)
+  (PHASE-025 §6's 11 acceptance criteria; the honest-marker ledger). The release ships
+  only COMPLETE phases with evidence — the PHASE-023/024 INCOMPLETE gated items ship as
+  honest UNVERIFIED/NOT_STARTED states (ZATCA stub refuses to submit; payment
+  production cutover pending [product/DR-002](../decisions/product/DR-002-payment-provider-selection.md)),
+  never as claims.
+- **Hosted-infra gates waived per the standing owner directive (2026-10-28 — same
+  pattern as v1.0.0)**: production-class hosted k6 full-load, the 12 h staging soak, the
+  recovery-region wall time of the cross-region rehearsal, the external pen-test firm,
+  and the 30-day nightly restore-smoke cadence (first attestable month 2026-12) —
+  local-equivalent evidence in the checklist + drill records; follow-ups tracked in
+  [NEXT_ACTION.md](../handoff/NEXT_ACTION.md).
+- **Tags are real this time**: `release/v1.1.0`, `v1.26.11.0` (CalVer alias), and
+  `phase/025` are created by the orchestrator at commit time on the GA-candidate SHA —
+  the repository carries `.git` end-to-end through PHASE-025 (the MVP release could only
+  record the tag *instruction*; this release records the tags).
+- **Post-GA pointers**: every open item has an owning decision-record slot
+  ([decisions/](../decisions/README.md) — DR-P25-01…07, filed 2026-11-06): bug bounty,
+  support SLA (OQ-008), personal-account payments (OQ-007), ETA/UAE follow-ups, iOS,
+  the OTel exporter swap (SF-024-021), and the per-tenant report-run quota
+  (MULTI_TENANCY §5).
+- Rollback posture unchanged: expand-contract only, staged client channels with
+  crash-rate gates + `minVersion` force-update (ADR-0014/0013 channels), forward-fix
+  preferred, restore-from-backup last resort per [INCIDENT_RESPONSE.md](../security/INCIDENT_RESPONSE.md).

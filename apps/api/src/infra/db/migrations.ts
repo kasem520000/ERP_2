@@ -118,6 +118,14 @@ export const MIGRATIONS: readonly string[] = [
   // modules, feature keys, or permission keys — the installments/notes plan
   // grants landed with 0038 already).
   "0039_education_template",
+  // PHASE-033: 0040_agriculture_template.sql (the agriculture commercial
+  // shell per ED-09 — configuration only: the industry_templates registry
+  // seed converging the 0008 index row to the full v1.0.0
+  // industry.agriculture manifest, the §J inventory.valuation report-key
+  // reconciliation; NO new tables, modules, feature keys, or permission
+  // keys — every required key was already granted by 0008/0026/0027, the
+  // first shipped template whose REQUIRED chain needs no plan grants).
+  "0040_agriculture_template",
 ];
 
 /**

@@ -274,6 +274,13 @@
       "when": 1794100000000,
       "tag": "0039_education_template",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1794150000000,
+      "tag": "0040_agriculture_template",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Template: Agriculture (Commercial Shell) — `agriculture`
 
-> **Status:** STABLE · **Owner:** Industry Solutions Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Industry Solutions Architecture · **Updated:** 2026-11-08
 
 Farming economics on the trading core: every **crop cycle الدورة الزراعية** is a BOM recipe
 run as a production order costed to a **field project الحقل**, harvests land as **batches
@@ -78,7 +78,7 @@ schema: [../README.md](../README.md) §3. Signature flow summary:
   },
   "report_defaults": [
     { "report_key": "manufacturing.production_cost", "pinned": true, "dashboard": true, "default_period": "this_year" },
-    { "report_key": "inventory.stock_valuation", "pinned": true, "dashboard": false, "default_period": "custom" },
+    { "report_key": "inventory.valuation", "pinned": true, "dashboard": false, "default_period": "custom" },
     { "report_key": "inventory.expiry_list", "pinned": true, "dashboard": false, "default_period": "this_week" },
     { "report_key": "manufacturing.batch_genealogy", "pinned": true, "dashboard": false, "default_period": "custom" }
   ],
@@ -197,8 +197,10 @@ agriculture-specific asset flow (none is needed).
 ## Reports emphasized
 
 `manufacturing.production_cost` (cycle: planned vs actual inputs, yield, crop loss —
-dashboard), `inventory.stock_valuation`, `inventory.expiry_list` (perishables),
-`manufacturing.batch_genealogy` — see [../reports/README.md](../reports/README.md).
+dashboard), `inventory.valuation`, `inventory.expiry_list` (perishables),
+`manufacturing.batch_genealogy` — see [../reports/README.md](../reports/README.md). The
+`inventory.valuation` pin is the live registry key (the 0025 automotive / 0039 education
+reconciliation precedent — `inventory.stock_valuation` was the pre-013 planning id).
 
 ## Out of scope for this template (ED-09, ED-11 — commercial shell only)
 

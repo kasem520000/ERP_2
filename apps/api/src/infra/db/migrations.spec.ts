@@ -47,7 +47,13 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // for industry.education v1.0.0, no schema objects; executes on the
     // PHASE-027 lineage per the stage-10 independence while the lost
     // interim 028–031 states remain NOT_STARTED).
-    expect(files.at(-1)?.tag).toBe("0039_education_template");
+    // PHASE-033: 0040_agriculture_template (the agriculture commercial
+    // shell per ED-09 — configuration only: the industry_templates registry
+    // seed for industry.agriculture v1.0.0, no schema objects; the §J
+    // inventory.valuation report-key reconciliation; every required key
+    // already granted by 0008/0026/0027 — zero new plan grants; executes
+    // on the same PHASE-027 lineage).
+    expect(files.at(-1)?.tag).toBe("0040_agriculture_template");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

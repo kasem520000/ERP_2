@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AGRICULTURE_TEMPLATE_MANIFEST,
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
   EDUCATION_TEMPLATE_MANIFEST,
@@ -43,16 +44,20 @@ describe("phase gate helpers", () => {
     expect(() => phaseNumber("PHASE-16")).toThrow();
   });
 
-  it("CURRENT_SHIPPED_PHASE is PHASE-027 (the notes/installments release shipped with it; the PHASE-032 education shell ships configuration-only on top)", () => {
+  it("CURRENT_SHIPPED_PHASE is PHASE-027 (the notes/installments release shipped with it; the PHASE-032 education shell and the PHASE-033 agriculture shell ship configuration-only on top)", () => {
     expect(CURRENT_SHIPPED_PHASE).toBe("PHASE-027");
     expect(phaseNumber(CURRENT_SHIPPED_PHASE)).toBe(27);
-    // PHASE-032 honesty note: the education commercial shell shipped with
-    // migration 0039 WITHOUT bumping the gate — every education capability
-    // gates at ≤ PHASE-027 (installment_terms@027 is the highest), and the
+    // PHASE-032/033 honesty note: the education and agriculture commercial
+    // shells shipped with migrations 0039/0040 WITHOUT bumping the gate —
+    // every education capability gates at ≤ PHASE-027, and agriculture's
+    // keys all resolve through grants shipped at ≤ 027 (the phase gate
+    // only engages for MISSING keys, so crop_cycle_costing — whose
+    // available_from_phase is PHASE-033 — classifies INCLUDED on plans
+    // that grant its keys, and phase-gated on plans that do not). The
     // stage-9 features (028 budgeting / 029 payroll) plus the stage-10
     // siblings (030 wholesale+electronics / 031 healthcare) were lost to
     // environment resets on this lineage and remain unshipped, so claiming
-    // 028–031 would be false. The gate constant stays the honest statement
+    // 028–032 would be false. The gate constant stays the honest statement
     // of which phases' features are live in THIS build.
   });
 });
@@ -321,6 +326,156 @@ describe("capability classification (industries/README §4)", () => {
     expect(check.guidance?.en).toContain("installments.plans");
   });
 
+  it("agriculture × business: the full season set is INCLUDED on the already-transcribed grants (0026/0027/0008 — ZERO new grants)", () => {
+    const check = checkPrerequisites(AGRICULTURE_TEMPLATE_MANIFEST, business());
+    expect(check.status).toBe("ok");
+    expect(check.missingChain).toEqual([]);
+    expect(check.closureViolations).toEqual([]);
+    // The season backbone: crop_cycle_costing's keys (manufacturing.bom/
+    // production_orders @ the 0026 grants + accounting.projects @ the 0027
+    // grants) are ALL granted, so the REQUIRED capability classifies
+    // INCLUDED even though its available_from_phase is PHASE-033 > the
+    // 027 gate — the phase gate only engages for MISSING keys (the §4
+    // decision tree: fully present ⇒ included, the roadmap marker never
+    // labels a granted key coming-soon).
+    expect(stateOf(check, "crop_cycle_costing")).toMatchObject({
+      status: "included",
+      featureKeys: ["manufacturing.bom", "manufacturing.production_orders", "accounting.projects"],
+    });
+    expect(stateOf(check, "harvest_batches")).toMatchObject({
+      status: "included",
+      featureKeys: ["inventory.batch_tracking", "manufacturing.batch_genealogy"],
+    });
+    expect(stateOf(check, "bom_production")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "expiry_tracking_fefo")).toMatchObject({ status: "included" });
+    // The OPTIONAL set: livestock serials ride the 0008 base grant, the
+    // genealogy/QC keys the 0026 grants, the tier/commission keys the 0025
+    // grants, landed_costs the 0008 base, pdc_notes the 0038 grants, and
+    // cashier_shifts the 016 intake — all INCLUDED. The one exception is
+    // shipment_tracking: distribution.shipment_tracking is NOT a
+    // plan-granted key (the §17 pending-intake posture — exactly like
+    // professional_services' deposits_late_fees pair), so the entry
+    // degrades HIDDEN — an upgrade path, never a coming-soon label
+    // (governance #7's degrade-cleanly posture).
+    expect(stateOf(check, "batch_genealogy")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "qc_inspections")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "customer_price_tiers")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "commissions")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "landed_costs")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "pdc_notes")).toMatchObject({
+      status: "included",
+      featureKeys: ["notes.received"],
+    });
+    expect(stateOf(check, "cashier_shifts")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "shipment_tracking")).toMatchObject({
+      status: "hidden",
+      missingKeys: ["distribution.shipment_tracking"],
+    });
+    expect(check.requiresAcknowledgement).toBe(false);
+  });
+
+  it("agriculture × starter: blocked with the exact uncovered season chain; crop_cycle_costing labels phase_gated @ PHASE-033 (the roadmap marker on ungranted keys)", () => {
+    const check = checkPrerequisites(AGRICULTURE_TEMPLATE_MANIFEST, [...PLAN_KEYS.starter]);
+    expect(check.status).toBe("blocked");
+    // The tier-4 posture (starter never carried the manufacturing/batch/
+    // projects sets): the uncovered REQUIRED chain — harvest_batches
+    // contributes both its keys (batch_tracking + batch_genealogy),
+    // bom_production both of its, plus the uncovered engine key and the
+    // uncovered cost-centers required key (the projects key itself stays
+    // out of the chain: crop_cycle_costing — the capability covering it —
+    // classifies phase_gated, so it never enters blockedChain). None of the
+    // blocked keys is phase-gated (their phases all shipped ≤ 027), so
+    // starter is a hard block with bilingual guidance naming the exact
+    // keys.
+    expect(check.missingChain).toEqual([
+      "accounting.cost_centers",
+      "industry.template_engine",
+      "inventory.batch_tracking",
+      "manufacturing.batch_genealogy",
+      "manufacturing.bom",
+      "manufacturing.production_orders",
+    ]);
+    expect(stateOf(check, "harvest_batches")).toMatchObject({
+      status: "blocked",
+      missingKeys: ["inventory.batch_tracking", "manufacturing.batch_genealogy"],
+    });
+    expect(stateOf(check, "bom_production")).toMatchObject({ status: "blocked" });
+    expect(stateOf(check, "expiry_tracking_fefo")).toMatchObject({ status: "blocked" });
+    // crop_cycle_costing — the one capability whose available_from_phase
+    // (PHASE-033) is beyond the 027 gate: its keys are ungranted on starter,
+    // so the §4 decision tree labels it PHASE-GATED ("coming with
+    // PHASE-033", the roadmap availability marker) instead of blocked.
+    // The overall apply is still blocked on the other uncovered REQUIRED
+    // keys; the label is the honest statement that this capability rides
+    // the template's own phase, not a plan upgrade path.
+    expect(stateOf(check, "crop_cycle_costing")).toMatchObject({
+      status: "phase_gated",
+      phase: "PHASE-033",
+      missingKeys: ["manufacturing.bom", "manufacturing.production_orders", "accounting.projects"],
+    });
+    // Bilingual guidance names the chain (never silent degradation).
+    expect(check.guidance?.ar).toContain("manufacturing.bom");
+    expect(check.guidance?.en).toContain("manufacturing.bom");
+    expect(check.guidance?.ar).toContain("inventory.batch_tracking");
+    expect(check.guidance?.en).toContain("inventory.batch_tracking");
+  });
+
+  it("agriculture without inventory.serial_tracking: the livestock surfaces hide cleanly — never blocks, never phase-labels (governance #7)", () => {
+    // The OPTIONAL livestock posture: a business plan minus serial tracking
+    // (the pre-PHASE-010 lineage, or a tenant category opt-out posture)
+    // hides the OPTIONAL entries that need it while the REQUIRED season
+    // chain stays fully INCLUDED — serial tracking is a leaf key (nothing
+    // depends on it, FEATURE_DEPS §7), so the tenant-set closure stays
+    // intact and nothing blocks.
+    const keys = business().filter((key) => key !== "inventory.serial_tracking");
+    const check = checkPrerequisites(AGRICULTURE_TEMPLATE_MANIFEST, keys);
+    expect(check.status).toBe("ok");
+    expect(check.missingChain).toEqual([]);
+    expect(check.closureViolations).toEqual([]);
+    expect(stateOf(check, "crop_cycle_costing")).toMatchObject({ status: "included" });
+    // The livestock register nav item + the livestock onboarding step ride
+    // the OPTIONAL key — the capability matrix carries no livestock entry
+    // (it is a nav/onboarding surface, not a capability_prerequisites
+    // row), so the classification table simply never mentions it; the
+    // hide happens at the navigation-pruning layer (deriveNavigation).
+  });
+
+  it("agriculture without manufacturing.bom (REQUIRED key): the apply blocks fail-loud with the exact key — governance #7's REQUIRED posture", () => {
+    // The phase plan §6 example: a plan missing a REQUIRED key (e.g.,
+    // manufacturing.bom) blocks onboarding with actionable guidance.
+    // bom_production (018 ≤ 027, shipped) blocks on its missing key, so the
+    // whole apply degrades with missingChain = ["manufacturing.bom"] and
+    // bilingual guidance naming it. NOTE the honest difference from
+    // education's torn notes cluster: the BR-040 closureViolations list
+    // stays EMPTY here because the closure universe is the active set ∪
+    // the manifest's own required keys — manufacturing.bom rides the
+    // required set, so the union restores closure and the block surfaces
+    // through the capability classification instead (education's
+    // notes.received was OUTSIDE its required set, so tearing it orphaned
+    // the four notes.* dependents in the closure list; a required key
+    // cannot orphan anything — the apply itself refuses).
+    const keys = business().filter((key) => key !== "manufacturing.bom");
+    const check = checkPrerequisites(AGRICULTURE_TEMPLATE_MANIFEST, keys);
+    expect(check.status).toBe("blocked");
+    expect(check.missingChain).toEqual(["manufacturing.bom"]);
+    expect(check.closureViolations).toEqual([]);
+    // The capability posture beside the block: bom_production blocks on
+    // its missing key (018 ≤ 027 — shipped), while crop_cycle_costing
+    // labels phase_gated (033 > 027 — its keys are missing AND its owning
+    // phase is beyond the gate). What blocks the apply is the named chain,
+    // never a silent partial season.
+    expect(stateOf(check, "bom_production")).toMatchObject({
+      status: "blocked",
+      missingKeys: ["manufacturing.bom"],
+    });
+    expect(stateOf(check, "crop_cycle_costing")).toMatchObject({
+      status: "phase_gated",
+      phase: "PHASE-033",
+    });
+    expect(check.guidance?.ar).toContain("manufacturing.bom");
+    expect(check.guidance?.en).toContain("manufacturing.bom");
+  });
+
   it("education without the notes family: pdc_notes hides cleanly — never blocks, never phase-labels", () => {
     // A plan that never carried the notes cluster (the honest governance-#7
     // posture — a pre-0038 lineage): removing the WHOLE notes family keeps
@@ -401,6 +556,11 @@ describe("BR-040 dependency closure over required_feature_keys (§7)", () => {
       // PHASE-032: the education closure — enterprise carries the installments
       // + notes sets (0038) on top of the crm chain (0027).
       EDUCATION_TEMPLATE_MANIFEST,
+      // PHASE-033: the agriculture closure — enterprise carries the
+      // manufacturing (0026) + projects/cost-centers (0027/0008) + batch
+      // (0008) chains; shipment_tracking stays HIDDEN (ungranted §17
+      // pending-intake key — an OPTIONAL upgrade path, never a block).
+      AGRICULTURE_TEMPLATE_MANIFEST,
     ]) {
       const check = checkPrerequisites(manifest, enterprise());
       expect(check.status, manifest.id).toBe("ok");

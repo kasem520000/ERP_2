@@ -1,4 +1,5 @@
 import {
+  AGRICULTURE_TEMPLATE_MANIFEST,
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
   EDUCATION_TEMPLATE_MANIFEST,
@@ -24,13 +25,22 @@ import type {
 } from "../domain/layer-model";
 
 /**
- * Unit-test layer-input fixtures (PHASE-015 §6): the eight shipped
+ * Unit-test layer-input fixtures (PHASE-015 §6): the nine shipped
  * manifests × the three plan seeds (migration 0008/0021/0024/0025/0026/
  * 0027 + the PHASE-027 0038 grants — the installments/notes set the
  * education template's REQUIRED/OPTIONAL chains resolve through — key and
  * limits lists, transcribed) × the SA jurisdiction seed (migration
  * 0013). Shared by config-resolution.spec (property/precedence tests) and
  * golden-effective-configs.spec (pinned hashes).
+ *
+ * PHASE-033 note: the agriculture template requires NO grant additions —
+ * its REQUIRED chain (manufacturing.bom/production_orders @ 0026,
+ * inventory.batch_tracking + accounting.cost_centers @ 0008, purchasing/
+ * sales @ the starter base, accounting.projects @ 0027) and every OPTIONAL
+ * entry except shipment_tracking (distribution.shipment_tracking — not a
+ * plan-granted key; degrades HIDDEN, the §17 pending-intake posture)
+ * resolve through the already-transcribed grants, so BUSINESS_KEYS is
+ * byte-identical to the PHASE-032 transcription.
  */
 
 export const SHIPPED_TEMPLATES: readonly IndustryTemplateManifest[] = [
@@ -42,6 +52,7 @@ export const SHIPPED_TEMPLATES: readonly IndustryTemplateManifest[] = [
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
   EDUCATION_TEMPLATE_MANIFEST,
+  AGRICULTURE_TEMPLATE_MANIFEST,
 ];
 
 /** L1 from a shipped manifest (applied state, no tenant overrides). */

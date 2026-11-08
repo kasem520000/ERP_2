@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
+  AGRICULTURE_TEMPLATE_MANIFEST,
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
   EDUCATION_TEMPLATE_MANIFEST,
@@ -21,8 +22,8 @@ import {
 
 /**
  * PHASE-015 T3 test hook (extended by PHASE-017 T2, PHASE-018 T2,
- * PHASE-019 T2, and PHASE-032 T1): all eight v1.0.0 manifests validate
- * against the §3 schema;
+ * PHASE-019 T2, PHASE-032 T1, and PHASE-033 T1): all nine v1.0.0 manifests
+ * validate against the §3 schema;
  * negative fixtures are rejected with the precise issue; the content hash is
  * canonical and deterministic (applied_manifest_hash). The automotive/
  * distribution pair is transcribed verbatim from the migration 0025 registry
@@ -40,7 +41,12 @@ import {
  * (docs mirror: docs/industries/templates/manifests/manifest.education.json —
  * the §J doc reconciliation applied: partners.ar_aging pinned to the live
  * `ar.aging` registry key, exactly the §12 precedent) and pins the live
- * installments/notes-era report keys.
+ * installments/notes-era report keys. The agriculture template is
+ * transcribed verbatim from the migration 0040 registry seed (docs mirror:
+ * docs/industries/templates/manifests/manifest.agriculture.json — the §J
+ * doc reconciliation applied: inventory.stock_valuation pinned to the live
+ * `inventory.valuation` registry key, the 0025/0039 precedent) and pins
+ * the live manufacturing/inventory-era report keys.
  */
 
 function cloneManifest(manifest: IndustryTemplateManifest): IndustryTemplateManifest {
@@ -93,14 +99,14 @@ function expectSingleIssue(
   }
 }
 
-describe("shipped industry template manifests (v1.0.0 — retail / grocery / restaurant / automotive / distribution / food_manufacturing / professional_services / education)", () => {
-  it("all eight parse against the §3 schema and round-trip identically", () => {
+describe("shipped industry template manifests (v1.0.0 — retail / grocery / restaurant / automotive / distribution / food_manufacturing / professional_services / education / agriculture)", () => {
+  it("all nine parse against the §3 schema and round-trip identically", () => {
     for (const manifest of SHIPPED_TEMPLATE_MANIFESTS) {
       expect(parseIndustryTemplateManifest(manifest)).toStrictEqual(manifest);
     }
   });
 
-  it("the registry ships exactly the eight ids at 1.0.0", () => {
+  it("the registry ships exactly the nine ids at 1.0.0", () => {
     expect(SHIPPED_TEMPLATE_MANIFESTS.map((manifest) => manifest.id)).toEqual([
       "industry.retail",
       "industry.grocery",
@@ -110,6 +116,7 @@ describe("shipped industry template manifests (v1.0.0 — retail / grocery / res
       "industry.food_manufacturing",
       "industry.professional_services",
       "industry.education",
+      "industry.agriculture",
     ]);
     expect(SHIPPED_TEMPLATE_MANIFESTS.every((manifest) => manifest.version === "1.0.0")).toBe(true);
   });
@@ -407,6 +414,163 @@ describe("shipped industry template manifests (v1.0.0 — retail / grocery / res
       level: "OPTIONAL",
       feature_keys: ["notes.received"],
       available_from_phase: "PHASE-027",
+    });
+  });
+
+  it("the PHASE-033 template pins the season/harvest navigation and the agriculture policy set (0040)", () => {
+    // The report pins: the two live manufacturing registry keys plus the
+    // two live inventory keys — inventory.valuation being the §J
+    // reconciliation (the pre-0040 doc draft said inventory.stock_valuation,
+    // exactly the §12 precedent on the 0025 automotive transcription and
+    // the §J precedent on the 0039 education transcription).
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.report_defaults.map((pin) => pin.report_key)).toEqual([
+      "manufacturing.production_cost",
+      "inventory.valuation",
+      "inventory.expiry_list",
+      "manufacturing.batch_genealogy",
+    ]);
+    expect(
+      AGRICULTURE_TEMPLATE_MANIFEST.report_defaults.find(
+        (pin) => pin.report_key === "manufacturing.production_cost",
+      ),
+    ).toMatchObject({ pinned: true, dashboard: true, default_period: "this_year" });
+    expect(
+      AGRICULTURE_TEMPLATE_MANIFEST.report_defaults.find(
+        (pin) => pin.report_key === "inventory.valuation",
+      ),
+    ).toMatchObject({ pinned: true, dashboard: false, default_period: "custom" });
+    // The season/harvest navigation groups ship as-is with the §2 targets
+    // (accounting.projects / manufacturing.bom / manufacturing.orders /
+    // inventory.batches / sales.invoices / inventory.serials — ordinary
+    // surfaces, zero agriculture-specific ones).
+    expect(
+      AGRICULTURE_TEMPLATE_MANIFEST.navigation_manifest.groups.map((group) => group.id),
+    ).toEqual(["season", "harvest"]);
+    const season = AGRICULTURE_TEMPLATE_MANIFEST.navigation_manifest.groups.find(
+      (group) => group.id === "season",
+    )!;
+    expect(season.items.map((item) => item.target)).toEqual([
+      "accounting.projects",
+      "manufacturing.bom",
+      "manufacturing.orders",
+    ]);
+    const harvestTrade = AGRICULTURE_TEMPLATE_MANIFEST.navigation_manifest.groups.find(
+      (group) => group.id === "harvest",
+    )!;
+    expect(harvestTrade.items.map((item) => item.target)).toEqual([
+      "inventory.batches",
+      "sales.invoices",
+      "inventory.serials",
+    ]);
+    // The season backbone rides in the required keys: the PHASE-018
+    // manufacturing chain (granted to business/enterprise by migration 0026)
+    // + the PHASE-019 projects dimension (0027) + the PHASE-010 batch
+    // tracking + the starter-base purchasing/sales + the engine itself —
+    // ZERO new grants needed (the first template whose REQUIRED chain
+    // resolves entirely through already-transcribed grants).
+    for (const key of [
+      "industry.template_engine",
+      "manufacturing.bom",
+      "manufacturing.production_orders",
+      "inventory.batch_tracking",
+      "purchasing.orders",
+      "purchasing.goods_receipts",
+      "sales.invoices",
+      "accounting.projects",
+      "accounting.cost_centers",
+    ]) {
+      expect(AGRICULTURE_TEMPLATE_MANIFEST.required_feature_keys).toContain(key);
+    }
+    // The six §2 workflow policies land as L1 defaults: four agriculture-owned
+    // POLICY_REGISTRY keys (no settingsKey mapping — the deliberate 0040
+    // choice, the 0039 precedent) + scrap_reason_required and
+    // consumption_variance_threshold_pct REUSING the PHASE-018 manufacturing
+    // keys (templates never fork policy keys).
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.workflow_policies).toEqual({
+      cycle_order_per_field_project: true,
+      harvest_batch_genealogy_enabled: true,
+      field_cost_center_mandatory_on_cycle: true,
+      scrap_reason_required: true,
+      consumption_variance_threshold_pct: 5,
+      livestock_serial_per_head: true,
+    });
+    // The CYC/GRN/INV/DLV/TRF numbering rules (production_order is the one
+    // series-bearing document with per_branch + reserve_on_approval — CYC
+    // reserved at release per the §2 policy; the rest tenant-level).
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.document_numbering_defaults.production_order).toEqual({
+      prefix: "CYC",
+      format: "CYC-{yyyy}-{seq:5}",
+      per_branch: true,
+      reserve_on_approval: true,
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.document_numbering_defaults.goods_receipt).toEqual({
+      prefix: "GRN",
+      format: "GRN-{yyyy}-{seq:6}",
+      per_branch: false,
+      reserve_on_approval: false,
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.document_numbering_defaults.stock_transfer).toEqual({
+      prefix: "TRF",
+      format: "TRF-{yyyy}-{seq:5}",
+      per_branch: false,
+      reserve_on_approval: false,
+    });
+    // The terminology carries the season Arabic (crop.cycle the الدورة
+    // الزراعية, harvest.batch the دفعة الحصاد, livestock.head the رأس).
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.terminology_overrides["crop.cycle"]).toEqual({
+      en: "Crop cycle",
+      ar: "الدورة الزراعية",
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.terminology_overrides["harvest.batch"]).toEqual({
+      en: "Harvest batch",
+      ar: "دفعة الحصاد",
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.terminology_overrides["livestock.head"]).toEqual({
+      en: "Livestock head",
+      ar: "رأس",
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.terminology_overrides["mfg.scrap"]).toEqual({
+      en: "Crop loss",
+      ar: "الفاقد",
+    });
+    // The capability posture: crop_cycle_costing REQUIRED at PHASE-033 (the
+    // template's own availability marker — its keys resolve through grants
+    // shipped ≤ 019, so it classifies INCLUDED on plans that grant them;
+    // the phase gate only labels MISSING keys) and pdc_notes OPTIONAL
+    // riding the 0038 notes.received grant (governance #7), with
+    // shipment_tracking OPTIONAL on the ungranted §17 pending-intake key
+    // (degrades HIDDEN — the upgrade-path posture).
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.capability_prerequisites.crop_cycle_costing).toEqual({
+      level: "REQUIRED",
+      feature_keys: ["manufacturing.bom", "manufacturing.production_orders", "accounting.projects"],
+      available_from_phase: "PHASE-033",
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.capability_prerequisites.harvest_batches).toEqual({
+      level: "REQUIRED",
+      feature_keys: ["inventory.batch_tracking", "manufacturing.batch_genealogy"],
+      available_from_phase: "PHASE-018",
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.capability_prerequisites.pdc_notes).toEqual({
+      level: "OPTIONAL",
+      feature_keys: ["notes.received"],
+      available_from_phase: "PHASE-027",
+    });
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.capability_prerequisites.shipment_tracking).toEqual({
+      level: "OPTIONAL",
+      feature_keys: ["distribution.shipment_tracking"],
+      available_from_phase: "PHASE-019",
+    });
+    // The inventory defaults pin the produce posture: WAC costing, batch +
+    // expiry on (perishability windows), FEFO picking on, serial per
+    // category (livestock opt-in), negative stock forbidden.
+    expect(AGRICULTURE_TEMPLATE_MANIFEST.inventory_policy_defaults).toEqual({
+      costing_method: "WAC",
+      default_track_batch: true,
+      default_track_expiry: true,
+      default_track_serial: false,
+      default_imei_tracking: false,
+      fefo_picking: true,
+      allow_negative_stock: false,
     });
   });
 });

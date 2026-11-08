@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AGRICULTURE_TEMPLATE_MANIFEST,
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
   EDUCATION_TEMPLATE_MANIFEST,
@@ -19,10 +20,11 @@ import { PLAN_KEYS, layerInputsFixture, l1Of, type PlanKey } from "./layer-fixtu
 /**
  * PHASE-015 §6 golden effective-configs (CONFIGURATION_ENGINE §10 #2):
  * one pinned, hashed effective config per shipped template × plan ×
- * jurisdiction example — the eight v1.0.0 manifests (retail / grocery /
+ * jurisdiction example — the nine v1.0.0 manifests (retail / grocery /
  * restaurant + the PHASE-017 automotive / distribution pair + the
  * PHASE-018 food manufacturing template + the PHASE-019 professional
- * services template + the PHASE-032 education template) × the plan seeds
+ * services template + the PHASE-032 education template + the PHASE-033
+ * agriculture template) × the plan seeds
  * (migration 0008/0021/0024/0025/0026/0027 + the PHASE-027 0038 grants)
  * × the SA jurisdiction seed (migration 0013, pack 1.0.0-baseline, VAT in
  * force, registered tenant).
@@ -71,6 +73,21 @@ import { PLAN_KEYS, layerInputsFixture, l1Of, type PlanKey } from "./layer-fixtu
  * compose pipeline over the updated fixtures (recorded in the
  * PHASE-032-COMPLETION report; the old→new table lives in
  * agent-ctx/P32-T5-golden-pins.md).
+ *
+ * PHASE-033 review note: ZERO existing pins move — the first shipped
+ * template whose REQUIRED chain resolves ENTIRELY through the
+ * already-transcribed grants (manufacturing.bom/production_orders @ the
+ * 0026 block, inventory.batch_tracking + accounting.cost_centers @ the
+ * 0008 base, purchasing/sales @ the starter base, accounting.projects @
+ * the 0027 block), so layer-fixtures is byte-identical to the PHASE-032
+ * transcription; and the four new agriculture POLICY_REGISTRY keys carry
+ * NO settingsKey mapping (the 0039 precedent), so non-agriculture
+ * tenants' policy maps are untouched. All 25 existing pins re-verified
+ * byte-stable by re-running the compose pipeline (the education ×
+ * business spot check: 29e14755…f7cbc unchanged); the three new
+ * agriculture rows pin with the rest (recorded in the
+ * PHASE-033-COMPLETION report; the reviewed table lives in
+ * agent-ctx/P33-T5-golden-pins.md).
  */
 
 const GOLDEN: Readonly<
@@ -177,6 +194,22 @@ const GOLDEN: Readonly<
   "industry.education × enterprise": {
     template: EDUCATION_TEMPLATE_MANIFEST,
     hash: "sha256:421a8d59db03671e3cd968ce37eee3498ac4e753e3375eb24e55bf3c4a68d637",
+  },
+  // -- PHASE-033 (migration 0040 seed; starter = degraded back-office —
+  // the manufacturing/batch/projects REQUIRED chain is ungranted there,
+  // exactly the tier-4 posture of the 0025/0026/0027/0039 templates
+  // before it; ZERO existing pins move — see the review note above)
+  "industry.agriculture × starter": {
+    template: AGRICULTURE_TEMPLATE_MANIFEST,
+    hash: "sha256:61b168b4a659a4d295504488a979bb6ad0e1579fc76f076a0f33349d11d0f034",
+  },
+  "industry.agriculture × business": {
+    template: AGRICULTURE_TEMPLATE_MANIFEST,
+    hash: "sha256:7261f1a473e216d560417b632b78486deb5384af93afefcc12f6d0fd2058c0c9",
+  },
+  "industry.agriculture × enterprise": {
+    template: AGRICULTURE_TEMPLATE_MANIFEST,
+    hash: "sha256:f0e4e461c659ea4206649ea059a8064c5b15068d5ab0af848a8db5a76df96fa5",
   },
   // The platform-default tenant (no template applied — L1 neutral).
   "(no template) × business": {
@@ -525,6 +558,99 @@ describe("golden effective-configs: template × plan × jurisdiction SA (pinned 
     ]);
     // The nav groups stay (ungated core targets render; the feature-keyed
     // items hide at the navigation-pruning layer, config-resolution.spec).
+
+    // Agriculture on business (PHASE-033): the season chain resolves LIVE
+    // entirely on the already-transcribed grants — the season/harvest groups
+    // derive with the manufacturing module enabled, the four agriculture
+    // workflow policies land as L1 defaults under their raw registry keys
+    // (no settingsKey mapping — the 0039 precedent), and the two reused
+    // PHASE-018 manufacturing keys carry the manifest values (crop loss
+    // reason-coded; the 5% variance threshold — both identical to the
+    // platform defaults, the template asserting the posture).
+    const agriculture = composeTenantStaticConfig(
+      layerInputsFixture({ template: AGRICULTURE_TEMPLATE_MANIFEST, plan: "business" }),
+    );
+    expect(agriculture.layers.l4_entitlements.missing).toEqual([]);
+    expect(agriculture.ui.navigation).toEqual(["season", "harvest"]);
+    const seasonGroup = agriculture.ui.navigation_tree.find((group) => group.id === "season")!;
+    expect(seasonGroup.items.map((item) => item.target)).toEqual([
+      "accounting.projects",
+      "manufacturing.bom",
+      "manufacturing.orders",
+    ]);
+    const harvestGroup = agriculture.ui.navigation_tree.find((group) => group.id === "harvest")!;
+    expect(harvestGroup.items.map((item) => item.target)).toEqual([
+      "inventory.batches",
+      "sales.invoices",
+      "inventory.serials",
+    ]);
+    expect(seasonGroup.items.every((item) => item.phase_gated === undefined)).toBe(true);
+    expect(harvestGroup.items.every((item) => item.phase_gated === undefined)).toBe(true);
+    expect(agriculture.ui.terminology["crop.item"]).toEqual({
+      en: "Crop",
+      ar: "المحصول",
+    });
+    expect(agriculture.ui.terminology["crop.cycle"]).toEqual({
+      en: "Crop cycle",
+      ar: "الدورة الزراعية",
+    });
+    expect(agriculture.ui.terminology["mfg.recipe"]).toEqual({
+      en: "Crop-cycle recipe (BOM)",
+      ar: "وصفة الدورة الزراعية (قائمة المواد)",
+    });
+    expect(agriculture.ui.terminology["harvest.batch"]).toEqual({
+      en: "Harvest batch",
+      ar: "دفعة الحصاد",
+    });
+    expect(agriculture.ui.terminology["farm.field"]).toEqual({
+      en: "Farm / Field",
+      ar: "المزرعة / الحقل",
+    });
+    expect(agriculture.ui.terminology["livestock.head"]).toEqual({
+      en: "Livestock head",
+      ar: "رأس",
+    });
+    expect(agriculture.ui.terminology["mfg.scrap"]).toEqual({
+      en: "Crop loss",
+      ar: "الفاقد",
+    });
+    expect(agriculture.policies["cycle_order_per_field_project"]).toBe(true); // L1 manifest default
+    expect(agriculture.policies["harvest_batch_genealogy_enabled"]).toBe(true);
+    expect(agriculture.policies["field_cost_center_mandatory_on_cycle"]).toBe(true);
+    expect(agriculture.policies["livestock_serial_per_head"]).toBe(true);
+    expect(agriculture.policies["manufacturing.scrap_reason_required"]).toBe(true); // the PHASE-018 reuse
+    expect(agriculture.policies["manufacturing.consumption_variance_threshold_pct"]).toBe(5); // the PHASE-018 reuse
+    expect(agriculture.policies["numbering.production_order.assign_at"]).toBe("approval"); // CYC reserved at release
+    expect(agriculture.policies["sales.cash_autopost"]).toBe(false); // back-office, never POS-first
+    expect(agriculture.policies["inventory.fefo_for_expiry_items"]).toBe(true); // FEFO produce picking
+    expect(agriculture.layers.l8_installed.manufacturing).toBe(true);
+
+    // Agriculture on starter: degraded back-office — the tier-4 posture (no
+    // 0040 grants: the manufacturing/batch/projects REQUIRED chain is
+    // uncovered, exactly the 0025/0026/0027/0039 posture). The nav groups
+    // stay (the ungated fields + produce-sales targets render; the
+    // feature-keyed recipes/cycles/batches/livestock items hide).
+    const agricultureStarter = composeTenantStaticConfig(
+      layerInputsFixture({ template: AGRICULTURE_TEMPLATE_MANIFEST, plan: "starter" }),
+    );
+    expect(agricultureStarter.layers.l4_entitlements.missing).toEqual([
+      "accounting.cost_centers",
+      "accounting.projects",
+      "industry.template_engine",
+      "inventory.batch_tracking",
+      "manufacturing.bom",
+      "manufacturing.production_orders",
+    ]);
+    expect(
+      agricultureStarter.ui.navigation_tree.find((group) => group.id === "season")!.items.map(
+        (item) => item.target,
+      ),
+    ).toEqual(["accounting.projects"]);
+    expect(
+      agricultureStarter.ui.navigation_tree.find((group) => group.id === "harvest")!.items.map(
+        (item) => item.target,
+      ),
+    ).toEqual(["sales.invoices"]);
 
     // The platform defaults (no template): the four manufacturing keys ride
     // the SETTINGS_REGISTRY defaults into every tenant's policy map — the

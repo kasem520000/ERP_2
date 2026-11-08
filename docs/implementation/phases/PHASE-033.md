@@ -1,6 +1,9 @@
 # PHASE-033 — Agriculture Commercial Shell
 
-> **Status:** PLANNED · **Updated:** 2026-10-28
+> **Status:** COMPLETE · **Updated:** 2026-11-08 — configuration-only scope
+> shipped on the PHASE-027 lineage (see
+> [reports/PHASE-033-COMPLETION.md](reports/PHASE-033-COMPLETION.md)); the
+> DB-level governance suites re-run on the harness environment.
 
 ## 1. Phase Overview
 

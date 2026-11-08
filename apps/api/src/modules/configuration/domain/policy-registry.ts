@@ -7,13 +7,13 @@ import type { WorkflowPolicyValue } from "@erp/contracts";
  * the platform policy registry; unknown keys are rejected").
  *
  * A manifest may only set policy keys THIS registry knows — every key used
- * by the eight shipped templates (retail / grocery / restaurant + the
+ * by the nine shipped templates (retail / grocery / restaurant + the
  * PHASE-017 automotive / distribution pair + the PHASE-018
  * food_manufacturing template + the PHASE-019 professional_services
- * template + the PHASE-032 education template, v1.0.0,
- * `packages/contracts/src/industry/templates.ts`) is transcribed below with
- * its canonical type, owning module, and optional mapping onto a
- * SETTINGS_REGISTRY key (L5 override surface).
+ * template + the PHASE-032 education template + the PHASE-033 agriculture
+ * template, v1.0.0, `packages/contracts/src/industry/templates.ts`) is
+ * transcribed below with its canonical type, owning module, and optional
+ * mapping onto a SETTINGS_REGISTRY key (L5 override surface).
  *
  * `inventory.fefo_for_expiry_items` NOTE (deliberate): grocery/restaurant
  * set FEFO via `inventory_policy_defaults.fefo_picking`, NOT via
@@ -366,6 +366,43 @@ export const POLICY_REGISTRY: Readonly<Record<string, PolicyDefinition>> = Objec
     "installments",
     true,
     "PHASE-032 §2: the aging buckets of installments.aging drive the guardian reminder cycle before any late-fee posting — policy + report configuration over the PHASE-027 module, no new dunning engine.",
+  ),
+  // --- agriculture (PHASE-033) -------------------------------------------------
+  // The season shell sets six workflow_policies; two —
+  // `scrap_reason_required` and `consumption_variance_threshold_pct` —
+  // REUSE the PHASE-018 manufacturing keys above (crop loss rides the
+  // G-18 scrap surface; the 5% variance threshold rides the §5 review
+  // flag; templates never fork policy keys). The four below are
+  // agriculture-owned. None maps onto a SETTINGS_REGISTRY key: they are
+  // template-level postures of the PHASE-018 manufacturing module + the
+  // PHASE-010 inventory surfaces it composes (L1 defaults the tenant may
+  // still override via the L5 settings surface's generic policy keys —
+  // the deliberate no-settingsKey choice, the 0039 precedent: platform-
+  // default policy maps stay byte-stable for every non-agriculture
+  // tenant, so no existing golden pin moves).
+  "cycle_order_per_field_project": booleanPolicy(
+    "cycle_order_per_field_project",
+    "manufacturing",
+    true,
+    "PHASE-033 §2: every cycle run order is stamped with its field project (accounting.projects) — one order per (field, cycle); multi-crop rotations are separate cycle orders (the no-co-product constraint).",
+  ),
+  "harvest_batch_genealogy_enabled": booleanPolicy(
+    "harvest_batch_genealogy_enabled",
+    "manufacturing",
+    true,
+    "PHASE-033 §2: completion links consumed input batches → harvest batch → produce sales through manufacturing.batch_genealogy — the recall-support traceability chain; the template composes the PHASE-018 surface, no new genealogy primitive.",
+  ),
+  "field_cost_center_mandatory_on_cycle": booleanPolicy(
+    "field_cost_center_mandatory_on_cycle",
+    "manufacturing",
+    true,
+    "PHASE-033 §2: a cycle order without the crop cost-center stamp fails (typed, fail-closed) — per-field profitability rides the accounting.cost_centers dimension on every cycle order, input issue, and produce sale.",
+  ),
+  "livestock_serial_per_head": booleanPolicy(
+    "livestock_serial_per_head",
+    "inventory",
+    true,
+    "PHASE-033 §2: livestock categories opt into inventory.serial_tracking with one serial per head (رأس) — status per animal; intake through existing documents; no biological-asset revaluation path exists (the documented IAS-41 limitation).",
   ),
 });
 

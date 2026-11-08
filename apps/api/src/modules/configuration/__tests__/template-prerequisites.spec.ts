@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
+  EDUCATION_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
   PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
   RESTAURANT_MANIFEST,
@@ -42,9 +43,17 @@ describe("phase gate helpers", () => {
     expect(() => phaseNumber("PHASE-16")).toThrow();
   });
 
-  it("CURRENT_SHIPPED_PHASE is PHASE-027 (the notes/installments release shipped with it)", () => {
+  it("CURRENT_SHIPPED_PHASE is PHASE-027 (the notes/installments release shipped with it; the PHASE-032 education shell ships configuration-only on top)", () => {
     expect(CURRENT_SHIPPED_PHASE).toBe("PHASE-027");
     expect(phaseNumber(CURRENT_SHIPPED_PHASE)).toBe(27);
+    // PHASE-032 honesty note: the education commercial shell shipped with
+    // migration 0039 WITHOUT bumping the gate — every education capability
+    // gates at ≤ PHASE-027 (installment_terms@027 is the highest), and the
+    // stage-9 features (028 budgeting / 029 payroll) plus the stage-10
+    // siblings (030 wholesale+electronics / 031 healthcare) were lost to
+    // environment resets on this lineage and remain unshipped, so claiming
+    // 028–031 would be false. The gate constant stays the honest statement
+    // of which phases' features are live in THIS build.
   });
 });
 
@@ -258,6 +267,114 @@ describe("capability classification (industries/README §4)", () => {
     });
     expect(check.requiresAcknowledgement).toBe(false);
   });
+
+  it("education × business: the full tuition set is INCLUDED (0038 grants)", () => {
+    const check = checkPrerequisites(EDUCATION_TEMPLATE_MANIFEST, business());
+    expect(check.status).toBe("ok");
+    expect(check.missingChain).toEqual([]);
+    expect(check.closureViolations).toEqual([]);
+    // The installment_terms backbone (PHASE-027 keys granted to business by
+    // migration 0038) and the enrollment-contract source (crm 0027 grants)
+    // both resolve LIVE — no phase gates anywhere (the highest education
+    // gate is installment_terms/pdc_notes @ PHASE-027, already shipped).
+    expect(stateOf(check, "installment_terms")).toMatchObject({
+      status: "included",
+      featureKeys: ["installments.plans", "installments.collections", "installments.late_fees"],
+    });
+    expect(stateOf(check, "service_contracts")).toMatchObject({ status: "included" });
+    // The OPTIONAL set: pdc_notes rides the 0038 notes.received grant
+    // (INCLUDED — parents paying by post-dated cheques), customer_price_tiers
+    // rides the 0025 grants, cashier_shifts the 016 intake; the two §17
+    // pending-intake keys (crm.contract_deposits + crm.late_fees) degrade
+    // HIDDEN exactly like professional_services — an upgrade path, never a
+    // coming-soon label (governance #7's degrade-cleanly posture).
+    expect(stateOf(check, "pdc_notes")).toMatchObject({
+      status: "included",
+      featureKeys: ["notes.received"],
+    });
+    expect(stateOf(check, "recurring_billing")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "customer_price_tiers")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "cashier_shifts")).toMatchObject({ status: "included" });
+    expect(stateOf(check, "deposits_late_fees")).toMatchObject({
+      status: "hidden",
+      missingKeys: ["crm.contract_deposits", "crm.late_fees"],
+    });
+    expect(check.requiresAcknowledgement).toBe(false);
+  });
+
+  it("education × starter: blocked with the exact uncovered tuition chain (guided plan selection)", () => {
+    const check = checkPrerequisites(EDUCATION_TEMPLATE_MANIFEST, [...PLAN_KEYS.starter]);
+    expect(check.status).toBe("blocked");
+    // The tier-4 posture (0038 skipped starter): the installment_terms
+    // REQUIRED keys + the crm source + the engine key itself are the honest
+    // uncovered chain — none phase-gated (all shipped), so starter is a hard
+    // block with bilingual guidance naming the exact keys.
+    expect(check.missingChain).toContain("industry.template_engine");
+    expect(check.missingChain).toContain("crm.service_contracts");
+    expect(check.missingChain).toContain("installments.plans");
+    expect(check.missingChain).toContain("installments.collections");
+    expect(check.missingChain).toContain("installments.late_fees");
+    expect(stateOf(check, "installment_terms")).toMatchObject({ status: "blocked" });
+    expect(stateOf(check, "service_contracts")).toMatchObject({ status: "blocked" });
+    // Bilingual guidance names the chain (never silent degradation).
+    expect(check.guidance?.ar).toContain("installments.plans");
+    expect(check.guidance?.en).toContain("installments.plans");
+  });
+
+  it("education without the notes family: pdc_notes hides cleanly — never blocks, never phase-labels", () => {
+    // A plan that never carried the notes cluster (the honest governance-#7
+    // posture — a pre-0038 lineage): removing the WHOLE notes family keeps
+    // the set closed (only notes.* keys depend on notes.* keys, FEATURE_DEPS
+    // §7), so the OPTIONAL pdc_notes entry degrades HIDDEN on its missing
+    // key alone — a hidden menu, nothing else — while the REQUIRED tuition
+    // chain (installments.*) stays fully INCLUDED.
+    const keys = business().filter((key) => !key.startsWith("notes."));
+    const check = checkPrerequisites(EDUCATION_TEMPLATE_MANIFEST, keys);
+    expect(check.status).toBe("ok");
+    expect(check.closureViolations).toEqual([]);
+    expect(stateOf(check, "pdc_notes")).toMatchObject({
+      status: "hidden",
+      missingKeys: ["notes.received"],
+    });
+    expect(stateOf(check, "installment_terms")).toMatchObject({ status: "included" });
+  });
+
+  it("education with a torn 0038 grant (business minus notes.received alone): the whole cluster blocks — BR-040 fail-loud", () => {
+    // Removing ONE key from the closed notes cluster tears the tenant-set
+    // closure: notes.pdc_calendar/endorsement/dishonor/discounting all
+    // require notes.received (FEATURE_DEPS §7), so the check blocks with
+    // the exact violations named — a plan is a closed grant cluster, and a
+    // torn cluster is guided plan selection (bilingual guidance naming the
+    // key), NEVER a silently-partial notes surface. The OPTIONAL pdc_notes
+    // entry itself still classifies HIDDEN on its missing key alone — what
+    // blocks is the tenant-set tear, not the OPTIONAL capability posture.
+    const keys = business().filter((key) => key !== "notes.received");
+    const check = checkPrerequisites(EDUCATION_TEMPLATE_MANIFEST, keys);
+    expect(check.status).toBe("blocked");
+    expect(check.missingChain).toEqual(["notes.received"]);
+    expect(check.closureViolations).toContainEqual({
+      featureKey: "notes.pdc_calendar",
+      missing: ["notes.received"],
+    });
+    expect(check.closureViolations).toContainEqual({
+      featureKey: "notes.endorsement",
+      missing: ["notes.received"],
+    });
+    expect(check.closureViolations).toContainEqual({
+      featureKey: "notes.dishonor",
+      missing: ["notes.received"],
+    });
+    expect(check.closureViolations).toContainEqual({
+      featureKey: "notes.discounting",
+      missing: ["notes.received"],
+    });
+    expect(stateOf(check, "pdc_notes")).toMatchObject({
+      status: "hidden",
+      missingKeys: ["notes.received"],
+    });
+    expect(check.guidance?.ar).toContain("notes.received");
+    expect(check.guidance?.en).toContain("notes.received");
+  });
 });
 
 describe("BR-040 dependency closure over required_feature_keys (§7)", () => {
@@ -280,6 +397,10 @@ describe("BR-040 dependency closure over required_feature_keys (§7)", () => {
       RESTAURANT_MANIFEST,
       AUTOMOTIVE_TEMPLATE_MANIFEST,
       DISTRIBUTION_TEMPLATE_MANIFEST,
+      PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
+      // PHASE-032: the education closure — enterprise carries the installments
+      // + notes sets (0038) on top of the crm chain (0027).
+      EDUCATION_TEMPLATE_MANIFEST,
     ]) {
       const check = checkPrerequisites(manifest, enterprise());
       expect(check.status, manifest.id).toBe("ok");

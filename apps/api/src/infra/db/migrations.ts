@@ -111,6 +111,13 @@ export const MIGRATIONS: readonly string[] = [
   // feature-key plan grants + the RC-11 'NOTES' kind + the notification
   // category widening).
   "0038_notes_installments",
+  // PHASE-032: 0039_education_template.sql (the education commercial shell
+  // per ED-08 — configuration only: the industry_templates registry seed
+  // converging the 0008 index row to the full v1.0.0 industry.education
+  // manifest, the §J ar.aging report-key reconciliation; NO new tables,
+  // modules, feature keys, or permission keys — the installments/notes plan
+  // grants landed with 0038 already).
+  "0039_education_template",
 ];
 
 /**

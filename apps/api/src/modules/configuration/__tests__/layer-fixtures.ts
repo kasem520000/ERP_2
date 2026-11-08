@@ -1,6 +1,7 @@
 import {
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
+  EDUCATION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
   PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
@@ -23,9 +24,11 @@ import type {
 } from "../domain/layer-model";
 
 /**
- * Unit-test layer-input fixtures (PHASE-015 §6): the seven shipped
- * manifests × the three plan seeds (migration 0008/0021/0024/0025/0026/0027
- * key and limits lists, transcribed) × the SA jurisdiction seed (migration
+ * Unit-test layer-input fixtures (PHASE-015 §6): the eight shipped
+ * manifests × the three plan seeds (migration 0008/0021/0024/0025/0026/
+ * 0027 + the PHASE-027 0038 grants — the installments/notes set the
+ * education template's REQUIRED/OPTIONAL chains resolve through — key and
+ * limits lists, transcribed) × the SA jurisdiction seed (migration
  * 0013). Shared by config-resolution.spec (property/precedence tests) and
  * golden-effective-configs.spec (pinned hashes).
  */
@@ -38,6 +41,7 @@ export const SHIPPED_TEMPLATES: readonly IndustryTemplateManifest[] = [
   DISTRIBUTION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
+  EDUCATION_TEMPLATE_MANIFEST,
 ];
 
 /** L1 from a shipped manifest (applied state, no tenant overrides). */
@@ -136,6 +140,19 @@ const BUSINESS_KEYS: readonly string[] = [
   // carries them from the 0008 base seed); the 021/022 app keys
   // (desktop/android/mobile_accounts) stay enterprise-only until they ship.
   "offline.sync_protocol", "offline.device_management",
+  // PHASE-032 transcription of the PHASE-027 0038 plan grants (the twelve
+  // notes/installments feature keys → business + enterprise, the tier-4
+  // precedent; starter does NOT get them): the education commercial shell's
+  // REQUIRED chain (installments.plans/collections/late_fees) and OPTIONAL
+  // pdc_notes entry (notes.received) resolve through exactly these grants,
+  // so the fixtures transcribe the 0038 block the way they transcribed the
+  // 0025/0026/0027 blocks before it. The 0035/0037 grant blocks stay
+  // untranscribed (no shipped template consumes their keys yet — the
+  // fixture's documented role is the template-relevant grant subset).
+  "notes.received", "notes.issued", "notes.pdc_calendar", "notes.endorsement",
+  "notes.dishonor", "notes.discounting", "notes.reports",
+  "installments.plans", "installments.schedules", "installments.collections",
+  "installments.late_fees", "installments.reports",
 ];
 
 const ENTERPRISE_KEYS: readonly string[] = [

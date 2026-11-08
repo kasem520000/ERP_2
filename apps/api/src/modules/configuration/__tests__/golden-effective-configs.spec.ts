@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
+  EDUCATION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
   PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
@@ -18,12 +19,13 @@ import { PLAN_KEYS, layerInputsFixture, l1Of, type PlanKey } from "./layer-fixtu
 /**
  * PHASE-015 §6 golden effective-configs (CONFIGURATION_ENGINE §10 #2):
  * one pinned, hashed effective config per shipped template × plan ×
- * jurisdiction example — the seven v1.0.0 manifests (retail / grocery /
+ * jurisdiction example — the eight v1.0.0 manifests (retail / grocery /
  * restaurant + the PHASE-017 automotive / distribution pair + the
  * PHASE-018 food manufacturing template + the PHASE-019 professional
- * services template) × the plan seeds
- * (migration 0008/0021/0024/0025/0026/0027) × the SA jurisdiction seed
- * (migration 0013, pack 1.0.0-baseline, VAT in force, registered tenant).
+ * services template + the PHASE-032 education template) × the plan seeds
+ * (migration 0008/0021/0024/0025/0026/0027 + the PHASE-027 0038 grants)
+ * × the SA jurisdiction seed (migration 0013, pack 1.0.0-baseline, VAT in
+ * force, registered tenant).
  *
  * A resolution change that alters any golden hash fails CI unless the
  * change is a reviewed decision — that is this spec's entire job. The
@@ -52,6 +54,23 @@ import { PLAN_KEYS, layerInputsFixture, l1Of, type PlanKey } from "./layer-fixtu
  * map is part of the hashed content). The old→new table is recorded in
  * agent-ctx/T43-2-template.md; the three new professional_services rows
  * pin with the rest.
+ *
+ * PHASE-032 review note: the fifteen business/enterprise pins + the
+ * no-template row moved — the fixtures now transcribe the PHASE-027 0038
+ * plan grants (the twelve notes/installments keys → business + enterprise,
+ * migration 0038's own UPDATE; starter untouched — its seven pins are
+ * byte-stable) because the education template's REQUIRED chain
+ * (installments.plans/collections/late_fees) and OPTIONAL pdc_notes entry
+ * resolve through exactly those grants; the 0035/0037 grant blocks stay
+ * untranscribed (no shipped template consumes them). The six new
+ * education POLICY_REGISTRY keys carry NO settingsKey mapping (the
+ * deliberate no-SETTINGS_REGISTRY-surface choice — the L1 manifest
+ * defaults land under their raw policy-key names, so non-education
+ * tenants' policy maps and pins are byte-stable). The three new education
+ * rows pin with the rest; every pin below was recomputed by running the
+ * compose pipeline over the updated fixtures (recorded in the
+ * PHASE-032-COMPLETION report; the old→new table lives in
+ * agent-ctx/P32-T5-golden-pins.md).
  */
 
 const GOLDEN: Readonly<
@@ -63,11 +82,11 @@ const GOLDEN: Readonly<
   },
   "industry.retail × business": {
     template: RETAIL_MANIFEST,
-    hash: "sha256:c32d2bc8eac2eb814d5c7ce95dcbef064369d1cab95707cd4340637c6bb2561f",
+    hash: "sha256:cbe6fe4b775e31891456f0f27fa95456dd3bfb783eb4832925d08360e8e0e463",
   },
   "industry.retail × enterprise": {
     template: RETAIL_MANIFEST,
-    hash: "sha256:e8b0ea1e1bd2e5089ec428c4cd4b7619fdce773d6c59b677a9cafcd51978435b",
+    hash: "sha256:1495168d3443ee1daa3fc122ef55bcbd8a08a6349f1c32ba2ab4aa9d0af2f2b8",
   },
   "industry.grocery × starter": {
     template: GROCERY_MANIFEST,
@@ -75,11 +94,11 @@ const GOLDEN: Readonly<
   },
   "industry.grocery × business": {
     template: GROCERY_MANIFEST,
-    hash: "sha256:bfac33332b7fd47997b70d81e34b5c9162966ed649d6fdbe92dddea6b8eaa528",
+    hash: "sha256:07e8af07c844d79eac49090e1b317f71cf4d292d9823b4eb48e7d6b0aa8048c7",
   },
   "industry.grocery × enterprise": {
     template: GROCERY_MANIFEST,
-    hash: "sha256:454ef52039c4cc93efa28f0e152fdd2d3812389b26f98da186f0240a9deeb448",
+    hash: "sha256:ab5a2ef974ccd43bc09f43f7ac309d3d5e7527283ceb46e77273c8f084d511ba",
   },
   "industry.restaurant × starter": {
     template: RESTAURANT_MANIFEST,
@@ -87,11 +106,11 @@ const GOLDEN: Readonly<
   },
   "industry.restaurant × business": {
     template: RESTAURANT_MANIFEST,
-    hash: "sha256:a3d8d005044a4b0d4debd695b98ed08f472c6dda1f659d9cd79cd67e6ff3ad4e",
+    hash: "sha256:a38caa0a1e16b346f956b6fc517081f9a27e6bc096909103b4ec50840aaafcbf",
   },
   "industry.restaurant × enterprise": {
     template: RESTAURANT_MANIFEST,
-    hash: "sha256:cd067efe0f89e0d70fd8a00acc27f25110772cfa45a9b4500abc457f02b0326e",
+    hash: "sha256:6320e7a203c3c4eb0f1dd4f9a34fcd0f156ba189b774be3d3322c887f53f912a",
   },
   // -- PHASE-017 pair (migration 0025 seeds; starter = degraded back-office)
   "industry.automotive × starter": {
@@ -100,11 +119,11 @@ const GOLDEN: Readonly<
   },
   "industry.automotive × business": {
     template: AUTOMOTIVE_TEMPLATE_MANIFEST,
-    hash: "sha256:f8b1e3cb14f94119572ca666e80100fe84422270938f392799384083e54a828d",
+    hash: "sha256:05f78f257ca8ac4f23582c5369fd1f10ce1c2145bcea824561f4566be55e4681",
   },
   "industry.automotive × enterprise": {
     template: AUTOMOTIVE_TEMPLATE_MANIFEST,
-    hash: "sha256:a25be7ecbcb6732c27cb2586ad56ad471acdf7d297faff591575bf5e1170f902",
+    hash: "sha256:5de65928c0b28d4561336ef13eaefe87101d7f2151cd1bd715354907ab3f7b9c",
   },
   "industry.distribution × starter": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
@@ -112,11 +131,11 @@ const GOLDEN: Readonly<
   },
   "industry.distribution × business": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
-    hash: "sha256:50758aab1d63d8182b6c000c6666104ce0d16818ea53111aba2b174adaa2b18f",
+    hash: "sha256:a143fd468e25560fdef6bb73a00a14e4ae6d805cd95722dadcb8840624c41576",
   },
   "industry.distribution × enterprise": {
     template: DISTRIBUTION_TEMPLATE_MANIFEST,
-    hash: "sha256:97b935892cfb35c8ded75a4ed1bf1ae2edfcd5aab18daba31853575f0e4a8ff5",
+    hash: "sha256:ccff2bd02b90557aa195ef0c912d3d766ed6f50db4334911e88caef69f6db7c5",
   },
   // -- PHASE-018 (migration 0026 seed; starter = degraded back-office)
   "industry.food_manufacturing × starter": {
@@ -125,11 +144,11 @@ const GOLDEN: Readonly<
   },
   "industry.food_manufacturing × business": {
     template: FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
-    hash: "sha256:ba98dacd8467149863dae37b8ac89fd548ae8575a4a7e849876a90b093a15774",
+    hash: "sha256:50882f04923ba0b21ae5d8993d8656e6df60678fb03145e71bbbb06e586ab6a6",
   },
   "industry.food_manufacturing × enterprise": {
     template: FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
-    hash: "sha256:07ea44a2f80ba810fbed7762b4ce0cb0dec05c85993420ceb54f6eff1638a9b1",
+    hash: "sha256:b4e9e4fe4bcf568beac08244325b5e314a9d2da37ab99d96cf4153268e088e6d",
   },
   // -- PHASE-019 (migration 0027 seed; starter = degraded back-office)
   "industry.professional_services × starter": {
@@ -138,16 +157,31 @@ const GOLDEN: Readonly<
   },
   "industry.professional_services × business": {
     template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
-    hash: "sha256:e5b6c557bf37b75cd3d9591f93e9f7acb543fd86129cf9c963142d67916bf90c",
+    hash: "sha256:e8fee3cb3ae30c6f6458c3ae9e8c964460d4737a2608874b9aea00ae4f2e8519",
   },
   "industry.professional_services × enterprise": {
     template: PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
-    hash: "sha256:1683e56a5e7df787c5a016c8c1dadcccbffc6cf9c08bff812d118a51814e135c",
+    hash: "sha256:1a5435a24b292c8071b739b7e8d4fc17b3d8fbeb51ff850f826bb2cc18770fe6",
+  },
+  // -- PHASE-032 (migration 0039 seed; starter = degraded back-office —
+  // the installments/crm REQUIRED chain is ungranted there, exactly the
+  // tier-4 posture of the 0025/0026/0027 templates before it)
+  "industry.education × starter": {
+    template: EDUCATION_TEMPLATE_MANIFEST,
+    hash: "sha256:eabd9b35bbff4ecca11ea57154c0791d2403717459fb47a771a3dbda579c06da",
+  },
+  "industry.education × business": {
+    template: EDUCATION_TEMPLATE_MANIFEST,
+    hash: "sha256:29e147555dce1a4d3da6027d6d7e8e73392572d9000b0b8cc1c93c597f0f7cbc",
+  },
+  "industry.education × enterprise": {
+    template: EDUCATION_TEMPLATE_MANIFEST,
+    hash: "sha256:421a8d59db03671e3cd968ce37eee3498ac4e753e3375eb24e55bf3c4a68d637",
   },
   // The platform-default tenant (no template applied — L1 neutral).
   "(no template) × business": {
     template: null,
-    hash: "sha256:cc4c714d205842a1b8da9a9d3ab7909f8f19fef07dc1d43678964304a102cfbb",
+    hash: "sha256:9718517f38dc4a9ec0bcb9086aaa5781b5cb3610c00c3a01b73b17d61cc59d9e",
   },
 });
 
@@ -419,6 +453,78 @@ describe("golden effective-configs: template × plan × jurisdiction SA (pinned 
     expect(services.policies["crm.narrative_required_on_time_billing"]).toBe(true);
     expect(services.policies["inventory.fefo_for_expiry_items"]).toBe(false);
     expect(services.layers.l8_installed.crm).toBe(true);
+
+    // Education on business (PHASE-032): the tuition chain resolves LIVE on
+    // the 0038 grants — the enrollment/billing groups derive with the crm +
+    // installments modules enabled, the six education workflow policies land
+    // as L1 defaults under their raw registry keys (no settingsKey mapping —
+    // the deliberate 0039 choice), and invoice_approval_required reuses the
+    // PHASE-019 crm key.
+    const education = composeTenantStaticConfig(
+      layerInputsFixture({ template: EDUCATION_TEMPLATE_MANIFEST, plan: "business" }),
+    );
+    expect(education.layers.l4_entitlements.missing).toEqual([]);
+    expect(education.ui.navigation).toEqual(["enrollment", "billing"]);
+    const enrollmentGroup = education.ui.navigation_tree.find(
+      (group) => group.id === "enrollment",
+    )!;
+    expect(enrollmentGroup.items.map((item) => item.target)).toEqual([
+      "crm.contracts",
+      "partners.directory",
+      "items.price_lists",
+    ]);
+    const tuitionGroup = education.ui.navigation_tree.find((group) => group.id === "billing")!;
+    expect(tuitionGroup.items.map((item) => item.target)).toEqual([
+      "installments.plans",
+      "sales.invoices",
+      "installments.collections",
+      "treasury.receipts",
+    ]);
+    expect(enrollmentGroup.items.every((item) => item.phase_gated === undefined)).toBe(true);
+    expect(tuitionGroup.items.every((item) => item.phase_gated === undefined)).toBe(true);
+    expect(education.ui.terminology["partner.student"]).toEqual({
+      en: "Student (financial file)",
+      ar: "الطالب (الملف المالي)",
+    });
+    expect(education.ui.terminology["partner.guardian"]).toEqual({
+      en: "Guardian (payer)",
+      ar: "ولي الأمر (الدافع)",
+    });
+    expect(education.ui.terminology["doc.enrollment_contract"]).toEqual({
+      en: "Enrollment contract",
+      ar: "عقد الالتحاق",
+    });
+    expect(education.ui.terminology["billing.installment_plan"]).toEqual({
+      en: "Installment plan",
+      ar: "خطة الأقساط",
+    });
+    expect(education.policies["guardian_is_paying_partner"]).toBe(true); // L1 manifest default
+    expect(education.policies["tuition_invoice_from_contract"]).toBe(true);
+    expect(education.policies["installment_schedule_immutable_after_activation"]).toBe(true);
+    expect(education.policies["late_fee_policy_per_plan"]).toBe(true);
+    expect(education.policies["sibling_discount_line_level"]).toBe(true);
+    expect(education.policies["dunning_cycle_before_late_fee"]).toBe(true);
+    expect(education.policies["crm.invoice_approval_required"]).toBe(true); // the PHASE-019 reuse
+    expect(education.policies["sales.cash_autopost"]).toBe(false); // back-office, never POS-first
+    expect(education.policies["inventory.fefo_for_expiry_items"]).toBe(false);
+    expect(education.layers.l8_installed.installments).toBe(true);
+    expect(education.layers.l8_installed.crm).toBe(true);
+
+    // Education on starter: degraded back-office — the tier-4 posture (the
+    // 0038 grants skip starter exactly like the 0025/0026/0027 sets before
+    // them): the installments + crm REQUIRED chain is uncovered.
+    const educationStarter = composeTenantStaticConfig(
+      layerInputsFixture({ template: EDUCATION_TEMPLATE_MANIFEST, plan: "starter" }),
+    );
+    expect(educationStarter.layers.l4_entitlements.missing).toEqual([
+      "crm.service_contracts",
+      "industry.template_engine",
+      "installments.collections",
+      "installments.late_fees",
+      "installments.plans",
+    ]);
+    // The nav groups stay (ungated core targets render; the feature-keyed
+    // items hide at the navigation-pruning layer, config-resolution.spec).
 
     // The platform defaults (no template): the four manufacturing keys ride
     // the SETTINGS_REGISTRY defaults into every tenant's policy map — the

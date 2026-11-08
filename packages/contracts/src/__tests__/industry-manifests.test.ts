@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTOMOTIVE_TEMPLATE_MANIFEST,
   DISTRIBUTION_TEMPLATE_MANIFEST,
+  EDUCATION_TEMPLATE_MANIFEST,
   FOOD_MANUFACTURING_TEMPLATE_MANIFEST,
   GROCERY_MANIFEST,
   PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST,
@@ -19,8 +20,9 @@ import {
 } from "../index";
 
 /**
- * PHASE-015 T3 test hook (extended by PHASE-017 T2, PHASE-018 T2, and
- * PHASE-019 T2): all seven v1.0.0 manifests validate against the §3 schema;
+ * PHASE-015 T3 test hook (extended by PHASE-017 T2, PHASE-018 T2,
+ * PHASE-019 T2, and PHASE-032 T1): all eight v1.0.0 manifests validate
+ * against the §3 schema;
  * negative fixtures are rejected with the precise issue; the content hash is
  * canonical and deterministic (applied_manifest_hash). The automotive/
  * distribution pair is transcribed verbatim from the migration 0025 registry
@@ -33,7 +35,12 @@ import {
  * migration 0027 registry seed (docs mirror:
  * docs/industries/templates/manifests/manifest.professional_services.json —
  * the §12 doc reconciliation applied: bom_production N/A entry dropped,
- * ar_aging pinned to the live `ar.aging` registry key).
+ * ar_aging pinned to the live `ar.aging` registry key). The education
+ * template is transcribed verbatim from the migration 0039 registry seed
+ * (docs mirror: docs/industries/templates/manifests/manifest.education.json —
+ * the §J doc reconciliation applied: partners.ar_aging pinned to the live
+ * `ar.aging` registry key, exactly the §12 precedent) and pins the live
+ * installments/notes-era report keys.
  */
 
 function cloneManifest(manifest: IndustryTemplateManifest): IndustryTemplateManifest {
@@ -86,14 +93,14 @@ function expectSingleIssue(
   }
 }
 
-describe("shipped industry template manifests (v1.0.0 — retail / grocery / restaurant / automotive / distribution / food_manufacturing / professional_services)", () => {
-  it("all seven parse against the §3 schema and round-trip identically", () => {
+describe("shipped industry template manifests (v1.0.0 — retail / grocery / restaurant / automotive / distribution / food_manufacturing / professional_services / education)", () => {
+  it("all eight parse against the §3 schema and round-trip identically", () => {
     for (const manifest of SHIPPED_TEMPLATE_MANIFESTS) {
       expect(parseIndustryTemplateManifest(manifest)).toStrictEqual(manifest);
     }
   });
 
-  it("the registry ships exactly the seven ids at 1.0.0", () => {
+  it("the registry ships exactly the eight ids at 1.0.0", () => {
     expect(SHIPPED_TEMPLATE_MANIFESTS.map((manifest) => manifest.id)).toEqual([
       "industry.retail",
       "industry.grocery",
@@ -102,6 +109,7 @@ describe("shipped industry template manifests (v1.0.0 — retail / grocery / res
       "industry.distribution",
       "industry.food_manufacturing",
       "industry.professional_services",
+      "industry.education",
     ]);
     expect(SHIPPED_TEMPLATE_MANIFESTS.every((manifest) => manifest.version === "1.0.0")).toBe(true);
   });
@@ -284,6 +292,121 @@ describe("shipped industry template manifests (v1.0.0 — retail / grocery / res
     expect(PROFESSIONAL_SERVICES_TEMPLATE_MANIFEST.terminology_overrides["svc.case"]).toEqual({
       en: "Case / Matter",
       ar: "القضية / الملف",
+    });
+  });
+
+  it("the PHASE-032 template pins the enrollment/billing navigation and the tuition policy set (0039)", () => {
+    // The report pins: the two PHASE-027 installments registry keys plus the
+    // composed already-live `services.contract_revenue_schedule` (PHASE-019)
+    // and `ar.aging` (the §J doc reconciliation — the pre-0039 doc draft
+    // said partners.ar_aging, exactly the §12 precedent on the 0027
+    // professional_services transcription).
+    expect(EDUCATION_TEMPLATE_MANIFEST.report_defaults.map((pin) => pin.report_key)).toEqual([
+      "installments.schedule",
+      "installments.aging",
+      "services.contract_revenue_schedule",
+      "ar.aging",
+    ]);
+    expect(
+      EDUCATION_TEMPLATE_MANIFEST.report_defaults.find((pin) => pin.report_key === "ar.aging"),
+    ).toMatchObject({ pinned: true, dashboard: false, default_period: "this_month" });
+    expect(
+      EDUCATION_TEMPLATE_MANIFEST.report_defaults.find(
+        (pin) => pin.report_key === "installments.schedule",
+      ),
+    ).toMatchObject({ pinned: true, dashboard: true, default_period: "this_month" });
+    // The enrollment/billing navigation groups ship as-is with the §J
+    // targets (crm.contracts / partners.directory / items.price_lists /
+    // installments.plans / sales.invoices / installments.collections /
+    // treasury.receipts — ordinary surfaces, zero education-specific ones).
+    expect(
+      EDUCATION_TEMPLATE_MANIFEST.navigation_manifest.groups.map((group) => group.id),
+    ).toEqual(["enrollment", "billing"]);
+    const enrollment = EDUCATION_TEMPLATE_MANIFEST.navigation_manifest.groups.find(
+      (group) => group.id === "enrollment",
+    )!;
+    expect(enrollment.items.map((item) => item.target)).toEqual([
+      "crm.contracts",
+      "partners.directory",
+      "items.price_lists",
+    ]);
+    const tuitionBilling = EDUCATION_TEMPLATE_MANIFEST.navigation_manifest.groups.find(
+      (group) => group.id === "billing",
+    )!;
+    expect(tuitionBilling.items.map((item) => item.target)).toEqual([
+      "installments.plans",
+      "sales.invoices",
+      "installments.collections",
+      "treasury.receipts",
+    ]);
+    // The tuition backbone rides in the required keys: the PHASE-027
+    // installments chain (granted to business/enterprise by migration 0038)
+    // + the crm enrollment-contract source (0027) + the engine itself.
+    for (const key of [
+      "industry.template_engine",
+      "crm.service_contracts",
+      "installments.plans",
+      "installments.collections",
+      "installments.late_fees",
+    ]) {
+      expect(EDUCATION_TEMPLATE_MANIFEST.required_feature_keys).toContain(key);
+    }
+    // The seven §2 workflow policies land as L1 defaults: six education-owned
+    // POLICY_REGISTRY keys (no settingsKey mapping — the deliberate 0039
+    // choice) + invoice_approval_required REUSING the PHASE-019 crm key
+    // (templates never fork policy keys).
+    expect(EDUCATION_TEMPLATE_MANIFEST.workflow_policies).toEqual({
+      guardian_is_paying_partner: true,
+      tuition_invoice_from_contract: true,
+      installment_schedule_immutable_after_activation: true,
+      late_fee_policy_per_plan: true,
+      sibling_discount_line_level: true,
+      dunning_cycle_before_late_fee: true,
+      invoice_approval_required: true,
+    });
+    // The INV-/RCP-/CN- numbering rules (contract_invoice is a series-bearing
+    // §3 document type; all four series are tenant-level, assigned at
+    // posting — identical to the professional_services posture).
+    expect(EDUCATION_TEMPLATE_MANIFEST.document_numbering_defaults.contract_invoice).toEqual({
+      prefix: "INV",
+      format: "INV-{yyyy}-{seq:6}",
+      per_branch: false,
+      reserve_on_approval: false,
+    });
+    expect(EDUCATION_TEMPLATE_MANIFEST.document_numbering_defaults.receipt).toEqual({
+      prefix: "RCP",
+      format: "RCP-{yyyy}-{seq:6}",
+      per_branch: false,
+      reserve_on_approval: false,
+    });
+    expect(EDUCATION_TEMPLATE_MANIFEST.document_numbering_defaults.credit_note).toEqual({
+      prefix: "CN",
+      format: "CN-{yyyy}-{seq:5}",
+      per_branch: false,
+      reserve_on_approval: false,
+    });
+    // The terminology carries the tuition Arabic (partner.student /
+    // partner.guardian — the ED-11 financial-file posture, never academic).
+    expect(EDUCATION_TEMPLATE_MANIFEST.terminology_overrides["partner.student"]).toEqual({
+      en: "Student (financial file)",
+      ar: "الطالب (الملف المالي)",
+    });
+    expect(EDUCATION_TEMPLATE_MANIFEST.terminology_overrides["partner.guardian"]).toEqual({
+      en: "Guardian (payer)",
+      ar: "ولي الأمر (الدافع)",
+    });
+    // The capability posture: installment_terms REQUIRED at PHASE-027 (the
+    // highest education gate — shipped, so never phase-gated) and pdc_notes
+    // OPTIONAL riding the 0038 notes.received grant (governance #7).
+    expect(EDUCATION_TEMPLATE_MANIFEST.capability_prerequisites.installment_terms).toEqual({
+      level: "REQUIRED",
+      feature_keys: ["installments.plans", "installments.collections", "installments.late_fees"],
+      available_from_phase: "PHASE-027",
+    });
+    expect(EDUCATION_TEMPLATE_MANIFEST.capability_prerequisites.pdc_notes).toEqual({
+      level: "OPTIONAL",
+      feature_keys: ["notes.received"],
+      available_from_phase: "PHASE-027",
     });
   });
 });
@@ -523,11 +646,20 @@ describe("negative fixtures — each §3 violation is rejected with the right is
       throw new Error("unreachable: expected the mutated manifest to be rejected");
     }
     expect(result.error.issues).toHaveLength(1);
-    expect(result.error.issues[0]).toMatchObject({
-      code: "unrecognized_keys",
-      path: ["document_numbering_defaults"],
-    });
-    expect(result.error.issues[0]!.message).toMatch(/service_contract/);
+    // zod's partialRecord key-violation shape moved across 4.x minors (the
+    // repo pins 4.6.7: `unrecognized_keys` at the record path with the key
+    // named in the message; older 4.x resolves report the generic
+    // `invalid_key` at the child path — the (q) comment's record behavior).
+    // Both name the offending `service_contract` key: assert the §3 rule,
+    // not the zod internals, so the fixture stays green under either shape.
+    const issue = result.error.issues[0]!;
+    if (issue.code === "unrecognized_keys") {
+      expect(issue.path).toEqual(["document_numbering_defaults"]);
+      expect(issue.message).toMatch(/service_contract/);
+    } else {
+      expect(issue.code).toBe("invalid_key");
+      expect(issue.path).toEqual(["document_numbering_defaults", "service_contract"]);
+    }
   });
 
   it("(s) professional_services: capability with an empty feature_keys array (minItems 1)", () => {

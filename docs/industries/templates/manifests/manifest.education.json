@@ -217,7 +217,7 @@
       "default_period": "this_year"
     },
     {
-      "report_key": "partners.ar_aging",
+      "report_key": "ar.aging",
       "pinned": true,
       "dashboard": false,
       "default_period": "this_month"

@@ -7,10 +7,10 @@ import type { WorkflowPolicyValue } from "@erp/contracts";
  * the platform policy registry; unknown keys are rejected").
  *
  * A manifest may only set policy keys THIS registry knows — every key used
- * by the seven shipped templates (retail / grocery / restaurant + the
+ * by the eight shipped templates (retail / grocery / restaurant + the
  * PHASE-017 automotive / distribution pair + the PHASE-018
  * food_manufacturing template + the PHASE-019 professional_services
- * template, v1.0.0,
+ * template + the PHASE-032 education template, v1.0.0,
  * `packages/contracts/src/industry/templates.ts`) is transcribed below with
  * its canonical type, owning module, and optional mapping onto a
  * SETTINGS_REGISTRY key (L5 override surface).
@@ -319,6 +319,53 @@ export const POLICY_REGISTRY: Readonly<Record<string, PolicyDefinition>> = Objec
     true,
     "PHASE-019 §5: hourly billing pulls only entries with a non-empty narrative (the honest timeslip) — empty-narrative entries are listed needsNarrative in the preview and skipped, never silently billed.",
     "crm.narrative_required_on_time_billing",
+  ),
+  // --- education (PHASE-032) -------------------------------------------------
+  // The tuition shell sets seven workflow_policies; the seventh —
+  // `invoice_approval_required` — REUSES the PHASE-019 crm key above
+  // (the template's approval gate rides the existing BR-034 SoD surface;
+  // templates never fork policy keys). The six below are education-owned.
+  // None maps onto a SETTINGS_REGISTRY key: they are template-level
+  // postures of the PHASE-027 installments module + the partner/crm/sales
+  // surfaces it composes (L1 defaults the tenant may still override via
+  // the L5 settings surface's generic policy keys — the 0039 review note
+  // records the deliberate no-settingsKey choice: platform-default policy
+  // maps stay byte-stable for every non-education tenant).
+  "guardian_is_paying_partner": booleanPolicy(
+    "guardian_is_paying_partner",
+    "partners",
+    true,
+    "PHASE-032 §2: the guardian is the AR partner — invoices, receipts, allocations, and statements address the guardian; the student stays a partner financial file (attributes only, never academic data — ED-11).",
+  ),
+  "tuition_invoice_from_contract": booleanPolicy(
+    "tuition_invoice_from_contract",
+    "crm",
+    true,
+    "PHASE-032 §2: tuition invoices generate from the enrollment contract's schedule (crm.recurring_billing OPTIONAL, or manual raise) — the contract itself posts nothing; G-01 fires only at the invoice.",
+  ),
+  "installment_schedule_immutable_after_activation": booleanPolicy(
+    "installment_schedule_immutable_after_activation",
+    "installments",
+    true,
+    "PHASE-032 §2: the tuition calendar is the PHASE-027 backbone — BR-048 plan total = invoice total exactly and the schedule (down payment + monthly/term dues) is immutable after activation (409 SCHEDULE_IMMUTABLE).",
+  ),
+  "late_fee_policy_per_plan": booleanPolicy(
+    "late_fee_policy_per_plan",
+    "installments",
+    true,
+    "PHASE-032 §2: late fees post only via the engine as G-28 per the per-plan policy (BR-049 — rate/cap/grace are tenant-configured PLACEHOLDER defaults, OQ-002 family; the template ships no invented rates).",
+  ),
+  "sibling_discount_line_level": booleanPolicy(
+    "sibling_discount_line_level",
+    "sales",
+    true,
+    "PHASE-032 §2: sibling/multi-child discounts are line-level invoice discounts under BR-002 role ceilings — revenue-only effect, VAT mathematics untouched (INV-022); never a new pricing-engine surface.",
+  ),
+  "dunning_cycle_before_late_fee": booleanPolicy(
+    "dunning_cycle_before_late_fee",
+    "installments",
+    true,
+    "PHASE-032 §2: the aging buckets of installments.aging drive the guardian reminder cycle before any late-fee posting — policy + report configuration over the PHASE-027 module, no new dunning engine.",
   ),
 });
 

@@ -42,7 +42,12 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // installment_lines + the treasury_allocations.note_id settle/restore
     // substrate + the cash_movements 'note' source kind + the four v2.0
     // CoA purposes + the RC-11 'NOTES' kind + the notification categories).
-    expect(files.at(-1)?.tag).toBe("0038_notes_installments");
+    // PHASE-032: 0039_education_template (the education commercial shell
+    // per ED-08 — configuration only: the industry_templates registry seed
+    // for industry.education v1.0.0, no schema objects; executes on the
+    // PHASE-027 lineage per the stage-10 independence while the lost
+    // interim 028–031 states remain NOT_STARTED).
+    expect(files.at(-1)?.tag).toBe("0039_education_template");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

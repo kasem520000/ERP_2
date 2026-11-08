@@ -1,11 +1,12 @@
 # Template: Education (Commercial Shell) — `education`
 
-> **Status:** STABLE · **Owner:** Industry Solutions Architecture · **Updated:** 2026-10-28
+> **Status:** STABLE · **Owner:** Industry Solutions Architecture · **Updated:** 2026-11-08
 
 The **commercial office** of a school: the guardian is the paying partner, the enrollment
 year is a **service contract عقد الالتحاق**, tuition bills in **installments أقساط** with
-late-fee dunning, and siblings discount through line-level policies. Ships in PHASE-032
-([../../EXPANSION_REGISTER.md](../../EXPANSION_REGISTER.md) §B; ED-08). Manifest schema:
+late-fee dunning, and siblings discount through line-level policies. Shipped in PHASE-032
+([../../EXPANSION_REGISTER.md](../../EXPANSION_REGISTER.md) §B; ED-08 — applied via the
+unmodified PHASE-015 engine; migration 0039 registry seed). Manifest schema:
 [../README.md](../README.md) §3. Signature flow summary:
 [../workflows/industry-workflows.md](../workflows/industry-workflows.md) §j.
 
@@ -81,7 +82,7 @@ late-fee dunning, and siblings discount through line-level policies. Ships in PH
     { "report_key": "installments.schedule", "pinned": true, "dashboard": true, "default_period": "this_month" },
     { "report_key": "installments.aging", "pinned": true, "dashboard": true, "default_period": "this_month" },
     { "report_key": "services.contract_revenue_schedule", "pinned": true, "dashboard": false, "default_period": "this_year" },
-    { "report_key": "partners.ar_aging", "pinned": true, "dashboard": false, "default_period": "this_month" }
+    { "report_key": "ar.aging", "pinned": true, "dashboard": false, "default_period": "this_month" }
   ],
   "onboarding_steps": [
     { "id": "coa_confirm", "title": { "en": "Confirm chart of accounts (tuition revenue, late-fee income)", "ar": "تأكيد دليل الحسابات (إيراد الرسوم، إيراد رسوم التأخير)" }, "required": true },
@@ -189,9 +190,11 @@ compact flow [../workflows/industry-workflows.md](../workflows/industry-workflow
 ## Reports emphasized
 
 `installments.schedule` (dashboard), `installments.aging` (dashboard),
-`services.contract_revenue_schedule`, `partners.ar_aging` — see
+`services.contract_revenue_schedule`, `ar.aging` — see
 [../reports/README.md](../reports/README.md). `installments.*` reports register at
-PHASE-027 ([../../EXPANSION_REGISTER.md](../../EXPANSION_REGISTER.md) §J).
+PHASE-027 ([../../EXPANSION_REGISTER.md](../../EXPANSION_REGISTER.md) §J). The
+`ar.aging` pin is the live registry key (the 0025 automotive reconciliation
+precedent — `partners.ar_aging` was the pre-013 planning id).
 
 ## Out of scope for this template (ED-08, ED-11 — commercial shell only)
 

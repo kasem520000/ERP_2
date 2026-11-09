@@ -248,7 +248,9 @@ run is audited and the permission is not granted to `viewer`-derived templates b
 
 ## 10. Consolidation (v2.0 — multi-entity)
 
-Delivered by PHASE-034. A legal entity = a tenant: consolidated statements are read-runs
+Delivered by PHASE-034 (**COMPLETE 2026-11-09** — registry rows 76 → 80; the four
+contracts run on the PHASE-013 engine reading the completed run's immutable
+snapshots). A legal entity = a tenant: consolidated statements are read-runs
 over member books plus eliminations posted in the parent's consolidation books
 ([ADR-0018](../architecture/ADR/ADR-0018-multi-entity-consolidation.md)); member books are
 never written (INV-026).
@@ -326,7 +328,7 @@ A report cannot be registered before its data phase — the registry cross-check
 | PHASE-027 | notes reports (maturity calendar, aging, dishonored register) + installment reports (schedule, aging) |
 | PHASE-028 | budgeting reports (budget vs actual, variance analysis) |
 | PHASE-029 | payroll reports (register, cost summary, EOS provision) |
-| PHASE-034 | consolidation reports (consolidated TB/IS/BS, eliminations log) |
+| PHASE-034 | consolidation reports (consolidated TB/IS/BS, eliminations log) — **delivered 2026-11-09, registry 80** |
 
 ## 14. Saved views, dashboard widgets, and subscriptions
 

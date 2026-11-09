@@ -109,6 +109,13 @@ import { notesAgingContract } from "./notes/aging.contract";
 import { notesDishonoredRegisterContract } from "./notes/dishonored-register.contract";
 import { installmentsScheduleContract } from "./installments/schedule.contract";
 import { installmentsAgingContract } from "./installments/aging.contract";
+// PHASE-034 · the consolidation set (REPORT_CATALOG §10 — the four
+// contracts that assert INV-026 in the footer and block exports on
+// failure; statements read the completed run's immutable snapshots).
+import { consolidationConsolidatedTbContract } from "./consolidation/consolidated-tb.contract";
+import { consolidationConsolidatedIsContract } from "./consolidation/consolidated-is.contract";
+import { consolidationConsolidatedBsContract } from "./consolidation/consolidated-bs.contract";
+import { consolidationEliminationsLogContract } from "./consolidation/eliminations-log.contract";
 
 export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   // §1 financial statements
@@ -216,6 +223,16 @@ export const REPORT_CONTRACTS: readonly ReportContract[] = Object.freeze([
   notesDishonoredRegisterContract,
   installmentsScheduleContract,
   installmentsAgingContract,
+  // §10 consolidation (REPORT_CATALOG §10 PHASE-034 rows — the
+  // consolidated-statement set: TB/IS/BS with the inv026 headline
+  // block-on-fail assertion + the TB balance tie, and the eliminations
+  // log with the eliminations-journal-tie INV-006 chain check; group
+  // views over the completed run's immutable snapshots — never live
+  // member books)
+  consolidationConsolidatedTbContract,
+  consolidationConsolidatedIsContract,
+  consolidationConsolidatedBsContract,
+  consolidationEliminationsLogContract,
 ]);
 
 export { validateRegistry, registrySnapshot } from "./runtime";

@@ -4132,3 +4132,184 @@ export interface LateFeeChargeResult {
   fee: string;
 }
 
+// -- PHASE-034 (T11): multi-entity consolidation wire types ------------------
+
+/** GET/POST /consolidation/groups[/:id] → rows (the consolidation group). */
+export interface ConsolidationGroupRow {
+  id: string;
+  name: string;
+  nameAr: string;
+  baseCurrency: string;
+  fxTranslationMethod: "CLOSING_RATE" | "TEMPORARY";
+  status: string;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/** GET/POST /consolidation/groups/:id/members → rows (the group membership). */
+export interface GroupMemberRow {
+  id: string;
+  groupId: string;
+  memberTenantId: string;
+  ownershipPercent: string;
+  includeFrom: string | null;
+  status: string;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+}
+
+/** One elimination document line (the jsonb DRAFT body's row — the G-32 shape). */
+export interface EliminationLineRow {
+  purposeKey: string;
+  direction: "DEBIT" | "CREDIT";
+  amount: string;
+  memberTenantId: string | null;
+  /** Optional on the wire (omitted keys never reach the jsonb body). */
+  memoEn?: string;
+  memoAr?: string;
+}
+
+/** GET/POST /consolidation/eliminations[/:id] → rows (the elimination entry). */
+export interface EliminationRow {
+  id: string;
+  groupId: string;
+  fiscalPeriodId: string;
+  eliminationNo: string | null;
+  kind: "INTERCOMPANY" | "INVESTMENT_EQUITY";
+  description: string;
+  memberATenantId: string | null;
+  memberBTenantId: string | null;
+  lines: EliminationLineRow[];
+  status: string;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  postedAt: string | null;
+  postedBy: string | null;
+  journalEntryIds: string[];
+  reversalOf: string | null;
+  note: string | null;
+  noteAr: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/**
+ * GET /consolidation/groups/:id/intercompany-suggestions → rows. Snake_case
+ * on purpose — the platform-plane reader contract's own column names.
+ */
+export interface IntercompanySuggestionRow {
+  partner_id: string;
+  partner_code: string;
+  partner_name: string;
+  partner_name_ar: string | null;
+  ar_balance: string;
+  ap_balance: string;
+}
+
+/** GET/POST /consolidation/runs[/:id] → rows (the consolidation run). */
+export interface ConsolidationRunRow {
+  id: string;
+  groupId: string;
+  fiscalPeriodId: string;
+  status: "QUEUED" | "RUNNING" | "COMPLETED" | "FAILED";
+  snapshotVersion: number;
+  snapshot: ConsolidationSnapshot | null;
+  jobId: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  errorCode: string | null;
+  errorDetail: unknown;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+/** GET /consolidation/runs/:id/snapshots → data (the run + its snapshot). */
+export interface ConsolidationRunSnapshotView {
+  runId: string;
+  status: string;
+  snapshot: ConsolidationSnapshot | null;
+}
+
+/** The run snapshot's money shape (group currency, 4dp decimal strings). */
+export interface ConsolidationAmounts {
+  debit: string;
+  credit: string;
+}
+
+/** One member's translated account extract (snapshot memberExtracts row). */
+export interface SnapshotMemberExtractRow {
+  memberTenantId: string;
+  accountCode: string;
+  accountType: string;
+  purposeKey: string | null;
+  amounts: ConsolidationAmounts;
+}
+
+/** One elimination's frozen effect lines (snapshot eliminations row). */
+export interface SnapshotEliminationRow {
+  eliminationId: string;
+  eliminationNo: string | null;
+  accountCode: string;
+  purposeKey: string | null;
+  amounts: ConsolidationAmounts;
+}
+
+/** One consolidated statement line (snapshot consolidated row). */
+export interface SnapshotConsolidatedRow {
+  accountCode: string;
+  accountType: string;
+  purposeKey: string | null;
+  amounts: ConsolidationAmounts;
+}
+
+/** One snapshot member (membership + the dated rates applied, INV-008). */
+export interface SnapshotMemberRow {
+  memberTenantId: string;
+  memberName: string | null;
+  ownershipPercent: string;
+  includeFrom: string | null;
+  baseCurrency: string;
+  /** The dated stored rates applied (per currency — exactly as stored). */
+  appliedRates: Record<string, string>;
+}
+
+/**
+ * The run snapshot jsonb (PHASE-034 §4 — the immutable, versioned DERIVED
+ * artifact; ADR-0017: never a second ledger, never a source of truth).
+ */
+export interface ConsolidationSnapshot {
+  schemaVersion: number;
+  runId: string;
+  groupId: string;
+  fiscalPeriodId: string;
+  periodEndDate: string;
+  group: {
+    groupId?: string;
+    name: string;
+    nameAr: string;
+    baseCurrency: string;
+    fxTranslationMethod: "CLOSING_RATE" | "TEMPORARY";
+  };
+  members: SnapshotMemberRow[];
+  memberExtracts: SnapshotMemberExtractRow[];
+  eliminations: SnapshotEliminationRow[];
+  consolidated: SnapshotConsolidatedRow[];
+  /** The INV-026 assertion recorded at build time (never a silent drift). */
+  inv026: {
+    status: "PASS" | "FAIL";
+    compared: { left: string; right: string };
+    brokenLines: string[];
+  };
+}
+

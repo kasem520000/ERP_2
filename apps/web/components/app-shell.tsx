@@ -87,6 +87,15 @@ const FALLBACK_CRUMBS: Record<string, { group?: keyof Dictionary; label: keyof D
   "treasury/bank-rec": { group: "navTreasury", label: "navTreasuryBankRec" },
   // -- T-WEB (PHASE-013) report workspace (registry-driven when resolved) ----
   reports: { group: "navReports", label: "reportsNavWorkspace" },
+  // -- PHASE-034 (T11): the consolidation surfaces (reports.consolidated …)
+  // (registry-driven when the navigation payload grows the reports group's
+  // consolidated item; these fallbacks cover nav-fetch failure for the
+  // module's sub-surfaces — the support-sessions rule, crumbs only).
+  consolidation: { group: "navReports", label: "navConsolidated" },
+  "consolidation/groups": { group: "navReports", label: "consolidationGroupsNav" },
+  "consolidation/eliminations": { group: "navReports", label: "consolidationEliminationsNav" },
+  "consolidation/eliminations/new": { group: "navReports", label: "consolidationEliminationsNav" },
+  "consolidation/runs": { group: "navReports", label: "consolidationRunsNav" },
   // -- T19-WEB (PHASE-014): dashboard / billing / notifications (registry-
   // driven when navigation resolves; fallback covers nav-fetch failure). The
   // dashboard entry mirrors home.dashboard's new /dashboard route. The
@@ -213,6 +222,17 @@ function fallbackCrumbsFor(
   // PHASE-027 (wave F) — installment plan detail routes (installments/:id).
   if (pagePath.startsWith("installments/") && pagePath !== "installments/new" && pagePath !== "installments/reports") {
     return { groupLabel: d.navSales, label: d.navInstallmentPlans };
+  }
+  // PHASE-034 (T11) — consolidation group detail routes
+  // (consolidation/groups/:id): the module label is the honest leaf crumb
+  // (the inventory/items/:id rule; static module routes resolve via the exact
+  // map above).
+  if (
+    pagePath.startsWith("consolidation/groups/") &&
+    pagePath !== "consolidation/groups" &&
+    !pagePath.startsWith("consolidation/groups/new")
+  ) {
+    return { groupLabel: d.navReports, label: d.consolidationGroupsNav };
   }
   return undefined;
 }

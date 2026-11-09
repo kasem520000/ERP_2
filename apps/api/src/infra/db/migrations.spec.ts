@@ -53,7 +53,13 @@ describe("migration manifest (MIGRATION_STRATEGY §1)", () => {
     // inventory.valuation report-key reconciliation; every required key
     // already granted by 0008/0026/0027 — zero new plan grants; executes
     // on the same PHASE-027 lineage).
-    expect(files.at(-1)?.tag).toBe("0040_agriculture_template");
+    // PHASE-034: 0041_consolidation (the consolidation module per ADR-0018 /
+    // DR-006 option A — four tenant tables + the §9 run-status enum + the
+    // platform-plane reader role + the SECURITY DEFINER reader function +
+    // the CONSOLIDATION_ADJUSTMENT CoA template account + the 5 §3.15
+    // permission seeds + the 5 feature-key plan grants; the FINAL roadmap
+    // phase — stage 11, the Enterprise Depth gate).
+    expect(files.at(-1)?.tag).toBe("0041_consolidation");
   });
 
   it("journal entries mirror the manifest order (drizzle-kit manifest)", () => {

@@ -126,6 +126,16 @@ export const MIGRATIONS: readonly string[] = [
   // keys — every required key was already granted by 0008/0026/0027, the
   // first shipped template whose REQUIRED chain needs no plan grants).
   "0040_agriculture_template",
+  // PHASE-034: 0041_consolidation.sql (the consolidation module per ADR-0018
+  // / DR-006 option A: consolidation_groups/group_entities/elimination_
+  // entries/consolidation_runs + the consolidation_run_status §9 enum +
+  // the CONSOLIDATION_ADJUSTMENT CoA template account 3220 + the 5 §3.15
+  // permission seeds + the 5 feature-key plan grants + THE platform-plane
+  // reader — role erp_consolidation_reader NOLOGIN BYPASSRLS, SELECT-only
+  // grants on the member GL read models, and the one SECURITY DEFINER
+  // reader function erp.consolidation_read_member_gl (BR-056 re-verified
+  // in-function; zero cross-tenant writes at the grant level)).
+  "0041_consolidation",
 ];
 
 /**

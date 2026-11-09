@@ -281,6 +281,13 @@
       "when": 1794150000000,
       "tag": "0040_agriculture_template",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794200000000,
+      "tag": "0041_consolidation",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,7 @@ import { CrmQueriesService } from "./industry/crm-queries";
 import { FixedAssetsQueriesService } from "./fixed-assets/fixed-assets-queries";
 import { NotesQueriesService } from "./notes/notes-queries";
 import { InstallmentsQueriesService } from "./installments/installments-queries";
+import { ConsolidationQueriesService } from "./consolidation/consolidation-queries";
 import { TreasuryQueriesService } from "../../treasury/application/treasury-queries";
 import { PartnerQueriesService } from "../../partners/application/partner-queries";
 import { TaxQueriesService } from "../../tax/application/tax-queries";
@@ -55,6 +56,8 @@ export interface ReportingServices {
   notes: NotesQueriesService;
   /** PHASE-027 · the installments query surface (one plan's schedule + schedule-sum-tie/lines-count-tie, the aging with the installments-inv016-tie sanity). */
   installments: InstallmentsQueriesService;
+  /** PHASE-034 · the consolidation query surface (the completed run's immutable snapshot → consolidated TB/IS/BS with the render-time INV-026 line-by-line re-check, the eliminations log with its journal-chain tie). Statements read snapshots — never live member books. */
+  consolidation: ConsolidationQueriesService;
   treasury: TreasuryQueriesService;
   partners: PartnerQueriesService;
   tax: TaxQueriesService;
@@ -83,6 +86,7 @@ export function reportingServices(): ReportingServices {
       fixedAssets: new FixedAssetsQueriesService(),
       notes: new NotesQueriesService(),
       installments: new InstallmentsQueriesService(),
+      consolidation: new ConsolidationQueriesService(),
       treasury: new TreasuryQueriesService(),
       partners: new PartnerQueriesService(),
       tax: new TaxQueriesService(),

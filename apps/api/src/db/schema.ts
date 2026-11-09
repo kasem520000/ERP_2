@@ -5550,3 +5550,145 @@ export const installmentLines = pgTable(
     index("ix_installment_lines_tenant_status_due").on(table.tenantId, table.status, table.dueDate),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// PHASE-034 (migration 0041) — multi-entity consolidation (ADR-0018 / DR-006
+// option A / ED-10, stage 11 — the final roadmap phase): groups as
+// CONFIGURATION in the owner tenant's plane (a legal entity = a tenant,
+// unchanged); eliminations as DRAFT→POSTED documents whose POST runs through
+// the posting engine into the PARENT tenant's consolidation books (source
+// CONSOLIDATION_ELIMINATION, G-32); runs as read-only aggregations over
+// member books through the ONE audited platform-plane reader
+// (erp.consolidation_read_member_gl — SECURITY DEFINER, SELECT-only grant
+// scope, BR-056 re-verified in-function); snapshots as immutable versioned
+// derived artifacts (ADR-0017 — never a second ledger). Zero cross-tenant
+// writes at the grant level (INV-026).
+// ---------------------------------------------------------------------------
+
+/** Consolidation groups (T4): owner-plane configuration — bilingual names,
+ * the GROUP reporting currency, the OQ-V2-2-decided FX method (DR-P34-FX-1
+ * amending DR-006 §4: CLOSING_RATE default, TEMPORARY bounded), status. */
+export const consolidationGroups = pgTable(
+  "consolidation_groups",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    name: text("name").notNull(),
+    nameAr: text("name_ar").notNull(),
+    baseCurrency: varchar("base_currency", { length: 3 }).notNull(),
+    fxTranslationMethod: text("fx_translation_method").notNull().default("CLOSING_RATE"),
+    status: text("status").notNull().default("ACTIVE"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_consolidation_groups_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_consolidation_groups_tenant_name").on(table.tenantId, table.name),
+    index("ix_consolidation_groups_tenant_status").on(table.tenantId, table.status),
+  ],
+);
+
+/** Group membership (T4): the configuration edge ADR-0018 sanctions —
+ * member_tenant_id deliberately NOT composite (the member is another tenant
+ * BY DESIGN; every read through it is audited). ownership_percent is
+ * disclosure/minority-interest presentation only (DR-006); include_from
+ * bounds the member's consolidated periods (NULL = from inception). */
+export const groupEntities = pgTable(
+  "group_entities",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    groupId: uuid("group_id").notNull(),
+    memberTenantId: uuid("member_tenant_id").notNull(),
+    ownershipPercent: numeric("ownership_percent", { precision: 7, scale: 4 }).notNull().default("100"),
+    includeFrom: date("include_from"),
+    status: text("status").notNull().default("ACTIVE"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_group_entities_id_tenant").on(table.id, table.tenantId),
+    uniqueIndex("uq_group_entities_group_member").on(table.groupId, table.memberTenantId),
+    index("ix_group_entities_tenant_group").on(table.tenantId, table.groupId, table.status),
+    index("ix_group_entities_member").on(table.memberTenantId, table.status),
+  ],
+);
+
+/** Elimination documents (T5): DRAFT over member-pair lines (jsonb manual
+ * authoring — the auto-matcher is out of scope) → POST via
+ * PostingEngine.post (source CONSOLIDATION_ELIMINATION, G-32 intercompany
+ * shape; investment/equity lines through CONSOLIDATION_ADJUSTMENT) into the
+ * PARENT's consolidation books ONLY. Posted = immutable (INV-003);
+ * reversal-only counter-entries (BR-056) as new DRAFT→POSTED pairs. */
+export const eliminationEntries = pgTable(
+  "elimination_entries",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    groupId: uuid("group_id").notNull(),
+    fiscalPeriodId: uuid("fiscal_period_id").notNull(),
+    eliminationNo: text("elimination_no"),
+    kind: text("kind").notNull().default("INTERCOMPANY"),
+    description: text("description").notNull(),
+    memberATenantId: uuid("member_a_tenant_id"),
+    memberBTenantId: uuid("member_b_tenant_id"),
+    lines: jsonb("lines").notNull().default([]),
+    status: text("status").notNull().default("DRAFT"),
+    approvedBy: uuid("approved_by"),
+    approvedAt: timestamp("approved_at", { withTimezone: true, mode: "string" }),
+    postedAt: timestamp("posted_at", { withTimezone: true, mode: "string" }),
+    postedBy: uuid("posted_by"),
+    journalEntryIds: jsonb("journal_entry_ids").notNull().default([]),
+    reversalOf: uuid("reversal_of"),
+    note: text("note"),
+    noteAr: text("note_ar"),
+  },
+  (table) => [
+    uniqueIndex("uq_elimination_entries_id_tenant").on(table.id, table.tenantId),
+    index("ix_elimination_entries_tenant_group_period").on(
+      table.tenantId,
+      table.groupId,
+      table.fiscalPeriodId,
+    ),
+    index("ix_elimination_entries_tenant_status").on(table.tenantId, table.status),
+    index("ix_elimination_entries_reversal_of").on(table.tenantId, table.reversalOf),
+  ],
+);
+
+/** Consolidation runs (T6): QUEUED→RUNNING→COMPLETED/FAILED (the §9
+ * consolidation_run_status enum) as bounded pg-boss jobs. snapshot = the
+ * immutable versioned derived artifact (member extracts at dated stored
+ * rates INV-008 + the frozen elimination set); re-run = NEW row; FAILED
+ * leaves no partial snapshot. The DB guard trigger (migration 0041 §5)
+ * makes COMPLETED snapshots rewrite-proof. */
+export const consolidationRuns = pgTable(
+  "consolidation_runs",
+  {
+    ...standardColumns,
+    tenantId: uuid("tenant_id").notNull(),
+    createdBy: uuid("created_by"),
+    groupId: uuid("group_id").notNull(),
+    fiscalPeriodId: uuid("fiscal_period_id").notNull(),
+    status: text("status").notNull().default("QUEUED"),
+    snapshotVersion: integer("snapshot_version").notNull().default(1),
+    snapshot: jsonb("snapshot"),
+    jobId: text("job_id"),
+    startedAt: timestamp("started_at", { withTimezone: true, mode: "string" }),
+    completedAt: timestamp("completed_at", { withTimezone: true, mode: "string" }),
+    errorCode: text("error_code"),
+    errorDetail: jsonb("error_detail"),
+    note: text("note"),
+  },
+  (table) => [
+    uniqueIndex("uq_consolidation_runs_id_tenant").on(table.id, table.tenantId),
+    index("ix_consolidation_runs_tenant_group_period").on(
+      table.tenantId,
+      table.groupId,
+      table.fiscalPeriodId,
+    ),
+    index("ix_consolidation_runs_tenant_status").on(table.tenantId, table.status),
+  ],
+);

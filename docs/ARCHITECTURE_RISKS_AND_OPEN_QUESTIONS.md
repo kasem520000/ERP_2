@@ -1,6 +1,6 @@
 # ARCHITECTURE_RISKS_AND_OPEN_QUESTIONS — Unresolved Decisions, Assumptions, and Risks
 
-> **Status:** STABLE · **Owner:** Platform Architecture · **Updated:** 2026-10-28 (consolidation pass; v2.0 expansion additions OQ-V2-1/OQ-V2-2)
+> **Status:** STABLE · **Owner:** Platform Architecture · **Updated:** 2026-11-09 (PHASE-034 T1: OQ-V2-2 RESOLVED — decision record DR-P34-FX-1 amending [decisions/accounting/DR-006](decisions/accounting/DR-006-consolidation.md) §4; first open-question closure on this list, kept visible per the decision-record rule)
 > **Authority:** Consolidated live list of what is **not yet decided or not yet proven**.
 > Domain risk detail remains in [planning/RISK_REGISTER.md](planning/RISK_REGISTER.md)
 > (R-xxx) and [ASSUMPTIONS_AND_OPEN_QUESTIONS.md](ASSUMPTIONS_AND_OPEN_QUESTIONS.md)
@@ -19,7 +19,7 @@
 | OQ-C-1 | Offline financial statements (TB/BS on devices) — currently online-only everywhere | Feature scope decision + ADR (touches posting-authoritative principle) | Stay online-only; documented limitation |
 | OQ-C-2 | PHASE-023 split (ZATCA vs other adapters) if certification lead times pressure GA | Roadmap decision | Keep single phase; DR-001 may defer clearance post-GA |
 | OQ-V2-1 | Payroll jurisdiction contribution/EOS tables — GOSI-style social-insurance rates and end-of-service legal scales **REQUIRE_VERIFICATION** against official sources per country before any jurisdiction-specific payroll default is enabled; components stay tenant-configured, **zero fabricated rates** (Blueprint v2.0, [accounting/DR-005](decisions/accounting/DR-005-payroll-scope.md)) | Blocks jurisdiction-specific payroll defaults only — the PHASE-029 financial-payroll module itself proceeds | Tenant-configured components; templates ship empty component shells with documentation pointers; no seeded rates |
-| OQ-V2-2 | Consolidation FX translation method — **closing-rate vs temporal**; closing-rate is the **proposed** default for group statement translation (Blueprint v2.0, [ADR-0018](architecture/ADR/ADR-0018-multi-entity-consolidation.md) / [accounting/DR-006](decisions/accounting/DR-006-consolidation.md)) | Needs product decision **before PHASE-034 planning**; does not block stages 9–10 | Dated-rate mechanics (INV-008) are fixed; the method itself stays an explicit per-group configuration with closing-rate proposed as default — no committed default in the docs |
+| OQ-V2-2 | ~~Consolidation FX translation method — **closing-rate vs temporal**~~ **RESOLVED 2026-11-09 (PHASE-034 T1 decision record DR-P34-FX-1, amending [decisions/accounting/DR-006](decisions/accounting/DR-006-consolidation.md) §4): CLOSING_RATE default, explicit per-group `fx_translation_method` configuration (CLOSING_RATE / TEMPORARY — TEMPORARY bounded to the PHASE-034 surface with the equity-recycling delta as a CONSOLIDATION_ADJUSTMENT elimination line); dated-rate mechanics (INV-008) unchanged; missing rates fail closed (`RATE_MISSING`)** | Resolved before executor tasks merged, as PHASE-034 required | N/A — the decision is recorded and the executor reads the method from group config only |
 
 ## 2. Assumptions explicitly relied upon (selected — full list in ASSUMPTIONS_AND_OPEN_QUESTIONS.md)
 

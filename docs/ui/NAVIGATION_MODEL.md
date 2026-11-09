@@ -185,4 +185,4 @@ hard-coded listeners in screens). POS terminal profiles define their own F-key m
 | Cheques & notes + maturity calendar under الخزينة; installment plans under المبيعات | PHASE-027 |
 | Budgets under المحاسبة | PHASE-028 |
 | HR & Payroll group (group 10) + its items | PHASE-029 |
-| Consolidated statements under التقارير | PHASE-034 |
+| Consolidated statements under التقارير | PHASE-034 — **LIVE** (delivered 2026-11-09: the `/consolidation` surfaces — group Settings, the elimination Transaction Entry workspace with the live balanced DR/CR preview, the run Report Page with the snapshot viewer — nav items under group 7 التقارير, `reports.consolidated`) |

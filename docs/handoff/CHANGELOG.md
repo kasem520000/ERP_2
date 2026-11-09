@@ -1,9 +1,67 @@
 # Changelog
 
-> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-07
+> **Status:** LIVING DOCUMENT — append-only, newest first · **Updated:** 2026-11-09
 
 Format: `DATE — item — type` where type ∈ {BLUEPRINT, PHASE-NNN, DOCS, BREAKING-ARCH, DECISION}.
 
+- 2026-11-09 — **PHASE-034 — Multi-Entity Consolidation (COMPLETE — the FINAL roadmap
+  phase, stage 11 / the Enterprise Depth gate; the 34-phase roadmap is COMPLETE)**:
+  migration `0041_consolidation.sql` (schema_version 41 — the four register §C tables
+  `consolidation_groups`/`group_entities`/`elimination_entries`/`consolidation_runs`,
+  all tenant-owned + RLS via the macro + composite FKs + hot indexes; the §9
+  run-status CHECK enum; the snapshot rewrite-guard trigger; the
+  CONSOLIDATION_ADJUSTMENT CoA template account 3220 under 3000 — used only in the
+  parent's consolidation books; the 5 §3.15 permission seeds — pre-seeded in 0004 at
+  plan time, converged idempotently here per the two-site 0037/0038 precedent, drift
+  245 = 245; the 5 `consolidation.*` feature-key plan grants on business+enterprise,
+  the tier-4 precedent; and **THE platform-plane reader** — the ONLY grant of its kind
+  in the platform: role `erp_consolidation_reader` NOLOGIN (disabled-by-default) +
+  BYPASSRLS (the 0003 erp_definer envelope — the RLS policy set itself untouched) with
+  SELECT-only grants on the member GL read models, owning the three SECURITY DEFINER
+  reader functions `consolidation_read_member_gl` (excluding
+  consolidation_elimination-source lines — the member STATUTORY books are what
+  consolidates) + the BR-056 period-lookup leg + the intercompany AR/AP suggestion
+  leg, each revoked from PUBLIC and re-validating membership/include_from/closed-period
+  in-function — ZERO cross-tenant writes at the grant level). The
+  `consolidation` NestJS module: group/membership service (audited maintenance),
+  elimination service (DRAFT over member-pair lines → approve (SoD creator ≠
+  approver) → POST via `PostingEngine.post`, source CONSOLIDATION_ELIMINATION,
+  G-32 intercompany shape, EL-{YYYY}-{SEQ:6}, reversal-only counter-entries per
+  BR-056), the audited reader service (every member-book read writes an audit row),
+  run service + the bounded on-demand pg-boss queue `consolidation.run.execute`
+  (BR-056 typed MEMBER_PERIOD_OPEN pre-check; FAILED leaves no partial snapshot;
+  snapshots immutable+versioned+content-hashed — ADR-0017 derived artifacts), the FX
+  translation step (INV-008: amount × stored rate exactly; CLOSING_RATE default per
+  **the T1 decision record DR-P34-FX-1 amending DR-006 §4 — OQ-V2-2 RESOLVED before
+  executor merge**; per-group fx_translation_method ∈ {CLOSING_RATE, TEMPORARY};
+  RATE_MISSING fail-closed; KWD-style 3-decimal currencies ride the ordinary
+  machinery), and the 23-route controller. Reporting: the four §10 contracts
+  (`consolidation.consolidated-tb/-is/-bs`, `consolidation.eliminations-log`) on the
+  PHASE-013 engine — **registry 76 → 80** — with the INV-026 headline block-on-fail
+  assertion (render-time line-by-line re-check vs the run snapshot), the TB balance
+  tie, the eliminations-journal-tie INV-006 chain check, and group-view labeling;
+  statements read immutable run snapshots, never live member books. Web: the five
+  `/consolidation` surfaces (workspace hub, group Settings §8, eliminations log +
+  the Transaction Entry workspace §4 with the live balanced DR/CR preview over
+  member-pair lines + reader suggestions, the run Report Page §7 with the snapshot
+  viewer + INV-026 badge + the group-view disclaimer) + nav under التقارير
+  (reports.consolidated) + ~100 AR/EN dictionary keys. Verification (sandbox):
+  consolidation units **50/50** (math INV-026 line-by-line + seeded drift · FX ·
+  elimination-lines G-32 failure packs · snapshot determinism/tamper · the
+  80-registry contracts boot check) · migrations 4/4 · configuration 111/111 ·
+  contracts 41+11 · print-templates 8/8 · permissions-drift 245 = 245 ·
+  validate:manifests 9/9 · docs:validate 29/29; the DB suites
+  (`__db__/consolidation`: G-32 golden + failure packs zero-residue, INV-026
+  line-by-line + member-GL byte-compare + tamper detection, BR-056 typed rejections +
+  snapshot immutability, FX dated-rate equality, isolation attacks + write-attempt
+  rejections + read-audit completeness + the policy-snapshot diff) written for the
+  live harness re-run (the honest PHASE-033 posture). Lineage note: prereqs 025/013
+  satisfied at this HEAD; 026/029 prereqs ship as the GA + 027-lineage surface (the
+  phases 028–031 environment-reset note stands); CURRENT_SHIPPED_PHASE stays 027 —
+  the honesty rule. Docs: DR-006 §4 amended · OQ-V2-2 closed · REPORT_CATALOG §10 ·
+  NAVIGATION_MODEL LIVE row · IMPLEMENTATION_STATUS COMPLETE + roadmap-complete note
+  · the completion report with the acceptance-criteria table (all 10 PASS) —
+  **PHASE-NNN**
 - 2026-11-07 — **PHASE-027 — Cheques, Promissory Notes & Installments (IN PROGRESS —
   the build waves + the docs sync landed; the serial orchestrator gate — full DB suite
   re-run + completion report + commit — closes the phase; status flips COMPLETE only on

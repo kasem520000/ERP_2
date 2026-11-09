@@ -4088,6 +4088,144 @@ export interface Dictionary {
   instErrPolicyInvalid: string;
   instErrLateFeeNotChargeable: string;
   instErrWaiveReason: string;
+
+  // -- PHASE-034 (T11): multi-entity consolidation (القوائم الموحدة) ---------
+  // (the consolidation workspace: groups + members (Settings §8), the
+  // elimination Transaction Entry workspace (§4) with the live DR/CR preview,
+  // and the run Report Page (§7) with the snapshot viewer; every string in
+  // BOTH locales. Nav labels ride the registry (reports.consolidated —
+  // contracts NAV_ITEMS); the nav* keys below are the app-shell breadcrumb
+  // fallbacks, the navFixedAssets precedent.)
+
+  navConsolidated: string;
+  consolidationGroupsNav: string;
+  consolidationEliminationsNav: string;
+  consolidationRunsNav: string;
+
+  // shared module vocabulary
+  consolidationTitle: string;
+  consolidationHubHint: string;
+  consolidationDisclaimer: string;
+  consolidationColGroup: string;
+  consolidationFiscalPeriod: string;
+  consolidationColCreated: string;
+  consolidationStatusActive: string;
+  consolidationStatusArchived: string;
+  consolidationFxMethodClosingRate: string;
+  consolidationFxMethodTemporary: string;
+  consolidationNoteEn: string;
+  consolidationNoteAr: string;
+  consolidationRunStatusQueued: string;
+  consolidationRunStatusRunning: string;
+  consolidationRunStatusCompleted: string;
+  consolidationRunStatusFailed: string;
+
+  // groups hub (the workspace landing surface)
+  consolidationEmptyGroups: string;
+  consolidationNewGroupButton: string;
+  consolidationCreateGroupTitle: string;
+  consolidationGroupName: string;
+  consolidationGroupNameAr: string;
+  consolidationGroupBaseCurrency: string;
+  consolidationGroupFxMethod: string;
+  consolidationGroupCreateToast: string;
+  consolidationGroupMembersLabel: string;
+  consolidationRecentRunsCard: string;
+  consolidationViewRuns: string;
+  consolidationViewEliminations: string;
+  consolidationNewElimination: string;
+  consolidationNewRun: string;
+  consolidationRunsEmpty: string;
+
+  // group settings (§8 detail surface)
+  consolidationGroupSettingsCard: string;
+  consolidationGroupArchivedWarning: string;
+  consolidationArchiveGroupAction: string;
+  consolidationReactivateGroupAction: string;
+  consolidationGroupStatusToast: string;
+  consolidationMembersCard: string;
+  consolidationAddMemberTitle: string;
+  consolidationMemberTenantId: string;
+  consolidationMemberTenantIdHint: string;
+  consolidationMemberOwnershipPercent: string;
+  consolidationMemberIncludeFrom: string;
+  consolidationAddMemberButton: string;
+  consolidationMemberAddedToast: string;
+  consolidationMemberStatusRemoved: string;
+  consolidationUpdateMemberTitle: string;
+  consolidationMemberUpdateAction: string;
+  consolidationMemberRemoveAction: string;
+  consolidationMemberUpdatedToast: string;
+  consolidationGroupEliminationsCard: string;
+  consolidationGroupRunsCard: string;
+
+  // eliminations log (the §2 list surface)
+  eliminationsTitle: string;
+  eliminationsEmpty: string;
+  eliminationsFilterKind: string;
+  eliminationsKindIntercompany: string;
+  eliminationsKindInvestmentEquity: string;
+  eliminationsColNo: string;
+  eliminationsColDescription: string;
+  eliminationsColLines: string;
+  eliminationsColJournals: string;
+  eliminationsColReversalOf: string;
+  eliminationsApprovedBadge: string;
+  eliminationsReverseAction: string;
+  eliminationsApproveToast: string;
+  eliminationsPostToast: string;
+  eliminationsReverseToast: string;
+  eliminationsSodHint: string;
+  eliminationsPostConfirmTitle: string;
+  eliminationsPostConfirmBody: string;
+  eliminationsReverseConfirmTitle: string;
+  eliminationsLinesTitle: string;
+  eliminationsLinePurpose: string;
+  eliminationsLineDirection: string;
+  eliminationsLineMember: string;
+  eliminationsLineMemoEn: string;
+  eliminationsLineMemoAr: string;
+  eliminationsPurposeArControl: string;
+  eliminationsPurposeApControl: string;
+  eliminationsPurposeConsolidationAdjustment: string;
+  eliminationsAddLine: string;
+  eliminationsRemoveLine: string;
+
+  // elimination workspace (§4 transaction entry)
+  eliminationFormKind: string;
+  eliminationFormMemberA: string;
+  eliminationFormMemberB: string;
+  eliminationFormMemberHint: string;
+  eliminationSuggestionsCard: string;
+  eliminationSuggestionsButton: string;
+  eliminationSuggestionsAsOf: string;
+  eliminationSuggestionsEmpty: string;
+  eliminationSuggestionColPartner: string;
+  eliminationSuggestionColAr: string;
+  eliminationSuggestionColAp: string;
+  eliminationPreviewTitle: string;
+  eliminationSubmitButton: string;
+  eliminationCreatedToast: string;
+  eliminationCreatedCard: string;
+
+  // runs report page (§7)
+  consolidationRunCreateHint: string;
+  consolidationRunCreateButton: string;
+  consolidationRunCreatedToast: string;
+  consolidationRunExecuteAction: string;
+  consolidationRunExecutedToast: string;
+  consolidationRunErrorCodeCol: string;
+  consolidationRunSnapshotCard: string;
+  consolidationSnapshotPending: string;
+  consolidationSnapshotMembersCard: string;
+  consolidationSnapshotColType: string;
+  consolidationSnapshotColNet: string;
+  consolidationSnapshotColRates: string;
+  consolidationSnapshotConsolidatedCard: string;
+  consolidationSnapshotEliminationsCard: string;
+  consolidationInv026Pass: string;
+  consolidationInv026Fail: string;
+  consolidationInv026Compared: string;
 }
 
 const ar: Dictionary = {
@@ -8195,6 +8333,133 @@ const ar: Dictionary = {
   instErrPolicyInvalid: "سياسة رسوم التأخير غير صالحة — راجع النسبة والحد وأيام السماح.",
   instErrLateFeeNotChargeable: "رسوم التأخير تُحتسب فقط على أقساط متأخرة غير محتسبة مسبقًا (G-28).",
   instErrWaiveReason: "سبب الإعفاء إلزامي (BR-049).",
+
+  // -- PHASE-034 (T11): multi-entity consolidation (القوائم الموحدة) --------
+
+  navConsolidated: "القوائم الموحدة",
+  consolidationGroupsNav: "مجموعات التوحيد",
+  consolidationEliminationsNav: "التسويات",
+  consolidationRunsNav: "دورات التوحيد",
+
+  consolidationTitle: "القوائم الموحدة",
+  consolidationHubHint:
+    "مساحة عمل التوحيد متعدد الكيانات: مجموعات التوحيد وأعضاؤها، والتسويات بين الشركات، ودورات التوحيد مع لقطات القوائم الموحدة.",
+  consolidationDisclaimer: "قوائم المجموعة — لا تحل محل الدفاتر النظامية للأعضاء.",
+  consolidationColGroup: "المجموعة",
+  consolidationFiscalPeriod: "الفترة المالية",
+  consolidationColCreated: "أُنشئت",
+  consolidationStatusActive: "نشطة",
+  consolidationStatusArchived: "مؤرشفة",
+  consolidationFxMethodClosingRate: "سعر الإغلاق",
+  consolidationFxMethodTemporary: "المعدل المؤقت",
+  consolidationNoteEn: "ملاحظة (إنجليزي)",
+  consolidationNoteAr: "ملاحظة (عربي)",
+  consolidationRunStatusQueued: "في الانتظار",
+  consolidationRunStatusRunning: "قيد التنفيذ",
+  consolidationRunStatusCompleted: "مكتملة",
+  consolidationRunStatusFailed: "فاشلة",
+
+  consolidationEmptyGroups: "لا توجد مجموعات توحيد بعد — أنشئ المجموعة الأولى.",
+  consolidationNewGroupButton: "مجموعة جديدة",
+  consolidationCreateGroupTitle: "إنشاء مجموعة توحيد",
+  consolidationGroupName: "الاسم (إنجليزي)",
+  consolidationGroupNameAr: "الاسم (عربي)",
+  consolidationGroupBaseCurrency: "العملة الأساسية للمجموعة",
+  consolidationGroupFxMethod: "طريقة ترجمة العملات",
+  consolidationGroupCreateToast: "أُنشئت المجموعة — أضف الأعضاء ثم ألِّف التسويات.",
+  consolidationGroupMembersLabel: "الأعضاء",
+  consolidationRecentRunsCard: "أحدث دورات التوحيد",
+  consolidationViewRuns: "كل الدورات",
+  consolidationViewEliminations: "سجل التسويات",
+  consolidationNewElimination: "تسوية جديدة",
+  consolidationNewRun: "دورة توحيد جديدة",
+  consolidationRunsEmpty: "لا توجد دورات توحيد بعد.",
+
+  consolidationGroupSettingsCard: "إعدادات المجموعة",
+  consolidationGroupArchivedWarning: "هذه المجموعة مؤرشفة — أعِد تنشيطها قبل أي تعديل جديد.",
+  consolidationArchiveGroupAction: "أرشفة المجموعة",
+  consolidationReactivateGroupAction: "إعادة تنشيط المجموعة",
+  consolidationGroupStatusToast: "حُدِّثت حالة المجموعة.",
+  consolidationMembersCard: "أعضاء المجموعة",
+  consolidationAddMemberTitle: "إضافة عضو",
+  consolidationMemberTenantId: "معرّف مستأجر العضو (UUID)",
+  consolidationMemberTenantIdHint: "أدخل معرّف المستأجر العضو كما هو — إدخال يدوي في هذه المرحلة.",
+  consolidationMemberOwnershipPercent: "نسبة الملكية (٪)",
+  consolidationMemberIncludeFrom: "الإدراج من تاريخ",
+  consolidationAddMemberButton: "إضافة العضو",
+  consolidationMemberAddedToast: "أُضيف العضو إلى المجموعة.",
+  consolidationMemberStatusRemoved: "مُزال",
+  consolidationUpdateMemberTitle: "تحديث العضو",
+  consolidationMemberUpdateAction: "تحديث",
+  consolidationMemberRemoveAction: "إزالة العضو",
+  consolidationMemberUpdatedToast: "حُدِّثت بيانات العضو.",
+  consolidationGroupEliminationsCard: "تسويات المجموعة",
+  consolidationGroupRunsCard: "دورات المجموعة",
+
+  eliminationsTitle: "سجل التسويات",
+  eliminationsEmpty: "لا توجد تسويات بعد — أنشئ أول تسوية.",
+  eliminationsFilterKind: "النوع",
+  eliminationsKindIntercompany: "بين الشركات",
+  eliminationsKindInvestmentEquity: "الاستثمار وحقوق الملكية",
+  eliminationsColNo: "رقم التسوية",
+  eliminationsColDescription: "الوصف",
+  eliminationsColLines: "البنود",
+  eliminationsColJournals: "قيود اليومية",
+  eliminationsColReversalOf: "عكسٌ لتسوية",
+  eliminationsApprovedBadge: "معتمدة",
+  eliminationsReverseAction: "عكس",
+  eliminationsApproveToast: "اعتُمدت التسوية — يمكن ترحيلها الآن.",
+  eliminationsPostToast: "رُحِّلت التسوية {no} — أُنشئ القيد {entry}.",
+  eliminationsReverseToast: "أُنشئت مسودة العكس — اعتَمدها ورحِّلها كأي تسوية.",
+  eliminationsSodHint: "فصل المهام: على مستخدم آخر (غير منشئ المسودة) اعتمادها قبل الترحيل.",
+  eliminationsPostConfirmTitle: "تأكيد الترحيل",
+  eliminationsPostConfirmBody: "سيُرحَّل قيد التسوية إلى دفاتر التوحيد للشركة الأم بإجمالي {amount}.",
+  eliminationsReverseConfirmTitle: "عكس التسوية المرحَّلة",
+  eliminationsLinesTitle: "بنود التسوية",
+  eliminationsLinePurpose: "الغرض",
+  eliminationsLineDirection: "الجهة",
+  eliminationsLineMember: "العضو",
+  eliminationsLineMemoEn: "بيان (إنجليزي)",
+  eliminationsLineMemoAr: "بيان (عربي)",
+  eliminationsPurposeArControl: "أرصدة العملاء (AR_CONTROL)",
+  eliminationsPurposeApControl: "أرصدة الموردين (AP_CONTROL)",
+  eliminationsPurposeConsolidationAdjustment: "تسوية التوحيد (CONSOLIDATION_ADJUSTMENT)",
+  eliminationsAddLine: "إضافة بند",
+  eliminationsRemoveLine: "حذف البند",
+
+  eliminationFormKind: "نوع التسوية",
+  eliminationFormMemberA: "العضو (أ)",
+  eliminationFormMemberB: "العضو (ب)",
+  eliminationFormMemberHint: "معرّف مستأجر (UUID) لعضو نشط في المجموعة المختارة.",
+  eliminationSuggestionsCard: "مقترحات بين الشركات (للعضو أ)",
+  eliminationSuggestionsButton: "جلب المقترحات",
+  eliminationSuggestionsAsOf: "كما في تاريخ",
+  eliminationSuggestionsEmpty: "لا مقترحات لهذا العضو في هذا التاريخ.",
+  eliminationSuggestionColPartner: "الشريك",
+  eliminationSuggestionColAr: "رصيد العملاء",
+  eliminationSuggestionColAp: "رصيد الموردين",
+  eliminationPreviewTitle: "معاينة التوازن المباشرة",
+  eliminationSubmitButton: "إنشاء المسودة",
+  eliminationCreatedToast: "أُنشئت مسودة التسوية — اعتَمدها ثم رحِّلها.",
+  eliminationCreatedCard: "المسودة المُنشأة",
+
+  consolidationRunCreateHint: "دورة واحدة لكل (مجموعة، فترة) — تُنشأ في الانتظار ثم تُنفَّذ.",
+  consolidationRunCreateButton: "إنشاء الدورة",
+  consolidationRunCreatedToast: "أُنشئت الدورة في الانتظار — نفِّذها الآن.",
+  consolidationRunExecuteAction: "تنفيذ",
+  consolidationRunExecutedToast: "نُفِّذت الدورة — الحالة: {status}.",
+  consolidationRunErrorCodeCol: "رمز الخطأ",
+  consolidationRunSnapshotCard: "لقطة الدورة",
+  consolidationSnapshotPending: "اللقطة متاحة بعد اكتمال الدورة فقط — نفّذ الدورة أولًا.",
+  consolidationSnapshotMembersCard: "الأعضاء والأسعار المطبقة",
+  consolidationSnapshotColType: "نوع الحساب",
+  consolidationSnapshotColNet: "الصافي",
+  consolidationSnapshotColRates: "الأسعار المطبقة",
+  consolidationSnapshotConsolidatedCard: "البنود الموحدة",
+  consolidationSnapshotEliminationsCard: "آثار التسويات",
+  consolidationInv026Pass: "INV-026: سليمة",
+  consolidationInv026Fail: "INV-026: انحراف",
+  consolidationInv026Compared: "المقارنة: {left} مقابل {right}",
 };
 
 const en: Dictionary = {
@@ -12311,6 +12576,133 @@ const en: Dictionary = {
   instErrPolicyInvalid: "The late-fee policy is invalid — check the rate, cap and grace days.",
   instErrLateFeeNotChargeable: "Late fees post only on OVERDUE lines not already charged (G-28).",
   instErrWaiveReason: "A waive reason is required (BR-049).",
+
+  // -- PHASE-034 (T11): multi-entity consolidation (القوائم الموحدة) --------
+
+  navConsolidated: "Consolidated statements",
+  consolidationGroupsNav: "Consolidation groups",
+  consolidationEliminationsNav: "Eliminations",
+  consolidationRunsNav: "Consolidation runs",
+
+  consolidationTitle: "Consolidated statements",
+  consolidationHubHint:
+    "The multi-entity consolidation workspace: consolidation groups & members, intercompany eliminations, and consolidation runs with consolidated-statement snapshots.",
+  consolidationDisclaimer: "Group view — never replaces member statutory books.",
+  consolidationColGroup: "Group",
+  consolidationFiscalPeriod: "Fiscal period",
+  consolidationColCreated: "Created",
+  consolidationStatusActive: "Active",
+  consolidationStatusArchived: "Archived",
+  consolidationFxMethodClosingRate: "Closing rate",
+  consolidationFxMethodTemporary: "Temporary method",
+  consolidationNoteEn: "Note (EN)",
+  consolidationNoteAr: "Note (AR)",
+  consolidationRunStatusQueued: "Queued",
+  consolidationRunStatusRunning: "Running",
+  consolidationRunStatusCompleted: "Completed",
+  consolidationRunStatusFailed: "Failed",
+
+  consolidationEmptyGroups: "No consolidation groups yet — create the first group.",
+  consolidationNewGroupButton: "New group",
+  consolidationCreateGroupTitle: "Create consolidation group",
+  consolidationGroupName: "Name (EN)",
+  consolidationGroupNameAr: "Name (AR)",
+  consolidationGroupBaseCurrency: "Group base currency",
+  consolidationGroupFxMethod: "FX translation method",
+  consolidationGroupCreateToast: "Group created — add members, then author eliminations.",
+  consolidationGroupMembersLabel: "Members",
+  consolidationRecentRunsCard: "Recent consolidation runs",
+  consolidationViewRuns: "All runs",
+  consolidationViewEliminations: "Eliminations log",
+  consolidationNewElimination: "New elimination",
+  consolidationNewRun: "New consolidation run",
+  consolidationRunsEmpty: "No consolidation runs yet.",
+
+  consolidationGroupSettingsCard: "Group settings",
+  consolidationGroupArchivedWarning: "This group is ARCHIVED — reactivate it before making changes.",
+  consolidationArchiveGroupAction: "Archive group",
+  consolidationReactivateGroupAction: "Reactivate group",
+  consolidationGroupStatusToast: "Group status updated.",
+  consolidationMembersCard: "Group members",
+  consolidationAddMemberTitle: "Add member",
+  consolidationMemberTenantId: "Member tenant id (UUID)",
+  consolidationMemberTenantIdHint: "Enter the member tenant's id as-is — manual entry at this phase.",
+  consolidationMemberOwnershipPercent: "Ownership percent (%)",
+  consolidationMemberIncludeFrom: "Include from",
+  consolidationAddMemberButton: "Add member",
+  consolidationMemberAddedToast: "Member added to the group.",
+  consolidationMemberStatusRemoved: "Removed",
+  consolidationUpdateMemberTitle: "Update member",
+  consolidationMemberUpdateAction: "Update",
+  consolidationMemberRemoveAction: "Remove member",
+  consolidationMemberUpdatedToast: "Member updated.",
+  consolidationGroupEliminationsCard: "Group eliminations",
+  consolidationGroupRunsCard: "Group runs",
+
+  eliminationsTitle: "Eliminations log",
+  eliminationsEmpty: "No eliminations yet — create the first one.",
+  eliminationsFilterKind: "Kind",
+  eliminationsKindIntercompany: "Intercompany",
+  eliminationsKindInvestmentEquity: "Investment & equity",
+  eliminationsColNo: "Elimination no.",
+  eliminationsColDescription: "Description",
+  eliminationsColLines: "Lines",
+  eliminationsColJournals: "Journal entries",
+  eliminationsColReversalOf: "Reversal of",
+  eliminationsApprovedBadge: "Approved",
+  eliminationsReverseAction: "Reverse",
+  eliminationsApproveToast: "Elimination approved — it can be posted now.",
+  eliminationsPostToast: "Elimination {no} posted — journal {entry} created.",
+  eliminationsReverseToast: "Reversal draft created — approve and post it like any elimination.",
+  eliminationsSodHint: "Separation of duties: another user (not the draft creator) must approve before posting.",
+  eliminationsPostConfirmTitle: "Confirm posting",
+  eliminationsPostConfirmBody: "The elimination journal will post into the parent's consolidation books for a total of {amount}.",
+  eliminationsReverseConfirmTitle: "Reverse posted elimination",
+  eliminationsLinesTitle: "Elimination lines",
+  eliminationsLinePurpose: "Purpose",
+  eliminationsLineDirection: "Direction",
+  eliminationsLineMember: "Member",
+  eliminationsLineMemoEn: "Memo (EN)",
+  eliminationsLineMemoAr: "Memo (AR)",
+  eliminationsPurposeArControl: "AR control (AR_CONTROL)",
+  eliminationsPurposeApControl: "AP control (AP_CONTROL)",
+  eliminationsPurposeConsolidationAdjustment: "Consolidation adjustment (CONSOLIDATION_ADJUSTMENT)",
+  eliminationsAddLine: "Add line",
+  eliminationsRemoveLine: "Remove line",
+
+  eliminationFormKind: "Elimination kind",
+  eliminationFormMemberA: "Member (A)",
+  eliminationFormMemberB: "Member (B)",
+  eliminationFormMemberHint: "Tenant id (UUID) of an ACTIVE member of the selected group.",
+  eliminationSuggestionsCard: "Intercompany suggestions (member A)",
+  eliminationSuggestionsButton: "Load suggestions",
+  eliminationSuggestionsAsOf: "As of date",
+  eliminationSuggestionsEmpty: "No suggestions for this member at this date.",
+  eliminationSuggestionColPartner: "Partner",
+  eliminationSuggestionColAr: "AR balance",
+  eliminationSuggestionColAp: "AP balance",
+  eliminationPreviewTitle: "Live balance preview",
+  eliminationSubmitButton: "Create draft",
+  eliminationCreatedToast: "Elimination draft created — approve it, then post.",
+  eliminationCreatedCard: "Created draft",
+
+  consolidationRunCreateHint: "One run per (group, period) — created QUEUED, then executed.",
+  consolidationRunCreateButton: "Create run",
+  consolidationRunCreatedToast: "Run created (QUEUED) — execute it now.",
+  consolidationRunExecuteAction: "Execute",
+  consolidationRunExecutedToast: "Run executed — status: {status}.",
+  consolidationRunErrorCodeCol: "Error code",
+  consolidationRunSnapshotCard: "Run snapshot",
+  consolidationSnapshotPending: "The snapshot is available only after the run completes — execute the run first.",
+  consolidationSnapshotMembersCard: "Members & applied rates",
+  consolidationSnapshotColType: "Account type",
+  consolidationSnapshotColNet: "Net",
+  consolidationSnapshotColRates: "Applied rates",
+  consolidationSnapshotConsolidatedCard: "Consolidated lines",
+  consolidationSnapshotEliminationsCard: "Elimination effects",
+  consolidationInv026Pass: "INV-026: PASS",
+  consolidationInv026Fail: "INV-026: FAIL",
+  consolidationInv026Compared: "Compared: {left} vs {right}",
 };
 
 const dictionaries: Record<Locale, Dictionary> = { ar, en };

@@ -1,6 +1,6 @@
 # Current State
 
-> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-06
+> **Status:** LIVING DOCUMENT — updated at every phase completion · **Updated:** 2026-11-09
 
 What actually exists in this repository right now. Paired with
 [../planning/IMPLEMENTATION_STATUS.md](../planning/IMPLEMENTATION_STATUS.md) (phase
@@ -56,6 +56,24 @@ table) and [NEXT_ACTION.md](NEXT_ACTION.md).
   live with SLOBurn, the observability audit green, the GA checklist closed
   with the honest ledger).** The
   pnpm + Turborepo monorepo with all local gates green (re-verified 2026-11-03):
+- **Post-GA v2.0 expansion on this lineage (2026-11-09) — THE 34-PHASE
+  ROADMAP IS COMPLETE:** after GA, this repository's lineage shipped
+  PHASE-027 (notes & installments, migration 0038 — schema_version 38) and
+  the stage-10 commercial-shell templates PHASE-032 education (0039) +
+  PHASE-033 agriculture (0040 — both configuration-only through the
+  unmodified PHASE-015 engine), then **PHASE-034 Multi-Entity Consolidation
+  (0041, the final roadmap phase — the Enterprise Depth gate): the
+  `consolidation` module** (groups/membership configuration, G-32
+  eliminations via the posting engine into the parent's consolidation books,
+  BR-056-gated read-only runs over the audited platform-plane reader with
+  ZERO cross-tenant writes, the DR-P34-FX-1 dated-FX translation decision,
+  the four §10 consolidated-statement report contracts — registry 80) with
+  the web surfaces and the unit/DB suites. The sibling phases 028–031 were
+  lost to environment resets on this lineage and remain NOT_STARTED (the
+  honest lineage note in IMPLEMENTATION_STATUS); every shipped phase's
+  evidence is in its completion report under
+  [../implementation/phases/reports/](../implementation/phases/reports/).
+  Post-completion: the maintenance/ops handoff per MASTER_ROADMAP §Handoff.
   - `apps/api` — NestJS with `GET /health/live` + `GET /health/ready` (DB +
     migration state + queue liveness); modules: `audit` (append-only, transactional
     appends inside the caller's UoW + audit.view-gated query endpoint),

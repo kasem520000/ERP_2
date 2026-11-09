@@ -1,6 +1,6 @@
 # DR-006 — Consolidation Policy: Read-Only Members, Engine-Posted Eliminations
 
-> **Status:** ACCEPTED · **Owner:** Accounting Domain Architecture · **Updated:** 2026-10-28 ·
+> **Status:** ACCEPTED · **Owner:** Accounting Domain Architecture · **Updated:** 2026-11-09 (OQ-V2-2 decision landed — §4 amended) ·
 > **Date:** opened 2026-10-28, accepted 2026-10-28 ·
 > **Approver:** Product Owner (author: Accounting Domain Architecture) ·
 > **Source:** [ED-10](../../EXPANSION_REGISTER.md) (Blueprint v2.0) ·
@@ -45,9 +45,19 @@ This record pins the **accounting policy** on top of that architecture.
    reversible **only by counter-entry** (BR-056) — INV-006 source chain and INV-013
    idempotency apply like any journal.
 4. **FX translation with dated rates** (INV-008 conventions) into the group's base
-   currency; the translation method choice (closing-rate vs temporal) is an explicit
-   open product decision — OQ-V2-2, to be decided before PHASE-034 planning (see
-   [../../ARCHITECTURE_RISKS_AND_OPEN_QUESTIONS.md](../../ARCHITECTURE_RISKS_AND_OPEN_QUESTIONS.md)).
+   currency. **Method decision (OQ-V2-2 — RESOLVED 2026-11-09, decision record
+   DR-P34-FX-1): CLOSING_RATE is the default; the shipped method is an explicit
+   per-group configuration (`fx_translation_method ∈ {CLOSING_RATE, TEMPORARY}`),
+   defaulting to CLOSING_RATE.** Under CLOSING_RATE, income-statement lines
+   translate at each member's period-rate (= the dated stored rate at the period
+   end) and balance-sheet lines at the closing rate — both strictly the stored
+   INV-008 rates (amount × stored rate, never recomputed); a group configured
+   TEMPORARY additionally translates non-monetary items at transaction-date
+   stored rates with the equity-recycling delta surfaced as a
+   `CONSOLIDATION_ADJUSTMENT` elimination line — bounded to exactly what ships
+   at PHASE-034 (no waterfall automation, the §5 posture). Missing rates fail
+   closed (`RATE_MISSING`); 3-decimal currencies (KWD-style) ride the ordinary
+   dated-rate machinery.
 5. **Consolidated statements are derived artifacts** (INV-026): consolidated TB/IS/BS =
    Σ member statements (group currency, dated FX) − eliminations; they never replace
    member statutory books.
@@ -71,8 +81,14 @@ This record pins the **accounting policy** on top of that architecture.
 
 ## Revisit conditions
 
-- The FX translation method decision (closing-rate default proposed — OQ-V2-2) lands via
-  the open question → amend §4 of this record with the chosen method.
+- ~~The FX translation method decision (closing-rate default proposed — OQ-V2-2) lands via
+  the open question → amend §4 of this record with the chosen method.~~ **RESOLVED
+  2026-11-09** — see the §4 amendment above (CLOSING_RATE default, per-group
+  `fx_translation_method`, TEMPORARY bounded to the PHASE-034 surface); OQ-V2-2 is
+  closed in [../../ARCHITECTURE_RISKS_AND_OPEN_QUESTIONS.md](../../ARCHITECTURE_RISKS_AND_OPEN_QUESTIONS.md).
+- Regulatory demand for a mandated translation method in a target jurisdiction → a
+  compliance-folder record may pin a group's method; the per-group configuration is
+  the seam.
 - Statutory consolidated filings are mandated in a target jurisdiction → compliance-folder
   record with official sources feeding the reports.
 - Demand for intercompany document automation (orders/invoices between members) → new

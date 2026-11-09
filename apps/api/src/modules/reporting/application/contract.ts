@@ -40,7 +40,8 @@ export type DataSourceModule =
   | "crm" // PHASE-019: the CRM query surface (contract revenue schedule / time billing)
   | "fixed_assets" // PHASE-026: the fixed_assets query surface (asset register/schedule/movements)
   | "notes" // PHASE-027: the notes query surface (maturity calendar / aging / dishonored register)
-  | "installments"; // PHASE-027: the installments query surface (schedule / aging)
+  | "installments" // PHASE-027: the installments query surface (schedule / aging)
+  | "consolidation"; // PHASE-034: the consolidation query surface (consolidated TB/IS/BS + eliminations log over the completed run's immutable snapshots)
 
 export interface DataSourceDecl {
   readonly module: DataSourceModule;
